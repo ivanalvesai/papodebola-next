@@ -32,7 +32,7 @@ export default function AdminLoginPage() {
         return;
       }
 
-      router.push("/admin/artigos");
+      router.push("/painel-pdb-9x/artigos");
     } catch {
       setError("Erro de conexao");
     } finally {

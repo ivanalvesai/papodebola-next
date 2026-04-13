@@ -8,6 +8,9 @@ services:
     env_file:
       - .env.local
     volumes:
-      - ./data:/app/data
+      - pdb-data:/app/data
     networks:
       - default
+
+volumes:
+  pdb-data:

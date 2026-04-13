@@ -14,22 +14,27 @@ function hashPassword(password: string): string {
   return createHash("sha256").update(`pdb_${password}`).digest("hex");
 }
 
+const DEFAULT_USERS: User[] = [
+  {
+    username: "admin",
+    password: hashPassword("admin123"),
+    role: "admin",
+  },
+];
+
 async function readUsers(): Promise<User[]> {
   try {
     const data = await readFile(USERS_FILE, "utf-8");
     return JSON.parse(data);
   } catch {
-    // Default admin user
-    const defaultUsers: User[] = [
-      {
-        username: "admin",
-        password: hashPassword("admin123"),
-        role: "admin",
-      },
-    ];
-    await ensureDir();
-    await writeFile(USERS_FILE, JSON.stringify(defaultUsers, null, 2));
-    return defaultUsers;
+    // File doesn't exist yet — try to create it, but don't fail if we can't
+    try {
+      await ensureDir();
+      await writeFile(USERS_FILE, JSON.stringify(DEFAULT_USERS, null, 2));
+    } catch {
+      // Read-only filesystem — return defaults in memory
+    }
+    return DEFAULT_USERS;
   }
 }
 

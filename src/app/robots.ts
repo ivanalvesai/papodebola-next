@@ -8,7 +8,7 @@ export default function robots(): MetadataRoute.Robots {
       {
         userAgent: "*",
         allow: "/",
-        disallow: ["/admin/", "/api/"],
+        disallow: ["/painel-pdb-9x/", "/admin/", "/api/"],
       },
     ],
     sitemap: `${BASE}/sitemap.xml`,

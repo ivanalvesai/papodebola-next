@@ -1,5 +1,5 @@
 import { redirect } from "next/navigation";
 
 export default function AdminPage() {
-  redirect("/admin/artigos");
+  redirect("/painel-pdb-9x/artigos");
 }

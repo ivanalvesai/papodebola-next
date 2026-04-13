@@ -5,23 +5,23 @@ import { usePathname } from "next/navigation";
 import { FileText, Users, Gamepad2, Settings, LogOut } from "lucide-react";
 
 const TABS = [
-  { href: "/admin/artigos", label: "Artigos", icon: FileText },
-  { href: "/admin/usuarios", label: "Usuarios", icon: Users },
-  { href: "/admin/jogos", label: "Jogos", icon: Gamepad2 },
-  { href: "/admin/config", label: "Config", icon: Settings },
+  { href: "/painel-pdb-9x/artigos", label: "Artigos", icon: FileText },
+  { href: "/painel-pdb-9x/usuarios", label: "Usuarios", icon: Users },
+  { href: "/painel-pdb-9x/jogos", label: "Jogos", icon: Gamepad2 },
+  { href: "/painel-pdb-9x/config", label: "Config", icon: Settings },
 ];
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
 
-  if (pathname === "/admin/login") {
+  if (pathname === "/painel-pdb-9x/login") {
     return <>{children}</>;
   }
 
   async function handleLogout() {
     await fetch("/api/auth/login", { method: "DELETE" }).catch(() => {});
     document.cookie = "pdb_auth=; path=/; max-age=0";
-    window.location.href = "/admin/login";
+    window.location.href = "/painel-pdb-9x/login";
   }
 
   return (

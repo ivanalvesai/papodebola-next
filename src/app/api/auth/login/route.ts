@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { authenticateUser } from "@/lib/auth/users";
-import { signToken, setSessionCookie } from "@/lib/auth/jwt";
+import { signToken } from "@/lib/auth/jwt";
 
 export async function POST(request: NextRequest) {
   try {
@@ -8,7 +8,7 @@ export async function POST(request: NextRequest) {
 
     if (!username || !password) {
       return NextResponse.json(
-        { error: "Username e password são obrigatórios" },
+        { error: "Usuario e senha sao obrigatorios" },
         { status: 400 }
       );
     }
@@ -16,20 +16,30 @@ export async function POST(request: NextRequest) {
     const user = await authenticateUser(username, password);
     if (!user) {
       return NextResponse.json(
-        { error: "Credenciais inválidas" },
+        { error: "Credenciais invalidas" },
         { status: 401 }
       );
     }
 
     const token = await signToken({ username: user.username, role: user.role });
-    await setSessionCookie(token);
 
-    return NextResponse.json({
+    const response = NextResponse.json({
       token,
       username: user.username,
       role: user.role,
     });
-  } catch {
+
+    response.cookies.set("pdb_auth", token, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      sameSite: "lax",
+      maxAge: 4 * 60 * 60,
+      path: "/",
+    });
+
+    return response;
+  } catch (err) {
+    console.error("Login error:", err);
     return NextResponse.json(
       { error: "Erro interno" },
       { status: 500 }
