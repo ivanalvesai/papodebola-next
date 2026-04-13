@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Plus, Trash2, Loader2 } from "lucide-react";
+import { Plus, Trash2, Loader2, Lock, Check } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 
@@ -15,6 +15,11 @@ export default function AdminUsuariosPage() {
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
   const [newUser, setNewUser] = useState({ username: "", password: "", role: "editor" });
+
+  const [editingPass, setEditingPass] = useState<string | null>(null);
+  const [newPassword, setNewPassword] = useState("");
+  const [passLoading, setPassLoading] = useState(false);
+  const [passMsg, setPassMsg] = useState<Record<string, string>>({});
 
   useEffect(() => { loadUsers(); }, []);
 
@@ -30,6 +35,7 @@ export default function AdminUsuariosPage() {
 
   async function handleCreate(e: React.FormEvent) {
     e.preventDefault();
+    if (newUser.password.length < 6) { alert("Senha deve ter no minimo 6 caracteres"); return; }
     try {
       const res = await fetch("/api/users", {
         method: "POST",
@@ -55,6 +61,34 @@ export default function AdminUsuariosPage() {
     } catch { alert("Erro"); }
   }
 
+  async function handleChangePassword(username: string) {
+    if (newPassword.length < 6) {
+      setPassMsg({ ...passMsg, [username]: "Minimo 6 caracteres" });
+      return;
+    }
+    setPassLoading(true);
+    try {
+      const res = await fetch(`/api/users/${username}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ password: newPassword }),
+      });
+      if (res.ok) {
+        setPassMsg({ ...passMsg, [username]: "Senha alterada!" });
+        setNewPassword("");
+        setTimeout(() => {
+          setEditingPass(null);
+          setPassMsg((prev) => { const n = { ...prev }; delete n[username]; return n; });
+        }, 2000);
+      } else {
+        setPassMsg({ ...passMsg, [username]: "Erro ao alterar" });
+      }
+    } catch {
+      setPassMsg({ ...passMsg, [username]: "Erro de conexao" });
+    }
+    setPassLoading(false);
+  }
+
   return (
     <div>
       <div className="flex items-center justify-between mb-4">
@@ -74,7 +108,7 @@ export default function AdminUsuariosPage() {
             </div>
             <div>
               <label className="block text-xs font-semibold text-text-secondary mb-1">Senha</label>
-              <Input type="password" value={newUser.password} onChange={(e) => setNewUser({ ...newUser, password: e.target.value })} required />
+              <Input type="password" value={newUser.password} onChange={(e) => setNewUser({ ...newUser, password: e.target.value })} placeholder="Minimo 6 caracteres" required />
             </div>
             <div>
               <label className="block text-xs font-semibold text-text-secondary mb-1">Perfil</label>
@@ -96,15 +130,55 @@ export default function AdminUsuariosPage() {
       ) : (
         <div className="bg-card-bg rounded-lg border border-border-custom divide-y divide-border-light">
           {users.map((u) => (
-            <div key={u.username} className="flex items-center gap-4 px-4 py-3">
-              <div className="flex-1">
-                <div className="text-sm font-semibold text-text-primary">{u.username}</div>
-                <div className="text-xs text-text-muted">{u.role}</div>
+            <div key={u.username}>
+              <div className="flex items-center gap-4 px-4 py-3">
+                <div className="flex-1">
+                  <div className="text-sm font-semibold text-text-primary">{u.username}</div>
+                  <div className="text-xs text-text-muted">{u.role}</div>
+                </div>
+                <div className="flex gap-1.5 shrink-0">
+                  <button
+                    onClick={() => {
+                      setEditingPass(editingPass === u.username ? null : u.username);
+                      setNewPassword("");
+                      setPassMsg({});
+                    }}
+                    className="p-2 text-text-muted hover:text-green transition-colors"
+                    title="Alterar senha"
+                  >
+                    <Lock className="h-4 w-4" />
+                  </button>
+                  {u.username !== "admin" && (
+                    <button onClick={() => handleDelete(u.username)} className="p-2 text-text-muted hover:text-red transition-colors" title="Excluir">
+                      <Trash2 className="h-4 w-4" />
+                    </button>
+                  )}
+                </div>
               </div>
-              {u.username !== "admin" && (
-                <button onClick={() => handleDelete(u.username)} className="p-2 text-text-muted hover:text-red transition-colors">
-                  <Trash2 className="h-4 w-4" />
-                </button>
+
+              {editingPass === u.username && (
+                <div className="px-4 pb-3 flex items-center gap-2">
+                  <Input
+                    type="password"
+                    value={newPassword}
+                    onChange={(e) => setNewPassword(e.target.value)}
+                    placeholder="Nova senha (min 6 caracteres)"
+                    className="max-w-[250px] h-8 text-sm"
+                  />
+                  <Button
+                    size="sm"
+                    disabled={passLoading}
+                    onClick={() => handleChangePassword(u.username)}
+                    className="bg-green hover:bg-green-hover text-white h-8 px-3"
+                  >
+                    {passLoading ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Check className="h-3.5 w-3.5" />}
+                  </Button>
+                  {passMsg[u.username] && (
+                    <span className={`text-xs font-semibold ${passMsg[u.username].includes("alterada") ? "text-green" : "text-red"}`}>
+                      {passMsg[u.username]}
+                    </span>
+                  )}
+                </div>
               )}
             </div>
           ))}
