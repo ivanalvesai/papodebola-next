@@ -166,7 +166,13 @@ const SERIE_A_SLUGS = [
 ];
 export const PANEL_TEAMS_BR: TeamInfo[] = TEAMS.filter(t => SERIE_A_SLUGS.includes(t.slug));
 
-// Side panel: European teams
-export const PANEL_TEAMS_EU: TeamInfo[] = TEAMS.filter(t =>
-  ['real-madrid','barcelona','liverpool','manchester-city','juventus','psg'].includes(t.slug)
-);
+// Side panel: European teams (all 17)
+const EU_SLUGS = [
+  'real-madrid','barcelona','liverpool','manchester-city','manchester-united',
+  'chelsea','tottenham','arsenal','juventus','milan','inter-milan',
+  'bayern','psg','porto','nottingham-forest','aston-villa','dortmund',
+];
+export const PANEL_TEAMS_EU: TeamInfo[] = TEAMS.filter(t => EU_SLUGS.includes(t.slug));
+
+// All teams with cluster pages (BR + EU)
+export const ALL_CLUSTER_TEAMS: TeamInfo[] = [...PANEL_TEAMS_BR, ...PANEL_TEAMS_EU];

@@ -1,10 +1,10 @@
 import Image from "next/image";
 import Link from "next/link";
-import { TEAM_BY_SLUG, TEAMS } from "@/lib/config";
+import { TEAM_BY_SLUG, ALL_CLUSTER_TEAMS } from "@/lib/config";
 import { notFound } from "next/navigation";
 
 export async function generateStaticParams() {
-  return TEAMS.map((t) => ({ slug: t.slug }));
+  return ALL_CLUSTER_TEAMS.map((t) => ({ slug: t.slug }));
 }
 
 function ClusterNav({ slug, teamName }: { slug: string; teamName: string }) {

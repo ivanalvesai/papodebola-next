@@ -8,6 +8,7 @@ import { SidePanel } from "@/components/layout/side-panel";
 import { Footer } from "@/components/layout/footer";
 import { CookieConsent } from "@/components/layout/cookie-consent";
 import { SidePanelProvider } from "@/components/layout/side-panel-context";
+import { MyTeamProvider } from "@/components/layout/my-team-context";
 
 const openSans = Open_Sans({
   variable: "--font-sans",
@@ -52,14 +53,16 @@ export default function RootLayout({
         </Script>
       </head>
       <body className="min-h-screen flex flex-col bg-body font-sans text-text-primary">
-        <SidePanelProvider>
-          <Header />
-          <MainNav />
-          <SidePanel />
-          <main className="flex-1">{children}</main>
-          <Footer />
-          <CookieConsent />
-        </SidePanelProvider>
+        <MyTeamProvider>
+          <SidePanelProvider>
+            <Header />
+            <MainNav />
+            <SidePanel />
+            <main className="flex-1">{children}</main>
+            <Footer />
+            <CookieConsent />
+          </SidePanelProvider>
+        </MyTeamProvider>
       </body>
     </html>
   );

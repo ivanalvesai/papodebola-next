@@ -7,6 +7,7 @@ import { StandingsWidget } from "@/components/sidebar/standings-widget";
 import { ScorersWidget } from "@/components/sidebar/scorers-widget";
 import { NextMatchWidget } from "@/components/sidebar/next-match-widget";
 import { RecentResultsWidget } from "@/components/sidebar/recent-results-widget";
+import { MyTeamWidget } from "@/components/sidebar/my-team-widget";
 
 import { getTodayMatches } from "@/lib/data/matches";
 import { getCBFUpcomingMatches } from "@/lib/data/cbf-calendar";
@@ -77,6 +78,7 @@ export default async function HomePage() {
 
           {/* Sidebar */}
           <aside className="space-y-6">
+            <MyTeamWidget />
             <NextMatchWidget match={nextMatch} />
             <StandingsWidget standings={standings} />
             <ScorersWidget scorers={scorers} />

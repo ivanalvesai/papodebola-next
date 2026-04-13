@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import Image from "next/image";
 import Link from "next/link";
-import { TEAM_BY_SLUG, TEAMS } from "@/lib/config";
+import { TEAM_BY_SLUG, ALL_CLUSTER_TEAMS } from "@/lib/config";
 import { getTeamPageData } from "@/lib/data/team";
 import { notFound } from "next/navigation";
 import { Tv } from "lucide-react";
@@ -9,7 +9,7 @@ import { Tv } from "lucide-react";
 export const revalidate = 1800;
 
 export async function generateStaticParams() {
-  return TEAMS.map((t) => ({ slug: t.slug }));
+  return ALL_CLUSTER_TEAMS.map((t) => ({ slug: t.slug }));
 }
 
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
