@@ -83,10 +83,20 @@ function extractAllBadges(html) {
 }
 
 function parseClassification(html) {
+  // Only parse the CLASSIFICAÇÃO tab — extract between id="Tabela" and the next tab-pane
+  let section = html;
+  const tabelaIdx = html.indexOf('id="Tabela"');
+  if (tabelaIdx > 0) {
+    const afterTabela = html.substring(tabelaIdx);
+    // Find the end: next tab-pane (Artilheiros, Melhor Defesa, etc.) or end of content
+    const endIdx = afterTabela.search(/id="(?:Artilheiros|MelhorDefesa|Documentos|Comunicados)"/);
+    section = endIdx > 0 ? afterTabela.substring(0, endIdx) : afterTabela;
+  }
+
   const tdRe = /<td[^>]*>\s*([^<]+?)\s*<\/td>/g;
   const tds = [];
   let m;
-  while ((m = tdRe.exec(html)) !== null) {
+  while ((m = tdRe.exec(section)) !== null) {
     const v = dec(m[1]);
     if (v && v !== " ") tds.push(v);
   }
@@ -97,10 +107,13 @@ function parseClassification(html) {
     const ps = tds[i].replace(/[^\d]/g, "");
     if (ps && parseInt(ps) > 0 && parseInt(ps) <= 30) {
       const nm = tds[i + 1];
-      if (nm && isNaN(parseInt(nm)) && nm.length > 2) {
+      // Validate: name must be text, pts/games must be small numbers (sanity check)
+      const pts = parseInt(tds[i + 2]);
+      const games = parseInt(tds[i + 3]);
+      if (nm && isNaN(parseInt(nm)) && nm.length > 2 && !isNaN(pts) && !isNaN(games) && games <= 50) {
         teams.push({
           pos: parseInt(ps), name: nm,
-          pts: parseInt(tds[i + 2]) || 0, games: parseInt(tds[i + 3]) || 0,
+          pts: pts || 0, games: games || 0,
           wins: parseInt(tds[i + 4]) || 0, draws: parseInt(tds[i + 5]) || 0,
           losses: parseInt(tds[i + 6]) || 0, gf: parseInt(tds[i + 7]) || 0,
           ga: parseInt(tds[i + 8]) || 0, gd: parseInt(tds[i + 9]) || 0,
@@ -112,16 +125,20 @@ function parseClassification(html) {
     i++;
   }
 
-  // Detect groups by position reset
+  // Detect groups: position resets to 1 after going past position 2+
   let grp = 1, last = 0;
   const grouped = {};
   for (const t of teams) {
-    if (t.pos <= last && t.pos <= 2 && last > 2) grp++;
+    if (t.pos === 1 && last > 2) grp++;
     if (!grouped[grp]) grouped[grp] = [];
     grouped[grp].push(t);
     last = t.pos;
   }
-  return Object.entries(grouped).map(([n, t]) => ({ name: `Grupo ${n}`, teams: t }));
+
+  // Only return groups with 4+ teams (filter out garbage)
+  return Object.entries(grouped)
+    .filter(([, t]) => t.length >= 4)
+    .map(([n, t]) => ({ name: Object.keys(grouped).length > 1 ? `Grupo ${n}` : "Classificacao", teams: t }));
 }
 
 function parseMatches(html) {
