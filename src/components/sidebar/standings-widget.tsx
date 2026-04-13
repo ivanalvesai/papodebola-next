@@ -52,7 +52,7 @@ export function StandingsWidget({ standings }: StandingsWidgetProps) {
                 <th className="py-2 px-1 font-semibold w-6">J</th>
                 <th className="py-2 px-1 font-semibold w-6">V</th>
                 <th className="py-2 px-1 font-semibold w-6">SG</th>
-                <th className="py-2 px-1 font-semibold text-center">Forma</th>
+                <th className="py-2 px-1 font-semibold text-center">Resultados</th>
               </tr>
             </thead>
             <tbody>

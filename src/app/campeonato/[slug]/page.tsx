@@ -95,7 +95,7 @@ export default function CampeonatoPage() {
                     <th className="py-2 px-1 font-semibold">GP</th>
                     <th className="py-2 px-1 font-semibold">GC</th>
                     <th className="py-2 px-1 font-semibold">SG</th>
-                    <th className="py-2 px-1 font-semibold text-center">Forma</th>
+                    <th className="py-2 px-1 font-semibold text-center">Resultados</th>
                   </tr>
                 </thead>
                 <tbody>
