@@ -39,7 +39,17 @@ export default function MunicipalPage() {
       .then((r) => r.json())
       .then((d) => {
         setData(d);
-        if (d[0]?.totalRounds) setSelectedRound(Math.max(1, d[0].totalRounds));
+        if (d[0]?.matchesByRound) {
+          // Find last round that has at least one finished match (with score)
+          const rounds = Object.keys(d[0].matchesByRound).map(Number).sort((a: number, b: number) => a - b);
+          let lastPlayed = rounds[0] || 0;
+          for (const r of rounds) {
+            const games = d[0].matchesByRound[String(r)] || [];
+            const hasFinished = games.some((g: Match) => g.homeScore !== null && g.awayScore !== null);
+            if (hasFinished) lastPlayed = r;
+          }
+          setSelectedRound(lastPlayed);
+        }
       })
       .catch(() => {})
       .finally(() => setLoading(false));
@@ -82,7 +92,16 @@ export default function MunicipalPage() {
           {data.map((c, i) => (
             <button
               key={i}
-              onClick={() => { setSelectedChamp(i); setSelectedRound(Math.max(1, (c.totalRounds || 1))); }}
+              onClick={() => {
+                setSelectedChamp(i);
+                const rs = Object.keys(c.matchesByRound || {}).map(Number).sort((a: number, b: number) => a - b);
+                let lp = rs[0] || 0;
+                for (const r of rs) {
+                  const gs = (c.matchesByRound?.[String(r)] || []) as Match[];
+                  if (gs.some((g: Match) => g.homeScore !== null && g.awayScore !== null)) lp = r;
+                }
+                setSelectedRound(lp);
+              }}
               className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors ${
                 selectedChamp === i
                   ? "bg-green text-white"
