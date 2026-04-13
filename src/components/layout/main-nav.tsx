@@ -140,6 +140,17 @@ export function MainNav() {
                   </ul>
 
                   <h4 className="text-xs font-bold text-text-muted uppercase tracking-wider mb-2 mt-4">
+                    Municipal
+                  </h4>
+                  <ul className="space-y-1">
+                    <li>
+                      <Link href="/municipal" onClick={() => setOpenDropdown(null)} className="block py-1.5 px-2 text-sm text-text-secondary hover:text-green hover:bg-green-light rounded transition-colors">
+                        Santana de Parnaiba
+                      </Link>
+                    </li>
+                  </ul>
+
+                  <h4 className="text-xs font-bold text-text-muted uppercase tracking-wider mb-2 mt-4">
                     Estaduais
                   </h4>
                   <ul className="space-y-1">
