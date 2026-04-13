@@ -18,7 +18,7 @@ interface Group {
 interface Match {
   round: number; home: string; away: string;
   homeScore: number | null; awayScore: number | null;
-  date: string; time: string; status: string;
+  date: string; time: string; venue: string; status: string;
   homeBadgeLocal: string; awayBadgeLocal: string;
 }
 
@@ -189,11 +189,11 @@ export default function MunicipalPage() {
                 const hasScore = m.homeScore !== null && m.awayScore !== null;
                 return (
                   <div key={i} className="px-4 py-3">
-                    {(m.date || m.status) && (
-                      <div className="text-[10px] text-text-muted text-center mb-2">
-                        {m.date && m.date} {m.time && `- ${m.time}`} {m.status && <span className="ml-1 text-green font-semibold">| {m.status}</span>}
-                      </div>
-                    )}
+                    <div className="text-[10px] text-text-muted text-center mb-2 space-y-0.5">
+                      {m.date && <div className="font-semibold">{m.date} {m.time && `- ${m.time}`}</div>}
+                      {m.venue && <div>{m.venue}</div>}
+                      {m.status && <div><span className="text-green font-bold">{m.status}</span></div>}
+                    </div>
                     <div className="flex items-center gap-3">
                       <div className="flex items-center gap-2 flex-1 justify-end">
                         <span className="text-xs font-semibold text-text-primary text-right truncate">{m.home}</span>
