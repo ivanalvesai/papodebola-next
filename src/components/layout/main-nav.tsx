@@ -76,7 +76,7 @@ export function MainNav() {
             </button>
 
             {openDropdown === "times" && (
-              <div className="absolute top-full left-0 bg-surface border border-border-custom rounded-lg shadow-lg p-4 z-50 w-[420px]">
+              <div className="absolute top-full left-0 bg-surface border border-border-custom rounded-lg shadow-lg p-4 z-50 w-[460px] max-h-[70vh] overflow-y-auto">
                 <h4 className="text-xs font-bold text-text-muted uppercase tracking-wider mb-3">
                   Brasileirao Serie A
                 </h4>

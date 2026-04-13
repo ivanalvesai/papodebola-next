@@ -45,24 +45,27 @@ export interface TeamInfo {
 }
 
 export const TEAMS: TeamInfo[] = [
-  // Brasileirão Série A
-  { name: 'Palmeiras',      id: 1963, slug: 'palmeiras' },
-  { name: 'Flamengo',       id: 5981, slug: 'flamengo' },
-  { name: 'Corinthians',    id: 1957, slug: 'corinthians' },
-  { name: 'São Paulo',      id: 1981, slug: 'sao-paulo' },
-  { name: 'Santos',         id: 1968, slug: 'santos' },
-  { name: 'Fluminense',     id: 1961, slug: 'fluminense' },
-  { name: 'Botafogo',       id: 1958, slug: 'botafogo' },
-  { name: 'Vasco',          id: 1974, slug: 'vasco' },
-  { name: 'Grêmio',         id: 5926, slug: 'gremio' },
-  { name: 'Internacional',  id: 1966, slug: 'internacional' },
-  { name: 'Atlético-MG',    id: 1977, slug: 'atletico-mg' },
-  { name: 'Cruzeiro',       id: 1954, slug: 'cruzeiro' },
-  { name: 'Bahia',          id: 1955, slug: 'bahia' },
-  { name: 'Fortaleza',      id: 2020, slug: 'fortaleza' },
-  { name: 'Athletico-PR',   id: 1967, slug: 'athletico-pr' },
-  { name: 'Bragantino',     id: 1999, slug: 'bragantino' },
-  { name: 'Coritiba',       id: 1982, slug: 'coritiba' },
+  // Brasileirão Série A 2026 (20 clubes - IDs verificados via API standings)
+  { name: 'Palmeiras',      id: 1963,  slug: 'palmeiras' },
+  { name: 'Flamengo',       id: 5981,  slug: 'flamengo' },
+  { name: 'São Paulo',      id: 1981,  slug: 'sao-paulo' },
+  { name: 'Fluminense',     id: 1961,  slug: 'fluminense' },
+  { name: 'Bahia',          id: 1955,  slug: 'bahia' },
+  { name: 'Athletico-PR',   id: 1967,  slug: 'athletico-pr' },
+  { name: 'Coritiba',       id: 1982,  slug: 'coritiba' },
+  { name: 'Atlético-MG',    id: 1977,  slug: 'atletico-mg' },
+  { name: 'Bragantino',     id: 1999,  slug: 'bragantino' },
+  { name: 'Vitória',        id: 1962,  slug: 'vitoria' },
+  { name: 'Botafogo',       id: 1958,  slug: 'botafogo' },
+  { name: 'Grêmio',         id: 5926,  slug: 'gremio' },
+  { name: 'Vasco',          id: 1974,  slug: 'vasco' },
+  { name: 'Internacional',  id: 1966,  slug: 'internacional' },
+  { name: 'Santos',         id: 1968,  slug: 'santos' },
+  { name: 'Corinthians',    id: 1957,  slug: 'corinthians' },
+  { name: 'Cruzeiro',       id: 1954,  slug: 'cruzeiro' },
+  { name: 'Remo',           id: 2012,  slug: 'remo' },
+  { name: 'Chapecoense',    id: 21845, slug: 'chapecoense' },
+  { name: 'Mirassol',       id: 21982, slug: 'mirassol' },
 
   // Europa
   { name: 'Real Madrid',     id: 2829, slug: 'real-madrid' },
@@ -154,11 +157,14 @@ export const WP_CATEGORIES = [
   'Futebol Brasileiro',
 ] as const;
 
-// Side panel: Brazilian teams
-export const PANEL_TEAMS_BR: TeamInfo[] = TEAMS.filter(t =>
-  ['palmeiras','flamengo','corinthians','sao-paulo','santos','fluminense',
-   'botafogo','vasco','gremio','internacional','atletico-mg','cruzeiro'].includes(t.slug)
-);
+// Brasileirão Série A: all 20 teams (for nav, side panel, etc.)
+const SERIE_A_SLUGS = [
+  'palmeiras','flamengo','sao-paulo','fluminense','bahia','athletico-pr',
+  'coritiba','atletico-mg','bragantino','vitoria','botafogo','gremio',
+  'vasco','internacional','santos','corinthians','cruzeiro','remo',
+  'chapecoense','mirassol',
+];
+export const PANEL_TEAMS_BR: TeamInfo[] = TEAMS.filter(t => SERIE_A_SLUGS.includes(t.slug));
 
 // Side panel: European teams
 export const PANEL_TEAMS_EU: TeamInfo[] = TEAMS.filter(t =>

@@ -5,16 +5,19 @@ import type { TopMatch } from "@/types/match";
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
+// Brasileirão Série A 2026 - 20 clubes (IDs verificados via API standings)
 const TEAM_IDS = [
-  1963, 5981, 1981, 1961, 1957, 1955, 1967, 1977,
-  1958, 1954, 1968, 1952, 1959, 1982, 1962,
+  1963, 5981, 1981, 1961, 1955, 1967, 1982, 1977,
+  1999, 1962, 1958, 5926, 1974, 1966, 1968, 1957,
+  1954, 2012, 21845, 21982,
 ];
 
 const TEAM_NAMES: Record<number, string> = {
   1963: "Palmeiras", 5981: "Flamengo", 1981: "São Paulo", 1961: "Fluminense",
-  1957: "Corinthians", 1955: "Bahia", 1967: "Athletico", 1977: "Atlético-MG",
-  1958: "Botafogo", 1954: "Grêmio", 1968: "Santos", 1952: "Vasco",
-  1959: "Internacional", 1982: "Cruzeiro", 1962: "Fortaleza",
+  1955: "Bahia", 1967: "Athletico-PR", 1982: "Coritiba", 1977: "Atlético-MG",
+  1999: "Bragantino", 1962: "Vitória", 1958: "Botafogo", 5926: "Grêmio",
+  1974: "Vasco", 1966: "Internacional", 1968: "Santos", 1957: "Corinthians",
+  1954: "Cruzeiro", 2012: "Remo", 21845: "Chapecoense", 21982: "Mirassol",
 };
 
 export async function getHighlights(): Promise<Highlight[]> {

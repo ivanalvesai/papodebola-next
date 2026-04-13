@@ -13,15 +13,15 @@ const TEAM_MAP: Record<string, number> = {
   "Atlético-MG": 1977, "Cruzeiro": 1954, "Bahia": 1955, "Fortaleza": 2020,
   "Athletico Paranaense": 1967, "Athletico-PR": 1967, "Red Bull Bragantino": 1999,
   "Bragantino": 1999, "Coritiba": 1982, "Goiás": 1996, "Ceará": 2001,
-  "Sport": 1947, "Vitória": 1944, "Juventude": 1998, "Cuiabá": 7315,
-  "América-MG": 1997, "Avaí": 2002, "Chapecoense": 5765, "Ponte Preta": 2004,
+  "Sport": 1947, "Vitória": 1962, "EC Vitória": 1962, "Juventude": 1998, "Cuiabá": 7315,
+  "América-MG": 1997, "Avaí": 2002, "Chapecoense": 21845, "Ponte Preta": 2004,
   "Guarani": 2003, "CRB": 2006, "CSA": 2008, "Náutico": 1945,
-  "ABC": 1942, "Sampaio Corrêa": 2012, "Londrina": 2013, "Operário-PR": 2014,
-  "Tombense": 7316, "Mirassol": 7820, "Novorizontino": 7317,
+  "ABC": 1942, "Remo": 2012, "Sampaio Corrêa": 2012, "Londrina": 2013, "Operário-PR": 2014,
+  "Tombense": 7316, "Mirassol": 21982, "Novorizontino": 7317,
   "Vila Nova": 2005, "Paysandu": 1964, "Ituano": 7318, "Amazonas": 390895,
   "Athletic": 448023, "Botafogo-SP": 7319, "Ceará SC": 2001,
   "Santos FC": 1968, "São Paulo FC": 1981, "Sport Recife": 1947,
-  "EC Vitória": 1944, "Fluminense FC": 1961,
+  "Fluminense FC": 1961, "Fortaleza EC": 2020,
 };
 
 function getTeamId(name: string): number | null {
