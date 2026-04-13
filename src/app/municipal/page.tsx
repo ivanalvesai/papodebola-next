@@ -31,6 +31,7 @@ interface Championship {
 export default function MunicipalPage() {
   const [data, setData] = useState<Championship[]>([]);
   const [loading, setLoading] = useState(true);
+  const [selectedChamp, setSelectedChamp] = useState(0);
   const [selectedRound, setSelectedRound] = useState(1);
 
   useEffect(() => {
@@ -56,23 +57,43 @@ export default function MunicipalPage() {
     );
   }
 
-  const champ = data[0];
-  const rounds = Object.keys(champ.matchesByRound).map(Number).sort((a, b) => a - b);
-  const roundMatches = champ.matchesByRound[String(selectedRound)] || [];
+  const champ = data[selectedChamp] || data[0];
+  if (!champ) return null;
+  const rounds = Object.keys(champ.matchesByRound || {}).map(Number).sort((a, b) => a - b);
+  const roundMatches = champ.matchesByRound?.[String(selectedRound)] || [];
 
   return (
     <div className="mx-auto max-w-[1240px] px-4 py-8">
       {/* Header */}
-      <div className="flex items-center gap-3 mb-6">
+      <div className="flex items-center gap-3 mb-4">
         <Trophy className="h-7 w-7 text-green" />
         <div>
-          <h1 className="text-xl font-bold text-text-primary">{champ.name}</h1>
+          <h1 className="text-xl font-bold text-text-primary">Campeonatos Municipais</h1>
           <p className="text-xs text-text-muted flex items-center gap-1">
             <MapPin className="h-3 w-3" />
-            {champ.city}/{champ.state} | Atualizado: {new Date(champ.updatedAt).toLocaleDateString("pt-BR")}
+            Santana de Parnaiba/SP | Atualizado: {new Date(champ.updatedAt).toLocaleDateString("pt-BR")}
           </p>
         </div>
       </div>
+
+      {/* Championship tabs */}
+      {data.length > 1 && (
+        <div className="flex gap-2 flex-wrap mb-6">
+          {data.map((c, i) => (
+            <button
+              key={i}
+              onClick={() => { setSelectedChamp(i); setSelectedRound(Math.max(1, (c.totalRounds || 1))); }}
+              className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors ${
+                selectedChamp === i
+                  ? "bg-green text-white"
+                  : "bg-body text-text-secondary hover:text-green border border-border-custom"
+              }`}
+            >
+              {c.name}
+            </button>
+          ))}
+        </div>
+      )}
 
       {/* Groups + Matches grid */}
       <div className="grid grid-cols-1 lg:grid-cols-[1fr_400px] gap-6">
