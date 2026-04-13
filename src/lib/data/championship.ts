@@ -1,5 +1,6 @@
 import { fetchAllSports } from "@/lib/api/allsports";
 import { TOURNAMENT_BY_SLUG } from "@/lib/config";
+import { translateStatus } from "@/lib/translations";
 import { getStandings } from "./standings";
 import type { ChampionshipData } from "@/types/tournament";
 import type { ChampionshipMatch } from "@/types/match";
@@ -16,7 +17,7 @@ function normalizeMatch(event: any, round: number): ChampionshipMatch {
     homeScore: event.homeScore?.current ?? null,
     awayScore: event.awayScore?.current ?? null,
     status: event.status?.type || "",
-    statusDesc: event.status?.description || "",
+    statusDesc: translateStatus(event.status?.description) || "",
     timestamp: event.startTimestamp || 0,
     round,
   };

@@ -1,4 +1,5 @@
 import { fetchAllSports } from "@/lib/api/allsports";
+import { translateStatus } from "@/lib/translations";
 import type { HomeData, HomeNews } from "@/types/home";
 import type { Highlight, Transfer } from "@/types/team";
 import type { TopMatch } from "@/types/match";
@@ -103,7 +104,7 @@ export async function getTopMatches(): Promise<TopMatch[]> {
     homeScore: event.homeScore?.current ?? null,
     awayScore: event.awayScore?.current ?? null,
     league: event.tournament?.uniqueTournament?.name || "",
-    status: event.status?.description || "",
+    status: translateStatus(event.status?.description) || "",
     time: event.startTimestamp
       ? new Date(event.startTimestamp * 1000).toLocaleTimeString("pt-BR", {
           hour: "2-digit",

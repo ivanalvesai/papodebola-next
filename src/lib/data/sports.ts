@@ -1,4 +1,5 @@
 import { fetchSport } from "@/lib/api/allsports";
+import { translateStatus } from "@/lib/translations";
 import type { SportData, SportEvent, SportConfig } from "@/types/sport";
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
@@ -24,7 +25,7 @@ function normalizeEvent(event: any): SportEvent {
     homeScore: event.homeScore?.current ?? null,
     awayScore: event.awayScore?.current ?? null,
     league: event.tournament?.uniqueTournament?.name || event.tournament?.name || "",
-    status: event.status?.description || event.status?.type || "",
+    status: translateStatus(event.status?.description) || translateStatus(event.status?.type) || "",
     time: ts.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit", timeZone: "America/Sao_Paulo" }),
     timestamp: event.startTimestamp || 0,
   };

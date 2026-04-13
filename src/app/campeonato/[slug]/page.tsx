@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import Image from "next/image";
 import { useParams } from "next/navigation";
 import { TOURNAMENT_BY_SLUG } from "@/lib/config";
+import { translateStatus } from "@/lib/translations";
 import { RoundNav } from "@/components/championship/round-nav";
 import { ChevronUp, ChevronDown, Minus } from "lucide-react";
 import type { ChampionshipData } from "@/types/tournament";
@@ -188,7 +189,7 @@ export default function CampeonatoPage() {
                     <div className="text-[10px] text-text-muted mt-1">
                       {!hasScore && dt
                         ? `${dt.toLocaleDateString("pt-BR", { day: "2-digit", month: "2-digit" })} ${dt.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit", timeZone: "America/Sao_Paulo" })}`
-                        : m.statusDesc || ""}
+                        : translateStatus(m.statusDesc) || ""}
                     </div>
                   </div>
                 );
