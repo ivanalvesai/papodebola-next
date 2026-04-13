@@ -1,14 +1,13 @@
 #!/usr/bin/env node
 /**
- * Scraper SisGel - Campeonatos Municipais de Santana de Parnaíba
- * Coleta classificação, jogos e escudos do site da prefeitura
- * Roda via cron 2x/dia no servidor
+ * Scraper SisGel - Campeonato Municipal de Santana de Parnaíba
+ * Coleta classificação (por grupo), jogos e escudos
+ * Roda via cron 2x/dia
  */
 
 const fs = require("fs");
 const path = require("path");
 const https = require("https");
-const http = require("http");
 
 const BASE_URL = "https://prefeitura.santanadeparnaiba.sp.gov.br";
 const CAMPEONATOS_URL = `${BASE_URL}/SisGel-PUB/campeonatos`;
@@ -18,10 +17,10 @@ const OUTPUT_FILE = path.join(DATA_DIR, "sisgel.json");
 
 function fetch(url) {
   return new Promise((resolve, reject) => {
-    const mod = url.startsWith("https") ? https : http;
-    mod.get(url, { headers: { "User-Agent": "Mozilla/5.0" } }, (res) => {
+    https.get(url, { headers: { "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36" } }, (res) => {
       if (res.statusCode >= 300 && res.statusCode < 400 && res.headers.location) {
-        return fetch(res.headers.location).then(resolve).catch(reject);
+        const redir = res.headers.location.startsWith("http") ? res.headers.location : `${BASE_URL}${res.headers.location}`;
+        return fetch(redir).then(resolve).catch(reject);
       }
       let data = "";
       res.on("data", (chunk) => (data += chunk));
@@ -33,10 +32,10 @@ function fetch(url) {
 
 function fetchBinary(url) {
   return new Promise((resolve, reject) => {
-    const mod = url.startsWith("https") ? https : http;
-    mod.get(url, { headers: { "User-Agent": "Mozilla/5.0" } }, (res) => {
+    https.get(url, { headers: { "User-Agent": "Mozilla/5.0" } }, (res) => {
       if (res.statusCode >= 300 && res.statusCode < 400 && res.headers.location) {
-        return fetchBinary(res.headers.location).then(resolve).catch(reject);
+        const redir = res.headers.location.startsWith("http") ? res.headers.location : `${BASE_URL}${res.headers.location}`;
+        return fetchBinary(redir).then(resolve).catch(reject);
       }
       const chunks = [];
       res.on("data", (chunk) => chunks.push(chunk));
@@ -46,265 +45,284 @@ function fetchBinary(url) {
   });
 }
 
-function decodeEntities(str) {
-  return str
-    .replace(/&#(\d+);/g, (_, n) => String.fromCharCode(n))
-    .replace(/&amp;/g, "&")
-    .replace(/&lt;/g, "<")
-    .replace(/&gt;/g, ">")
-    .replace(/&quot;/g, '"')
-    .replace(/&apos;/g, "'")
-    .replace(/&nbsp;/g, " ");
+function dec(str) {
+  return str.replace(/&#(\d+);/g, (_, n) => String.fromCharCode(n))
+    .replace(/&amp;/g, "&").replace(/&lt;/g, "<").replace(/&gt;/g, ">")
+    .replace(/&quot;/g, '"').replace(/&apos;/g, "'").replace(/&nbsp;/g, " ").trim();
 }
 
-async function getChampionshipLinks(html) {
-  const links = [];
-  const re = /href="(\/SisGel-PUB\/campeonatos\/[^"]+)"/g;
-  let m;
-  while ((m = re.exec(html)) !== null) {
-    const href = m[1];
-    if (href.length > 30 && !links.includes(href)) {
-      links.push(href);
+function slugify(name) {
+  return name.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "")
+    .replace(/[^a-z0-9]/g, "-").replace(/-+/g, "-").replace(/^-|-$/g, "");
+}
+
+async function findChampionshipUrl() {
+  // Try the main listing page to get a fresh token link
+  console.log("Fetching championship listing...");
+  const html = await fetch(CAMPEONATOS_URL);
+  const links = html.match(/href="(\/SisGel-PUB\/campeonatos\/[A-Za-z0-9_-]{20,})"/g) || [];
+
+  if (links.length > 0) {
+    const href = links[0].replace('href="', '').replace('"', '');
+    const url = `${BASE_URL}${href}`;
+    // Verify it's 2026 by checking content
+    const detail = await fetch(url);
+    if (detail.includes("2026") || detail.includes("GAROTOS")) {
+      console.log("Found 2026 championship via listing");
+      return { url, html: detail };
     }
+    // If listing returns old championship, it's still valid data
+    console.log("Found championship via listing (may be current season)");
+    return { url, html: detail };
   }
 
-  // Get championship name
-  const nameRe = /<h5[^>]*><strong>([^<]+)<\/strong><\/h5>/g;
-  const names = [];
-  while ((m = nameRe.exec(html)) !== null) {
-    names.push(decodeEntities(m[1].trim()));
-  }
-
-  return links.map((link, i) => ({
-    url: `${BASE_URL}${link}`,
-    name: names[i] || `Campeonato ${i + 1}`,
-  }));
+  throw new Error("No championship found");
 }
 
 function parseClassification(html) {
+  // Split by group tables - look for tbTabela or classification sections
+  const groups = [];
+
+  // Find group sections by splitting on group headers
+  // The HTML has multiple table bodies for each group
+  const tableSection = html.split(/id="Tabela"/)[1] || html;
+
+  // Extract all td data
   const tdRe = /<td[^>]*>\s*([^<]+?)\s*<\/td>/g;
   const tds = [];
   let m;
-  while ((m = tdRe.exec(html)) !== null) {
-    const val = decodeEntities(m[1].trim());
-    if (val && val !== "&nbsp;") tds.push(val);
+  while ((m = tdRe.exec(tableSection)) !== null) {
+    const val = dec(m[1]);
+    if (val && val !== " ") tds.push(val);
   }
 
-  // Pattern: pos, name, pts, games, W, D, L, GF, GA, GD, extra1, extra2
+  // Parse teams: each team is 12 fields (pos, name, pts, J, V, E, D, GP, GC, SG, CA, CV)
   const teams = [];
-  for (let i = 0; i + 11 < tds.length; i += 12) {
-    const pos = tds[i].replace(/[^\d]/g, "");
-    if (!pos) { i -= 11; continue; }
-    teams.push({
-      pos: parseInt(pos),
-      name: tds[i + 1],
-      pts: parseInt(tds[i + 2]) || 0,
-      games: parseInt(tds[i + 3]) || 0,
-      wins: parseInt(tds[i + 4]) || 0,
-      draws: parseInt(tds[i + 5]) || 0,
-      losses: parseInt(tds[i + 6]) || 0,
-      gf: parseInt(tds[i + 7]) || 0,
-      ga: parseInt(tds[i + 8]) || 0,
-      gd: parseInt(tds[i + 9]) || 0,
+  let i = 0;
+  while (i + 11 < tds.length) {
+    const posStr = tds[i].replace(/[^\d]/g, "");
+    if (posStr && parseInt(posStr) > 0 && parseInt(posStr) <= 30) {
+      const name = tds[i + 1];
+      // Verify it looks like a team name (not another number)
+      if (name && isNaN(parseInt(name)) && name.length > 2) {
+        teams.push({
+          pos: parseInt(posStr),
+          name,
+          pts: parseInt(tds[i + 2]) || 0,
+          games: parseInt(tds[i + 3]) || 0,
+          wins: parseInt(tds[i + 4]) || 0,
+          draws: parseInt(tds[i + 5]) || 0,
+          losses: parseInt(tds[i + 6]) || 0,
+          gf: parseInt(tds[i + 7]) || 0,
+          ga: parseInt(tds[i + 8]) || 0,
+          gd: parseInt(tds[i + 9]) || 0,
+          badge: "",
+        });
+        i += 12;
+        continue;
+      }
+    }
+    i++;
+  }
+
+  // Detect groups: when position resets to 1, it's a new group
+  let currentGroup = 1;
+  let lastPos = 0;
+  const groupedTeams = {};
+
+  for (const team of teams) {
+    if (team.pos <= lastPos && team.pos === 1 && lastPos > 1) {
+      currentGroup++;
+    }
+    if (!groupedTeams[currentGroup]) groupedTeams[currentGroup] = [];
+    groupedTeams[currentGroup].push(team);
+    lastPos = team.pos;
+  }
+
+  for (const [groupNum, groupTeams] of Object.entries(groupedTeams)) {
+    groups.push({
+      name: `Grupo ${groupNum}`,
+      teams: groupTeams,
     });
   }
-  return teams;
+
+  return groups;
 }
 
 function parseMatches(html) {
   const matches = [];
+  const gameBlocks = html.split(/href="\/SisGel-PUB\/jogo\//);
 
-  // Split by rodada blocks
-  const rodadaBlocks = html.split(/data-rodada="/);
+  for (let j = 1; j < gameBlocks.length; j++) {
+    const gb = gameBlocks[j];
 
-  for (let i = 1; i < rodadaBlocks.length; i++) {
-    const block = rodadaBlocks[i];
-    const rodadaNum = parseInt(block.match(/^(\d+)/)?.[1] || "0");
-    if (rodadaNum === 0 && !block.includes("partida-item")) continue;
+    // Find round number from context
+    let round = 0;
+    const beforeBlock = html.substring(0, html.indexOf(gb.substring(0, 30)));
+    const roundMatches = beforeBlock.match(/data-rodada="(\d+)"/g);
+    if (roundMatches) {
+      const last = roundMatches[roundMatches.length - 1];
+      round = parseInt(last.match(/\d+/)[0]) || 0;
+    }
 
-    // Find individual games in this block
-    const gameBlocks = block.split(/<a href="\/SisGel-PUB\/jogo\//);
+    // Team names from partida-item blocks
+    const teamTexts = [];
+    const partidaItems = gb.split(/partida-item/);
+    for (const pi of partidaItems) {
+      // Text directly in partida-item div (team name before or after avatar)
+      const textBefore = pi.match(/^">\s*\n?\s*([A-ZÀ-Ü][A-Za-zÀ-ü\s\.\/\(\)]+)\s*<div/);
+      const textAfter = pi.match(/<\/div>\s*\n?\s*([A-ZÀ-Ü][A-Za-zÀ-ü\s\.\/\(\)]+)\s*$/m);
+      if (textBefore) teamTexts.push(dec(textBefore[1]));
+      if (textAfter) teamTexts.push(dec(textAfter[1]));
+    }
 
-    for (let j = 1; j < gameBlocks.length; j++) {
-      const gb = gameBlocks[j];
+    // Scores
+    const scores = [];
+    const scoreRe = /font-size:\s*x-large[^>]*>\s*(\d+)\s*</g;
+    let sm;
+    while ((sm = scoreRe.exec(gb)) !== null) {
+      scores.push(parseInt(sm[1]));
+    }
 
-      // Team names - appear right before/after the avatar div
-      const teamNames = [];
-      // Team A: text before first avatar
-      const beforeAvatar = gb.match(/partida-item">\s*\n?\s*([A-ZÀ-Ü][A-Za-zÀ-ü\s\.\/]+)\s*<div class="time-partida-avatar"/);
-      if (beforeAvatar) teamNames.push(beforeAvatar[1].trim());
+    // Date / Time
+    const dateMatch = gb.match(/(\d{2}\/\d{2}\/\d{4})/);
+    const timeMatch = gb.match(/(\d{2}:\d{2})/);
 
-      // Team B: text after second avatar
-      const afterAvatar = gb.match(/<\/div>\s*\n?\s*([A-ZÀ-Ü][A-Za-zÀ-ü\s\.\/]+)\s*<\/div>\s*\n?\s*<\/div>/);
-      if (afterAvatar) teamNames.push(afterAvatar[1].trim());
+    // Status
+    const statusMatch = gb.match(/partida-situacao">([^<]+)</);
 
-      // Broader search if above didn't work
-      if (teamNames.length < 2) {
-        const allTeamTexts = gb.match(/partida-item">\s*\n?\s*([^<\n]+)/g) || [];
-        for (const t of allTeamTexts) {
-          const clean = t.replace(/partida-item">\s*/, "").trim();
-          if (clean.length > 2 && !clean.includes("<") && !clean.includes("mdi") && !/^\d/.test(clean)) {
-            if (!teamNames.includes(clean)) teamNames.push(clean);
-          }
-        }
-      }
+    // Badges
+    const badges = [];
+    const badgeRe = /alt="(?:Time [AB]|Foto Time)"[^>]*src="([^"]+)"/g;
+    let bm;
+    while ((bm = badgeRe.exec(gb)) !== null) {
+      badges.push(bm[1]);
+    }
 
-      // Scores
-      const scores = [];
-      const scoreRe = /font-size:\s*x-large[^>]*>\s*(\d+)\s*</g;
-      let sm;
-      while ((sm = scoreRe.exec(gb)) !== null) {
-        scores.push(parseInt(sm[1]));
-      }
-
-      // Date
-      const dateMatch = gb.match(/(\d{2}\/\d{2}\/\d{4})/);
-      const timeMatch = gb.match(/(\d{2}:\d{2})/);
-      const locationMatch = gb.match(/<span>([^<]+)<\/span>\s*<\/div>\s*<\/div>\s*<\/div>\s*<div class="row form-group">\s*<div class="col-xs-12 partida">/);
-
-      // Status
-      const statusMatch = gb.match(/partida-situacao">([^<]+)</);
-
-      // Badge URLs
-      const badges = [];
-      const badgeRe = /alt="(?:Time [AB]|Foto Time)"[^>]*src="([^"]+)"/g;
-      let bm;
-      while ((bm = badgeRe.exec(gb)) !== null) {
-        badges.push(bm[1]);
-      }
-
-      if (teamNames.length >= 2 || scores.length >= 2) {
-        matches.push({
-          round: rodadaNum,
-          home: decodeEntities(teamNames[0] || "?"),
-          away: decodeEntities(teamNames[1] || "?"),
-          homeScore: scores[0] ?? null,
-          awayScore: scores[1] ?? null,
-          date: dateMatch?.[1] || "",
-          time: timeMatch?.[1] || "",
-          status: decodeEntities(statusMatch?.[1]?.trim() || ""),
-          homeBadge: badges[0] ? `${BASE_URL}${badges[0]}` : "",
-          awayBadge: badges[1] ? `${BASE_URL}${badges[1]}` : "",
-        });
-      }
+    if (teamTexts.length >= 2 || scores.length >= 2) {
+      matches.push({
+        round,
+        home: teamTexts[0] || "?",
+        away: teamTexts[1] || "?",
+        homeScore: scores.length >= 2 ? scores[0] : null,
+        awayScore: scores.length >= 2 ? scores[1] : null,
+        date: dateMatch?.[1] || "",
+        time: timeMatch?.[1] || "",
+        status: dec(statusMatch?.[1] || ""),
+        homeBadgeUrl: badges[0] ? `${BASE_URL}${badges[0]}` : "",
+        awayBadgeUrl: badges[1] ? `${BASE_URL}${badges[1]}` : "",
+        homeBadgeLocal: "",
+        awayBadgeLocal: "",
+      });
     }
   }
 
   return matches;
 }
 
-function parseTeamBadges(html) {
-  const badges = {};
-  // From classification table - team names mapped to badge images
-  const re = /alt="Foto Time"[^>]*src="([^"]+)"[^<]*<\/div>\s*<\/td>\s*<td[^>]*>\s*([^<]+)/g;
-  let m;
-  while ((m = re.exec(html)) !== null) {
-    const name = decodeEntities(m[2].trim());
-    const url = m[1];
-    if (name && url) badges[name] = `${BASE_URL}${url}`;
-  }
-
-  // Also from equipe table
-  const re2 = /src="(\/SisGel-PUB\/arquivo\/download-inline\/[^"]+)"[^<]*<\/div>\s*<\/td>\s*<td[^>]*>\s*([^<]+)/g;
-  while ((m = re2.exec(html)) !== null) {
-    const name = decodeEntities(m[2].trim());
-    const url = m[1];
-    if (name && url && !badges[name]) badges[name] = `${BASE_URL}${url}`;
-  }
-
-  return badges;
-}
-
-async function downloadBadges(badges) {
+async function downloadBadges(groups, matches) {
   fs.mkdirSync(BADGES_DIR, { recursive: true });
-  const localBadges = {};
 
-  for (const [name, url] of Object.entries(badges)) {
-    const safeName = name
-      .toLowerCase()
-      .normalize("NFD").replace(/[\u0300-\u036f]/g, "")
-      .replace(/[^a-z0-9]/g, "-")
-      .replace(/-+/g, "-")
-      .replace(/^-|-$/g, "");
-    const filename = `${safeName}.png`;
+  // Collect all badge URLs from matches
+  const badgeMap = {}; // name -> url
+  for (const m of matches) {
+    if (m.homeBadgeUrl && m.home !== "?") badgeMap[m.home] = m.homeBadgeUrl;
+    if (m.awayBadgeUrl && m.away !== "?") badgeMap[m.away] = m.awayBadgeUrl;
+  }
+
+  const localMap = {}; // name -> local path
+
+  for (const [name, url] of Object.entries(badgeMap)) {
+    const filename = `${slugify(name)}.png`;
     const filepath = path.join(BADGES_DIR, filename);
 
     if (!fs.existsSync(filepath)) {
       try {
         const buffer = await fetchBinary(url);
-        fs.writeFileSync(filepath, buffer);
-        console.log(`  Badge: ${name} -> ${filename}`);
+        if (buffer.length > 100) { // Not an error page
+          fs.writeFileSync(filepath, buffer);
+          console.log(`  Badge: ${name} -> ${filename}`);
+        }
       } catch (err) {
         console.error(`  Badge error ${name}: ${err.message}`);
       }
       await new Promise((r) => setTimeout(r, 300));
     }
-    localBadges[name] = `/escudos-municipal/${filename}`;
+    localMap[name] = `/escudos-municipal/${filename}`;
   }
 
-  return localBadges;
+  // Apply to groups
+  for (const group of groups) {
+    for (const team of group.teams) {
+      team.badge = localMap[team.name] || "";
+    }
+  }
+
+  // Apply to matches
+  for (const m of matches) {
+    m.homeBadgeLocal = localMap[m.home] || "";
+    m.awayBadgeLocal = localMap[m.away] || "";
+  }
+
+  return localMap;
 }
 
 async function main() {
   console.log(`[${new Date().toISOString()}] SisGel scraper starting...`);
 
-  // 1. Get championship list
-  console.log("Fetching championships list...");
-  const mainHtml = await fetch(CAMPEONATOS_URL);
-  const championships = await getChampionshipLinks(mainHtml);
-  console.log(`Found ${championships.length} championship(s)`);
+  const { url, html } = await findChampionshipUrl();
+  console.log(`Championship URL: ${url.substring(0, 80)}...`);
 
-  const results = [];
+  // Parse championship name
+  const nameMatch = html.match(/<h5[^>]*><strong>([^<]+)<\/strong>/);
+  const champName = nameMatch ? dec(nameMatch[1]) : "Campeonato Municipal";
 
-  for (const champ of championships) {
-    console.log(`\nProcessing: ${champ.name}`);
-    console.log(`URL: ${champ.url}`);
+  // Parse year
+  const yearMatch = html.match(/FUTEBOL\s*(\d{4})/);
+  const year = yearMatch ? yearMatch[1] : new Date().getFullYear().toString();
 
-    const html = await fetch(champ.url);
+  console.log(`Name: ${champName}`);
+  console.log(`Year: ${year}`);
 
-    // 2. Parse classification
-    const classification = parseClassification(html);
-    console.log(`  Classification: ${classification.length} teams`);
-
-    // 3. Parse matches
-    const matches = parseMatches(html);
-    console.log(`  Matches: ${matches.length} games`);
-
-    // 4. Parse and download badges
-    const badgeUrls = parseTeamBadges(html);
-    console.log(`  Badges found: ${Object.keys(badgeUrls).length}`);
-    const localBadges = await downloadBadges(badgeUrls);
-
-    // Apply local badge paths to classification and matches
-    for (const team of classification) {
-      team.badge = localBadges[team.name] || "";
-    }
-    for (const match of matches) {
-      match.homeBadgeLocal = localBadges[match.home] || "";
-      match.awayBadgeLocal = localBadges[match.away] || "";
-    }
-
-    // Group matches by round
-    const matchesByRound = {};
-    for (const m of matches) {
-      if (!matchesByRound[m.round]) matchesByRound[m.round] = [];
-      matchesByRound[m.round].push(m);
-    }
-
-    results.push({
-      name: champ.name,
-      url: champ.url,
-      classification,
-      matches,
-      matchesByRound,
-      totalRounds: Object.keys(matchesByRound).length,
-      updatedAt: new Date().toISOString(),
-    });
+  // Parse classification by groups
+  const groups = parseClassification(html);
+  const totalTeams = groups.reduce((sum, g) => sum + g.teams.length, 0);
+  console.log(`Groups: ${groups.length}, Total teams: ${totalTeams}`);
+  for (const g of groups) {
+    console.log(`  ${g.name}: ${g.teams.length} teams`);
   }
 
-  // Save results
+  // Parse matches
+  const matches = parseMatches(html);
+  console.log(`Matches: ${matches.length} games`);
+
+  // Download badges
+  await downloadBadges(groups, matches);
+
+  // Group matches by round
+  const matchesByRound = {};
+  for (const m of matches) {
+    const key = m.round || 0;
+    if (!matchesByRound[key]) matchesByRound[key] = [];
+    matchesByRound[key].push(m);
+  }
+
+  const result = [{
+    name: `${champName} ${year}`,
+    city: "Santana de Parnaiba",
+    state: "SP",
+    year,
+    url,
+    groups,
+    matches,
+    matchesByRound,
+    totalRounds: Object.keys(matchesByRound).length,
+    updatedAt: new Date().toISOString(),
+  }];
+
+  // Save
   fs.mkdirSync(DATA_DIR, { recursive: true });
-  fs.writeFileSync(OUTPUT_FILE, JSON.stringify(results, null, 2));
+  fs.writeFileSync(OUTPUT_FILE, JSON.stringify(result, null, 2));
   console.log(`\nSaved to ${OUTPUT_FILE}`);
   console.log(`[${new Date().toISOString()}] Done!`);
 }
