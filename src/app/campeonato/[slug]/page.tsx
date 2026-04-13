@@ -138,7 +138,7 @@ export default function CampeonatoPage() {
                         <td className="py-2 px-1">
                           <div className="flex items-center justify-center gap-0.5">
                             {(r.recentForm || []).length > 0
-                              ? (r.recentForm as FormResult[]).map((f: FormResult, i: number) => (
+                              ? ([...(r.recentForm as FormResult[])].reverse()).map((f: FormResult, i: number) => (
                                   <span key={i} className={`inline-block w-2.5 h-2.5 rounded-full ${f === "W" ? "bg-green" : f === "L" ? "bg-red" : "bg-text-muted"}`} title={f === "W" ? "Vitoria" : f === "L" ? "Derrota" : "Empate"} />
                                 ))
                               : <span className="text-[9px] text-text-muted">-</span>

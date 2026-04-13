@@ -100,7 +100,7 @@ export function StandingsWidget({ standings }: StandingsWidgetProps) {
                     <td className="py-2 px-1">
                       <div className="flex items-center justify-center gap-0.5">
                         {r.recentForm.length > 0
-                          ? r.recentForm.map((f, i) => <FormDot key={i} result={f} />)
+                          ? [...r.recentForm].reverse().map((f, i) => <FormDot key={i} result={f} />)
                           : <span className="text-[9px] text-text-muted">-</span>
                         }
                       </div>
