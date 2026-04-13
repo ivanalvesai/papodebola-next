@@ -1,3 +1,5 @@
+export type FormResult = "W" | "D" | "L";
+
 export interface StandingRow {
   pos: number;
   team: string;
@@ -11,6 +13,8 @@ export interface StandingRow {
   ga: number;
   gd: number;
   promo: string;
+  posChange: number; // positive = subiu, negative = caiu, 0 = manteve
+  recentForm: FormResult[]; // últimos 5 jogos, do mais recente ao mais antigo
 }
 
 export interface StandingsGroup {

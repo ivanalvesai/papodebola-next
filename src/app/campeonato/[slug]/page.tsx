@@ -5,8 +5,9 @@ import Image from "next/image";
 import { useParams } from "next/navigation";
 import { TOURNAMENT_BY_SLUG } from "@/lib/config";
 import { RoundNav } from "@/components/championship/round-nav";
+import { ChevronUp, ChevronDown, Minus } from "lucide-react";
 import type { ChampionshipData } from "@/types/tournament";
-import type { StandingRow } from "@/types/standings";
+import type { StandingRow, FormResult } from "@/types/standings";
 import type { ChampionshipMatch } from "@/types/match";
 
 export default function CampeonatoPage() {
@@ -84,16 +85,17 @@ export default function CampeonatoPage() {
               <table className="w-full text-xs">
                 <thead>
                   <tr className="text-text-muted border-b border-border-light">
-                    <th className="text-left py-2 px-3 font-semibold">#</th>
+                    <th className="text-left py-2 px-2 font-semibold w-8">#</th>
                     <th className="text-left py-2 px-2 font-semibold">Time</th>
-                    <th className="py-2 px-2 font-semibold">P</th>
-                    <th className="py-2 px-2 font-semibold">J</th>
-                    <th className="py-2 px-2 font-semibold">V</th>
-                    <th className="py-2 px-2 font-semibold">E</th>
-                    <th className="py-2 px-2 font-semibold">D</th>
-                    <th className="py-2 px-2 font-semibold">GP</th>
-                    <th className="py-2 px-2 font-semibold">GC</th>
-                    <th className="py-2 px-2 font-semibold">SG</th>
+                    <th className="py-2 px-1 font-semibold">P</th>
+                    <th className="py-2 px-1 font-semibold">J</th>
+                    <th className="py-2 px-1 font-semibold">V</th>
+                    <th className="py-2 px-1 font-semibold">E</th>
+                    <th className="py-2 px-1 font-semibold">D</th>
+                    <th className="py-2 px-1 font-semibold">GP</th>
+                    <th className="py-2 px-1 font-semibold">GC</th>
+                    <th className="py-2 px-1 font-semibold">SG</th>
+                    <th className="py-2 px-1 font-semibold text-center">Forma</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -105,21 +107,38 @@ export default function CampeonatoPage() {
 
                     return (
                       <tr key={r.teamId} className={`border-b border-border-light last:border-0 hover:bg-card-hover ${border}`}>
-                        <td className="py-2 px-3 font-semibold text-text-muted">{r.pos}</td>
+                        <td className="py-2 px-2">
+                          <div className="flex items-center gap-0.5">
+                            <span className="font-semibold text-text-muted w-4 text-center">{r.pos}</span>
+                            {r.posChange > 0 && <ChevronUp className="h-3 w-3 text-green" />}
+                            {r.posChange < 0 && <ChevronDown className="h-3 w-3 text-red" />}
+                            {r.posChange === 0 && <Minus className="h-2.5 w-2.5 text-text-muted opacity-30" />}
+                          </div>
+                        </td>
                         <td className="py-2 px-2">
                           <div className="flex items-center gap-2">
                             <Image src={`/img/team/${r.teamId}/image`} alt="" width={18} height={18} className="rounded-full" unoptimized />
                             <span className="font-semibold text-text-primary">{r.team}</span>
                           </div>
                         </td>
-                        <td className="py-2 px-2 text-center font-bold">{r.pts}</td>
-                        <td className="py-2 px-2 text-center text-text-muted">{r.matches}</td>
-                        <td className="py-2 px-2 text-center text-text-muted">{r.wins}</td>
-                        <td className="py-2 px-2 text-center text-text-muted">{r.draws}</td>
-                        <td className="py-2 px-2 text-center text-text-muted">{r.losses}</td>
-                        <td className="py-2 px-2 text-center text-text-muted">{r.gf}</td>
-                        <td className="py-2 px-2 text-center text-text-muted">{r.ga}</td>
-                        <td className="py-2 px-2 text-center text-text-muted">{r.gd > 0 ? `+${r.gd}` : r.gd}</td>
+                        <td className="py-2 px-1 text-center font-bold">{r.pts}</td>
+                        <td className="py-2 px-1 text-center text-text-muted">{r.matches}</td>
+                        <td className="py-2 px-1 text-center text-text-muted">{r.wins}</td>
+                        <td className="py-2 px-1 text-center text-text-muted">{r.draws}</td>
+                        <td className="py-2 px-1 text-center text-text-muted">{r.losses}</td>
+                        <td className="py-2 px-1 text-center text-text-muted">{r.gf}</td>
+                        <td className="py-2 px-1 text-center text-text-muted">{r.ga}</td>
+                        <td className="py-2 px-1 text-center text-text-muted">{r.gd > 0 ? `+${r.gd}` : r.gd}</td>
+                        <td className="py-2 px-1">
+                          <div className="flex items-center justify-center gap-0.5">
+                            {(r.recentForm || []).length > 0
+                              ? (r.recentForm as FormResult[]).map((f: FormResult, i: number) => (
+                                  <span key={i} className={`inline-block w-2.5 h-2.5 rounded-full ${f === "W" ? "bg-green" : f === "L" ? "bg-red" : "bg-text-muted"}`} title={f === "W" ? "Vitoria" : f === "L" ? "Derrota" : "Empate"} />
+                                ))
+                              : <span className="text-[9px] text-text-muted">-</span>
+                            }
+                          </div>
+                        </td>
                       </tr>
                     );
                   })}
