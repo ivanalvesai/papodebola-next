@@ -105,7 +105,7 @@ function normalizeStandingRow(row: any): StandingRow {
 export async function getStandings(
   tournamentId: number,
   seasonId: number,
-  revalidate: number = 3600
+  revalidate: number = 1800
 ): Promise<StandingsGroup[]> {
   const data = await fetchAllSports<any>(
     `tournament/${tournamentId}/season/${seasonId}/standings/total`,
