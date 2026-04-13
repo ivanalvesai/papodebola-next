@@ -44,9 +44,9 @@ export async function getChampionshipData(
   // Fetch standings
   const standings = await getStandings(id, seasonId, 7200);
 
-  // Fetch matches for current round ±2
+  // Fetch matches: 5 rounds back (for form dots) + 2 ahead (for schedule)
   const matchesByRound: Record<number, ChampionshipMatch[]> = {};
-  const startRound = Math.max(1, currentRound - 2);
+  const startRound = Math.max(1, currentRound - 5);
   const endRound = Math.min(totalRounds, currentRound + 2);
 
   for (let r = startRound; r <= endRound; r++) {
