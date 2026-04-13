@@ -16,30 +16,11 @@ import { getLatestArticles } from "@/lib/data/articles";
 import { getBrasileiraoStandings } from "@/lib/data/standings";
 import { getTopScorers } from "@/lib/data/scorers";
 import { getChampionshipData } from "@/lib/data/championship";
+import { enrichStandingsWithForm } from "@/lib/standings-utils";
 import type { ChampionshipMatch } from "@/types/match";
+import type { ChampionshipData } from "@/types/tournament";
 
 export const revalidate = 1800;
-
-async function getNextMatch(): Promise<ChampionshipMatch | null> {
-  const data = await getChampionshipData("brasileirao-serie-a");
-  if (!data?.matchesByRound) return null;
-
-  const now = Date.now() / 1000;
-  let next: ChampionshipMatch | null = null;
-
-  for (const round of Object.keys(data.matchesByRound).map(Number).sort((a, b) => a - b)) {
-    for (const m of data.matchesByRound[round]) {
-      if (m.status === "notstarted" && m.timestamp > now) {
-        if (!next || m.timestamp < next.timestamp) {
-          next = m;
-        }
-      }
-    }
-    if (next) break;
-  }
-
-  return next;
-}
 
 export default async function HomePage() {
   const [
@@ -48,9 +29,9 @@ export default async function HomePage() {
     highlights,
     transfers,
     articles,
-    standings,
+    rawStandings,
     scorers,
-    nextMatch,
+    champData,
   ] = await Promise.all([
     getTodayMatches().catch(() => []),
     getCBFUpcomingMatches().catch(() => []),
@@ -59,8 +40,29 @@ export default async function HomePage() {
     getLatestArticles(20).catch(() => []),
     getBrasileiraoStandings().catch(() => []),
     getTopScorers().catch(() => []),
-    getNextMatch().catch(() => null),
+    getChampionshipData("brasileirao-serie-a").catch(() => null as ChampionshipData | null),
   ]);
+
+  // Enrich standings with form dots from matches already loaded — zero extra API requests
+  const standings = champData
+    ? enrichStandingsWithForm(rawStandings, champData.matchesByRound, champData.currentRound)
+    : rawStandings;
+
+  // Find next scheduled match from championship data already loaded
+  let nextMatch: ChampionshipMatch | null = null;
+  if (champData?.matchesByRound) {
+    const now = Date.now() / 1000;
+    for (const round of Object.keys(champData.matchesByRound).map(Number).sort((a, b) => a - b)) {
+      for (const m of champData.matchesByRound[round]) {
+        if (m.status === "notstarted" && m.timestamp > now) {
+          if (!nextMatch || m.timestamp < nextMatch.timestamp) {
+            nextMatch = m;
+          }
+        }
+      }
+      if (nextMatch) break;
+    }
+  }
 
   return (
     <>

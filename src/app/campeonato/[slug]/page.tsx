@@ -5,6 +5,7 @@ import Image from "next/image";
 import { useParams } from "next/navigation";
 import { TOURNAMENT_BY_SLUG } from "@/lib/config";
 import { translateStatus } from "@/lib/translations";
+import { enrichStandingsWithForm } from "@/lib/standings-utils";
 import { RoundNav } from "@/components/championship/round-nav";
 import { ChevronUp, ChevronDown, Minus } from "lucide-react";
 import type { ChampionshipData } from "@/types/tournament";
@@ -66,7 +67,11 @@ export default function CampeonatoPage() {
     );
   }
 
-  const standings = data?.standings?.[0]?.rows || [];
+  // Enrich standings with form from already-loaded matches — zero extra requests
+  const enriched = data
+    ? enrichStandingsWithForm(data.standings || [], data.matchesByRound || {}, data.currentRound || 1)
+    : [];
+  const standings = enriched[0]?.rows || [];
   const roundMatches = data?.matchesByRound?.[selectedRound] || [];
 
   return (
