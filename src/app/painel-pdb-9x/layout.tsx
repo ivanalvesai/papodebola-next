@@ -2,13 +2,14 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { FileText, Users, Gamepad2, Settings, LogOut } from "lucide-react";
+import { FileText, Users, Gamepad2, Settings, LogOut, Sparkles } from "lucide-react";
 
 const TABS = [
   { href: "/painel-pdb-9x/artigos", label: "Artigos", icon: FileText },
   { href: "/painel-pdb-9x/usuarios", label: "Usuarios", icon: Users },
   { href: "/painel-pdb-9x/jogos", label: "Jogos", icon: Gamepad2 },
   { href: "/painel-pdb-9x/config", label: "Config", icon: Settings },
+  { href: "/studio-pdb", label: "Studio", icon: Sparkles, external: true },
 ];
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
@@ -43,6 +44,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
           <Link
             key={tab.href}
             href={tab.href}
+            target={"external" in tab ? "_blank" : undefined}
             className={`flex items-center gap-1.5 px-4 py-2.5 text-sm font-semibold border-b-2 transition-colors ${
               pathname.startsWith(tab.href)
                 ? "text-green border-green"
@@ -51,6 +53,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
           >
             <tab.icon className="h-4 w-4" />
             {tab.label}
+            {"external" in tab && <span className="text-[9px] bg-green text-white px-1 py-0.5 rounded ml-1">NEW</span>}
           </Link>
         ))}
       </div>

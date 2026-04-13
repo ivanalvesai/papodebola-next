@@ -9,10 +9,11 @@ const SECRET = new TextEncoder().encode(
 const PANEL_PATH = "/painel-pdb-9x";
 
 export async function middleware(request: NextRequest) {
-  if (
-    request.nextUrl.pathname.startsWith(PANEL_PATH) &&
-    !request.nextUrl.pathname.startsWith(`${PANEL_PATH}/login`)
-  ) {
+  const protectedPaths = [PANEL_PATH, "/studio-pdb", "/api/kanban"];
+  const isProtected = protectedPaths.some((p) => request.nextUrl.pathname.startsWith(p));
+  const isLogin = request.nextUrl.pathname.startsWith(`${PANEL_PATH}/login`);
+
+  if (isProtected && !isLogin) {
     const token = request.cookies.get("pdb_auth")?.value;
 
     if (!token) {
@@ -35,5 +36,5 @@ export async function middleware(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ["/painel-pdb-9x/:path*", "/admin/:path*"],
+  matcher: ["/painel-pdb-9x/:path*", "/studio-pdb/:path*", "/api/kanban/:path*", "/admin/:path*"],
 };
