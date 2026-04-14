@@ -5,6 +5,7 @@
  */
 
 import { buildLearningContext, buildReviewerContext, addFeedback } from "./learning-store";
+import { searchWikimediaTeam } from "./image-sources";
 
 const HF_TOKENS = [
   process.env.HUGGINGFACE_TOKEN,
@@ -163,6 +164,8 @@ export interface PipelineResult {
   imageUrl: string; prompt: string; review: ReviewResult;
   attempt: number; totalAttempts: number;
   autoApproved: boolean; galleryFallback: boolean;
+  credit: string; // attribution text (for Wikimedia images)
+  imageSource: "wikimedia" | "flux" | "gallery";
 }
 
 export async function runImagePipeline(
@@ -170,6 +173,49 @@ export async function runImagePipeline(
   saveImage: (postId: string, buffer: Buffer, attempt: number) => Promise<string>,
 ): Promise<PipelineResult> {
   const teamContext = extractTeamContext(title, text);
+
+  // STEP 1: Try Wikimedia Commons first (real photos)
+  console.log(`[Pipeline] Searching Wikimedia for: ${teamContext}`);
+  const wikiImages = await searchWikimediaTeam(teamContext);
+
+  if (wikiImages.length > 0) {
+    // Try top 3 Wikimedia images with the reviewer
+    for (let i = 0; i < Math.min(3, wikiImages.length); i++) {
+      const wImg = wikiImages[i];
+      console.log(`[Pipeline] Testing Wikimedia image ${i + 1}: ${wImg.title.substring(0, 40)}`);
+
+      try {
+        // Download image to check with reviewer
+        const imgRes = await fetch(wImg.url);
+        if (!imgRes.ok) continue;
+        const buf = await imgRes.arrayBuffer();
+        if (buf.byteLength < 5000) continue;
+
+        const base64 = Buffer.from(buf).toString("base64");
+        const review = await reviewImage(base64, title, text);
+        console.log(`[Reviewer] Wikimedia ${i + 1}: score=${review.score}, approved=${review.approved}`);
+
+        if (review.approved) {
+          // Save Wikimedia image locally
+          const imageUrl = await saveImage(postId, Buffer.from(buf), 0);
+          await addFeedback({
+            postTitle: title, teamContext, prompt: `wikimedia: ${wImg.title}`,
+            approved: true, score: review.score,
+            feedback: review.feedback, issues: [], attempt: 0,
+          });
+          return {
+            imageUrl, prompt: wImg.title, review,
+            attempt: 0, totalAttempts: 1,
+            autoApproved: true, galleryFallback: false,
+            credit: wImg.credit, imageSource: "wikimedia",
+          };
+        }
+      } catch { continue; }
+    }
+    console.log("[Pipeline] No Wikimedia image approved, falling back to FLUX");
+  }
+
+  // STEP 2: FLUX generation with retry
   const maxAttempts = 3;
   let lastFeedback = "";
   let lastPrompt = "";
@@ -177,26 +223,22 @@ export async function runImagePipeline(
   let lastImageUrl = "";
 
   for (let attempt = 1; attempt <= maxAttempts; attempt++) {
-    console.log(`[Pipeline] Attempt ${attempt}/${maxAttempts}: ${title.substring(0, 50)}`);
+    console.log(`[Pipeline] FLUX attempt ${attempt}/${maxAttempts}: ${title.substring(0, 50)}`);
 
-    // CREATOR: generate prompt with learning + previous feedback
     const prompt = await generateImagePrompt(title, text, lastFeedback);
     lastPrompt = prompt;
 
-    // CREATOR: generate image
     const imageBuffer = await generateFluxImage(prompt);
     if (!imageBuffer) { console.log(`[Creator] Failed attempt ${attempt}`); continue; }
 
     const imageUrl = await saveImage(postId, imageBuffer, attempt);
     lastImageUrl = imageUrl;
 
-    // REVIEWER: analyze
     const base64 = imageBuffer.toString("base64");
     const review = await reviewImage(base64, title, text);
     lastReview = review;
-    console.log(`[Reviewer] Attempt ${attempt}: score=${review.score}, approved=${review.approved}`);
+    console.log(`[Reviewer] FLUX ${attempt}: score=${review.score}, approved=${review.approved}`);
 
-    // Save feedback for learning
     await addFeedback({
       postTitle: title, teamContext, prompt,
       approved: review.approved, score: review.score,
@@ -204,7 +246,7 @@ export async function runImagePipeline(
     });
 
     if (review.approved) {
-      return { imageUrl, prompt, review, attempt, totalAttempts: attempt, autoApproved: true, galleryFallback: false };
+      return { imageUrl, prompt, review, attempt, totalAttempts: attempt, autoApproved: true, galleryFallback: false, credit: "", imageSource: "flux" };
     }
 
     // Build feedback for next attempt
@@ -217,7 +259,7 @@ export async function runImagePipeline(
 
   // All attempts rejected
   console.log(`[Pipeline] All ${maxAttempts} attempts rejected → gallery fallback`);
-  return { imageUrl: lastImageUrl, prompt: lastPrompt, review: lastReview, attempt: maxAttempts, totalAttempts: maxAttempts, autoApproved: false, galleryFallback: true };
+  return { imageUrl: lastImageUrl, prompt: lastPrompt, review: lastReview, attempt: maxAttempts, totalAttempts: maxAttempts, autoApproved: false, galleryFallback: true, credit: "", imageSource: "flux" };
 }
 
 // ==================== GALLERY ====================

@@ -22,8 +22,9 @@ interface ReviewResult {
   approved: boolean; score: number; feedback: string; issues: string[];
 }
 
-interface GalleryImage {
-  id: string; title: string; thumbnail: string; url: string;
+interface SourceImage {
+  id: string; title: string; url: string; thumbnail: string;
+  author: string; license: string; credit: string; source: "wikimedia" | "pexels";
 }
 
 const COLUMNS: { key: Column; label: string; icon: React.ElementType; color: string; bg: string }[] = [
@@ -55,7 +56,9 @@ export default function StudioPage() {
   const [imageReview, setImageReview] = useState<Record<string, ReviewResult>>({});
   const [pipelineInfo, setPipelineInfo] = useState<Record<string, { attempts: number; galleryFallback: boolean; prompt: string }>>({});
   const [showGallery, setShowGallery] = useState<string | null>(null);
-  const [gallery, setGallery] = useState<GalleryImage[]>([]);
+  const [wikimediaImages, setWikimediaImages] = useState<SourceImage[]>([]);
+  const [pexelsImages, setPexelsImages] = useState<SourceImage[]>([]);
+  const [galleryTab, setGalleryTab] = useState<"wikimedia" | "pexels">("wikimedia");
   const [galleryLoading, setGalleryLoading] = useState(false);
 
   const loadPosts = useCallback(async () => {
@@ -139,17 +142,21 @@ export default function StudioPage() {
   async function handleOpenGallery(postId: string, title: string) {
     setShowGallery(postId);
     setGalleryLoading(true);
-    setGallery([]);
+    setWikimediaImages([]);
+    setPexelsImages([]);
+    setGalleryTab("wikimedia");
     try {
-      const teamName = encodeURIComponent(title);
-      const res = await fetch(`/api/kanban/gallery?team=${teamName}`);
-      if (res.ok) { const data = await res.json(); setGallery(data.images || []); }
+      const res = await fetch(`/api/kanban/gallery?team=${encodeURIComponent(title)}`);
+      if (res.ok) {
+        const data = await res.json();
+        setWikimediaImages(data.wikimedia || []);
+        setPexelsImages(data.pexels || []);
+      }
     } catch { /* */ }
     setGalleryLoading(false);
   }
 
-  async function handleSelectGalleryImage(postId: string, imageUrl: string) {
-    // Register manual choice for learning
+  async function handleSelectGalleryImage(postId: string, img: SourceImage) {
     const post = posts.find((p) => p.id === postId);
     const info = pipelineInfo[postId];
     await fetch("/api/kanban/gallery", {
@@ -158,7 +165,8 @@ export default function StudioPage() {
         postId,
         postTitle: post?.title || "",
         teamContext: post?.title || "",
-        imageUrl,
+        imageUrl: img.thumbnail,
+        credit: img.credit,
         rejectedPrompts: info?.prompt ? [info.prompt] : [],
       }),
     });
@@ -399,46 +407,67 @@ export default function StudioPage() {
         </div>
       )}
 
-      {/* Gallery modal */}
+      {/* Gallery modal — Wikimedia + Pexels tabs */}
       {showGallery && (
         <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4" onClick={() => setShowGallery(null)}>
-          <div className="bg-surface rounded-xl border border-border-custom shadow-xl w-full max-w-3xl max-h-[80vh] flex flex-col" onClick={(e) => e.stopPropagation()}>
+          <div className="bg-surface rounded-xl border border-border-custom shadow-xl w-full max-w-4xl max-h-[85vh] flex flex-col" onClick={(e) => e.stopPropagation()}>
             <div className="flex items-center justify-between px-6 py-4 border-b border-border-custom shrink-0">
               <h2 className="text-base font-bold text-text-primary flex items-center gap-2">
                 <Images className="h-5 w-5 text-green" />
-                Galeria do Time (Sofascore)
+                Galeria de Imagens
               </h2>
               <button onClick={() => setShowGallery(null)} className="p-1 text-text-muted hover:text-text-primary"><X className="h-5 w-5" /></button>
             </div>
+
+            {/* Tabs */}
+            <div className="flex border-b border-border-custom px-6 shrink-0">
+              <button onClick={() => setGalleryTab("wikimedia")}
+                className={`px-4 py-2.5 text-sm font-semibold border-b-2 transition-colors ${galleryTab === "wikimedia" ? "text-green border-green" : "text-text-muted border-transparent hover:text-text-secondary"}`}>
+                Wikimedia ({wikimediaImages.length})
+              </button>
+              <button onClick={() => setGalleryTab("pexels")}
+                className={`px-4 py-2.5 text-sm font-semibold border-b-2 transition-colors ${galleryTab === "pexels" ? "text-green border-green" : "text-text-muted border-transparent hover:text-text-secondary"}`}>
+                Pexels ({pexelsImages.length})
+              </button>
+            </div>
+
             <div className="p-6 overflow-y-auto flex-1">
               {galleryLoading ? (
                 <div className="flex justify-center py-12"><Loader2 className="h-6 w-6 animate-spin text-text-muted" /></div>
-              ) : gallery.length === 0 ? (
-                <div className="text-center py-12 text-text-muted">
-                  <Images className="h-10 w-10 mx-auto mb-2 opacity-30" />
-                  <p className="text-sm">Nenhuma imagem encontrada para este time</p>
-                  <p className="text-xs mt-1">Tente com o nome do time no titulo do post</p>
-                </div>
-              ) : (
-                <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-                  {gallery.map((img) => (
-                    <button key={img.id} onClick={() => handleSelectGalleryImage(showGallery, img.thumbnail)}
-                      className="group rounded-lg overflow-hidden border border-border-custom hover:border-green hover:shadow-md transition-all text-left">
-                      <div className="relative">
-                        <Image src={img.thumbnail} alt={img.title} width={320} height={180} className="w-full h-32 object-cover" unoptimized />
-                        <div className="absolute inset-0 bg-green/0 group-hover:bg-green/20 transition-colors flex items-center justify-center">
-                          <span className="bg-green text-white text-xs font-bold px-3 py-1 rounded-full opacity-0 group-hover:opacity-100 transition-opacity">
-                            Usar esta
+              ) : (() => {
+                const images = galleryTab === "wikimedia" ? wikimediaImages : pexelsImages;
+                if (images.length === 0) return (
+                  <div className="text-center py-12 text-text-muted">
+                    <Images className="h-10 w-10 mx-auto mb-2 opacity-30" />
+                    <p className="text-sm">Nenhuma imagem encontrada</p>
+                    <p className="text-xs mt-1">Tente a outra aba ou ajuste o titulo do post</p>
+                  </div>
+                );
+                return (
+                  <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
+                    {images.map((img) => (
+                      <button key={img.id} onClick={() => handleSelectGalleryImage(showGallery, img)}
+                        className="group rounded-lg overflow-hidden border border-border-custom hover:border-green hover:shadow-md transition-all text-left">
+                        <div className="relative">
+                          <Image src={img.thumbnail} alt={img.title} width={320} height={180} className="w-full h-32 object-cover" unoptimized />
+                          <div className="absolute inset-0 bg-green/0 group-hover:bg-green/20 transition-colors flex items-center justify-center">
+                            <span className="bg-green text-white text-xs font-bold px-3 py-1 rounded-full opacity-0 group-hover:opacity-100 transition-opacity">
+                              Usar esta
+                            </span>
+                          </div>
+                          <span className={`absolute top-1.5 left-1.5 text-[8px] font-bold px-1.5 py-0.5 rounded text-white ${img.source === "wikimedia" ? "bg-blue" : "bg-green"}`}>
+                            {img.source === "wikimedia" ? "Wiki" : "Pexels"}
                           </span>
                         </div>
-                      </div>
-                      <div className="p-2">
-                        <p className="text-[10px] text-text-muted line-clamp-1">{img.title}</p>
-                      </div>
-                    </button>
-                  ))}
-                </div>
-              )}
+                        <div className="p-2">
+                          <p className="text-[10px] text-text-primary font-medium line-clamp-1">{img.title}</p>
+                          <p className="text-[9px] text-text-muted line-clamp-1">{img.author} | {img.license}</p>
+                        </div>
+                      </button>
+                    ))}
+                  </div>
+                );
+              })()}
             </div>
           </div>
         </div>

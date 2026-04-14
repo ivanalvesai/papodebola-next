@@ -1,8 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getSession } from "@/lib/auth/jwt";
-import { getTeamGallery } from "@/lib/services/image-agent";
 import { addManualChoice } from "@/lib/services/learning-store";
 import { updatePost } from "@/lib/data/kanban-store";
+import { searchWikimediaTeam, searchPexels } from "@/lib/services/image-sources";
 import { readdir, unlink } from "fs/promises";
 import { join } from "path";
 
@@ -13,8 +13,13 @@ export async function GET(request: NextRequest) {
   const team = request.nextUrl.searchParams.get("team") || "";
   if (!team) return NextResponse.json({ error: "Parametro team obrigatorio" }, { status: 400 });
 
-  const images = await getTeamGallery(team);
-  return NextResponse.json({ images, team });
+  // Fetch from both sources in parallel
+  const [wikimedia, pexels] = await Promise.all([
+    searchWikimediaTeam(team),
+    searchPexels(team),
+  ]);
+
+  return NextResponse.json({ wikimedia, pexels, team });
 }
 
 export async function POST(request: NextRequest) {
@@ -22,7 +27,7 @@ export async function POST(request: NextRequest) {
   if (!session) return NextResponse.json({ error: "Nao autorizado" }, { status: 401 });
 
   try {
-    const { postId, postTitle, teamContext, imageUrl, rejectedPrompts } = await request.json();
+    const { postId, postTitle, teamContext, imageUrl, credit, rejectedPrompts } = await request.json();
 
     await addManualChoice({
       postTitle: postTitle || "",
@@ -35,7 +40,7 @@ export async function POST(request: NextRequest) {
     if (postId) {
       await updatePost(postId, { image: imageUrl });
 
-      // Cleanup: delete all AI-generated images for this post (user chose gallery)
+      // Cleanup AI-generated images
       try {
         const dir = join(process.cwd(), "data", "kanban-images");
         const files = await readdir(dir);
@@ -45,10 +50,10 @@ export async function POST(request: NextRequest) {
             console.log(`[Cleanup] Deleted ${f}`);
           }
         }
-      } catch { /* dir may not exist */ }
+      } catch { /* */ }
     }
 
-    return NextResponse.json({ ok: true });
+    return NextResponse.json({ ok: true, credit: credit || "" });
   } catch {
     return NextResponse.json({ error: "Erro interno" }, { status: 500 });
   }
