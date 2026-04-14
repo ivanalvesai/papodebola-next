@@ -60,6 +60,7 @@ export default function StudioPage() {
   const [pexelsImages, setPexelsImages] = useState<SourceImage[]>([]);
   const [galleryTab, setGalleryTab] = useState<"wikimedia" | "pexels">("wikimedia");
   const [galleryLoading, setGalleryLoading] = useState(false);
+  const [manualImageUrl, setManualImageUrl] = useState("");
 
   const loadPosts = useCallback(async () => {
     try {
@@ -145,6 +146,7 @@ export default function StudioPage() {
     setWikimediaImages([]);
     setPexelsImages([]);
     setGalleryTab("wikimedia");
+    setManualImageUrl("");
     try {
       const res = await fetch(`/api/kanban/gallery?team=${encodeURIComponent(title)}`);
       if (res.ok) {
@@ -154,6 +156,28 @@ export default function StudioPage() {
       }
     } catch { /* */ }
     setGalleryLoading(false);
+  }
+
+  async function handleApplyManualUrl(postId: string) {
+    if (!manualImageUrl.trim()) return;
+    const post = posts.find((p) => p.id === postId);
+    const info = pipelineInfo[postId];
+    await fetch("/api/kanban/gallery", {
+      method: "POST", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        postId,
+        postTitle: post?.title || "",
+        teamContext: post?.title || "",
+        imageUrl: manualImageUrl.trim(),
+        credit: "",
+        rejectedPrompts: info?.prompt ? [info.prompt] : [],
+      }),
+    });
+    await loadPosts();
+    setShowGallery(null);
+    setManualImageUrl("");
+    setImageReview((prev) => { const n = { ...prev }; delete n[postId]; return n; });
+    setPipelineInfo((prev) => { const n = { ...prev }; delete n[postId]; return n; });
   }
 
   async function handleSelectGalleryImage(postId: string, img: SourceImage) {
@@ -417,6 +441,33 @@ export default function StudioPage() {
                 Galeria de Imagens
               </h2>
               <button onClick={() => setShowGallery(null)} className="p-1 text-text-muted hover:text-text-primary"><X className="h-5 w-5" /></button>
+            </div>
+
+            {/* Manual URL input */}
+            <div className="px-6 py-3 bg-body border-b border-border-custom shrink-0">
+              <label className="block text-[10px] font-semibold text-text-muted uppercase tracking-wider mb-1.5">
+                Colar URL de imagem
+              </label>
+              <div className="flex gap-2">
+                <input
+                  value={manualImageUrl}
+                  onChange={(e) => setManualImageUrl(e.target.value)}
+                  placeholder="https://exemplo.com/foto-jogador.jpg"
+                  className="flex-1 h-9 rounded-lg border border-border-custom bg-surface px-3 text-sm focus:outline-none focus:ring-2 focus:ring-green/30 focus:border-green"
+                />
+                <button
+                  onClick={() => handleApplyManualUrl(showGallery!)}
+                  disabled={!manualImageUrl.trim()}
+                  className="px-4 h-9 bg-green text-white rounded-lg text-sm font-semibold hover:bg-green-hover disabled:opacity-30 transition-colors shrink-0"
+                >
+                  Usar
+                </button>
+              </div>
+              {manualImageUrl.trim() && (
+                <div className="mt-2 rounded overflow-hidden border border-border-custom">
+                  <Image src={manualImageUrl.trim()} alt="Preview" width={400} height={200} className="w-full h-24 object-cover" unoptimized />
+                </div>
+              )}
             </div>
 
             {/* Tabs */}
