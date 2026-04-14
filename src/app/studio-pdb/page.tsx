@@ -53,6 +53,7 @@ export default function StudioPage() {
   // Image generation state
   const [generatingImage, setGeneratingImage] = useState<string | null>(null);
   const [imageReview, setImageReview] = useState<Record<string, ReviewResult>>({});
+  const [pipelineInfo, setPipelineInfo] = useState<Record<string, { attempts: number; galleryFallback: boolean; prompt: string }>>({});
   const [showGallery, setShowGallery] = useState<string | null>(null);
   const [gallery, setGallery] = useState<GalleryImage[]>([]);
   const [galleryLoading, setGalleryLoading] = useState(false);
@@ -107,17 +108,27 @@ export default function StudioPage() {
 
   // ==================== IMAGE AGENT ====================
 
-  async function handleGenerateImage(postId: string, attempt: number = 1) {
+  async function handleGenerateImage(postId: string) {
     setGeneratingImage(postId);
     try {
       const res = await fetch("/api/kanban/image", {
         method: "POST", headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ postId, attempt }),
+        body: JSON.stringify({ postId }),
       });
       if (res.ok) {
         const data = await res.json();
         setImageReview((prev) => ({ ...prev, [postId]: data.review }));
+        setPipelineInfo((prev) => ({ ...prev, [postId]: {
+          attempts: data.totalAttempts || 1,
+          galleryFallback: data.galleryFallback || false,
+          prompt: data.prompt || "",
+        }}));
         await loadPosts();
+        // Auto-open gallery if all attempts were rejected
+        if (data.galleryFallback) {
+          const post = posts.find((p) => p.id === postId);
+          if (post) handleOpenGallery(postId, post.title);
+        }
       } else {
         alert("Erro ao gerar imagem");
       }
@@ -138,13 +149,23 @@ export default function StudioPage() {
   }
 
   async function handleSelectGalleryImage(postId: string, imageUrl: string) {
-    await apiAction({ action: "update", id: postId, updates: { image: imageUrl } });
-    setShowGallery(null);
-    setImageReview((prev) => {
-      const n = { ...prev };
-      delete n[postId];
-      return n;
+    // Register manual choice for learning
+    const post = posts.find((p) => p.id === postId);
+    const info = pipelineInfo[postId];
+    await fetch("/api/kanban/gallery", {
+      method: "POST", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        postId,
+        postTitle: post?.title || "",
+        teamContext: post?.title || "",
+        imageUrl,
+        rejectedPrompts: info?.prompt ? [info.prompt] : [],
+      }),
     });
+    await loadPosts();
+    setShowGallery(null);
+    setImageReview((prev) => { const n = { ...prev }; delete n[postId]; return n; });
+    setPipelineInfo((prev) => { const n = { ...prev }; delete n[postId]; return n; });
   }
 
   function handleDragStart(id: string) { setDragId(id); }
@@ -194,6 +215,7 @@ export default function StudioPage() {
               <div className="flex-1 overflow-y-auto space-y-2 pt-2 pb-4">
                 {columnPosts(col.key).map((post) => {
                   const review = imageReview[post.id];
+                  const pipeline = pipelineInfo[post.id];
                   const isGenerating = generatingImage === post.id;
 
                   return (
@@ -245,11 +267,19 @@ export default function StudioPage() {
                           </div>
                         )}
 
+                        {/* Pipeline info */}
+                        {pipeline && !isGenerating && (
+                          <div className="mt-1 text-[9px] text-text-muted">
+                            {pipeline.attempts} tentativa{pipeline.attempts > 1 ? "s" : ""}
+                            {pipeline.galleryFallback && " — IA nao aprovou, escolha da galeria"}
+                          </div>
+                        )}
+
                         {/* Generating indicator */}
                         {isGenerating && (
                           <div className="mt-2 flex items-center gap-2 p-2 bg-body rounded text-xs text-text-muted">
                             <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                            Gerando imagem com IA...
+                            Gerando imagem (ate 3 tentativas)...
                           </div>
                         )}
 
