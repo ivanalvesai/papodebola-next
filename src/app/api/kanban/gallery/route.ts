@@ -3,6 +3,8 @@ import { getSession } from "@/lib/auth/jwt";
 import { getTeamGallery } from "@/lib/services/image-agent";
 import { addManualChoice } from "@/lib/services/learning-store";
 import { updatePost } from "@/lib/data/kanban-store";
+import { readdir, unlink } from "fs/promises";
+import { join } from "path";
 
 export async function GET(request: NextRequest) {
   const session = await getSession();
@@ -30,7 +32,21 @@ export async function POST(request: NextRequest) {
       rejectedPrompts: rejectedPrompts || [],
     });
 
-    if (postId) await updatePost(postId, { image: imageUrl });
+    if (postId) {
+      await updatePost(postId, { image: imageUrl });
+
+      // Cleanup: delete all AI-generated images for this post (user chose gallery)
+      try {
+        const dir = join(process.cwd(), "public", "kanban-images");
+        const files = await readdir(dir);
+        for (const f of files) {
+          if (f.startsWith(postId)) {
+            await unlink(join(dir, f)).catch(() => {});
+            console.log(`[Cleanup] Deleted ${f}`);
+          }
+        }
+      } catch { /* dir may not exist */ }
+    }
 
     return NextResponse.json({ ok: true });
   } catch {

@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from "next/server";
 import { getSession } from "@/lib/auth/jwt";
 import { getPosts, addPost, updatePost, deletePost, movePost } from "@/lib/data/kanban-store";
 import type { KanbanColumn } from "@/lib/data/kanban-store";
+import { readdir, unlink } from "fs/promises";
+import { join } from "path";
 
 export async function GET() {
   const session = await getSession();
@@ -48,6 +50,18 @@ export async function POST(request: NextRequest) {
     if (action === "delete") {
       const ok = await deletePost(body.id);
       if (!ok) return NextResponse.json({ error: "Post nao encontrado" }, { status: 404 });
+
+      // Cleanup generated images
+      try {
+        const dir = join(process.cwd(), "public", "kanban-images");
+        const files = await readdir(dir);
+        for (const f of files) {
+          if (f.startsWith(body.id)) {
+            await unlink(join(dir, f)).catch(() => {});
+          }
+        }
+      } catch { /* */ }
+
       return NextResponse.json({ deleted: body.id });
     }
 

@@ -250,7 +250,7 @@ export async function getTeamGallery(teamName: string): Promise<GalleryImage[]> 
     const data = await res.json();
     return (data.media || [])
       .filter((m: Record<string, unknown>) => m.mediaType === 6 && m.thumbnailUrl)
-      .slice(0, 20)
+      .slice(0, 50)
       .map((m: Record<string, unknown>, i: number) => ({
         id: `gallery_${i}`, title: (m.title as string) || "",
         thumbnail: (m.thumbnailUrl as string) || "", url: (m.url as string) || "",
