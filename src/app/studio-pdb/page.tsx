@@ -5,7 +5,8 @@ import Image from "next/image";
 import {
   Sparkles, Plus, Trash2, ExternalLink, Send, GripVertical,
   Loader2, ChevronDown, X, Goal, LogOut, RefreshCw,
-  Lightbulb, Pencil, CheckCircle, Globe, Eye,
+  Lightbulb, Pencil, CheckCircle, Globe, Eye, ImageIcon,
+  ThumbsUp, ThumbsDown, Images,
 } from "lucide-react";
 
 type Column = "sugestoes" | "edicao" | "aprovado" | "publicado";
@@ -15,6 +16,14 @@ interface Post {
   category: string; source: string; rssUrl: string;
   column: Column; wpId: number | null; wpEditUrl: string;
   createdAt: string; updatedAt: string;
+}
+
+interface ReviewResult {
+  approved: boolean; score: number; feedback: string; issues: string[];
+}
+
+interface GalleryImage {
+  id: string; title: string; thumbnail: string; url: string;
 }
 
 const COLUMNS: { key: Column; label: string; icon: React.ElementType; color: string; bg: string }[] = [
@@ -41,13 +50,17 @@ export default function StudioPage() {
   const [newCategory, setNewCategory] = useState("Futebol Brasileiro");
   const [dragId, setDragId] = useState<string | null>(null);
 
+  // Image generation state
+  const [generatingImage, setGeneratingImage] = useState<string | null>(null);
+  const [imageReview, setImageReview] = useState<Record<string, ReviewResult>>({});
+  const [showGallery, setShowGallery] = useState<string | null>(null);
+  const [gallery, setGallery] = useState<GalleryImage[]>([]);
+  const [galleryLoading, setGalleryLoading] = useState(false);
+
   const loadPosts = useCallback(async () => {
     try {
       const res = await fetch("/api/kanban");
-      if (res.ok) {
-        const data = await res.json();
-        setPosts(data.posts || []);
-      }
+      if (res.ok) { const data = await res.json(); setPosts(data.posts || []); }
     } catch { /* */ }
     setLoading(false);
   }, []);
@@ -56,8 +69,7 @@ export default function StudioPage() {
 
   async function apiAction(body: Record<string, unknown>) {
     const res = await fetch("/api/kanban", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
+      method: "POST", headers: { "Content-Type": "application/json" },
       body: JSON.stringify(body),
     });
     if (res.ok) await loadPosts();
@@ -80,17 +92,12 @@ export default function StudioPage() {
     setNewTitle(""); setNewText(""); setShowNewPost(false);
   }
 
-  async function handleMove(id: string, column: Column) {
-    await apiAction({ action: "move", id, column });
-  }
+  async function handleMove(id: string, column: Column) { await apiAction({ action: "move", id, column }); }
 
   async function handlePublish(id: string) {
     if (!confirm("Publicar este post no WordPress?")) return;
     const res = await apiAction({ action: "publish", id });
-    if (res.ok) {
-      const data = await res.json();
-      if (data.wpEditUrl) window.open(data.wpEditUrl, "_blank");
-    }
+    if (res.ok) { const data = await res.json(); if (data.wpEditUrl) window.open(data.wpEditUrl, "_blank"); }
   }
 
   async function handleDelete(id: string) {
@@ -98,26 +105,56 @@ export default function StudioPage() {
     await apiAction({ action: "delete", id });
   }
 
-  function handleDragStart(id: string) { setDragId(id); }
-  function handleDragOver(e: React.DragEvent) { e.preventDefault(); }
-  function handleDrop(column: Column) {
-    if (dragId) { handleMove(dragId, column); setDragId(null); }
+  // ==================== IMAGE AGENT ====================
+
+  async function handleGenerateImage(postId: string, attempt: number = 1) {
+    setGeneratingImage(postId);
+    try {
+      const res = await fetch("/api/kanban/image", {
+        method: "POST", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ postId, attempt }),
+      });
+      if (res.ok) {
+        const data = await res.json();
+        setImageReview((prev) => ({ ...prev, [postId]: data.review }));
+        await loadPosts();
+      } else {
+        alert("Erro ao gerar imagem");
+      }
+    } catch { alert("Erro de conexao"); }
+    setGeneratingImage(null);
   }
 
-  function handleLogout() {
-    document.cookie = "pdb_auth=; path=/; max-age=0";
-    window.location.href = "/painel-pdb-9x/login";
+  async function handleOpenGallery(postId: string, title: string) {
+    setShowGallery(postId);
+    setGalleryLoading(true);
+    setGallery([]);
+    try {
+      const teamName = encodeURIComponent(title);
+      const res = await fetch(`/api/kanban/gallery?team=${teamName}`);
+      if (res.ok) { const data = await res.json(); setGallery(data.images || []); }
+    } catch { /* */ }
+    setGalleryLoading(false);
   }
+
+  async function handleSelectGalleryImage(postId: string, imageUrl: string) {
+    await apiAction({ action: "update", id: postId, updates: { image: imageUrl } });
+    setShowGallery(null);
+    setImageReview((prev) => {
+      const n = { ...prev };
+      delete n[postId];
+      return n;
+    });
+  }
+
+  function handleDragStart(id: string) { setDragId(id); }
+  function handleDragOver(e: React.DragEvent) { e.preventDefault(); }
+  function handleDrop(column: Column) { if (dragId) { handleMove(dragId, column); setDragId(null); } }
+  function handleLogout() { document.cookie = "pdb_auth=; path=/; max-age=0"; window.location.href = "/painel-pdb-9x/login"; }
 
   const columnPosts = (col: Column) => posts.filter((p) => p.column === col);
 
-  if (loading) {
-    return (
-      <div className="h-screen flex items-center justify-center bg-body">
-        <Loader2 className="h-8 w-8 animate-spin text-green" />
-      </div>
-    );
-  }
+  if (loading) return <div className="h-screen flex items-center justify-center bg-body"><Loader2 className="h-8 w-8 animate-spin text-green" /></div>;
 
   return (
     <div className="h-screen flex flex-col bg-body font-sans">
@@ -126,173 +163,160 @@ export default function StudioPage() {
         <Goal className="h-6 w-6 text-green" />
         <h1 className="text-lg font-bold text-text-primary">Studio</h1>
         <span className="text-xs text-text-muted">Papo de Bola</span>
-
         <div className="flex-1" />
-
-        <button
-          onClick={handleGenerate}
-          disabled={generating}
-          className="flex items-center gap-2 px-4 py-2 bg-green text-white rounded-lg text-sm font-semibold hover:bg-green-hover transition-colors disabled:opacity-50"
-        >
+        <button onClick={handleGenerate} disabled={generating}
+          className="flex items-center gap-2 px-4 py-2 bg-green text-white rounded-lg text-sm font-semibold hover:bg-green-hover transition-colors disabled:opacity-50">
           {generating ? <Loader2 className="h-4 w-4 animate-spin" /> : <Sparkles className="h-4 w-4" />}
           Gerar Sugestoes IA
         </button>
-
-        <button
-          onClick={() => setShowNewPost(true)}
-          className="flex items-center gap-2 px-4 py-2 border border-border-custom text-text-secondary rounded-lg text-sm font-semibold hover:border-green hover:text-green transition-colors"
-        >
-          <Plus className="h-4 w-4" />
-          Novo Post
+        <button onClick={() => setShowNewPost(true)}
+          className="flex items-center gap-2 px-4 py-2 border border-border-custom text-text-secondary rounded-lg text-sm font-semibold hover:border-green hover:text-green transition-colors">
+          <Plus className="h-4 w-4" /> Novo Post
         </button>
-
-        <button onClick={() => loadPosts()} className="p-2 text-text-muted hover:text-green" title="Atualizar">
-          <RefreshCw className="h-4 w-4" />
-        </button>
-
-        <a href="/painel-pdb-9x/artigos" className="p-2 text-text-muted hover:text-green" title="Painel Admin">
-          <ExternalLink className="h-4 w-4" />
-        </a>
-
-        <button onClick={handleLogout} className="p-2 text-text-muted hover:text-red" title="Sair">
-          <LogOut className="h-4 w-4" />
-        </button>
+        <button onClick={() => loadPosts()} className="p-2 text-text-muted hover:text-green" title="Atualizar"><RefreshCw className="h-4 w-4" /></button>
+        <a href="/painel-pdb-9x/artigos" className="p-2 text-text-muted hover:text-green" title="Painel Admin"><ExternalLink className="h-4 w-4" /></a>
+        <button onClick={handleLogout} className="p-2 text-text-muted hover:text-red" title="Sair"><LogOut className="h-4 w-4" /></button>
       </header>
 
       {/* Kanban board */}
       <div className="flex-1 overflow-x-auto overflow-y-hidden">
         <div className="flex gap-4 p-6 h-full min-w-max">
           {COLUMNS.map((col) => (
-            <div
-              key={col.key}
-              className="w-[340px] flex flex-col shrink-0"
-              onDragOver={handleDragOver}
-              onDrop={() => handleDrop(col.key)}
-            >
+            <div key={col.key} className="w-[340px] flex flex-col shrink-0" onDragOver={handleDragOver} onDrop={() => handleDrop(col.key)}>
               {/* Column header */}
               <div className={`flex items-center gap-2 px-4 py-2.5 rounded-t-lg border ${col.bg}`}>
                 <col.icon className={`h-4 w-4 ${col.color}`} />
                 <span className={`text-sm font-bold ${col.color}`}>{col.label}</span>
-                <span className="ml-auto bg-white/60 text-text-muted text-xs font-bold px-2 py-0.5 rounded-full">
-                  {columnPosts(col.key).length}
-                </span>
+                <span className="ml-auto bg-white/60 text-text-muted text-xs font-bold px-2 py-0.5 rounded-full">{columnPosts(col.key).length}</span>
               </div>
 
               {/* Cards */}
               <div className="flex-1 overflow-y-auto space-y-2 pt-2 pb-4">
-                {columnPosts(col.key).map((post) => (
-                  <div
-                    key={post.id}
-                    draggable
-                    onDragStart={() => handleDragStart(post.id)}
-                    className={`bg-surface border border-border-custom rounded-lg shadow-sm hover:shadow-md transition-shadow cursor-grab active:cursor-grabbing ${
-                      dragId === post.id ? "opacity-40" : ""
-                    }`}
-                  >
-                    {/* Card header */}
-                    <div className="p-3">
-                      <div className="flex items-start gap-2">
-                        <GripVertical className="h-4 w-4 text-border-custom shrink-0 mt-0.5" />
-                        <div className="flex-1 min-w-0">
-                          <div className="flex items-center gap-1.5 mb-1">
-                            <span className="text-[9px] font-bold uppercase px-1.5 py-0.5 rounded bg-green-light text-green">
-                              {post.category}
-                            </span>
-                            <span className="text-[9px] text-text-muted">
-                              {post.source === "rss-ia" ? "IA" : "Manual"}
-                            </span>
-                          </div>
-                          <h3 className="text-sm font-semibold text-text-primary leading-tight line-clamp-2">
-                            {post.title}
-                          </h3>
-                          <div className="text-[10px] text-text-muted mt-1">
-                            {new Date(post.createdAt).toLocaleDateString("pt-BR", { day: "2-digit", month: "short", hour: "2-digit", minute: "2-digit" })}
+                {columnPosts(col.key).map((post) => {
+                  const review = imageReview[post.id];
+                  const isGenerating = generatingImage === post.id;
+
+                  return (
+                    <div key={post.id} draggable onDragStart={() => handleDragStart(post.id)}
+                      className={`bg-surface border border-border-custom rounded-lg shadow-sm hover:shadow-md transition-shadow cursor-grab active:cursor-grabbing ${dragId === post.id ? "opacity-40" : ""}`}>
+                      <div className="p-3">
+                        <div className="flex items-start gap-2">
+                          <GripVertical className="h-4 w-4 text-border-custom shrink-0 mt-0.5" />
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-center gap-1.5 mb-1">
+                              <span className="text-[9px] font-bold uppercase px-1.5 py-0.5 rounded bg-green-light text-green">{post.category}</span>
+                              <span className="text-[9px] text-text-muted">{post.source === "rss-ia" ? "IA" : "Manual"}</span>
+                            </div>
+                            <h3 className="text-sm font-semibold text-text-primary leading-tight line-clamp-2">{post.title}</h3>
+                            <div className="text-[10px] text-text-muted mt-1">
+                              {new Date(post.createdAt).toLocaleDateString("pt-BR", { day: "2-digit", month: "short", hour: "2-digit", minute: "2-digit" })}
+                            </div>
                           </div>
                         </div>
+
+                        {/* Image preview */}
+                        {post.image && (
+                          <div className="mt-2 rounded overflow-hidden relative">
+                            <Image src={post.image} alt="" width={300} height={150} className="w-full h-28 object-cover" unoptimized />
+                            {review && (
+                              <div className={`absolute top-1.5 right-1.5 flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold text-white ${review.approved ? "bg-green" : "bg-red"}`}>
+                                {review.approved ? <ThumbsUp className="h-3 w-3" /> : <ThumbsDown className="h-3 w-3" />}
+                                {review.score}/10
+                              </div>
+                            )}
+                          </div>
+                        )}
+
+                        {/* Review feedback */}
+                        {review && !review.approved && (
+                          <div className="mt-2 p-2 bg-red-light rounded text-[10px] text-red">
+                            <strong>Agente Revisor:</strong> {review.feedback}
+                            {review.issues.length > 0 && (
+                              <ul className="mt-1 list-disc list-inside">
+                                {review.issues.map((issue, i) => <li key={i}>{issue}</li>)}
+                              </ul>
+                            )}
+                          </div>
+                        )}
+
+                        {review && review.approved && (
+                          <div className="mt-2 p-2 bg-green-light rounded text-[10px] text-green">
+                            <strong>Agente Revisor:</strong> {review.feedback}
+                          </div>
+                        )}
+
+                        {/* Generating indicator */}
+                        {isGenerating && (
+                          <div className="mt-2 flex items-center gap-2 p-2 bg-body rounded text-xs text-text-muted">
+                            <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                            Gerando imagem com IA...
+                          </div>
+                        )}
+
+                        {/* Expanded text */}
+                        {expandedCard === post.id && (
+                          <div className="mt-2 p-2 bg-body rounded text-xs text-text-secondary leading-relaxed max-h-40 overflow-y-auto">
+                            {post.text || "Sem texto"}
+                          </div>
+                        )}
                       </div>
 
-                      {/* Image preview */}
-                      {post.image && (
-                        <div className="mt-2 rounded overflow-hidden">
-                          <Image src={post.image} alt="" width={300} height={150} className="w-full h-24 object-cover" unoptimized />
-                        </div>
-                      )}
+                      {/* Card actions */}
+                      <div className="border-t border-border-light px-3 py-2 flex items-center gap-1">
+                        <button onClick={() => setExpandedCard(expandedCard === post.id ? null : post.id)}
+                          className="p-1.5 text-text-muted hover:text-text-primary rounded" title="Ver texto"><Eye className="h-3.5 w-3.5" /></button>
 
-                      {/* Expanded text */}
-                      {expandedCard === post.id && (
-                        <div className="mt-2 p-2 bg-body rounded text-xs text-text-secondary leading-relaxed max-h-40 overflow-y-auto">
-                          {post.text || "Sem texto"}
-                        </div>
-                      )}
-                    </div>
-
-                    {/* Card actions */}
-                    <div className="border-t border-border-light px-3 py-2 flex items-center gap-1">
-                      <button
-                        onClick={() => setExpandedCard(expandedCard === post.id ? null : post.id)}
-                        className="p-1.5 text-text-muted hover:text-text-primary rounded" title="Ver texto"
-                      >
-                        <Eye className="h-3.5 w-3.5" />
-                      </button>
-
-                      {post.rssUrl && (
-                        <a href={post.rssUrl} target="_blank" rel="noopener noreferrer"
-                          className="p-1.5 text-text-muted hover:text-blue rounded" title="Fonte original"
-                        >
-                          <ExternalLink className="h-3.5 w-3.5" />
-                        </a>
-                      )}
-
-                      {post.wpEditUrl && (
-                        <a href={post.wpEditUrl} target="_blank" rel="noopener noreferrer"
-                          className="p-1.5 text-text-muted hover:text-green rounded" title="Editar no WordPress"
-                        >
-                          <Pencil className="h-3.5 w-3.5" />
-                        </a>
-                      )}
-
-                      <div className="flex-1" />
-
-                      {/* Move buttons */}
-                      {post.column !== "publicado" && (
-                        <div className="relative group">
-                          <button className="p-1.5 text-text-muted hover:text-green rounded" title="Mover">
-                            <ChevronDown className="h-3.5 w-3.5" />
-                          </button>
-                          <div className="absolute right-0 bottom-full mb-1 bg-surface border border-border-custom rounded-lg shadow-lg p-1 hidden group-hover:block z-10 min-w-[140px]">
-                            {COLUMNS.filter((c) => c.key !== post.column && c.key !== "publicado").map((c) => (
-                              <button
-                                key={c.key}
-                                onClick={() => handleMove(post.id, c.key)}
-                                className="flex items-center gap-2 w-full px-3 py-1.5 text-xs text-text-secondary hover:text-green hover:bg-green-light rounded"
-                              >
-                                <c.icon className="h-3 w-3" />
-                                {c.label}
-                              </button>
-                            ))}
-                          </div>
-                        </div>
-                      )}
-
-                      {post.column === "aprovado" && (
-                        <button
-                          onClick={() => handlePublish(post.id)}
-                          className="flex items-center gap-1 px-2.5 py-1 bg-green text-white text-[11px] font-semibold rounded hover:bg-green-hover"
-                        >
-                          <Send className="h-3 w-3" />
-                          Publicar
+                        {/* Generate image button */}
+                        <button onClick={() => handleGenerateImage(post.id)} disabled={isGenerating}
+                          className="p-1.5 text-text-muted hover:text-green rounded disabled:opacity-30" title="Gerar imagem com IA">
+                          <ImageIcon className="h-3.5 w-3.5" />
                         </button>
-                      )}
 
-                      <button
-                        onClick={() => handleDelete(post.id)}
-                        className="p-1.5 text-text-muted hover:text-red rounded" title="Excluir"
-                      >
-                        <Trash2 className="h-3.5 w-3.5" />
-                      </button>
+                        {/* Gallery button */}
+                        <button onClick={() => handleOpenGallery(post.id, post.title)}
+                          className="p-1.5 text-text-muted hover:text-blue rounded" title="Galeria do time (Sofascore)">
+                          <Images className="h-3.5 w-3.5" />
+                        </button>
+
+                        {post.rssUrl && (
+                          <a href={post.rssUrl} target="_blank" rel="noopener noreferrer"
+                            className="p-1.5 text-text-muted hover:text-blue rounded" title="Fonte original"><ExternalLink className="h-3.5 w-3.5" /></a>
+                        )}
+
+                        {post.wpEditUrl && (
+                          <a href={post.wpEditUrl} target="_blank" rel="noopener noreferrer"
+                            className="p-1.5 text-text-muted hover:text-green rounded" title="Editar no WordPress"><Pencil className="h-3.5 w-3.5" /></a>
+                        )}
+
+                        <div className="flex-1" />
+
+                        {/* Move buttons */}
+                        {post.column !== "publicado" && (
+                          <div className="relative group">
+                            <button className="p-1.5 text-text-muted hover:text-green rounded" title="Mover"><ChevronDown className="h-3.5 w-3.5" /></button>
+                            <div className="absolute right-0 bottom-full mb-1 bg-surface border border-border-custom rounded-lg shadow-lg p-1 hidden group-hover:block z-10 min-w-[140px]">
+                              {COLUMNS.filter((c) => c.key !== post.column && c.key !== "publicado").map((c) => (
+                                <button key={c.key} onClick={() => handleMove(post.id, c.key)}
+                                  className="flex items-center gap-2 w-full px-3 py-1.5 text-xs text-text-secondary hover:text-green hover:bg-green-light rounded">
+                                  <c.icon className="h-3 w-3" /> {c.label}
+                                </button>
+                              ))}
+                            </div>
+                          </div>
+                        )}
+
+                        {post.column === "aprovado" && (
+                          <button onClick={() => handlePublish(post.id)}
+                            className="flex items-center gap-1 px-2.5 py-1 bg-green text-white text-[11px] font-semibold rounded hover:bg-green-hover">
+                            <Send className="h-3 w-3" /> Publicar
+                          </button>
+                        )}
+
+                        <button onClick={() => handleDelete(post.id)} className="p-1.5 text-text-muted hover:text-red rounded" title="Excluir"><Trash2 className="h-3.5 w-3.5" /></button>
+                      </div>
                     </div>
-                  </div>
-                ))}
+                  );
+                })}
 
                 {columnPosts(col.key).length === 0 && (
                   <div className="text-center py-8 text-text-muted">
@@ -312,56 +336,79 @@ export default function StudioPage() {
           <div className="bg-surface rounded-xl border border-border-custom shadow-xl w-full max-w-lg" onClick={(e) => e.stopPropagation()}>
             <div className="flex items-center justify-between px-6 py-4 border-b border-border-custom">
               <h2 className="text-base font-bold text-text-primary">Novo Post</h2>
-              <button onClick={() => setShowNewPost(false)} className="p-1 text-text-muted hover:text-text-primary">
-                <X className="h-5 w-5" />
-              </button>
+              <button onClick={() => setShowNewPost(false)} className="p-1 text-text-muted hover:text-text-primary"><X className="h-5 w-5" /></button>
             </div>
             <div className="p-6 space-y-4">
               <div>
                 <label className="block text-xs font-semibold text-text-secondary mb-1">Titulo *</label>
-                <input
-                  value={newTitle}
-                  onChange={(e) => setNewTitle(e.target.value)}
-                  placeholder="Titulo do post"
-                  className="w-full h-10 rounded-lg border border-border-custom bg-surface px-4 text-sm focus:outline-none focus:ring-2 focus:ring-green/30 focus:border-green"
-                  autoFocus
-                />
+                <input value={newTitle} onChange={(e) => setNewTitle(e.target.value)} placeholder="Titulo do post"
+                  className="w-full h-10 rounded-lg border border-border-custom bg-surface px-4 text-sm focus:outline-none focus:ring-2 focus:ring-green/30 focus:border-green" autoFocus />
               </div>
               <div>
                 <label className="block text-xs font-semibold text-text-secondary mb-1">Texto</label>
-                <textarea
-                  value={newText}
-                  onChange={(e) => setNewText(e.target.value)}
-                  placeholder="Conteudo do post (pode editar depois)"
-                  rows={6}
-                  className="w-full rounded-lg border border-border-custom bg-surface px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-green/30 focus:border-green resize-none"
-                />
+                <textarea value={newText} onChange={(e) => setNewText(e.target.value)} placeholder="Conteudo do post" rows={6}
+                  className="w-full rounded-lg border border-border-custom bg-surface px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-green/30 focus:border-green resize-none" />
               </div>
               <div>
                 <label className="block text-xs font-semibold text-text-secondary mb-1">Categoria</label>
-                <select
-                  value={newCategory}
-                  onChange={(e) => setNewCategory(e.target.value)}
-                  className="w-full h-10 rounded-lg border border-border-custom bg-surface px-4 text-sm"
-                >
+                <select value={newCategory} onChange={(e) => setNewCategory(e.target.value)}
+                  className="w-full h-10 rounded-lg border border-border-custom bg-surface px-4 text-sm">
                   {CATEGORIES.map((c) => <option key={c} value={c}>{c}</option>)}
                 </select>
               </div>
             </div>
             <div className="flex gap-3 px-6 py-4 border-t border-border-custom">
-              <button
-                onClick={handleCreateManual}
-                className="flex-1 flex items-center justify-center gap-2 py-2.5 bg-green text-white rounded-lg text-sm font-semibold hover:bg-green-hover"
-              >
-                <Plus className="h-4 w-4" />
-                Criar Post
+              <button onClick={handleCreateManual}
+                className="flex-1 flex items-center justify-center gap-2 py-2.5 bg-green text-white rounded-lg text-sm font-semibold hover:bg-green-hover">
+                <Plus className="h-4 w-4" /> Criar Post
               </button>
-              <button
-                onClick={() => setShowNewPost(false)}
-                className="px-6 py-2.5 border border-border-custom text-text-secondary rounded-lg text-sm font-semibold hover:bg-body"
-              >
-                Cancelar
-              </button>
+              <button onClick={() => setShowNewPost(false)}
+                className="px-6 py-2.5 border border-border-custom text-text-secondary rounded-lg text-sm font-semibold hover:bg-body">Cancelar</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Gallery modal */}
+      {showGallery && (
+        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4" onClick={() => setShowGallery(null)}>
+          <div className="bg-surface rounded-xl border border-border-custom shadow-xl w-full max-w-3xl max-h-[80vh] flex flex-col" onClick={(e) => e.stopPropagation()}>
+            <div className="flex items-center justify-between px-6 py-4 border-b border-border-custom shrink-0">
+              <h2 className="text-base font-bold text-text-primary flex items-center gap-2">
+                <Images className="h-5 w-5 text-green" />
+                Galeria do Time (Sofascore)
+              </h2>
+              <button onClick={() => setShowGallery(null)} className="p-1 text-text-muted hover:text-text-primary"><X className="h-5 w-5" /></button>
+            </div>
+            <div className="p-6 overflow-y-auto flex-1">
+              {galleryLoading ? (
+                <div className="flex justify-center py-12"><Loader2 className="h-6 w-6 animate-spin text-text-muted" /></div>
+              ) : gallery.length === 0 ? (
+                <div className="text-center py-12 text-text-muted">
+                  <Images className="h-10 w-10 mx-auto mb-2 opacity-30" />
+                  <p className="text-sm">Nenhuma imagem encontrada para este time</p>
+                  <p className="text-xs mt-1">Tente com o nome do time no titulo do post</p>
+                </div>
+              ) : (
+                <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                  {gallery.map((img) => (
+                    <button key={img.id} onClick={() => handleSelectGalleryImage(showGallery, img.thumbnail)}
+                      className="group rounded-lg overflow-hidden border border-border-custom hover:border-green hover:shadow-md transition-all text-left">
+                      <div className="relative">
+                        <Image src={img.thumbnail} alt={img.title} width={320} height={180} className="w-full h-32 object-cover" unoptimized />
+                        <div className="absolute inset-0 bg-green/0 group-hover:bg-green/20 transition-colors flex items-center justify-center">
+                          <span className="bg-green text-white text-xs font-bold px-3 py-1 rounded-full opacity-0 group-hover:opacity-100 transition-opacity">
+                            Usar esta
+                          </span>
+                        </div>
+                      </div>
+                      <div className="p-2">
+                        <p className="text-[10px] text-text-muted line-clamp-1">{img.title}</p>
+                      </div>
+                    </button>
+                  ))}
+                </div>
+              )}
             </div>
           </div>
         </div>
