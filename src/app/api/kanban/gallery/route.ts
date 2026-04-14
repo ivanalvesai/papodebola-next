@@ -37,7 +37,7 @@ export async function POST(request: NextRequest) {
 
       // Cleanup: delete all AI-generated images for this post (user chose gallery)
       try {
-        const dir = join(process.cwd(), "public", "kanban-images");
+        const dir = join(process.cwd(), "data", "kanban-images");
         const files = await readdir(dir);
         for (const f of files) {
           if (f.startsWith(postId)) {

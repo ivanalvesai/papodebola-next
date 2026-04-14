@@ -53,7 +53,7 @@ export async function POST(request: NextRequest) {
 
       // Cleanup generated images
       try {
-        const dir = join(process.cwd(), "public", "kanban-images");
+        const dir = join(process.cwd(), "data", "kanban-images");
         const files = await readdir(dir);
         for (const f of files) {
           if (f.startsWith(body.id)) {

@@ -5,7 +5,7 @@ import { runImagePipeline } from "@/lib/services/image-agent";
 import { writeFile, mkdir, unlink, readdir } from "fs/promises";
 import { join } from "path";
 
-const IMG_DIR = join(process.cwd(), "public", "kanban-images");
+const IMG_DIR = join(process.cwd(), "data", "kanban-images");
 
 async function saveImage(postId: string, buffer: Buffer, attempt: number): Promise<string> {
   await mkdir(IMG_DIR, { recursive: true });
@@ -22,7 +22,7 @@ async function saveImage(postId: string, buffer: Buffer, attempt: number): Promi
 
   const filename = `${postId}-v${attempt}.jpg`;
   await writeFile(join(IMG_DIR, filename), buffer);
-  return `/kanban-images/${filename}`;
+  return `/api/kanban/image/serve?f=${filename}`;
 }
 
 // Cleanup: delete all generated images for a post
