@@ -9,6 +9,8 @@ services:
       - .env.local
     volumes:
       - pdb-data:/app/data
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
     networks:
       - default
 
