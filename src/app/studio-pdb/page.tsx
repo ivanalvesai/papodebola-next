@@ -6,7 +6,7 @@ import {
   Sparkles, Plus, Trash2, ExternalLink, Send, GripVertical,
   Loader2, ChevronDown, X, Goal, LogOut, RefreshCw,
   Lightbulb, Pencil, CheckCircle, Globe, Eye, ImageIcon,
-  ThumbsUp, ThumbsDown, Images,
+  ThumbsUp, ThumbsDown, Images, FileText,
 } from "lucide-react";
 
 type Column = "sugestoes" | "edicao" | "aprovado" | "publicado";
@@ -16,6 +16,8 @@ interface Post {
   category: string; source: string; rssUrl: string;
   column: Column; wpId: number | null; wpEditUrl: string;
   createdAt: string; updatedAt: string;
+  slug?: string; excerpt?: string; focusKeyword?: string; tags?: string[];
+  htmlContent?: string; wordCount?: number; headingCount?: number;
 }
 
 interface ReviewResult {
@@ -50,6 +52,9 @@ export default function StudioPage() {
   const [newText, setNewText] = useState("");
   const [newCategory, setNewCategory] = useState("Futebol Brasileiro");
   const [dragId, setDragId] = useState<string | null>(null);
+
+  // Writer agent state
+  const [writingArticle, setWritingArticle] = useState<string | null>(null);
 
   // Image generation state
   const [generatingImage, setGeneratingImage] = useState<string | null>(null);
@@ -89,6 +94,19 @@ export default function StudioPage() {
       else alert("Erro ao gerar sugestoes");
     } catch { alert("Erro de conexao"); }
     setGenerating(false);
+  }
+
+  async function handleWriteArticle(postId: string) {
+    setWritingArticle(postId);
+    try {
+      const res = await fetch("/api/kanban/write", {
+        method: "POST", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ postId }),
+      });
+      if (res.ok) await loadPosts();
+      else alert("Erro ao escrever artigo");
+    } catch { alert("Erro de conexao"); }
+    setWritingArticle(null);
   }
 
   async function handleCreateManual() {
@@ -249,6 +267,7 @@ export default function StudioPage() {
                   const review = imageReview[post.id];
                   const pipeline = pipelineInfo[post.id];
                   const isGenerating = generatingImage === post.id;
+                  const isWriting = writingArticle === post.id;
 
                   return (
                     <div key={post.id} draggable onDragStart={() => handleDragStart(post.id)}
@@ -315,6 +334,32 @@ export default function StudioPage() {
                           </div>
                         )}
 
+                        {/* Writing indicator */}
+                        {isWriting && (
+                          <div className="mt-2 flex items-center gap-2 p-2 bg-body rounded text-xs text-text-muted">
+                            <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                            Escrevendo artigo (humanizado)...
+                          </div>
+                        )}
+
+                        {/* SEO info badge */}
+                        {post.source === "writer-ia" && (
+                          <div className="mt-2 p-2 bg-blue-light rounded text-[10px] text-blue space-y-0.5">
+                            <div className="font-semibold flex items-center justify-between">
+                              <span>Agente Escritor + SEO</span>
+                              {post.wordCount && (
+                                <span className={`px-1.5 py-0.5 rounded text-[9px] font-bold text-white ${post.wordCount >= 1500 ? "bg-green" : post.wordCount >= 600 ? "bg-yellow-500" : "bg-red"}`}>
+                                  {post.wordCount} palavras
+                                </span>
+                              )}
+                            </div>
+                            {post.focusKeyword && <div>KW: {post.focusKeyword}</div>}
+                            {post.excerpt && <div className="text-text-muted line-clamp-1">Meta: {post.excerpt}</div>}
+                            {post.headingCount !== undefined && <div>H2: {post.headingCount} subtitulos {post.headingCount >= 3 ? "(TOC ativo)" : ""}</div>}
+                            {post.tags && post.tags.length > 0 && <div>Tags: {post.tags.join(", ")}</div>}
+                          </div>
+                        )}
+
                         {/* Expanded text */}
                         {expandedCard === post.id && (
                           <div className="mt-2 p-2 bg-body rounded text-xs text-text-secondary leading-relaxed max-h-40 overflow-y-auto">
@@ -327,6 +372,12 @@ export default function StudioPage() {
                       <div className="border-t border-border-light px-3 py-2 flex items-center gap-1">
                         <button onClick={() => setExpandedCard(expandedCard === post.id ? null : post.id)}
                           className="p-1.5 text-text-muted hover:text-text-primary rounded" title="Ver texto"><Eye className="h-3.5 w-3.5" /></button>
+
+                        {/* Write article button */}
+                        <button onClick={() => handleWriteArticle(post.id)} disabled={isWriting}
+                          className="p-1.5 text-text-muted hover:text-blue rounded disabled:opacity-30" title="Escrever artigo com IA (humanizado)">
+                          <FileText className="h-3.5 w-3.5" />
+                        </button>
 
                         {/* Generate image button */}
                         <button onClick={() => handleGenerateImage(post.id)} disabled={isGenerating}

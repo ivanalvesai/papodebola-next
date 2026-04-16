@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { revalidatePath } from "next/cache";
 import { getSession } from "@/lib/auth/jwt";
 import { getPosts, addPost, updatePost, deletePost, movePost } from "@/lib/data/kanban-store";
 import type { KanbanColumn } from "@/lib/data/kanban-store";
@@ -71,10 +72,67 @@ export async function POST(request: NextRequest) {
       if (!post) return NextResponse.json({ error: "Post nao encontrado" }, { status: 404 });
 
       const wpAuth = Buffer.from(`${process.env.WP_USER}:${process.env.WP_APP_PASSWORD}`).toString("base64");
-      const slug = post.title.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "")
+      const wpBase = process.env.WP_BASE_URL;
+      const slug = post.slug || post.title.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "")
         .replace(/[^a-z0-9\s-]/g, "").replace(/\s+/g, "-").slice(0, 60);
 
-      // 1. Optimize and upload image to WordPress
+      // 1. Resolve WordPress category ID
+      let wpCategoryId: number | null = null;
+      if (post.category) {
+        try {
+          const catRes = await fetch(
+            `${wpBase}/categories?search=${encodeURIComponent(post.category)}&per_page=5`,
+            { headers: { Authorization: `Basic ${wpAuth}` } },
+          );
+          if (catRes.ok) {
+            const cats = await catRes.json();
+            const exact = cats.find((c: { name: string }) =>
+              c.name.toLowerCase() === post.category.toLowerCase()
+            );
+            if (exact) {
+              wpCategoryId = exact.id;
+            } else if (cats.length > 0) {
+              wpCategoryId = cats[0].id;
+            }
+          }
+        } catch { /* use default */ }
+      }
+
+      // 2. Resolve WordPress tag IDs (create if needed)
+      const wpTagIds: number[] = [];
+      if (post.tags && post.tags.length > 0) {
+        for (const tagName of post.tags) {
+          try {
+            // Search existing tag
+            const tagRes = await fetch(
+              `${wpBase}/tags?search=${encodeURIComponent(tagName)}&per_page=5`,
+              { headers: { Authorization: `Basic ${wpAuth}` } },
+            );
+            if (tagRes.ok) {
+              const existingTags = await tagRes.json();
+              const exact = existingTags.find((t: { name: string }) =>
+                t.name.toLowerCase() === tagName.toLowerCase()
+              );
+              if (exact) {
+                wpTagIds.push(exact.id);
+                continue;
+              }
+            }
+            // Create new tag
+            const createRes = await fetch(`${wpBase}/tags`, {
+              method: "POST",
+              headers: { Authorization: `Basic ${wpAuth}`, "Content-Type": "application/json" },
+              body: JSON.stringify({ name: tagName }),
+            });
+            if (createRes.ok) {
+              const newTag = await createRes.json();
+              wpTagIds.push(newTag.id);
+            }
+          } catch { /* skip tag */ }
+        }
+      }
+
+      // 3. Optimize and upload image to WordPress
       let featuredMediaId = 0;
       if (post.image) {
         console.log(`[Publish] Processing image for: ${post.title.substring(0, 40)}`);
@@ -92,24 +150,56 @@ export async function POST(request: NextRequest) {
         }
       }
 
-      // 2. Publish post to WordPress
-      const wpRes = await fetch(`${process.env.WP_BASE_URL}/posts`, {
+      // 4. Publish post to WordPress with full SEO fields
+      // Use htmlContent (with TOC, H2s, internal links) if available, otherwise basic paragraphs
+      const content = post.htmlContent
+        || post.text.split("\n\n").map((p) => `<p>${p}</p>`).join("");
+
+      const seoTitle = post.title.length > 60
+        ? post.title.substring(0, 57) + "..."
+        : post.title;
+
+      const wpBody: Record<string, unknown> = {
+        title: post.title,
+        slug,
+        content,
+        excerpt: post.excerpt || post.text.substring(0, 155),
+        status: "publish",
+        featured_media: featuredMediaId || undefined,
+        categories: wpCategoryId ? [wpCategoryId] : [],
+        tags: wpTagIds.length > 0 ? wpTagIds : [],
+        // Rank Math SEO fields (requires Rank Math REST API enabled)
+        meta: {
+          rank_math_focus_keyword: post.focusKeyword || "",
+          rank_math_description: post.excerpt || post.text.substring(0, 155),
+          rank_math_title: seoTitle,
+          rank_math_rich_snippet: "article",
+          rank_math_snippet_article_type: "NewsArticle",
+          rank_math_robots: ["index", "follow", "max-snippet:-1", "max-image-preview:large"],
+          rank_math_facebook_title: seoTitle,
+          rank_math_facebook_description: post.excerpt || post.text.substring(0, 155),
+          rank_math_twitter_use_facebook: "on",
+        },
+      };
+
+      console.log(`[Publish] SEO: keyword="${post.focusKeyword}", cat=${wpCategoryId}, tags=${wpTagIds.join(",")}, slug=${slug}`);
+
+      const wpRes = await fetch(`${wpBase}/posts`, {
         method: "POST",
         headers: { Authorization: `Basic ${wpAuth}`, "Content-Type": "application/json" },
-        body: JSON.stringify({
-          title: post.title,
-          content: post.text.split("\n\n").map((p) => `<p>${p}</p>`).join(""),
-          status: "publish",
-          featured_media: featuredMediaId || undefined,
-        }),
+        body: JSON.stringify(wpBody),
       });
 
-      if (!wpRes.ok) return NextResponse.json({ error: "Erro ao publicar no WordPress" }, { status: 500 });
+      if (!wpRes.ok) {
+        const errText = await wpRes.text().catch(() => "");
+        console.error(`[Publish] WordPress error: ${wpRes.status}`, errText);
+        return NextResponse.json({ error: "Erro ao publicar no WordPress" }, { status: 500 });
+      }
 
       const wpData = await wpRes.json();
       const wpEditUrl = `https://admin.papodebola.com.br/wp-admin/post.php?post=${wpData.id}&action=edit`;
 
-      // 3. Cleanup local AI images
+      // 5. Cleanup local AI images
       try {
         const dir = join(process.cwd(), "data", "kanban-images");
         const files = await readdir(dir);
@@ -124,9 +214,22 @@ export async function POST(request: NextRequest) {
         wpEditUrl,
       });
 
+      // 6. Revalidate homepage and news so the article appears immediately
+      const wpSlug = wpData.slug || slug;
+      revalidatePath("/");
+      revalidatePath("/noticias");
+      if (wpSlug) revalidatePath(`/artigos/${wpSlug}`);
+
       return NextResponse.json({
         post: updated, wpId: wpData.id, wpEditUrl,
         imageOptimized: !!featuredMediaId,
+        seo: {
+          slug: wpSlug,
+          categoryId: wpCategoryId,
+          tagIds: wpTagIds,
+          focusKeyword: post.focusKeyword,
+          excerpt: post.excerpt,
+        },
       });
     }
 

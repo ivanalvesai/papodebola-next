@@ -92,8 +92,9 @@ export async function getArticles(options?: {
   category?: string;
   search?: string;
   tag?: string;
+  noCache?: boolean;
 }): Promise<{ articles: Article[]; total: number }> {
-  const { page = 1, perPage = 20, category, search, tag } = options || {};
+  const { page = 1, perPage = 20, category, search, tag, noCache } = options || {};
   const categories = await getCategories();
   const tags = await getTags();
 
@@ -113,7 +114,7 @@ export async function getArticles(options?: {
     if (tagId) endpoint += `&tags=${tagId}`;
   }
 
-  const data = await fetchWP<any[]>(endpoint, 1800);
+  const data = await fetchWP<any[]>(endpoint, noCache ? 0 : 1800);
   if (!data) return { articles: [], total: 0 };
 
   const articles = data.map((post: any) => normalizeArticle(post, categories, tags));
@@ -121,11 +122,11 @@ export async function getArticles(options?: {
   return { articles, total: articles.length < perPage ? (page - 1) * perPage + articles.length : page * perPage + 1 };
 }
 
-export async function getArticleBySlug(slug: string): Promise<Article | null> {
+export async function getArticleBySlug(slug: string, noCache?: boolean): Promise<Article | null> {
   const categories = await getCategories();
   const tags = await getTags();
 
-  const data = await fetchWP<any[]>(`posts?slug=${encodeURIComponent(slug)}&_embed`, 1800);
+  const data = await fetchWP<any[]>(`posts?slug=${encodeURIComponent(slug)}&_embed`, noCache ? 0 : 1800);
   if (!data || data.length === 0) return null;
 
   return normalizeArticle(data[0], categories, tags);
