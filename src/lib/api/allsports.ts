@@ -1,11 +1,45 @@
 const DIRECT_BASE = "https://allsportsapi2.p.rapidapi.com/api";
 
+const MAX_CONCURRENT = parseInt(process.env.ALLSPORTS_MAX_CONCURRENT || "4", 10);
+let activeRequests = 0;
+const waitQueue: (() => void)[] = [];
+
+async function acquireSlot(): Promise<void> {
+  if (activeRequests < MAX_CONCURRENT) {
+    activeRequests++;
+    return;
+  }
+  await new Promise<void>((resolve) => waitQueue.push(resolve));
+  activeRequests++;
+}
+
+function releaseSlot(): void {
+  activeRequests--;
+  const next = waitQueue.shift();
+  if (next) next();
+}
+
 async function fetchFromUrl<T>(
   url: string,
   headers: Record<string, string>,
   revalidate: number,
   label: string,
   maxRetries: number = 3
+): Promise<{ ok: boolean; data: T | null }> {
+  await acquireSlot();
+  try {
+    return await fetchWithRetry<T>(url, headers, revalidate, label, maxRetries);
+  } finally {
+    releaseSlot();
+  }
+}
+
+async function fetchWithRetry<T>(
+  url: string,
+  headers: Record<string, string>,
+  revalidate: number,
+  label: string,
+  maxRetries: number
 ): Promise<{ ok: boolean; data: T | null }> {
   for (let attempt = 0; attempt <= maxRetries; attempt++) {
     try {
