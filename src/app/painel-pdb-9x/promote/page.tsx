@@ -6,7 +6,7 @@ import { Rocket, AlertTriangle, CheckCircle2, RefreshCw, Loader2 } from "lucide-
 type Commit = { sha: string; author: string; date: string; message: string };
 type FileChange = { status: string; file: string };
 type Preview = { ahead: number; behind: number; commits: Commit[]; files: FileChange[] };
-type JobStatus = { status: "running" | "done"; success?: boolean; exitCode?: number; output: string };
+type JobStatus = { status: "running" | "done"; success?: boolean; exitCode?: number; output: string; totalLines?: number };
 
 const POLL_INTERVAL_MS = 3000;
 
@@ -45,8 +45,16 @@ export default function PromotePage() {
   async function pollStatus(id: string) {
     try {
       const res = await fetch(`/api/promote?jobId=${id}`);
-      const data: JobStatus = await res.json();
-      setJobStatus(data);
+      if (!res.ok) {
+        console.warn("poll HTTP", res.status, "- continuando");
+        return;
+      }
+      const data = await res.json();
+      if (!data.status) {
+        console.warn("poll sem status - continuando");
+        return;
+      }
+      setJobStatus(data as JobStatus);
       if (data.status === "done") {
         if (pollRef.current) {
           clearInterval(pollRef.current);
@@ -219,7 +227,12 @@ export default function PromotePage() {
             )}
           </div>
           {isRunning && (
-            <p className="text-xs text-text-muted mb-2">Job ID: <span className="font-mono">{jobId}</span> - atualizando a cada 3s</p>
+            <p className="text-xs text-text-muted mb-2">
+              Job ID: <span className="font-mono">{jobId}</span> - atualizando a cada 3s
+              {jobStatus.totalLines && jobStatus.totalLines > 200 && (
+                <span className="ml-2">(mostrando ultimas 200 de {jobStatus.totalLines} linhas)</span>
+              )}
+            </p>
           )}
           {isDone && jobStatus.success && (
             <p className="text-sm text-text-muted mb-2">Producao atualizada. Lembre de purgar o cache Cloudflare (Purge Everything).</p>
