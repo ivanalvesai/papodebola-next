@@ -44,14 +44,24 @@ export default function PromotePage() {
 
   async function pollStatus(id: string) {
     try {
-      const res = await fetch(`/api/promote?jobId=${id}`);
+      const res = await fetch(`/api/promote?jobId=${id}`, { headers: { Accept: "application/json" } });
+      if (res.status === 401) {
+        setError("Sessao expirada. Faca login novamente.");
+        if (pollRef.current) { clearInterval(pollRef.current); pollRef.current = null; }
+        return;
+      }
       if (!res.ok) {
         console.warn("poll HTTP", res.status, "- continuando");
         return;
       }
+      const ct = res.headers.get("content-type") || "";
+      if (!ct.includes("application/json")) {
+        console.warn("poll content-type invalido:", ct);
+        return;
+      }
       const data = await res.json();
       if (!data.status) {
-        console.warn("poll sem status - continuando");
+        console.warn("poll sem status:", data);
         return;
       }
       setJobStatus(data as JobStatus);

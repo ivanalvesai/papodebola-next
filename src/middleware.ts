@@ -15,15 +15,20 @@ export async function middleware(request: NextRequest) {
 
   if (isProtected && !isLogin) {
     const token = request.cookies.get("pdb_auth")?.value;
+    const isApi = request.nextUrl.pathname.startsWith("/api/");
 
     if (!token) {
-      return NextResponse.redirect(new URL(`${PANEL_PATH}/login`, request.url));
+      return isApi
+        ? NextResponse.json({ error: "nao autenticado" }, { status: 401 })
+        : NextResponse.redirect(new URL(`${PANEL_PATH}/login`, request.url));
     }
 
     try {
       await jwtVerify(token, SECRET);
     } catch {
-      return NextResponse.redirect(new URL(`${PANEL_PATH}/login`, request.url));
+      return isApi
+        ? NextResponse.json({ error: "sessao expirada" }, { status: 401 })
+        : NextResponse.redirect(new URL(`${PANEL_PATH}/login`, request.url));
     }
   }
 
