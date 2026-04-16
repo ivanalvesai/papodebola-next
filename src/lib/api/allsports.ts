@@ -87,6 +87,11 @@ async function fetchWithRetry<T>(
 
       return { ok: true, data: data as T };
     } catch (error) {
+      const code = (error as { cause?: { code?: string }; code?: string })?.cause?.code
+        ?? (error as { code?: string })?.code;
+      if (code === "ENOTFOUND" || code === "ECONNREFUSED") {
+        return { ok: false, data: null };
+      }
       console.error(`${label} fetch failed (attempt ${attempt}):`, error);
       if (attempt === maxRetries) return { ok: false, data: null };
       await new Promise((r) => setTimeout(r, 500 * (attempt + 1)));
