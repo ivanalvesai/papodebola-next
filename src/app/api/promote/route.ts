@@ -1,4 +1,4 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { spawn } from "child_process";
 
 const SSH_KEY = process.env.PROMOTE_SSH_KEY || "/app/.ssh/promote_executor";
@@ -6,25 +6,23 @@ const SSH_HOST = process.env.PROMOTE_SSH_HOST || "host.docker.internal";
 const SSH_USER = process.env.PROMOTE_SSH_USER || "ivan";
 const SSH_PORT = process.env.PROMOTE_SSH_PORT || "1822";
 
-function runPromoteCommand(cmd: "preview" | "promote", timeoutMs: number): Promise<{ code: number; stdout: string; stderr: string }> {
+function runSsh(command: string, timeoutMs: number): Promise<{ code: number; stdout: string; stderr: string }> {
   return new Promise((resolve) => {
-    const args = [
+    const child = spawn("ssh", [
       "-i", SSH_KEY,
       "-o", "StrictHostKeyChecking=no",
       "-o", "UserKnownHostsFile=/dev/null",
       "-o", "BatchMode=yes",
       "-p", SSH_PORT,
       `${SSH_USER}@${SSH_HOST}`,
-      cmd,
-    ];
-    const child = spawn("ssh", args);
+      command,
+    ]);
     let stdout = "";
     let stderr = "";
     const timer = setTimeout(() => {
       child.kill("SIGKILL");
       resolve({ code: 124, stdout, stderr: stderr + "\nTIMEOUT" });
     }, timeoutMs);
-
     child.stdout.on("data", (d) => (stdout += d.toString()));
     child.stderr.on("data", (d) => (stderr += d.toString()));
     child.on("close", (code) => {
@@ -34,28 +32,43 @@ function runPromoteCommand(cmd: "preview" | "promote", timeoutMs: number): Promi
   });
 }
 
-export async function GET() {
-  const { code, stdout, stderr } = await runPromoteCommand("preview", 15000);
+export async function GET(request: NextRequest) {
+  const jobId = request.nextUrl.searchParams.get("jobId");
+
+  if (jobId) {
+    if (!/^[0-9a-zA-Z-]+$/.test(jobId)) {
+      return NextResponse.json({ error: "invalid jobId" }, { status: 400 });
+    }
+    const { code, stdout, stderr } = await runSsh(`status ${jobId}`, 15000);
+    if (code !== 0) {
+      return NextResponse.json({ error: "status falhou", stderr }, { status: 500 });
+    }
+    try {
+      return NextResponse.json(JSON.parse(stdout));
+    } catch {
+      return NextResponse.json({ error: "resposta invalida", raw: stdout }, { status: 500 });
+    }
+  }
+
+  const { code, stdout, stderr } = await runSsh("preview", 15000);
   if (code !== 0) {
-    return NextResponse.json({ error: "preview falhou", stderr, stdout }, { status: 500 });
+    return NextResponse.json({ error: "preview falhou", stderr }, { status: 500 });
   }
   try {
-    const data = JSON.parse(stdout);
-    return NextResponse.json(data);
+    return NextResponse.json(JSON.parse(stdout));
   } catch {
     return NextResponse.json({ error: "resposta invalida", raw: stdout }, { status: 500 });
   }
 }
 
 export async function POST() {
-  const { code, stdout, stderr } = await runPromoteCommand("promote", 300000);
-  return NextResponse.json(
-    {
-      success: code === 0,
-      exitCode: code,
-      stdout,
-      stderr,
-    },
-    { status: code === 0 ? 200 : 500 }
-  );
+  const { code, stdout, stderr } = await runSsh("promote-async", 15000);
+  if (code !== 0) {
+    return NextResponse.json({ error: "dispatch falhou", stderr }, { status: 500 });
+  }
+  try {
+    return NextResponse.json(JSON.parse(stdout));
+  } catch {
+    return NextResponse.json({ error: "resposta invalida", raw: stdout }, { status: 500 });
+  }
 }
