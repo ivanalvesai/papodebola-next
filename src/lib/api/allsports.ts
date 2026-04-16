@@ -101,6 +101,7 @@ export async function fetchAllSports<T>(
 ): Promise<T | null> {
   const proxyUrl = process.env.SPORTS_PROXY_URL;
   const proxyToken = process.env.SPORTS_PROXY_TOKEN;
+  const isBuildPhase = process.env.NEXT_PHASE === "phase-production-build";
 
   if (proxyUrl && proxyToken) {
     const result = await fetchFromUrl<T>(
@@ -110,6 +111,11 @@ export async function fetchAllSports<T>(
       `SportsProxy[${endpoint}]`
     );
     if (result.ok) return result.data;
+
+    if (isBuildPhase) {
+      console.warn(`Build: proxy indisponivel (host.docker.internal nao resolve no builder), skip direct: ${endpoint}`);
+      return null;
+    }
     console.warn(`SportsProxy failed, falling back to direct API: ${endpoint}`);
   }
 
