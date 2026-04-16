@@ -1,19 +1,24 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Rocket, AlertTriangle, CheckCircle2, RefreshCw, Loader2 } from "lucide-react";
 
 type Commit = { sha: string; author: string; date: string; message: string };
 type FileChange = { status: string; file: string };
 type Preview = { ahead: number; behind: number; commits: Commit[]; files: FileChange[] };
+type JobStatus = { status: "running" | "done"; success?: boolean; exitCode?: number; output: string };
+
+const POLL_INTERVAL_MS = 3000;
 
 export default function PromotePage() {
   const [preview, setPreview] = useState<Preview | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [confirming, setConfirming] = useState(false);
-  const [promoting, setPromoting] = useState(false);
-  const [result, setResult] = useState<{ success: boolean; stdout: string; stderr: string } | null>(null);
+  const [jobId, setJobId] = useState<string | null>(null);
+  const [jobStatus, setJobStatus] = useState<JobStatus | null>(null);
+  const [dispatching, setDispatching] = useState(false);
+  const pollRef = useRef<number | null>(null);
 
   async function loadPreview() {
     setLoading(true);
@@ -21,11 +26,8 @@ export default function PromotePage() {
     try {
       const res = await fetch("/api/promote");
       const data = await res.json();
-      if (!res.ok) {
-        setError(data.error || "Erro ao carregar preview");
-      } else {
-        setPreview(data);
-      }
+      if (!res.ok) setError(data.error || "Erro ao carregar preview");
+      else setPreview(data);
     } catch (e) {
       setError(String(e));
     } finally {
@@ -35,28 +37,56 @@ export default function PromotePage() {
 
   useEffect(() => {
     loadPreview();
+    return () => {
+      if (pollRef.current) clearInterval(pollRef.current);
+    };
   }, []);
 
+  async function pollStatus(id: string) {
+    try {
+      const res = await fetch(`/api/promote?jobId=${id}`);
+      const data: JobStatus = await res.json();
+      setJobStatus(data);
+      if (data.status === "done") {
+        if (pollRef.current) {
+          clearInterval(pollRef.current);
+          pollRef.current = null;
+        }
+        if (data.success) {
+          setTimeout(() => loadPreview(), 2000);
+        }
+      }
+    } catch (e) {
+      console.error("poll error", e);
+    }
+  }
+
   async function handlePromote() {
-    setPromoting(true);
-    setResult(null);
+    setDispatching(true);
+    setJobStatus(null);
     try {
       const res = await fetch("/api/promote", { method: "POST" });
       const data = await res.json();
-      setResult(data);
-      if (data.success) {
-        setTimeout(() => loadPreview(), 2000);
+      if (!res.ok || !data.jobId) {
+        setError(data.error || "Falha ao disparar promocao");
+        return;
       }
-    } catch (e) {
-      setResult({ success: false, stdout: "", stderr: String(e) });
-    } finally {
-      setPromoting(false);
+      setJobId(data.jobId);
+      setJobStatus({ status: "running", output: "Iniciando...\n" });
       setConfirming(false);
+      pollStatus(data.jobId);
+      pollRef.current = window.setInterval(() => pollStatus(data.jobId), POLL_INTERVAL_MS);
+    } catch (e) {
+      setError(String(e));
+    } finally {
+      setDispatching(false);
     }
   }
 
   const statusLabel: Record<string, string> = { A: "Adicionado", M: "Modificado", D: "Removido", R: "Renomeado" };
   const statusColor: Record<string, string> = { A: "text-green", M: "text-yellow-600", D: "text-red", R: "text-blue-600" };
+  const isRunning = jobStatus?.status === "running";
+  const isDone = jobStatus?.status === "done";
 
   return (
     <div className="space-y-6 max-w-[1000px]">
@@ -70,7 +100,7 @@ export default function PromotePage() {
             Envia as mudancas validadas em <span className="font-mono text-xs bg-gray-100 px-1.5 py-0.5 rounded">development</span> para o site <span className="font-semibold">papodebola.com.br</span>
           </p>
         </div>
-        <button onClick={loadPreview} disabled={loading} className="text-sm text-text-muted hover:text-text-primary flex items-center gap-1.5">
+        <button onClick={loadPreview} disabled={loading || isRunning} className="text-sm text-text-muted hover:text-text-primary flex items-center gap-1.5 disabled:opacity-50">
           <RefreshCw className={`h-4 w-4 ${loading ? "animate-spin" : ""}`} />
           Atualizar
         </button>
@@ -90,7 +120,7 @@ export default function PromotePage() {
         </div>
       )}
 
-      {preview && preview.ahead === 0 && (
+      {preview && preview.ahead === 0 && !jobStatus && (
         <div className="bg-card-bg border border-border-custom rounded-lg p-8 text-center">
           <CheckCircle2 className="h-10 w-10 mx-auto text-green" />
           <p className="text-base font-semibold mt-3">Nada a promover</p>
@@ -98,17 +128,13 @@ export default function PromotePage() {
         </div>
       )}
 
-      {preview && preview.ahead > 0 && (
+      {preview && preview.ahead > 0 && !jobStatus && (
         <>
           <div className="bg-card-bg border border-border-custom rounded-lg overflow-hidden">
             <div className="px-5 py-3 bg-gray-50 border-b border-border-custom flex items-center justify-between">
-              <div className="text-sm font-semibold text-text-primary">
-                {preview.ahead} commit(s) a promover
-              </div>
+              <div className="text-sm font-semibold text-text-primary">{preview.ahead} commit(s) a promover</div>
               {preview.behind > 0 && (
-                <div className="text-xs text-yellow-700 bg-yellow-50 px-2 py-1 rounded">
-                  AVISO: master tem {preview.behind} commit(s) que development nao tem
-                </div>
+                <div className="text-xs text-yellow-700 bg-yellow-50 px-2 py-1 rounded">AVISO: master tem {preview.behind} commit(s) que development nao tem</div>
               )}
             </div>
             <ul className="divide-y divide-border-custom">
@@ -127,9 +153,7 @@ export default function PromotePage() {
           </div>
 
           <div className="bg-card-bg border border-border-custom rounded-lg overflow-hidden">
-            <div className="px-5 py-3 bg-gray-50 border-b border-border-custom text-sm font-semibold">
-              {preview.files.length} arquivo(s) alterado(s)
-            </div>
+            <div className="px-5 py-3 bg-gray-50 border-b border-border-custom text-sm font-semibold">{preview.files.length} arquivo(s) alterado(s)</div>
             <ul className="divide-y divide-border-custom max-h-[300px] overflow-y-auto">
               {preview.files.map((f) => (
                 <li key={f.file} className="px-5 py-2 flex items-center gap-3 text-sm font-mono">
@@ -141,7 +165,7 @@ export default function PromotePage() {
             </ul>
           </div>
 
-          {!confirming && !result && (
+          {!confirming && (
             <button
               onClick={() => setConfirming(true)}
               className="w-full bg-green hover:bg-green-hover text-white font-semibold py-3 rounded-lg flex items-center justify-center gap-2 transition-colors"
@@ -151,26 +175,26 @@ export default function PromotePage() {
             </button>
           )}
 
-          {confirming && !result && (
+          {confirming && (
             <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
               <div className="flex items-start gap-3">
                 <AlertTriangle className="h-5 w-5 text-yellow-700 shrink-0 mt-0.5" />
                 <div className="flex-1">
                   <p className="font-semibold text-text-primary">Confirmar promocao</p>
                   <p className="text-sm text-text-muted mt-1">
-                    Esses {preview.ahead} commit(s) serao mergeados em <span className="font-mono">master</span> e publicados em <span className="font-semibold">papodebola.com.br</span>. O processo leva ~3 minutos.
+                    Esses {preview.ahead} commit(s) serao mergeados em <span className="font-mono">master</span> e publicados em <span className="font-semibold">papodebola.com.br</span>. O processo leva ~3 minutos; voce pode acompanhar o progresso aqui mesmo.
                   </p>
                   <div className="flex gap-2 mt-4">
                     <button
                       onClick={handlePromote}
-                      disabled={promoting}
+                      disabled={dispatching}
                       className="bg-green hover:bg-green-hover disabled:opacity-50 text-white font-semibold px-4 py-2 rounded text-sm flex items-center gap-2"
                     >
-                      {promoting ? <><Loader2 className="h-4 w-4 animate-spin" /> Promovendo...</> : <>Confirmar e promover</>}
+                      {dispatching ? <><Loader2 className="h-4 w-4 animate-spin" /> Disparando...</> : <>Confirmar e promover</>}
                     </button>
                     <button
                       onClick={() => setConfirming(false)}
-                      disabled={promoting}
+                      disabled={dispatching}
                       className="bg-white border border-border-custom text-text-primary px-4 py-2 rounded text-sm disabled:opacity-50"
                     >
                       Cancelar
@@ -183,22 +207,32 @@ export default function PromotePage() {
         </>
       )}
 
-      {result && (
-        <div className={`border rounded-lg p-4 ${result.success ? "bg-green/5 border-green" : "bg-red/5 border-red"}`}>
+      {jobStatus && (
+        <div className={`border rounded-lg p-4 ${isRunning ? "bg-blue-50 border-blue-200" : jobStatus.success ? "bg-green/5 border-green" : "bg-red/5 border-red"}`}>
           <div className="flex items-center gap-2 font-semibold mb-2">
-            {result.success ? (
+            {isRunning ? (
+              <><Loader2 className="h-5 w-5 text-blue-600 animate-spin" /> <span className="text-blue-700">Promocao em andamento...</span></>
+            ) : jobStatus.success ? (
               <><CheckCircle2 className="h-5 w-5 text-green" /> <span className="text-green">Promocao concluida</span></>
             ) : (
-              <><AlertTriangle className="h-5 w-5 text-red" /> <span className="text-red">Falha na promocao</span></>
+              <><AlertTriangle className="h-5 w-5 text-red" /> <span className="text-red">Falha na promocao (exit {jobStatus.exitCode})</span></>
             )}
           </div>
-          {result.success && (
-            <p className="text-sm text-text-muted mb-2">Lembre de purgar o cache Cloudflare (Purge Everything).</p>
+          {isRunning && (
+            <p className="text-xs text-text-muted mb-2">Job ID: <span className="font-mono">{jobId}</span> - atualizando a cada 3s</p>
           )}
-          <details className="text-xs">
-            <summary className="cursor-pointer text-text-muted hover:text-text-primary">Ver log</summary>
-            <pre className="mt-2 p-3 bg-gray-900 text-gray-100 rounded overflow-x-auto max-h-[400px]">{result.stdout}{result.stderr && `\n\n--- stderr ---\n${result.stderr}`}</pre>
-          </details>
+          {isDone && jobStatus.success && (
+            <p className="text-sm text-text-muted mb-2">Producao atualizada. Lembre de purgar o cache Cloudflare (Purge Everything).</p>
+          )}
+          <pre className="mt-2 p-3 bg-gray-900 text-gray-100 rounded overflow-x-auto max-h-[500px] text-xs whitespace-pre-wrap">{jobStatus.output || "(aguardando output)"}</pre>
+          {isDone && (
+            <button
+              onClick={() => { setJobStatus(null); setJobId(null); loadPreview(); }}
+              className="mt-3 text-sm text-text-muted hover:text-text-primary underline"
+            >
+              Fechar e voltar
+            </button>
+          )}
         </div>
       )}
     </div>
