@@ -60,13 +60,13 @@ function normalizeTeamMatch(event: any): TeamMatch {
 }
 
 export async function getTeamNextEvents(teamId: number): Promise<TeamMatch[]> {
-  const data = await fetchAllSports<any>(`team/${teamId}/events/next/0`, 3600);
+  const data = await fetchAllSports<any>(`team/${teamId}/matches/next/0`, 3600);
   if (!data?.events) return [];
   return data.events.map(normalizeTeamMatch);
 }
 
 export async function getTeamPreviousEvents(teamId: number): Promise<TeamMatch[]> {
-  const data = await fetchAllSports<any>(`team/${teamId}/events/last/0`, 3600);
+  const data = await fetchAllSports<any>(`team/${teamId}/matches/previous/0`, 3600);
   if (!data?.events) return [];
   return data.events.map(normalizeTeamMatch).reverse();
 }
@@ -80,7 +80,7 @@ export async function getTeamTopPlayers(teamId: number): Promise<Scorer[]> {
     86400
   );
 
-  const players = data?.bestPlayers?.goals || [];
+  const players = (data?.topPlayers?.goals || data?.bestPlayers?.goals) || [];
   return players.slice(0, 10).map((p: any) => ({
     player: {
       id: p.player?.id || 0,

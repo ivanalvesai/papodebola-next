@@ -25,7 +25,7 @@ export async function getTopScorers(): Promise<Scorer[]> {
       86400
     );
 
-    const players = data?.bestPlayers?.goals || [];
+    const players = (data?.topPlayers?.goals || data?.bestPlayers?.goals) || [];
     for (const p of players) {
       if (p.player?.id && !seenPlayers.has(p.player.id)) {
         seenPlayers.add(p.player.id);
