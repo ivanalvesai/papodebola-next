@@ -13,14 +13,30 @@ export async function fetchAllSports<T>(
       next: { revalidate },
     });
 
-    if (!res.ok) {
-      console.error(
-        `AllSportsApi error: ${res.status} for ${endpoint}`
-      );
+    if (res.status >= 500) {
+      console.error(`AllSportsApi 5xx: ${res.status} for ${endpoint}`);
       return null;
     }
 
-    return res.json();
+    const ct = res.headers.get("content-type") || "";
+    if (!ct.includes("application/json")) {
+      console.error(`AllSportsApi non-JSON: ${res.status} ${ct} for ${endpoint}`);
+      return null;
+    }
+
+    const data = await res.json();
+
+    if (data && typeof data === "object" && "message" in data && typeof data.message === "string" && /does not exist|not found|endpoint/i.test(data.message)) {
+      console.error(`AllSportsApi endpoint invalido: ${endpoint} - ${data.message}`);
+      return null;
+    }
+
+    if (!res.ok && res.status !== 404) {
+      console.error(`AllSportsApi 4xx: ${res.status} for ${endpoint}`);
+      return null;
+    }
+
+    return data;
   } catch (error) {
     console.error(`AllSportsApi fetch failed: ${endpoint}`, error);
     return null;
