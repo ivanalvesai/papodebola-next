@@ -15,6 +15,7 @@ export async function GET(request: NextRequest) {
     perPage: limit,
     category,
     search,
+    noCache: true,
   });
 
   return NextResponse.json({

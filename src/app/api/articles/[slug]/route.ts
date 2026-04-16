@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { revalidatePath } from "next/cache";
 import { getSession } from "@/lib/auth/jwt";
 import { getArticleBySlug } from "@/lib/data/articles";
 import { updateWP, deleteWP } from "@/lib/api/wordpress";
@@ -8,7 +9,7 @@ export async function GET(
   { params }: { params: Promise<{ slug: string }> }
 ) {
   const { slug } = await params;
-  const article = await getArticleBySlug(slug);
+  const article = await getArticleBySlug(slug, true);
 
   if (!article) {
     return NextResponse.json({ error: "Artigo não encontrado" }, { status: 404 });
@@ -27,7 +28,7 @@ export async function PUT(
   }
 
   const { slug } = await params;
-  const article = await getArticleBySlug(slug);
+  const article = await getArticleBySlug(slug, true);
 
   if (!article || !article.wpId) {
     return NextResponse.json({ error: "Artigo não encontrado" }, { status: 404 });
@@ -65,7 +66,7 @@ export async function DELETE(
   }
 
   const { slug } = await params;
-  const article = await getArticleBySlug(slug);
+  const article = await getArticleBySlug(slug, true);
 
   if (!article || !article.wpId) {
     return NextResponse.json({ error: "Artigo não encontrado" }, { status: 404 });
@@ -79,6 +80,10 @@ export async function DELETE(
       { status: 500 }
     );
   }
+
+  revalidatePath("/");
+  revalidatePath("/noticias");
+  revalidatePath(`/artigos/${slug}`);
 
   return NextResponse.json({ deleted: slug });
 }

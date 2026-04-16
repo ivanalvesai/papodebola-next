@@ -12,13 +12,21 @@ export interface KanbanPost {
   text: string;
   image: string;
   category: string;
-  source: string; // "rss-ia" | "manual"
+  source: string; // "rss-ia" | "manual" | "writer-ia"
   rssUrl: string;
   column: KanbanColumn;
   wpId: number | null;
   wpEditUrl: string;
   createdAt: string;
   updatedAt: string;
+  // SEO fields (populated by writer agent)
+  slug?: string;
+  excerpt?: string;
+  focusKeyword?: string;
+  tags?: string[];
+  htmlContent?: string;
+  wordCount?: number;
+  headingCount?: number;
 }
 
 async function ensureDir() {

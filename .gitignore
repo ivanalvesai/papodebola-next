@@ -49,3 +49,4 @@ scripts/sisgel.log
 rebuild.sh
 watch-rebuild.sh
 logs/
+docker-compose.override.yml
