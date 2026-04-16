@@ -82,20 +82,33 @@ export default function PromotePage() {
   async function handlePromote() {
     setDispatching(true);
     setJobStatus(null);
+    setError(null);
     try {
-      const res = await fetch("/api/promote", { method: "POST" });
-      const data = await res.json();
-      if (!res.ok || !data.jobId) {
-        setError(data.error || "Falha ao disparar promocao");
+      const res = await fetch("/api/promote", { method: "POST", headers: { Accept: "application/json" } });
+      const ct = res.headers.get("content-type") || "";
+      let data: Record<string, unknown> = {};
+      if (ct.includes("application/json")) {
+        data = await res.json();
+      } else {
+        const text = await res.text();
+        setError(`POST /api/promote: HTTP ${res.status} (${ct || "sem content-type"}). Body: ${text.slice(0, 200)}`);
         return;
       }
-      setJobId(data.jobId);
+      if (!res.ok) {
+        setError(`POST /api/promote: HTTP ${res.status} - ${JSON.stringify(data)}`);
+        return;
+      }
+      if (!data.jobId) {
+        setError(`POST /api/promote OK mas sem jobId: ${JSON.stringify(data)}`);
+        return;
+      }
+      setJobId(data.jobId as string);
       setJobStatus({ status: "running", output: "Iniciando...\n" });
       setConfirming(false);
-      pollStatus(data.jobId);
-      pollRef.current = window.setInterval(() => pollStatus(data.jobId), POLL_INTERVAL_MS);
+      pollStatus(data.jobId as string);
+      pollRef.current = window.setInterval(() => pollStatus(data.jobId as string), POLL_INTERVAL_MS);
     } catch (e) {
-      setError(String(e));
+      setError(`Exception no POST: ${String(e)}`);
     } finally {
       setDispatching(false);
     }
