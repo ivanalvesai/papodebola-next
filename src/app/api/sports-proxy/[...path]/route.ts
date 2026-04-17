@@ -2,6 +2,57 @@ import { NextRequest, NextResponse } from "next/server";
 
 const UPSTREAM_BASE = "https://allsportsapi2.p.rapidapi.com/api";
 
+// Respostas de matches/{date} e {sport}/matches/{date} chegam a 14MB (excede limite de
+// 2MB do Next.js data cache, invalidando o cache e queimando quota). Extraímos só os
+// campos consumidos por src/lib/data/matches.ts + home.ts + championship.ts.
+function slimTeam(t: any) {
+  if (!t) return t;
+  return { id: t.id, name: t.name, nameCode: t.nameCode, slug: t.slug };
+}
+
+function slimEvent(e: any) {
+  if (!e) return e;
+  return {
+    id: e.id,
+    homeTeam: slimTeam(e.homeTeam),
+    awayTeam: slimTeam(e.awayTeam),
+    homeScore: e.homeScore ? { current: e.homeScore.current } : null,
+    awayScore: e.awayScore ? { current: e.awayScore.current } : null,
+    status: e.status
+      ? { type: e.status.type, code: e.status.code, description: e.status.description }
+      : null,
+    tournament: e.tournament
+      ? {
+          id: e.tournament.id,
+          name: e.tournament.name,
+          category: e.tournament.category ? { name: e.tournament.category.name } : null,
+          uniqueTournament: e.tournament.uniqueTournament
+            ? {
+                id: e.tournament.uniqueTournament.id,
+                name: e.tournament.uniqueTournament.name,
+              }
+            : null,
+        }
+      : null,
+    startTimestamp: e.startTimestamp,
+    roundInfo: e.roundInfo ? { round: e.roundInfo.round } : undefined,
+  };
+}
+
+function trimBody(body: string): string {
+  if (body.length < 500_000) return body; // payloads pequenos passam direto
+  try {
+    const json = JSON.parse(body);
+    if (Array.isArray(json?.events)) {
+      json.events = json.events.map(slimEvent);
+      return JSON.stringify(json);
+    }
+  } catch {
+    // fallthrough: retorna raw
+  }
+  return body;
+}
+
 export async function GET(
   request: NextRequest,
   { params }: { params: Promise<{ path: string[] }> }
@@ -30,8 +81,9 @@ export async function GET(
       next: { revalidate: 1800 },
     });
 
-    const body = await res.text();
+    const rawBody = await res.text();
     const ct = res.headers.get("content-type") || "application/json";
+    const body = ct.includes("application/json") && res.ok ? trimBody(rawBody) : rawBody;
 
     return new NextResponse(body, {
       status: res.status,
