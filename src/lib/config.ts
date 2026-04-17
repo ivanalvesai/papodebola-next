@@ -167,7 +167,10 @@ const SERIE_A_SLUGS = [
   'vasco','internacional','santos','corinthians','cruzeiro','remo',
   'chapecoense','mirassol',
 ];
-export const PANEL_TEAMS_BR: TeamInfo[] = TEAMS.filter(t => SERIE_A_SLUGS.includes(t.slug));
+// Ordem alfabética (pt-BR, respeita acentos) pra não privilegiar nenhum time na listagem
+export const PANEL_TEAMS_BR: TeamInfo[] = TEAMS
+  .filter(t => SERIE_A_SLUGS.includes(t.slug))
+  .sort((a, b) => a.name.localeCompare(b.name, 'pt-BR'));
 
 // Side panel: European teams (all 17)
 const EU_SLUGS = [
@@ -175,7 +178,9 @@ const EU_SLUGS = [
   'chelsea','tottenham','arsenal','juventus','milan','inter-milan',
   'bayern','psg','porto','nottingham-forest','aston-villa','dortmund',
 ];
-export const PANEL_TEAMS_EU: TeamInfo[] = TEAMS.filter(t => EU_SLUGS.includes(t.slug));
+export const PANEL_TEAMS_EU: TeamInfo[] = TEAMS
+  .filter(t => EU_SLUGS.includes(t.slug))
+  .sort((a, b) => a.name.localeCompare(b.name, 'pt-BR'));
 
 // All teams with cluster pages (BR + EU)
 export const ALL_CLUSTER_TEAMS: TeamInfo[] = [...PANEL_TEAMS_BR, ...PANEL_TEAMS_EU];

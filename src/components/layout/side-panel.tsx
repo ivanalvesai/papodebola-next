@@ -110,20 +110,33 @@ export function SidePanel() {
           <Link href="/agenda" onClick={close} className="block px-5 py-2.5 text-sm font-semibold text-text-primary hover:bg-green-light hover:text-green transition-colors">
             Agenda
           </Link>
-          <Link href="/futebol/brasileirao-serie-a" onClick={close} className="block px-5 py-2.5 text-sm font-semibold text-text-primary hover:bg-green-light hover:text-green transition-colors">
+        </div>
+
+        {/* Futebol */}
+        <div className="border-b border-border-custom">
+          <div className="px-5 py-2.5 text-xs font-bold text-text-primary uppercase tracking-wider bg-body">
+            Futebol
+          </div>
+          <Link href="/futebol/jogos-hoje" onClick={close} className="block px-5 py-2.5 text-sm text-text-secondary hover:bg-green-light hover:text-green transition-colors">
+            Jogos de Hoje
+          </Link>
+          <Link href="/futebol/onde-assistir" onClick={close} className="block px-5 py-2.5 text-sm text-text-secondary hover:bg-green-light hover:text-green transition-colors">
+            Onde Assistir
+          </Link>
+          <Link href="/futebol/brasileirao-serie-a" onClick={close} className="block px-5 py-2.5 text-sm text-text-secondary hover:bg-green-light hover:text-green transition-colors">
             Brasileirão
           </Link>
-          <Link href="/futebol/champions-league" onClick={close} className="block px-5 py-2.5 text-sm font-semibold text-text-primary hover:bg-green-light hover:text-green transition-colors">
+          <Link href="/futebol/champions-league" onClick={close} className="block px-5 py-2.5 text-sm text-text-secondary hover:bg-green-light hover:text-green transition-colors">
             Champions League
           </Link>
-          <Link href="/futebol/libertadores" onClick={close} className="block px-5 py-2.5 text-sm font-semibold text-text-primary hover:bg-green-light hover:text-green transition-colors">
+          <Link href="/futebol/libertadores" onClick={close} className="block px-5 py-2.5 text-sm text-text-secondary hover:bg-green-light hover:text-green transition-colors">
             Libertadores
           </Link>
-          <Link href="/noticias?cat=Copa%20do%20Mundo" onClick={close} className="block px-5 py-2.5 text-sm font-semibold text-text-primary hover:bg-green-light hover:text-green transition-colors">
-            Copa do Mundo 2026
-          </Link>
-          <Link href="/noticias?cat=Seleção%20Brasileira" onClick={close} className="block px-5 py-2.5 text-sm font-semibold text-text-primary hover:bg-green-light hover:text-green transition-colors">
+          <Link href="/futebol/selecao-brasileira" onClick={close} className="block px-5 py-2.5 text-sm text-text-secondary hover:bg-green-light hover:text-green transition-colors">
             Seleção Brasileira
+          </Link>
+          <Link href="/noticias?cat=Copa%20do%20Mundo" onClick={close} className="block px-5 py-2.5 text-sm text-text-secondary hover:bg-green-light hover:text-green transition-colors">
+            Copa do Mundo 2026
           </Link>
         </div>
 
