@@ -47,47 +47,6 @@ export function MainNav() {
             </button>
           </li>
 
-          {/* Inicio */}
-          <li>
-            <Link
-              href="/"
-              className={`block px-3 py-3 font-semibold whitespace-nowrap transition-colors ${
-                pathname === "/"
-                  ? "text-green border-b-2 border-green"
-                  : "text-text-secondary hover:text-green"
-              }`}
-            >
-              Inicio
-            </Link>
-          </li>
-
-          {/* Noticias */}
-          <li>
-            <Link
-              href="/noticias"
-              className={`block px-3 py-3 font-semibold whitespace-nowrap transition-colors ${
-                pathname.startsWith("/noticias")
-                  ? "text-green border-b-2 border-green"
-                  : "text-text-secondary hover:text-green"
-              }`}
-            >
-              Noticias
-            </Link>
-          </li>
-
-          {/* Agenda */}
-          <li>
-            <Link
-              href="/agenda"
-              className={`block px-3 py-3 font-semibold whitespace-nowrap transition-colors ${
-                pathname === "/agenda"
-                  ? "text-green border-b-2 border-green"
-                  : "text-text-secondary hover:text-green"
-              }`}
-            >
-              Agenda
-            </Link>
-          </li>
 
           {/* ========== TIMES ========== */}
           <li className="relative">
@@ -220,17 +179,17 @@ export function MainNav() {
             )}
           </li>
 
-          {/* Parceiros */}
-          <li className="ml-auto">
+          {/* Onde Assistir */}
+          <li>
             <Link
-              href="/parceiros"
+              href="/futebol/onde-assistir"
               className={`block px-3 py-3 font-semibold whitespace-nowrap transition-colors ${
-                pathname === "/parceiros"
+                pathname === "/futebol/onde-assistir"
                   ? "text-green border-b-2 border-green"
                   : "text-text-secondary hover:text-green"
               }`}
             >
-              Parceiros
+              Onde Assistir
             </Link>
           </li>
         </ul>
