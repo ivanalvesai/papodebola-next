@@ -34,8 +34,8 @@ export function MainNav() {
       ref={navRef}
       className="bg-nav-bg border-b border-border-custom shadow-sm sticky top-14 z-40"
     >
-      <div className="mx-auto max-w-[1240px] px-4">
-        <ul className="flex items-center gap-0 text-sm">
+      <div className="mx-auto max-w-[1240px] px-4 overflow-x-auto scrollbar-hide">
+        <ul className="flex items-center gap-0 text-sm whitespace-nowrap">
           {/* Menu lateral */}
           <li>
             <button
