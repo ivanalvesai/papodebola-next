@@ -10,7 +10,7 @@ import { PANEL_TEAMS_BR, PANEL_TEAMS_EU, type TeamInfo } from "@/lib/config";
 function TeamItem({ team }: { team: TeamInfo }) {
   return (
     <Link
-      href={`/time/${team.slug}`}
+      href={`/futebol/times/${team.slug}`}
       className="flex items-center gap-3 px-5 py-2.5 text-sm text-text-secondary hover:bg-green-light hover:text-green transition-colors"
     >
       <Image
@@ -132,26 +132,32 @@ export function SidePanel() {
           <div className="px-5 py-2.5 text-xs font-bold text-text-primary uppercase tracking-wider bg-body">
             Esportes
           </div>
-          <Link href="/esporte/nba" onClick={close} className="block px-5 py-2.5 text-sm text-text-secondary hover:bg-green-light hover:text-green transition-colors">
-            NBA / Basquete
+          <Link href="/basquete" onClick={close} className="block px-5 py-2.5 text-sm text-text-secondary hover:bg-green-light hover:text-green transition-colors">
+            Basquete
           </Link>
-          <Link href="/esporte/tenis" onClick={close} className="block px-5 py-2.5 text-sm text-text-secondary hover:bg-green-light hover:text-green transition-colors">
-            Tênis
+          <Link href="/boxe" onClick={close} className="block px-5 py-2.5 text-sm text-text-secondary hover:bg-green-light hover:text-green transition-colors">
+            Boxe
           </Link>
-          <Link href="/esporte/f1" onClick={close} className="block px-5 py-2.5 text-sm text-text-secondary hover:bg-green-light hover:text-green transition-colors">
-            Fórmula 1
+          <Link href="/combate" onClick={close} className="block px-5 py-2.5 text-sm text-text-secondary hover:bg-green-light hover:text-green transition-colors">
+            Combate
           </Link>
-          <Link href="/esporte/mma" onClick={close} className="block px-5 py-2.5 text-sm text-text-secondary hover:bg-green-light hover:text-green transition-colors">
-            MMA / UFC
-          </Link>
-          <Link href="/esporte/volei" onClick={close} className="block px-5 py-2.5 text-sm text-text-secondary hover:bg-green-light hover:text-green transition-colors">
-            Vôlei
-          </Link>
-          <Link href="/esporte/esports" onClick={close} className="block px-5 py-2.5 text-sm text-text-secondary hover:bg-green-light hover:text-green transition-colors">
+          <Link href="/esports" onClick={close} className="block px-5 py-2.5 text-sm text-text-secondary hover:bg-green-light hover:text-green transition-colors">
             eSports
           </Link>
-          <Link href="/esporte/nfl" onClick={close} className="block px-5 py-2.5 text-sm text-text-secondary hover:bg-green-light hover:text-green transition-colors">
-            NFL
+          <Link href="/formula-1" onClick={close} className="block px-5 py-2.5 text-sm text-text-secondary hover:bg-green-light hover:text-green transition-colors">
+            Fórmula 1
+          </Link>
+          <Link href="/futebol-americano" onClick={close} className="block px-5 py-2.5 text-sm text-text-secondary hover:bg-green-light hover:text-green transition-colors">
+            Futebol Americano
+          </Link>
+          <Link href="/futsal" onClick={close} className="block px-5 py-2.5 text-sm text-text-secondary hover:bg-green-light hover:text-green transition-colors">
+            Futsal
+          </Link>
+          <Link href="/tenis" onClick={close} className="block px-5 py-2.5 text-sm text-text-secondary hover:bg-green-light hover:text-green transition-colors">
+            Tênis
+          </Link>
+          <Link href="/volei" onClick={close} className="block px-5 py-2.5 text-sm text-text-secondary hover:bg-green-light hover:text-green transition-colors">
+            Vôlei
           </Link>
         </div>
 
@@ -183,6 +189,17 @@ export function SidePanel() {
           defaultOpen={false}
           searchQuery={search}
         />
+
+        {/* Parceiros (último item) */}
+        <div className="border-t border-border-custom">
+          <Link
+            href="/parceiros"
+            onClick={close}
+            className="block px-5 py-2.5 text-sm font-semibold text-text-primary hover:bg-green-light hover:text-green transition-colors"
+          >
+            Parceiros
+          </Link>
+        </div>
       </div>
     </>
   );

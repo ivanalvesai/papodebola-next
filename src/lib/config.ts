@@ -129,15 +129,18 @@ export const CBF_IDS = {
   COPA_NORDESTE: 1260624,
 } as const;
 
-// Sports for multi-sport pages
+// Sports — cada esporte tem URL top-level. Basquete tem landing + /basquete/nba;
+// os outros são single-page diretos. Boxe e Futsal adicionados em 17/04/2026.
 export const SPORTS = [
-  { slug: 'nba',     name: 'NBA / Basquete', icon: 'basketball' },
-  { slug: 'tenis',   name: 'Tênis',          icon: 'tennis' },
-  { slug: 'f1',      name: 'Fórmula 1',      icon: 'flag' },
-  { slug: 'mma',     name: 'MMA / UFC',       icon: 'swords' },
-  { slug: 'volei',   name: 'Vôlei',           icon: 'volleyball' },
-  { slug: 'esports', name: 'eSports',         icon: 'gamepad' },
-  { slug: 'nfl',     name: 'NFL',             icon: 'football' },
+  { slug: 'basquete',           name: 'Basquete',          icon: 'basketball', href: '/basquete' },
+  { slug: 'tenis',              name: 'Tênis',             icon: 'tennis',     href: '/tenis' },
+  { slug: 'formula-1',          name: 'Fórmula 1',         icon: 'flag',       href: '/formula-1' },
+  { slug: 'combate',            name: 'Combate',           icon: 'swords',     href: '/combate' },
+  { slug: 'volei',              name: 'Vôlei',             icon: 'volleyball', href: '/volei' },
+  { slug: 'esports',            name: 'eSports',           icon: 'gamepad',    href: '/esports' },
+  { slug: 'futebol-americano',  name: 'Futebol Americano', icon: 'football',   href: '/futebol-americano' },
+  { slug: 'boxe',               name: 'Boxe',              icon: 'swords',     href: '/boxe' },
+  { slug: 'futsal',             name: 'Futsal',            icon: 'football',   href: '/futsal' },
 ] as const;
 
 // WordPress categories for article filters

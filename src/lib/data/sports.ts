@@ -5,13 +5,15 @@ import type { SportData, SportEvent, SportConfig } from "@/types/sport";
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
 const SPORT_CONFIGS: Record<string, SportConfig> = {
-  nba: { slug: "nba", api: "basketball", tournamentId: 132, seasonId: 80229, hasStandings: true },
+  "basquete-nba": { slug: "basquete-nba", api: "basketball", tournamentId: 132, seasonId: 80229, hasStandings: true },
   tenis: { slug: "tenis", api: "tennis", rankingType: "atp", hasRankings: true },
-  f1: { slug: "f1", api: "motorsport" },
-  mma: { slug: "mma", api: "mma", tournamentId: 19906 },
+  "formula-1": { slug: "formula-1", api: "motorsport" },
+  combate: { slug: "combate", api: "mma", tournamentId: 19906 },
   volei: { slug: "volei", api: "volleyball" },
   esports: { slug: "esports", api: "esports" },
-  nfl: { slug: "nfl", api: "american-football" },
+  "futebol-americano": { slug: "futebol-americano", api: "american-football" },
+  boxe: { slug: "boxe", api: "boxing" },
+  futsal: { slug: "futsal", api: "futsal" },
 };
 
 function normalizeEvent(event: any): SportEvent {

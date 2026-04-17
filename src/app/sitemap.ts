@@ -38,13 +38,26 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       priority: 0.8,
     }));
 
-  // Sport pages
+  // Sport pages (top-level, sem prefixo /esporte/)
   const sportPages: MetadataRoute.Sitemap = SPORTS.map((s) => ({
-    url: `${BASE}/esporte/${s.slug}`,
+    url: `${BASE}${s.href}`,
     lastModified: now,
     changeFrequency: "daily" as const,
     priority: 0.6,
   }));
 
-  return [...staticPages, ...teamPages, ...champPages, ...sportPages];
+  // Basquete tem subrota NBA (conteúdo do torneio)
+  sportPages.push({
+    url: `${BASE}/basquete/nba`,
+    lastModified: now,
+    changeFrequency: "daily" as const,
+    priority: 0.6,
+  });
+
+  // Parceiros (institucional)
+  const parceirosPage: MetadataRoute.Sitemap = [
+    { url: `${BASE}/parceiros`, changeFrequency: "monthly" as const, priority: 0.3 },
+  ];
+
+  return [...staticPages, ...teamPages, ...champPages, ...sportPages, ...parceirosPage];
 }

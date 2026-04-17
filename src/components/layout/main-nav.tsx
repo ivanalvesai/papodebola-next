@@ -216,7 +216,7 @@ export function MainNav() {
             <button
               onClick={() => toggleDropdown("esportes")}
               className={`flex items-center gap-1 px-3 py-3 font-semibold whitespace-nowrap transition-colors ${
-                pathname.startsWith("/esporte")
+                SPORTS.some((s) => pathname.startsWith(s.href))
                   ? "text-green border-b-2 border-green"
                   : "text-text-secondary hover:text-green"
               }`}
@@ -231,7 +231,7 @@ export function MainNav() {
                   {SPORTS.map((sport) => (
                     <li key={sport.slug}>
                       <Link
-                        href={`/esporte/${sport.slug}`}
+                        href={sport.href}
                         onClick={() => setOpenDropdown(null)}
                         className="block py-1.5 px-2 text-sm text-text-secondary hover:text-green hover:bg-green-light rounded transition-colors"
                       >

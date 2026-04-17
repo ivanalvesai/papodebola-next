@@ -331,7 +331,16 @@ papodebola-next/
 │   │   ├── noticias/page.tsx
 │   │   ├── agenda/page.tsx
 │   │   ├── futebol/[slug]/page.tsx             # Campeonato (classificação + rodadas)
-│   │   ├── esporte/[slug]/page.tsx             # NBA, Tênis, F1, MMA
+│   │   ├── basquete/                           # /basquete (landing) + /basquete/nba
+│   │   ├── boxe/page.tsx
+│   │   ├── combate/page.tsx                    # conteúdo UFC
+│   │   ├── esports/page.tsx
+│   │   ├── formula-1/page.tsx
+│   │   ├── futebol-americano/page.tsx          # conteúdo NFL
+│   │   ├── futsal/page.tsx
+│   │   ├── tenis/page.tsx
+│   │   ├── volei/page.tsx
+│   │   ├── parceiros/page.tsx                  # institucional
 │   │   ├── artigos/[slug]/page.tsx             # Artigo com SEO
 │   │   ├── sobre/contato/privacidade           # Institucional
 │   │   ├── municipal/                          # Futebol municipal (SisGel)
@@ -458,7 +467,9 @@ URLs antigas (`/times/*` e `/campeonato/*`) têm 301 redirect em `next.config.ts
 | `/futebol/[slug]` | Campeonato específico (Brasileirão, Libertadores, etc) |
 | `/futebol/times/[slug]` | Hub do time |
 | `/futebol/times/[slug]/{jogo-hoje,proximos-jogos,onde-assistir,escalacao,estatisticas}` | Subrotas cluster SEO |
-| `/esporte/[slug]` | NBA, F1, Tênis, MMA (não-futebol) |
+| `/basquete` + `/basquete/nba` | Basquete (landing) + NBA (torneio) |
+| `/boxe` `/combate` `/esports` `/formula-1` `/futebol-americano` `/futsal` `/tenis` `/volei` | Single-page por esporte |
+| `/parceiros` | Institucional — parcerias comerciais |
 | `/artigos/[slug]` | Artigo |
 | `/noticias` `/agenda` `/ao-vivo` | Seções gerais |
 | `/municipal/*` | Futebol municipal (SisGel) |
