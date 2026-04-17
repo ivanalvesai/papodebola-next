@@ -207,13 +207,17 @@ Apenas no dev (prod também expõe, mas ninguém acessa). Catch-all que:
 
 ### Endpoints da AllSportsApi (atualizados)
 
-A API mudou schemas e paths em 2026:
+A API mudou schemas e paths em 2026 — **padrão geral: `events/*` virou `matches/*`**:
 
 | Antes (deprecated) | Agora |
 |---|---|
 | `team/{id}/events/next/0` | `team/{id}/matches/next/0` |
 | `team/{id}/events/last/0` | `team/{id}/matches/previous/0` |
+| `{sport}/events/live` | `{sport}/matches/live` |
+| `{sport}/events/{d}/{m}/{y}` | `{sport}/matches/{d}/{m}/{y}` |
 | `bestPlayers.goals` | `topPlayers.goals` (código suporta ambos) |
+
+Endpoints `events/live` deprecated retornam `HTTP 404 text/plain` (não JSON) — por isso são detectados como erro e descartados. Código atualizado em `src/lib/data/sports.ts` e `src/lib/data/team.ts`.
 
 ### CBF API (gratuita)
 
