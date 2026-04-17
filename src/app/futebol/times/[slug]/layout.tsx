@@ -2,6 +2,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { TEAM_BY_SLUG, ALL_CLUSTER_TEAMS } from "@/lib/config";
 import { notFound } from "next/navigation";
+import { TeamBreadcrumb } from "@/components/seo/team-breadcrumb";
 
 export async function generateStaticParams() {
   return ALL_CLUSTER_TEAMS.map((t) => ({ slug: t.slug }));
@@ -9,12 +10,12 @@ export async function generateStaticParams() {
 
 function ClusterNav({ slug, teamName }: { slug: string; teamName: string }) {
   const links = [
-    { href: `/times/${slug}`, label: teamName },
-    { href: `/times/${slug}/jogo-hoje`, label: "Jogo de Hoje" },
-    { href: `/times/${slug}/onde-assistir`, label: "Onde Assistir" },
-    { href: `/times/${slug}/escalacao`, label: "Escalacao" },
-    { href: `/times/${slug}/proximos-jogos`, label: "Proximos Jogos" },
-    { href: `/times/${slug}/estatisticas`, label: "Estatisticas 2026" },
+    { href: `/futebol/times/${slug}`, label: teamName },
+    { href: `/futebol/times/${slug}/jogo-hoje`, label: "Jogo de Hoje" },
+    { href: `/futebol/times/${slug}/onde-assistir`, label: "Onde Assistir" },
+    { href: `/futebol/times/${slug}/escalacao`, label: "Escalacao" },
+    { href: `/futebol/times/${slug}/proximos-jogos`, label: "Proximos Jogos" },
+    { href: `/futebol/times/${slug}/estatisticas`, label: "Estatisticas 2026" },
   ];
 
   return (
@@ -47,8 +48,11 @@ export default async function TeamLayout({
 
   return (
     <div>
-      {/* Team header */}
+      {/* Team header with breadcrumb */}
       <div className="bg-surface border-b border-border-custom">
+        <div className="mx-auto max-w-[1240px] px-4 pt-3">
+          <TeamBreadcrumb teamSlug={slug} teamName={team.name} />
+        </div>
         <div className="mx-auto max-w-[1240px] px-4 py-4 flex items-center gap-4">
           <Image
             src={`/img/team/${team.id}/image`}

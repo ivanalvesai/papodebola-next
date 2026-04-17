@@ -65,10 +65,10 @@ export function MatchBar({ todayMatches, cbfUpcoming }: MatchBarProps) {
       </div>
 
       {/* Scrollable match cards */}
-      <div className="relative">
+      <div className="relative mx-auto max-w-[1240px] px-4">
         <button
           onClick={() => scroll(-300)}
-          className="absolute left-0 top-0 bottom-0 z-10 w-8 bg-gradient-to-r from-surface to-transparent flex items-center justify-center text-text-muted hover:text-text-primary"
+          className="absolute left-4 top-0 bottom-0 z-10 w-8 bg-gradient-to-r from-surface to-transparent flex items-center justify-center text-text-muted hover:text-text-primary"
         >
           <ChevronLeft className="h-5 w-5" />
         </button>
@@ -121,7 +121,7 @@ export function MatchBar({ todayMatches, cbfUpcoming }: MatchBarProps) {
 
         <button
           onClick={() => scroll(300)}
-          className="absolute right-0 top-0 bottom-0 z-10 w-8 bg-gradient-to-l from-surface to-transparent flex items-center justify-center text-text-muted hover:text-text-primary"
+          className="absolute right-4 top-0 bottom-0 z-10 w-8 bg-gradient-to-l from-surface to-transparent flex items-center justify-center text-text-muted hover:text-text-primary"
         >
           <ChevronRight className="h-5 w-5" />
         </button>

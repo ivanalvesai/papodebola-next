@@ -39,11 +39,11 @@ export default async function TeamHubPage({
   if (!data) notFound();
 
   const clusterLinks = [
-    { href: `/times/${slug}/jogo-hoje`, label: "Jogo de Hoje", desc: `Veja se o ${team.name} joga hoje, horario e detalhes`, icon: Calendar },
-    { href: `/times/${slug}/onde-assistir`, label: "Onde Assistir", desc: `Saiba onde assistir ao jogo do ${team.name} ao vivo`, icon: Tv },
-    { href: `/times/${slug}/escalacao`, label: "Escalacao", desc: `Escalacao provavel do ${team.name} para o proximo jogo`, icon: Users },
-    { href: `/times/${slug}/proximos-jogos`, label: "Proximos Jogos", desc: `Calendario completo dos proximos jogos do ${team.name}`, icon: Calendar },
-    { href: `/times/${slug}/estatisticas`, label: "Estatisticas 2026", desc: `Numeros, artilheiros e desempenho do ${team.name} em 2026`, icon: BarChart3 },
+    { href: `/futebol/times/${slug}/jogo-hoje`, label: "Jogo de Hoje", desc: `Veja se o ${team.name} joga hoje, horario e detalhes`, icon: Calendar },
+    { href: `/futebol/times/${slug}/onde-assistir`, label: "Onde Assistir", desc: `Saiba onde assistir ao jogo do ${team.name} ao vivo`, icon: Tv },
+    { href: `/futebol/times/${slug}/escalacao`, label: "Escalacao", desc: `Escalacao provavel do ${team.name} para o proximo jogo`, icon: Users },
+    { href: `/futebol/times/${slug}/proximos-jogos`, label: "Proximos Jogos", desc: `Calendario completo dos proximos jogos do ${team.name}`, icon: Calendar },
+    { href: `/futebol/times/${slug}/estatisticas`, label: "Estatisticas 2026", desc: `Numeros, artilheiros e desempenho do ${team.name} em 2026`, icon: BarChart3 },
   ];
 
   return (
@@ -148,7 +148,7 @@ export default async function TeamHubPage({
                   <div className="text-sm"><span className="font-bold">{data.standingPosition.gf}</span> <span className="text-text-muted text-xs">gols</span></div>
                 </div>
               </div>
-              <Link href="/campeonato/brasileirao-serie-a" className="block text-center text-xs font-semibold text-green mt-3 hover:text-green-hover">
+              <Link href="/futebol/brasileirao-serie-a" className="block text-center text-xs font-semibold text-green mt-3 hover:text-green-hover">
                 Ver tabela completa &rarr;
               </Link>
             </div>
@@ -178,7 +178,7 @@ export default async function TeamHubPage({
                 ))}
               </div>
             )}
-            <Link href={`/times/${slug}/proximos-jogos`} className="block text-center text-xs font-semibold text-green py-3 border-t border-border-custom hover:bg-card-hover">
+            <Link href={`/futebol/times/${slug}/proximos-jogos`} className="block text-center text-xs font-semibold text-green py-3 border-t border-border-custom hover:bg-card-hover">
               Ver todos &rarr;
             </Link>
           </div>

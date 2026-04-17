@@ -7,6 +7,7 @@ import { TOURNAMENT_BY_SLUG } from "@/lib/config";
 import { translateStatus } from "@/lib/translations";
 import { enrichStandingsWithForm } from "@/lib/standings-utils";
 import { RoundNav } from "@/components/championship/round-nav";
+import { PageBreadcrumb } from "@/components/seo/page-breadcrumb";
 import { ChevronUp, ChevronDown, Minus } from "lucide-react";
 import type { ChampionshipData } from "@/types/tournament";
 import type { StandingRow, FormResult } from "@/types/standings";
@@ -46,6 +47,13 @@ export default function CampeonatoPage() {
   if (loading) {
     return (
       <div className="mx-auto max-w-[1240px] px-4 py-8">
+        <PageBreadcrumb
+          className="mb-4"
+          items={[
+            { label: "Início", href: "/" },
+            { label: tournament.name },
+          ]}
+        />
         <h1 className="text-xl font-bold text-text-primary mb-6">{tournament.name}</h1>
         <div className="grid grid-cols-1 lg:grid-cols-[1fr_400px] gap-6">
           <div className="bg-card-bg rounded-lg border border-border-custom p-6">
@@ -76,6 +84,13 @@ export default function CampeonatoPage() {
 
   return (
     <div className="mx-auto max-w-[1240px] px-4 py-8">
+      <PageBreadcrumb
+        className="mb-4"
+        items={[
+          { label: "Início", href: "/" },
+          { label: tournament.name },
+        ]}
+      />
       <h1 className="text-xl font-bold text-text-primary mb-6">{tournament.name}</h1>
 
       <div className="grid grid-cols-1 lg:grid-cols-[1fr_400px] gap-6">

@@ -26,7 +26,7 @@ export function Footer() {
                 </Link>
               </li>
               <li>
-                <Link href="/campeonato/brasileirao-serie-a" className="text-text-muted hover:text-white transition-colors">
+                <Link href="/futebol/brasileirao-serie-a" className="text-text-muted hover:text-white transition-colors">
                   Brasileirão
                 </Link>
               </li>

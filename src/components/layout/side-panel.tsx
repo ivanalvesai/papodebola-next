@@ -110,13 +110,13 @@ export function SidePanel() {
           <Link href="/agenda" onClick={close} className="block px-5 py-2.5 text-sm font-semibold text-text-primary hover:bg-green-light hover:text-green transition-colors">
             Agenda
           </Link>
-          <Link href="/campeonato/brasileirao-serie-a" onClick={close} className="block px-5 py-2.5 text-sm font-semibold text-text-primary hover:bg-green-light hover:text-green transition-colors">
+          <Link href="/futebol/brasileirao-serie-a" onClick={close} className="block px-5 py-2.5 text-sm font-semibold text-text-primary hover:bg-green-light hover:text-green transition-colors">
             Brasileirão
           </Link>
-          <Link href="/campeonato/champions-league" onClick={close} className="block px-5 py-2.5 text-sm font-semibold text-text-primary hover:bg-green-light hover:text-green transition-colors">
+          <Link href="/futebol/champions-league" onClick={close} className="block px-5 py-2.5 text-sm font-semibold text-text-primary hover:bg-green-light hover:text-green transition-colors">
             Champions League
           </Link>
-          <Link href="/campeonato/libertadores" onClick={close} className="block px-5 py-2.5 text-sm font-semibold text-text-primary hover:bg-green-light hover:text-green transition-colors">
+          <Link href="/futebol/libertadores" onClick={close} className="block px-5 py-2.5 text-sm font-semibold text-text-primary hover:bg-green-light hover:text-green transition-colors">
             Libertadores
           </Link>
           <Link href="/noticias?cat=Copa%20do%20Mundo" onClick={close} className="block px-5 py-2.5 text-sm font-semibold text-text-primary hover:bg-green-light hover:text-green transition-colors">

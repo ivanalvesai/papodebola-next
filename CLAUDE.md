@@ -330,12 +330,12 @@ papodebola-next/
 │   │   ├── ao-vivo/page.tsx
 │   │   ├── noticias/page.tsx
 │   │   ├── agenda/page.tsx
-│   │   ├── campeonato/[slug]/page.tsx          # Classificação + rodadas
+│   │   ├── futebol/[slug]/page.tsx             # Campeonato (classificação + rodadas)
 │   │   ├── esporte/[slug]/page.tsx             # NBA, Tênis, F1, MMA
 │   │   ├── artigos/[slug]/page.tsx             # Artigo com SEO
 │   │   ├── sobre/contato/privacidade           # Institucional
 │   │   ├── municipal/                          # Futebol municipal (SisGel)
-│   │   ├── times/[slug]/                       # Cluster SEO de times (222 URLs)
+│   │   ├── futebol/times/[slug]/               # Cluster SEO de times (222 URLs)
 │   │   │   ├── layout.tsx
 │   │   │   ├── page.tsx                        # HUB
 │   │   │   ├── jogo-hoje/page.tsx
@@ -427,12 +427,14 @@ Palmeiras (1963), Flamengo (5981), São Paulo (1981), Fluminense (1961), Bahia (
 Real Madrid (2829), Barcelona (2817), Liverpool (44), Man City (17), Man United (35), Chelsea (38), Tottenham (33), Arsenal (42), Juventus (2687), Milan (2692), Inter Milan (2697), Bayern (2672), PSG (1644), Porto (3002), Nott. Forest (174), Aston Villa (40), Dortmund (2673)
 
 ### Sub-rotas por time
-- `/times/{slug}` (HUB)
-- `/times/{slug}/jogo-hoje`
-- `/times/{slug}/proximos-jogos`
-- `/times/{slug}/onde-assistir`
-- `/times/{slug}/escalacao`
-- `/times/{slug}/estatisticas`
+- `/futebol/times/{slug}` (HUB)
+- `/futebol/times/{slug}/jogo-hoje`
+- `/futebol/times/{slug}/proximos-jogos`
+- `/futebol/times/{slug}/onde-assistir`
+- `/futebol/times/{slug}/escalacao`
+- `/futebol/times/{slug}/estatisticas`
+
+URLs antigas (`/times/*` e `/campeonato/*`) têm 301 redirect em `next.config.ts` pra preservar SEO.
 
 ---
 
@@ -447,6 +449,19 @@ Real Madrid (2829), Barcelona (2817), Liverpool (44), Man City (17), Man United 
 | CBF Calendário | 12h | 3 |
 | Esportes (NBA/F1/etc) | 24h | ~8 |
 | Times (páginas cluster) | 30min | via proxy |
+
+### Rotas públicas principais
+
+| Rota | Descrição |
+|---|---|
+| `/` | Homepage |
+| `/futebol/[slug]` | Campeonato específico (Brasileirão, Libertadores, etc) |
+| `/futebol/times/[slug]` | Hub do time |
+| `/futebol/times/[slug]/{jogo-hoje,proximos-jogos,onde-assistir,escalacao,estatisticas}` | Subrotas cluster SEO |
+| `/esporte/[slug]` | NBA, F1, Tênis, MMA (não-futebol) |
+| `/artigos/[slug]` | Artigo |
+| `/noticias` `/agenda` `/ao-vivo` | Seções gerais |
+| `/municipal/*` | Futebol municipal (SisGel) |
 
 Forçar revalidação manual:
 ```bash
