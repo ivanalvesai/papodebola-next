@@ -1,43 +1,24 @@
-import type { Metadata } from "next";
-import { SPORTS } from "@/lib/config";
 import { getSportData } from "@/lib/data/sports";
-import { notFound } from "next/navigation";
 import { translateStatus } from "@/lib/translations";
-import { PageBreadcrumb } from "@/components/seo/page-breadcrumb";
+import { PageBreadcrumb, type BreadcrumbItem } from "@/components/seo/page-breadcrumb";
 
-export const revalidate = 86400;
-
-export async function generateStaticParams() {
-  return SPORTS.map((s) => ({ slug: s.slug }));
+interface SportPageContentProps {
+  sportKey: string;
+  title: string;
+  breadcrumbItems: BreadcrumbItem[];
 }
 
-export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
-  const { slug } = await params;
-  const sport = SPORTS.find((s) => s.slug === slug);
-  if (!sport) return {};
-  return {
-    title: `${sport.name} - Resultados e Calendario`,
-    description: `Acompanhe resultados, calendario e classificacao de ${sport.name}. Jogos ao vivo, proximos eventos e rankings.`,
-  };
-}
-
-export default async function EsportePage({ params }: { params: Promise<{ slug: string }> }) {
-  const { slug } = await params;
-  const sport = SPORTS.find((s) => s.slug === slug);
-  if (!sport) notFound();
-
-  const data = await getSportData(slug);
+export async function SportPageContent({
+  sportKey,
+  title,
+  breadcrumbItems,
+}: SportPageContentProps) {
+  const data = await getSportData(sportKey);
 
   return (
     <div className="mx-auto max-w-[1240px] px-4 py-8">
-      <PageBreadcrumb
-        className="mb-4"
-        items={[
-          { label: "Início", href: "/" },
-          { label: sport.name },
-        ]}
-      />
-      <h1 className="text-xl font-bold text-text-primary mb-6">{sport.name}</h1>
+      <PageBreadcrumb className="mb-4" items={breadcrumbItems} />
+      <h1 className="text-xl font-bold text-text-primary mb-6">{title}</h1>
 
       <div className="grid grid-cols-1 lg:grid-cols-[1fr_340px] gap-6">
         {/* Main */}

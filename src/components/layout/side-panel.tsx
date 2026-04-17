@@ -10,7 +10,7 @@ import { PANEL_TEAMS_BR, PANEL_TEAMS_EU, type TeamInfo } from "@/lib/config";
 function TeamItem({ team }: { team: TeamInfo }) {
   return (
     <Link
-      href={`/time/${team.slug}`}
+      href={`/futebol/times/${team.slug}`}
       className="flex items-center gap-3 px-5 py-2.5 text-sm text-text-secondary hover:bg-green-light hover:text-green transition-colors"
     >
       <Image
@@ -108,22 +108,89 @@ export function SidePanel() {
             Notícias
           </Link>
           <Link href="/agenda" onClick={close} className="block px-5 py-2.5 text-sm font-semibold text-text-primary hover:bg-green-light hover:text-green transition-colors">
-            Agenda
+            Jogos de Hoje
           </Link>
-          <Link href="/futebol/brasileirao-serie-a" onClick={close} className="block px-5 py-2.5 text-sm font-semibold text-text-primary hover:bg-green-light hover:text-green transition-colors">
-            Brasileirão
+          <Link href="/futebol/selecao-brasileira" onClick={close} className="block px-5 py-2.5 text-sm font-semibold text-text-primary hover:bg-green-light hover:text-green transition-colors">
+            Seleção Brasileira
           </Link>
-          <Link href="/futebol/champions-league" onClick={close} className="block px-5 py-2.5 text-sm font-semibold text-text-primary hover:bg-green-light hover:text-green transition-colors">
-            Champions League
+        </div>
+
+        {/* Futebol — campeonatos detalhados (invertido do main-nav em abr/2026) */}
+        <div className="border-b border-border-custom">
+          <div className="px-5 py-2.5 text-xs font-bold text-text-primary uppercase tracking-wider bg-body">
+            Futebol — Brasil
+          </div>
+          <Link href="/futebol/brasileirao-serie-a" onClick={close} className="block px-5 py-2.5 text-sm text-text-secondary hover:bg-green-light hover:text-green transition-colors">
+            Brasileirão Série A
           </Link>
-          <Link href="/futebol/libertadores" onClick={close} className="block px-5 py-2.5 text-sm font-semibold text-text-primary hover:bg-green-light hover:text-green transition-colors">
+          <Link href="/futebol/brasileirao-serie-b" onClick={close} className="block px-5 py-2.5 text-sm text-text-secondary hover:bg-green-light hover:text-green transition-colors">
+            Brasileirão Série B
+          </Link>
+          <Link href="/futebol/copa-do-brasil" onClick={close} className="block px-5 py-2.5 text-sm text-text-secondary hover:bg-green-light hover:text-green transition-colors">
+            Copa do Brasil
+          </Link>
+          <Link href="/futebol/copa-do-nordeste" onClick={close} className="block px-5 py-2.5 text-sm text-text-secondary hover:bg-green-light hover:text-green transition-colors">
+            Copa do Nordeste
+          </Link>
+        </div>
+
+        <div className="border-b border-border-custom">
+          <div className="px-5 py-2.5 text-xs font-bold text-text-primary uppercase tracking-wider bg-body">
+            Estaduais
+          </div>
+          <Link href="/futebol/paulista" onClick={close} className="block px-5 py-2.5 text-sm text-text-secondary hover:bg-green-light hover:text-green transition-colors">
+            Paulista
+          </Link>
+          <Link href="/futebol/carioca" onClick={close} className="block px-5 py-2.5 text-sm text-text-secondary hover:bg-green-light hover:text-green transition-colors">
+            Carioca
+          </Link>
+          <Link href="/futebol/mineiro" onClick={close} className="block px-5 py-2.5 text-sm text-text-secondary hover:bg-green-light hover:text-green transition-colors">
+            Mineiro
+          </Link>
+          <Link href="/futebol/gaucho" onClick={close} className="block px-5 py-2.5 text-sm text-text-secondary hover:bg-green-light hover:text-green transition-colors">
+            Gaúcho
+          </Link>
+          <Link href="/municipal" onClick={close} className="block px-5 py-2.5 text-sm text-text-secondary hover:bg-green-light hover:text-green transition-colors">
+            Municipal (SdP)
+          </Link>
+        </div>
+
+        <div className="border-b border-border-custom">
+          <div className="px-5 py-2.5 text-xs font-bold text-text-primary uppercase tracking-wider bg-body">
+            Sul-Americano
+          </div>
+          <Link href="/futebol/libertadores" onClick={close} className="block px-5 py-2.5 text-sm text-text-secondary hover:bg-green-light hover:text-green transition-colors">
             Libertadores
           </Link>
-          <Link href="/noticias?cat=Copa%20do%20Mundo" onClick={close} className="block px-5 py-2.5 text-sm font-semibold text-text-primary hover:bg-green-light hover:text-green transition-colors">
-            Copa do Mundo 2026
+          <Link href="/futebol/sudamericana" onClick={close} className="block px-5 py-2.5 text-sm text-text-secondary hover:bg-green-light hover:text-green transition-colors">
+            Sudamericana
           </Link>
-          <Link href="/noticias?cat=Seleção%20Brasileira" onClick={close} className="block px-5 py-2.5 text-sm font-semibold text-text-primary hover:bg-green-light hover:text-green transition-colors">
-            Seleção Brasileira
+        </div>
+
+        <div className="border-b border-border-custom">
+          <div className="px-5 py-2.5 text-xs font-bold text-text-primary uppercase tracking-wider bg-body">
+            Europa
+          </div>
+          <Link href="/futebol/champions-league" onClick={close} className="block px-5 py-2.5 text-sm text-text-secondary hover:bg-green-light hover:text-green transition-colors">
+            Champions League
+          </Link>
+          <Link href="/futebol/europa-league" onClick={close} className="block px-5 py-2.5 text-sm text-text-secondary hover:bg-green-light hover:text-green transition-colors">
+            Europa League
+          </Link>
+          <Link href="/futebol/premier-league" onClick={close} className="block px-5 py-2.5 text-sm text-text-secondary hover:bg-green-light hover:text-green transition-colors">
+            Premier League
+          </Link>
+          <Link href="/futebol/la-liga" onClick={close} className="block px-5 py-2.5 text-sm text-text-secondary hover:bg-green-light hover:text-green transition-colors">
+            La Liga
+          </Link>
+          <Link href="/futebol/serie-a-italia" onClick={close} className="block px-5 py-2.5 text-sm text-text-secondary hover:bg-green-light hover:text-green transition-colors">
+            Serie A (Itália)
+          </Link>
+          <Link href="/futebol/bundesliga" onClick={close} className="block px-5 py-2.5 text-sm text-text-secondary hover:bg-green-light hover:text-green transition-colors">
+            Bundesliga
+          </Link>
+          <Link href="/futebol/ligue-1" onClick={close} className="block px-5 py-2.5 text-sm text-text-secondary hover:bg-green-light hover:text-green transition-colors">
+            Ligue 1
           </Link>
         </div>
 
@@ -132,26 +199,32 @@ export function SidePanel() {
           <div className="px-5 py-2.5 text-xs font-bold text-text-primary uppercase tracking-wider bg-body">
             Esportes
           </div>
-          <Link href="/esporte/nba" onClick={close} className="block px-5 py-2.5 text-sm text-text-secondary hover:bg-green-light hover:text-green transition-colors">
-            NBA / Basquete
+          <Link href="/basquete" onClick={close} className="block px-5 py-2.5 text-sm text-text-secondary hover:bg-green-light hover:text-green transition-colors">
+            Basquete
           </Link>
-          <Link href="/esporte/tenis" onClick={close} className="block px-5 py-2.5 text-sm text-text-secondary hover:bg-green-light hover:text-green transition-colors">
-            Tênis
+          <Link href="/boxe" onClick={close} className="block px-5 py-2.5 text-sm text-text-secondary hover:bg-green-light hover:text-green transition-colors">
+            Boxe
           </Link>
-          <Link href="/esporte/f1" onClick={close} className="block px-5 py-2.5 text-sm text-text-secondary hover:bg-green-light hover:text-green transition-colors">
-            Fórmula 1
+          <Link href="/combate" onClick={close} className="block px-5 py-2.5 text-sm text-text-secondary hover:bg-green-light hover:text-green transition-colors">
+            Combate
           </Link>
-          <Link href="/esporte/mma" onClick={close} className="block px-5 py-2.5 text-sm text-text-secondary hover:bg-green-light hover:text-green transition-colors">
-            MMA / UFC
-          </Link>
-          <Link href="/esporte/volei" onClick={close} className="block px-5 py-2.5 text-sm text-text-secondary hover:bg-green-light hover:text-green transition-colors">
-            Vôlei
-          </Link>
-          <Link href="/esporte/esports" onClick={close} className="block px-5 py-2.5 text-sm text-text-secondary hover:bg-green-light hover:text-green transition-colors">
+          <Link href="/esports" onClick={close} className="block px-5 py-2.5 text-sm text-text-secondary hover:bg-green-light hover:text-green transition-colors">
             eSports
           </Link>
-          <Link href="/esporte/nfl" onClick={close} className="block px-5 py-2.5 text-sm text-text-secondary hover:bg-green-light hover:text-green transition-colors">
-            NFL
+          <Link href="/formula-1" onClick={close} className="block px-5 py-2.5 text-sm text-text-secondary hover:bg-green-light hover:text-green transition-colors">
+            Fórmula 1
+          </Link>
+          <Link href="/futebol-americano" onClick={close} className="block px-5 py-2.5 text-sm text-text-secondary hover:bg-green-light hover:text-green transition-colors">
+            Futebol Americano
+          </Link>
+          <Link href="/futsal" onClick={close} className="block px-5 py-2.5 text-sm text-text-secondary hover:bg-green-light hover:text-green transition-colors">
+            Futsal
+          </Link>
+          <Link href="/tenis" onClick={close} className="block px-5 py-2.5 text-sm text-text-secondary hover:bg-green-light hover:text-green transition-colors">
+            Tênis
+          </Link>
+          <Link href="/volei" onClick={close} className="block px-5 py-2.5 text-sm text-text-secondary hover:bg-green-light hover:text-green transition-colors">
+            Vôlei
           </Link>
         </div>
 
@@ -183,6 +256,17 @@ export function SidePanel() {
           defaultOpen={false}
           searchQuery={search}
         />
+
+        {/* Parceiros (último item) */}
+        <div className="border-t border-border-custom">
+          <Link
+            href="/parceiros"
+            onClick={close}
+            className="block px-5 py-2.5 text-sm font-semibold text-text-primary hover:bg-green-light hover:text-green transition-colors"
+          >
+            Parceiros
+          </Link>
+        </div>
       </div>
     </>
   );

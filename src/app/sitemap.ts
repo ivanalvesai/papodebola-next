@@ -13,6 +13,9 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     { url: `${BASE}/noticias`, lastModified: now, changeFrequency: "hourly", priority: 0.9 },
     { url: `${BASE}/agenda`, lastModified: now, changeFrequency: "daily", priority: 0.7 },
     { url: `${BASE}/ao-vivo`, lastModified: now, changeFrequency: "always", priority: 0.8 },
+    { url: `${BASE}/futebol/jogos-hoje`, lastModified: now, changeFrequency: "hourly", priority: 0.85 },
+    { url: `${BASE}/futebol/onde-assistir`, lastModified: now, changeFrequency: "hourly", priority: 0.8 },
+    { url: `${BASE}/futebol/selecao-brasileira`, lastModified: now, changeFrequency: "daily", priority: 0.8 },
     { url: `${BASE}/sobre`, changeFrequency: "monthly", priority: 0.3 },
     { url: `${BASE}/contato`, changeFrequency: "monthly", priority: 0.3 },
     { url: `${BASE}/privacidade`, changeFrequency: "monthly", priority: 0.2 },
@@ -38,13 +41,26 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       priority: 0.8,
     }));
 
-  // Sport pages
+  // Sport pages (top-level, sem prefixo /esporte/)
   const sportPages: MetadataRoute.Sitemap = SPORTS.map((s) => ({
-    url: `${BASE}/esporte/${s.slug}`,
+    url: `${BASE}${s.href}`,
     lastModified: now,
     changeFrequency: "daily" as const,
     priority: 0.6,
   }));
 
-  return [...staticPages, ...teamPages, ...champPages, ...sportPages];
+  // Basquete tem subrota NBA (conteúdo do torneio)
+  sportPages.push({
+    url: `${BASE}/basquete/nba`,
+    lastModified: now,
+    changeFrequency: "daily" as const,
+    priority: 0.6,
+  });
+
+  // Parceiros (institucional)
+  const parceirosPage: MetadataRoute.Sitemap = [
+    { url: `${BASE}/parceiros`, changeFrequency: "monthly" as const, priority: 0.3 },
+  ];
+
+  return [...staticPages, ...teamPages, ...champPages, ...sportPages, ...parceirosPage];
 }
