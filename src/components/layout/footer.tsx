@@ -32,7 +32,7 @@ export function Footer() {
               </li>
               <li>
                 <Link href="/agenda" className="text-text-muted hover:text-white transition-colors">
-                  Agenda
+                  Jogos de Hoje
                 </Link>
               </li>
             </ul>

@@ -7,7 +7,7 @@ import { PageBreadcrumb } from "@/components/seo/page-breadcrumb";
 export const revalidate = 43200;
 
 export const metadata: Metadata = {
-  title: "Agenda de Jogos - Futebol Brasileiro",
+  title: "Jogos de Hoje - Futebol Brasileiro",
   description: "Calendario completo de jogos do futebol brasileiro. Brasileirao, Copa do Brasil e mais. Datas, horarios e estadios.",
 };
 
@@ -20,12 +20,12 @@ export default async function AgendaPage() {
         className="mb-4"
         items={[
           { label: "Início", href: "/" },
-          { label: "Agenda" },
+          { label: "Jogos de Hoje" },
         ]}
       />
       <h1 className="text-xl font-bold text-text-primary mb-6 flex items-center gap-2">
         <Calendar className="h-6 w-6 text-green" />
-        Agenda - Futebol Brasileiro
+        Jogos de Hoje - Futebol Brasileiro
       </h1>
 
       <div className="space-y-8">
