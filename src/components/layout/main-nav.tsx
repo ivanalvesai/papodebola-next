@@ -84,7 +84,7 @@ export function MainNav() {
                   {PANEL_TEAMS_BR.map((team) => (
                     <Link
                       key={team.slug}
-                      href={`/times/${team.slug}`}
+                      href={`/futebol/times/${team.slug}`}
                       onClick={() => setOpenDropdown(null)}
                       className="flex items-center gap-2.5 py-2 px-2.5 rounded-md text-sm text-text-secondary hover:text-green hover:bg-green-light transition-colors"
                     >
@@ -126,10 +126,10 @@ export function MainNav() {
                   </h4>
                   <ul className="space-y-1">
                     {[
-                      { label: "Brasileirao Serie A", href: "/campeonato/brasileirao-serie-a" },
-                      { label: "Brasileirao Serie B", href: "/campeonato/brasileirao-serie-b" },
-                      { label: "Copa do Brasil", href: "/campeonato/copa-do-brasil" },
-                      { label: "Copa do Nordeste", href: "/campeonato/copa-do-nordeste" },
+                      { label: "Brasileirao Serie A", href: "/futebol/brasileirao-serie-a" },
+                      { label: "Brasileirao Serie B", href: "/futebol/brasileirao-serie-b" },
+                      { label: "Copa do Brasil", href: "/futebol/copa-do-brasil" },
+                      { label: "Copa do Nordeste", href: "/futebol/copa-do-nordeste" },
                     ].map((l) => (
                       <li key={l.href}>
                         <Link href={l.href} onClick={() => setOpenDropdown(null)} className="block py-1.5 px-2 text-sm text-text-secondary hover:text-green hover:bg-green-light rounded transition-colors">
@@ -155,10 +155,10 @@ export function MainNav() {
                   </h4>
                   <ul className="space-y-1">
                     {[
-                      { label: "Paulista", href: "/campeonato/paulista" },
-                      { label: "Carioca", href: "/campeonato/carioca" },
-                      { label: "Mineiro", href: "/campeonato/mineiro" },
-                      { label: "Gaucho", href: "/campeonato/gaucho" },
+                      { label: "Paulista", href: "/futebol/paulista" },
+                      { label: "Carioca", href: "/futebol/carioca" },
+                      { label: "Mineiro", href: "/futebol/mineiro" },
+                      { label: "Gaucho", href: "/futebol/gaucho" },
                     ].map((l) => (
                       <li key={l.href}>
                         <Link href={l.href} onClick={() => setOpenDropdown(null)} className="block py-1.5 px-2 text-sm text-text-secondary hover:text-green hover:bg-green-light rounded transition-colors">
@@ -175,8 +175,8 @@ export function MainNav() {
                   </h4>
                   <ul className="space-y-1">
                     {[
-                      { label: "Libertadores", href: "/campeonato/libertadores" },
-                      { label: "Sudamericana", href: "/campeonato/sudamericana" },
+                      { label: "Libertadores", href: "/futebol/libertadores" },
+                      { label: "Sudamericana", href: "/futebol/sudamericana" },
                     ].map((l) => (
                       <li key={l.href}>
                         <Link href={l.href} onClick={() => setOpenDropdown(null)} className="block py-1.5 px-2 text-sm text-text-secondary hover:text-green hover:bg-green-light rounded transition-colors">
@@ -191,13 +191,13 @@ export function MainNav() {
                   </h4>
                   <ul className="space-y-1">
                     {[
-                      { label: "Champions League", href: "/campeonato/champions-league" },
-                      { label: "Europa League", href: "/campeonato/europa-league" },
-                      { label: "Premier League", href: "/campeonato/premier-league" },
-                      { label: "La Liga", href: "/campeonato/la-liga" },
-                      { label: "Serie A (Italia)", href: "/campeonato/serie-a-italia" },
-                      { label: "Bundesliga", href: "/campeonato/bundesliga" },
-                      { label: "Ligue 1", href: "/campeonato/ligue-1" },
+                      { label: "Champions League", href: "/futebol/champions-league" },
+                      { label: "Europa League", href: "/futebol/europa-league" },
+                      { label: "Premier League", href: "/futebol/premier-league" },
+                      { label: "La Liga", href: "/futebol/la-liga" },
+                      { label: "Serie A (Italia)", href: "/futebol/serie-a-italia" },
+                      { label: "Bundesliga", href: "/futebol/bundesliga" },
+                      { label: "Ligue 1", href: "/futebol/ligue-1" },
                     ].map((l) => (
                       <li key={l.href}>
                         <Link href={l.href} onClick={() => setOpenDropdown(null)} className="block py-1.5 px-2 text-sm text-text-secondary hover:text-green hover:bg-green-light rounded transition-colors">

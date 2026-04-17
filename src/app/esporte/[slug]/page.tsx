@@ -3,6 +3,7 @@ import { SPORTS } from "@/lib/config";
 import { getSportData } from "@/lib/data/sports";
 import { notFound } from "next/navigation";
 import { translateStatus } from "@/lib/translations";
+import { PageBreadcrumb } from "@/components/seo/page-breadcrumb";
 
 export const revalidate = 86400;
 
@@ -29,6 +30,13 @@ export default async function EsportePage({ params }: { params: Promise<{ slug: 
 
   return (
     <div className="mx-auto max-w-[1240px] px-4 py-8">
+      <PageBreadcrumb
+        className="mb-4"
+        items={[
+          { label: "Início", href: "/" },
+          { label: sport.name },
+        ]}
+      />
       <h1 className="text-xl font-bold text-text-primary mb-6">{sport.name}</h1>
 
       <div className="grid grid-cols-1 lg:grid-cols-[1fr_340px] gap-6">

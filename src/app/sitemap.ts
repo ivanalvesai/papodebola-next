@@ -20,19 +20,19 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
 
   // Team cluster pages
   const teamPages: MetadataRoute.Sitemap = TEAMS.flatMap((t) => [
-    { url: `${BASE}/times/${t.slug}`, lastModified: now, changeFrequency: "daily" as const, priority: 0.8 },
-    { url: `${BASE}/times/${t.slug}/jogo-hoje`, lastModified: now, changeFrequency: "daily" as const, priority: 0.7 },
-    { url: `${BASE}/times/${t.slug}/onde-assistir`, lastModified: now, changeFrequency: "daily" as const, priority: 0.6 },
-    { url: `${BASE}/times/${t.slug}/escalacao`, lastModified: now, changeFrequency: "daily" as const, priority: 0.6 },
-    { url: `${BASE}/times/${t.slug}/proximos-jogos`, lastModified: now, changeFrequency: "daily" as const, priority: 0.7 },
-    { url: `${BASE}/times/${t.slug}/estatisticas`, lastModified: now, changeFrequency: "weekly" as const, priority: 0.6 },
+    { url: `${BASE}/futebol/times/${t.slug}`, lastModified: now, changeFrequency: "daily" as const, priority: 0.8 },
+    { url: `${BASE}/futebol/times/${t.slug}/jogo-hoje`, lastModified: now, changeFrequency: "daily" as const, priority: 0.7 },
+    { url: `${BASE}/futebol/times/${t.slug}/onde-assistir`, lastModified: now, changeFrequency: "daily" as const, priority: 0.6 },
+    { url: `${BASE}/futebol/times/${t.slug}/escalacao`, lastModified: now, changeFrequency: "daily" as const, priority: 0.6 },
+    { url: `${BASE}/futebol/times/${t.slug}/proximos-jogos`, lastModified: now, changeFrequency: "daily" as const, priority: 0.7 },
+    { url: `${BASE}/futebol/times/${t.slug}/estatisticas`, lastModified: now, changeFrequency: "weekly" as const, priority: 0.6 },
   ]);
 
   // Championship pages
   const champPages: MetadataRoute.Sitemap = Object.values(TOURNAMENTS)
     .filter((t) => t.seasonId)
     .map((t) => ({
-      url: `${BASE}/campeonato/${t.slug}`,
+      url: `${BASE}/futebol/${t.slug}`,
       lastModified: now,
       changeFrequency: "daily" as const,
       priority: 0.8,

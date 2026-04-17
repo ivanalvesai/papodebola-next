@@ -6,14 +6,7 @@ import { Clock, Pen, BookOpen, Tag, Trophy } from "lucide-react";
 import { getArticleBySlug, getRelatedArticles } from "@/lib/data/articles";
 import { ShareButtons } from "@/components/article/share-buttons";
 import { ArticleSchema } from "@/components/seo/article-schema";
-import {
-  Breadcrumb,
-  BreadcrumbItem,
-  BreadcrumbLink,
-  BreadcrumbList,
-  BreadcrumbPage,
-  BreadcrumbSeparator,
-} from "@/components/ui/breadcrumb";
+import { PageBreadcrumb } from "@/components/seo/page-breadcrumb";
 
 export const revalidate = 1800;
 
@@ -114,30 +107,15 @@ export default async function ArticlePage({
       {/* Hero */}
       <section className="bg-surface border-b border-border-custom">
         <div className="mx-auto max-w-[800px] px-4 pt-6 pb-8">
-          {/* Breadcrumb */}
-          <Breadcrumb className="mb-4">
-            <BreadcrumbList>
-              <BreadcrumbItem>
-                <BreadcrumbLink href="/">Inicio</BreadcrumbLink>
-              </BreadcrumbItem>
-              <BreadcrumbSeparator />
-              <BreadcrumbItem>
-                <BreadcrumbLink href="/noticias">Noticias</BreadcrumbLink>
-              </BreadcrumbItem>
-              <BreadcrumbSeparator />
-              <BreadcrumbItem>
-                <BreadcrumbLink href={`/noticias?cat=${encodeURIComponent(article.category)}`}>
-                  {article.category}
-                </BreadcrumbLink>
-              </BreadcrumbItem>
-              <BreadcrumbSeparator />
-              <BreadcrumbItem>
-                <BreadcrumbPage className="truncate max-w-[200px]">
-                  {article.rewrittenTitle}
-                </BreadcrumbPage>
-              </BreadcrumbItem>
-            </BreadcrumbList>
-          </Breadcrumb>
+          <PageBreadcrumb
+            className="mb-4"
+            items={[
+              { label: "Início", href: "/" },
+              { label: "Notícias", href: "/noticias" },
+              { label: article.category, href: `/noticias?cat=${encodeURIComponent(article.category)}` },
+              { label: article.rewrittenTitle },
+            ]}
+          />
 
           {/* Image */}
           {article.image && (

@@ -28,7 +28,7 @@ export function MyTeamWidget() {
           </button>
         </div>
         <Link
-          href={`/times/${myTeam.slug}`}
+          href={`/futebol/times/${myTeam.slug}`}
           className="flex items-center gap-3 px-4 py-3 hover:bg-card-hover transition-colors"
         >
           <Image
@@ -47,25 +47,25 @@ export function MyTeamWidget() {
         </Link>
         <div className="px-4 pb-3 grid grid-cols-2 gap-1.5">
           <Link
-            href={`/times/${myTeam.slug}/jogo-hoje`}
+            href={`/futebol/times/${myTeam.slug}/jogo-hoje`}
             className="text-[11px] text-center py-1.5 bg-body rounded text-text-secondary hover:text-green hover:bg-green-light transition-colors font-medium"
           >
             Jogo de Hoje
           </Link>
           <Link
-            href={`/times/${myTeam.slug}/proximos-jogos`}
+            href={`/futebol/times/${myTeam.slug}/proximos-jogos`}
             className="text-[11px] text-center py-1.5 bg-body rounded text-text-secondary hover:text-green hover:bg-green-light transition-colors font-medium"
           >
             Proximos Jogos
           </Link>
           <Link
-            href={`/times/${myTeam.slug}/estatisticas`}
+            href={`/futebol/times/${myTeam.slug}/estatisticas`}
             className="text-[11px] text-center py-1.5 bg-body rounded text-text-secondary hover:text-green hover:bg-green-light transition-colors font-medium"
           >
             Estatisticas
           </Link>
           <Link
-            href={`/times/${myTeam.slug}/escalacao`}
+            href={`/futebol/times/${myTeam.slug}/escalacao`}
             className="text-[11px] text-center py-1.5 bg-body rounded text-text-secondary hover:text-green hover:bg-green-light transition-colors font-medium"
           >
             Escalacao

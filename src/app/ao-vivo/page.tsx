@@ -3,6 +3,7 @@ import { getTodayMatches } from "@/lib/data/matches";
 import Image from "next/image";
 import { Radio } from "lucide-react";
 import type { NormalizedMatch } from "@/types/match";
+import { PageBreadcrumb } from "@/components/seo/page-breadcrumb";
 
 export const revalidate = 300;
 
@@ -67,6 +68,13 @@ export default async function AoVivoPage() {
 
   return (
     <div className="mx-auto max-w-[800px] px-4 py-8">
+      <PageBreadcrumb
+        className="mb-4"
+        items={[
+          { label: "Início", href: "/" },
+          { label: "Ao Vivo" },
+        ]}
+      />
       <h1 className="text-xl font-bold text-text-primary mb-6 flex items-center gap-2">
         <Radio className="h-6 w-6 text-red" />
         Jogos de Hoje

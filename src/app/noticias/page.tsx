@@ -4,6 +4,7 @@ import Link from "next/link";
 import { Newspaper } from "lucide-react";
 import { getArticles } from "@/lib/data/articles";
 import { WP_CATEGORIES } from "@/lib/config";
+import { PageBreadcrumb } from "@/components/seo/page-breadcrumb";
 
 export const revalidate = 1800;
 
@@ -33,8 +34,20 @@ export default async function NoticiasPage({ searchParams }: PageProps) {
 
   const totalPages = Math.ceil(total / perPage);
 
+  const breadcrumbItems = category
+    ? [
+        { label: "Início", href: "/" },
+        { label: "Notícias", href: "/noticias" },
+        { label: category },
+      ]
+    : [
+        { label: "Início", href: "/" },
+        { label: "Notícias" },
+      ];
+
   return (
     <div className="mx-auto max-w-[1240px] px-4 py-8">
+      <PageBreadcrumb className="mb-4" items={breadcrumbItems} />
       <h1 className="text-xl font-bold text-text-primary mb-6 flex items-center gap-2">
         <Newspaper className="h-6 w-6 text-green" />
         Noticias

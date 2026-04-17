@@ -95,7 +95,7 @@ export default async function EscalacaoPage({ params }: { params: Promise<{ slug
       )}
 
       <div className="text-center">
-        <Link href={`/times/${slug}`} className="text-sm text-green font-semibold hover:text-green-hover">
+        <Link href={`/futebol/times/${slug}`} className="text-sm text-green font-semibold hover:text-green-hover">
           &larr; Voltar para {team.name}
         </Link>
       </div>

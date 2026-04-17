@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Image from "next/image";
 import { getCBFCalendar } from "@/lib/data/cbf-calendar";
 import { Calendar } from "lucide-react";
+import { PageBreadcrumb } from "@/components/seo/page-breadcrumb";
 
 export const revalidate = 43200;
 
@@ -15,6 +16,13 @@ export default async function AgendaPage() {
 
   return (
     <div className="mx-auto max-w-[1240px] px-4 py-8">
+      <PageBreadcrumb
+        className="mb-4"
+        items={[
+          { label: "Início", href: "/" },
+          { label: "Agenda" },
+        ]}
+      />
       <h1 className="text-xl font-bold text-text-primary mb-6 flex items-center gap-2">
         <Calendar className="h-6 w-6 text-green" />
         Agenda - Futebol Brasileiro

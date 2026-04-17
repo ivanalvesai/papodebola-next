@@ -114,7 +114,7 @@ export function StandingsWidget({ standings }: StandingsWidgetProps) {
       )}
 
       <Link
-        href="/campeonato/brasileirao-serie-a"
+        href="/futebol/brasileirao-serie-a"
         className="block text-center text-xs font-semibold text-green py-3 border-t border-border-custom hover:bg-card-hover transition-colors"
       >
         Ver tabela completa &rarr;
