@@ -61,6 +61,34 @@ export function MainNav() {
             </Link>
           </li>
 
+          {/* Noticias */}
+          <li>
+            <Link
+              href="/noticias"
+              className={`block px-3 py-3 font-semibold whitespace-nowrap transition-colors ${
+                pathname.startsWith("/noticias")
+                  ? "text-green border-b-2 border-green"
+                  : "text-text-secondary hover:text-green"
+              }`}
+            >
+              Noticias
+            </Link>
+          </li>
+
+          {/* Agenda */}
+          <li>
+            <Link
+              href="/agenda"
+              className={`block px-3 py-3 font-semibold whitespace-nowrap transition-colors ${
+                pathname === "/agenda"
+                  ? "text-green border-b-2 border-green"
+                  : "text-text-secondary hover:text-green"
+              }`}
+            >
+              Agenda
+            </Link>
+          </li>
+
           {/* ========== TIMES ========== */}
           <li className="relative">
             <button
@@ -104,12 +132,12 @@ export function MainNav() {
             )}
           </li>
 
-          {/* ========== FUTEBOL ========== */}
+          {/* ========== FUTEBOL (atalhos rapidos) ========== */}
           <li className="relative">
             <button
               onClick={() => toggleDropdown("futebol")}
               className={`flex items-center gap-1 px-3 py-3 font-semibold whitespace-nowrap transition-colors ${
-                pathname.startsWith("/campeonato")
+                pathname.startsWith("/futebol")
                   ? "text-green border-b-2 border-green"
                   : "text-text-secondary hover:text-green"
               }`}
@@ -119,94 +147,42 @@ export function MainNav() {
             </button>
 
             {openDropdown === "futebol" && (
-              <div className="absolute top-full left-0 bg-surface border border-border-custom rounded-lg shadow-lg p-4 z-50 flex gap-6 min-w-[480px]">
-                <div>
-                  <h4 className="text-xs font-bold text-text-muted uppercase tracking-wider mb-2">
-                    Brasil
-                  </h4>
-                  <ul className="space-y-1">
-                    {[
-                      { label: "Brasileirao Serie A", href: "/futebol/brasileirao-serie-a" },
-                      { label: "Brasileirao Serie B", href: "/futebol/brasileirao-serie-b" },
-                      { label: "Copa do Brasil", href: "/futebol/copa-do-brasil" },
-                      { label: "Copa do Nordeste", href: "/futebol/copa-do-nordeste" },
-                    ].map((l) => (
-                      <li key={l.href}>
-                        <Link href={l.href} onClick={() => setOpenDropdown(null)} className="block py-1.5 px-2 text-sm text-text-secondary hover:text-green hover:bg-green-light rounded transition-colors">
-                          {l.label}
-                        </Link>
-                      </li>
-                    ))}
-                  </ul>
-
-                  <h4 className="text-xs font-bold text-text-muted uppercase tracking-wider mb-2 mt-4">
-                    Municipal
-                  </h4>
-                  <ul className="space-y-1">
-                    <li>
-                      <Link href="/municipal" onClick={() => setOpenDropdown(null)} className="block py-1.5 px-2 text-sm text-text-secondary hover:text-green hover:bg-green-light rounded transition-colors">
-                        Santana de Parnaiba
+              <div className="absolute top-full left-0 bg-surface border border-border-custom rounded-lg shadow-lg p-2 z-50 min-w-[220px]">
+                <ul className="space-y-0.5">
+                  {[
+                    { label: "Jogos de Hoje", href: "/futebol/jogos-hoje" },
+                    { label: "Onde Assistir", href: "/futebol/onde-assistir" },
+                  ].map((l) => (
+                    <li key={l.href}>
+                      <Link href={l.href} onClick={() => setOpenDropdown(null)} className="block py-1.5 px-2 text-sm text-text-secondary hover:text-green hover:bg-green-light rounded transition-colors">
+                        {l.label}
                       </Link>
                     </li>
-                  </ul>
-
-                  <h4 className="text-xs font-bold text-text-muted uppercase tracking-wider mb-2 mt-4">
-                    Estaduais
-                  </h4>
-                  <ul className="space-y-1">
-                    {[
-                      { label: "Paulista", href: "/futebol/paulista" },
-                      { label: "Carioca", href: "/futebol/carioca" },
-                      { label: "Mineiro", href: "/futebol/mineiro" },
-                      { label: "Gaucho", href: "/futebol/gaucho" },
-                    ].map((l) => (
-                      <li key={l.href}>
-                        <Link href={l.href} onClick={() => setOpenDropdown(null)} className="block py-1.5 px-2 text-sm text-text-secondary hover:text-green hover:bg-green-light rounded transition-colors">
-                          {l.label}
-                        </Link>
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-
-                <div>
-                  <h4 className="text-xs font-bold text-text-muted uppercase tracking-wider mb-2">
-                    Sul-Americano
-                  </h4>
-                  <ul className="space-y-1">
-                    {[
-                      { label: "Libertadores", href: "/futebol/libertadores" },
-                      { label: "Sudamericana", href: "/futebol/sudamericana" },
-                    ].map((l) => (
-                      <li key={l.href}>
-                        <Link href={l.href} onClick={() => setOpenDropdown(null)} className="block py-1.5 px-2 text-sm text-text-secondary hover:text-green hover:bg-green-light rounded transition-colors">
-                          {l.label}
-                        </Link>
-                      </li>
-                    ))}
-                  </ul>
-
-                  <h4 className="text-xs font-bold text-text-muted uppercase tracking-wider mb-2 mt-4">
-                    Europa
-                  </h4>
-                  <ul className="space-y-1">
-                    {[
-                      { label: "Champions League", href: "/futebol/champions-league" },
-                      { label: "Europa League", href: "/futebol/europa-league" },
-                      { label: "Premier League", href: "/futebol/premier-league" },
-                      { label: "La Liga", href: "/futebol/la-liga" },
-                      { label: "Serie A (Italia)", href: "/futebol/serie-a-italia" },
-                      { label: "Bundesliga", href: "/futebol/bundesliga" },
-                      { label: "Ligue 1", href: "/futebol/ligue-1" },
-                    ].map((l) => (
-                      <li key={l.href}>
-                        <Link href={l.href} onClick={() => setOpenDropdown(null)} className="block py-1.5 px-2 text-sm text-text-secondary hover:text-green hover:bg-green-light rounded transition-colors">
-                          {l.label}
-                        </Link>
-                      </li>
-                    ))}
-                  </ul>
-                </div>
+                  ))}
+                  <li><div className="my-1 border-t border-border-custom" /></li>
+                  {[
+                    { label: "Brasileirao", href: "/futebol/brasileirao-serie-a" },
+                    { label: "Champions League", href: "/futebol/champions-league" },
+                    { label: "Libertadores", href: "/futebol/libertadores" },
+                  ].map((l) => (
+                    <li key={l.href}>
+                      <Link href={l.href} onClick={() => setOpenDropdown(null)} className="block py-1.5 px-2 text-sm text-text-secondary hover:text-green hover:bg-green-light rounded transition-colors">
+                        {l.label}
+                      </Link>
+                    </li>
+                  ))}
+                  <li><div className="my-1 border-t border-border-custom" /></li>
+                  {[
+                    { label: "Selecao Brasileira", href: "/futebol/selecao-brasileira" },
+                    { label: "Copa do Mundo 2026", href: "/noticias?cat=Copa%20do%20Mundo" },
+                  ].map((l) => (
+                    <li key={l.href}>
+                      <Link href={l.href} onClick={() => setOpenDropdown(null)} className="block py-1.5 px-2 text-sm text-text-secondary hover:text-green hover:bg-green-light rounded transition-colors">
+                        {l.label}
+                      </Link>
+                    </li>
+                  ))}
+                </ul>
               </div>
             )}
           </li>
@@ -242,6 +218,20 @@ export function MainNav() {
                 </ul>
               </div>
             )}
+          </li>
+
+          {/* Parceiros */}
+          <li className="ml-auto">
+            <Link
+              href="/parceiros"
+              className={`block px-3 py-3 font-semibold whitespace-nowrap transition-colors ${
+                pathname === "/parceiros"
+                  ? "text-green border-b-2 border-green"
+                  : "text-text-secondary hover:text-green"
+              }`}
+            >
+              Parceiros
+            </Link>
           </li>
         </ul>
       </div>
