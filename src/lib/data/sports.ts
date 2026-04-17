@@ -38,7 +38,7 @@ export async function getSportData(slug: string): Promise<SportData | null> {
   const { api } = config;
 
   // Live events
-  const liveData = await fetchSport<any>(api, "events/live", 300);
+  const liveData = await fetchSport<any>(api, "matches/live", 300);
   const live = (liveData?.events || []).map(normalizeEvent);
 
   // Today's events
@@ -46,7 +46,7 @@ export async function getSportData(slug: string): Promise<SportData | null> {
   const d = now.getDate();
   const m = now.getMonth() + 1;
   const y = now.getFullYear();
-  const todayData = await fetchSport<any>(api, `events/${d}/${m}/${y}`, 3600);
+  const todayData = await fetchSport<any>(api, `matches/${d}/${m}/${y}`, 3600);
   const today = (todayData?.events || []).map(normalizeEvent);
 
   // Calendar (next 5 days)
@@ -58,7 +58,7 @@ export async function getSportData(slug: string): Promise<SportData | null> {
     const mm = date.getMonth() + 1;
     const yy = date.getFullYear();
 
-    const dayData = await fetchSport<any>(api, `events/${dd}/${mm}/${yy}`, 86400);
+    const dayData = await fetchSport<any>(api, `matches/${dd}/${mm}/${yy}`, 86400);
     const events = (dayData?.events || []).map(normalizeEvent);
 
     const label = date.toLocaleDateString("pt-BR", {
