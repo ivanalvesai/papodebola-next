@@ -42,7 +42,8 @@ export function HighlightsSection({ highlights }: HighlightsSectionProps) {
                   src={h.thumbnail}
                   alt={h.title}
                   className="w-full h-full object-cover"
-                  loading="lazy"
+                  loading={i < 4 ? "eager" : "lazy"}
+                  fetchPriority={i === 0 ? "high" : "auto"}
                 />
               )}
               <div className="absolute inset-0 flex items-center justify-center bg-black/20 group-hover:bg-black/40 transition-colors">

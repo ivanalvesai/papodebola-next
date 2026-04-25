@@ -4,7 +4,7 @@ import { Open_Sans } from "next/font/google";
 import "./globals.css";
 import { Header } from "@/components/layout/header";
 import { MainNav } from "@/components/layout/main-nav";
-import { SidePanel } from "@/components/layout/side-panel";
+import { SidePanelLoader } from "@/components/layout/side-panel-loader";
 import { Footer } from "@/components/layout/footer";
 import { CookieConsent } from "@/components/layout/cookie-consent";
 import { SidePanelProvider } from "@/components/layout/side-panel-context";
@@ -70,7 +70,7 @@ export default function RootLayout({
           <SidePanelProvider>
             <Header />
             <MainNav />
-            <SidePanel />
+            <SidePanelLoader />
             <main className="flex-1">{children}</main>
             <Footer />
             <CookieConsent />
