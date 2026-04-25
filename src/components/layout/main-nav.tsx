@@ -34,7 +34,7 @@ export function MainNav() {
       ref={navRef}
       className="bg-nav-bg border-b border-border-custom shadow-sm sticky top-14 z-40"
     >
-      <div className="mx-auto max-w-[1240px] px-4 overflow-x-auto scrollbar-hide">
+      <div className="mx-auto max-w-[1240px] px-4">
         <ul className="flex items-center gap-0 text-sm whitespace-nowrap">
           {/* Menu lateral */}
           <li>
@@ -72,6 +72,7 @@ export function MainNav() {
                     <Link
                       key={team.slug}
                       href={`/futebol/times/${team.slug}`}
+                      prefetch={false}
                       onClick={() => setOpenDropdown(null)}
                       className="flex items-center gap-2.5 py-2 px-2.5 rounded-md text-sm text-text-secondary hover:text-green hover:bg-green-light transition-colors"
                     >
@@ -113,7 +114,7 @@ export function MainNav() {
                     { label: "Onde Assistir", href: "/futebol/onde-assistir" },
                   ].map((l) => (
                     <li key={l.href}>
-                      <Link href={l.href} onClick={() => setOpenDropdown(null)} className="block py-1.5 px-2 text-sm text-text-secondary hover:text-green hover:bg-green-light rounded transition-colors">
+                      <Link href={l.href} prefetch={false} onClick={() => setOpenDropdown(null)} className="block py-1.5 px-2 text-sm text-text-secondary hover:text-green hover:bg-green-light rounded transition-colors">
                         {l.label}
                       </Link>
                     </li>
@@ -125,7 +126,7 @@ export function MainNav() {
                     { label: "Libertadores", href: "/futebol/libertadores" },
                   ].map((l) => (
                     <li key={l.href}>
-                      <Link href={l.href} onClick={() => setOpenDropdown(null)} className="block py-1.5 px-2 text-sm text-text-secondary hover:text-green hover:bg-green-light rounded transition-colors">
+                      <Link href={l.href} prefetch={false} onClick={() => setOpenDropdown(null)} className="block py-1.5 px-2 text-sm text-text-secondary hover:text-green hover:bg-green-light rounded transition-colors">
                         {l.label}
                       </Link>
                     </li>
@@ -136,7 +137,7 @@ export function MainNav() {
                     { label: "Copa do Mundo 2026", href: "/noticias?cat=Copa%20do%20Mundo" },
                   ].map((l) => (
                     <li key={l.href}>
-                      <Link href={l.href} onClick={() => setOpenDropdown(null)} className="block py-1.5 px-2 text-sm text-text-secondary hover:text-green hover:bg-green-light rounded transition-colors">
+                      <Link href={l.href} prefetch={false} onClick={() => setOpenDropdown(null)} className="block py-1.5 px-2 text-sm text-text-secondary hover:text-green hover:bg-green-light rounded transition-colors">
                         {l.label}
                       </Link>
                     </li>
@@ -167,6 +168,7 @@ export function MainNav() {
                     <li key={sport.slug}>
                       <Link
                         href={sport.href}
+                        prefetch={false}
                         onClick={() => setOpenDropdown(null)}
                         className="block py-1.5 px-2 text-sm text-text-secondary hover:text-green hover:bg-green-light rounded transition-colors"
                       >
@@ -180,7 +182,7 @@ export function MainNav() {
           </li>
 
           {/* Jogos de Hoje (label aponta pra /agenda — CBF calendar) */}
-          <li>
+          <li className="hidden sm:block">
             <Link
               href="/agenda"
               className={`block px-3 py-3 font-semibold whitespace-nowrap transition-colors ${
@@ -194,7 +196,7 @@ export function MainNav() {
           </li>
 
           {/* Onde Assistir */}
-          <li>
+          <li className="hidden sm:block">
             <Link
               href="/futebol/onde-assistir"
               className={`block px-3 py-3 font-semibold whitespace-nowrap transition-colors ${
