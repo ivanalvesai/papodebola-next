@@ -411,17 +411,35 @@ papodebola-next/
 
 ## Sistema de artigos
 
-Cron no projeto antigo (único ativo):
-```
-*/30 * * * * /bin/bash /home/ivan/site-papodebola/cache/update.sh
-```
+### Status: automação **DESLIGADA** (2026-05-13)
 
-Fluxo:
+O cron `*/30 * * * * /bin/bash /home/ivan/site-papodebola/cache/update.sh` está comentado no crontab do user `ivan`. Backup do crontab original em `~/crontab.backup.20260513-172817`.
+
+**Por quê desligado:** o `build-articles.js` lia RSS, reescrevia com Claude e publicava no WordPress sem dedupe semântico. Resultado: o mesmo artigo de "ciberseguranca-lidera-crescimento-de-vagas-no-brasil" foi publicado 21+ vezes (sufixos -2…-21), e o RSS trazia spam de cassinos online (instaspin, fresh-casino, winthrone, betsson, bet3000, kingmaker) que ia direto pro ar. 33 posts spam foram movidos pra lixeira do WP nessa mesma data.
+
+**Como reativar (se algum dia for):** `crontab -e` no user `ivan`, remover o prefixo `# DESATIVADO em 2026-05-13 a pedido do Ivan:`. **Antes**, adicionar dedupe semântico no `build-articles.js` (hash do título canonicalizado) ou trocar as fontes de RSS — caso contrário o spam volta na primeira hora.
+
+**Geração manual continua funcionando:** `/studio-pdb` (writer-agent com Humanizer + Rank Math 85+) é independente do cron e está OK.
+
+### Fluxo (quando ligado)
 ```
 RSS → Claude (humanizer + SEO) → WordPress → Next.js lê via ISR 30min
+                                     │
+                                     └─ mu-plugin papodebola-revalidate dispara /api/revalidate
 ```
 
-Também há geração manual via `/studio-pdb` (writer-agent com Humanizer + Rank Math 85+).
+### mu-plugin `papodebola-revalidate.php`
+
+Instalado em 2026-05-13 em `/var/www/html/wp-content/mu-plugins/` no container `wordpress-papodebola-wordpress-1`. Como é must-use, carrega automaticamente sem precisar ativar.
+
+**O que faz:** dispara POST não-bloqueante para `https://www.papodebola.com.br/api/revalidate` nos hooks `save_post`, `wp_trash_post`, `untrash_post`, `before_delete_post` e `transition_post_status`. Resultado: deletes/edições no WP somem do site em segundos, não em 30 min (TTL do ISR em `fetchWP`).
+
+**Atenção URL:** usa `www.papodebola.com.br` porque o apex `papodebola.com.br` redireciona 301 no Cloudflare e POST não sobrevive a redirect. Se mudar essa regra DNS/CF, atualizar o plugin.
+
+**Token:** `REVALIDATION_SECRET` está hard-coded no PHP (mesmo valor do `.env.local` do prod). Se rotacionar, atualizar nos dois lugares.
+
+### Outros crons que NÃO mexem no Papo de Bola
+Os crons "Ofertas Tech do Dia" e "Ofertas Canais (Telegram/WhatsApp)" do `/home/ivan/automacao-site` continuam ativos — apontam para outro WP (`WP_USER=admin_5sr4xje0`, projeto signsimples/AI Tecnologia). Não confundir.
 
 ---
 
@@ -581,6 +599,22 @@ tail /home/ivan/papodebola-next/logs/promote-audit.log
 
 ### Container dev não responde mas prod tá OK
 Proxy vai falhar → prod faz fallback direto pra AllSportsApi → gasta quota. Arrume o dev ASAP ou desative temporariamente `SPORTS_PROXY_URL` no `.env.local` do prod e recrie o container.
+
+### Post deletado no WP continua aparecendo no site
+Verifique se o mu-plugin `papodebola-revalidate` está carregado:
+```bash
+ssh -i ~/.ssh/debian_ed25519 -p 1822 ivan@138.117.60.14 \
+  "docker exec wordpress-papodebola-wordpress-1 wp plugin list --status=must-use --allow-root"
+```
+Se não aparecer, reinstale a partir de `wp-mu-plugins/papodebola-revalidate.php` (ver `wp-mu-plugins/README.md`). Para forçar revalidate manual:
+```bash
+curl -X POST -H 'Content-Type: application/json' \
+  -d '{"secret":"<REVALIDATION_SECRET>","paths":["/","/noticias"]}' \
+  https://www.papodebola.com.br/api/revalidate
+```
+
+### Quero reativar a geração automática de artigos
+Hoje desligada (ver "Sistema de artigos"). Antes de descomentar o cron `*/30 ... update.sh`, adicione dedupe semântico no `build-articles.js` (hash do título canonicalizado contra `articles.json`) ou troque as fontes RSS — caso contrário o spam de cassinos e a duplicação de "ciberseguranca-lidera-crescimento-de-vagas-no-brasil" voltam na primeira hora.
 
 ---
 
