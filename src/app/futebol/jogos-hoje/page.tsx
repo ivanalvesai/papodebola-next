@@ -1,8 +1,8 @@
 import type { Metadata } from "next";
-import Image from "next/image";
 import { getTodayMatches } from "@/lib/data/matches";
 import { PageBreadcrumb } from "@/components/seo/page-breadcrumb";
 import { CalendarDays } from "lucide-react";
+import { TeamLogo } from "@/components/ui/team-logo";
 import type { NormalizedMatch } from "@/types/match";
 
 export const revalidate = 1800;
@@ -74,18 +74,14 @@ export default async function JogosHojePage() {
 
                       <div className="flex-1 min-w-0 space-y-1">
                         <div className="flex items-center gap-2 text-sm">
-                          {m.homeLogo && (
-                            <Image src={m.homeLogo} alt="" width={20} height={20} className="rounded-full" unoptimized />
-                          )}
+                          <TeamLogo src={m.homeLogo} size={20} />
                           <span className="font-semibold truncate flex-1">{m.homeTeam}</span>
                           {m.homeScore !== null && (
                             <span className="font-bold text-text-primary">{m.homeScore}</span>
                           )}
                         </div>
                         <div className="flex items-center gap-2 text-sm">
-                          {m.awayLogo && (
-                            <Image src={m.awayLogo} alt="" width={20} height={20} className="rounded-full" unoptimized />
-                          )}
+                          <TeamLogo src={m.awayLogo} size={20} />
                           <span className="font-semibold truncate flex-1">{m.awayTeam}</span>
                           {m.awayScore !== null && (
                             <span className="font-bold text-text-primary">{m.awayScore}</span>

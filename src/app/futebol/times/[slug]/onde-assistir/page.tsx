@@ -1,10 +1,10 @@
 import type { Metadata } from "next";
-import Image from "next/image";
 import Link from "next/link";
 import { TEAM_BY_SLUG, ALL_CLUSTER_TEAMS } from "@/lib/config";
 import { getTeamPageData } from "@/lib/data/team";
 import { notFound } from "next/navigation";
 import { Tv } from "lucide-react";
+import { TeamLogo } from "@/components/ui/team-logo";
 
 export const revalidate = 1800;
 
@@ -45,14 +45,14 @@ export default async function OndeAssistirPage({ params }: { params: Promise<{ s
             <div className="text-xs font-bold text-green uppercase mb-3">{match.league}</div>
             <div className="flex items-center justify-center gap-6">
               <div className="flex flex-col items-center gap-1.5">
-                <Image src={`/img/team/${match.homeId}/image`} alt="" width={44} height={44} className="rounded-full" unoptimized />
+                <TeamLogo teamId={match.homeId} size={44} />
                 <span className="text-sm font-semibold">{match.home}</span>
               </div>
               <div className="text-lg font-bold text-text-muted">
                 {match.homeScore !== null ? `${match.homeScore} - ${match.awayScore}` : match.time}
               </div>
               <div className="flex flex-col items-center gap-1.5">
-                <Image src={`/img/team/${match.awayId}/image`} alt="" width={44} height={44} className="rounded-full" unoptimized />
+                <TeamLogo teamId={match.awayId} size={44} />
                 <span className="text-sm font-semibold">{match.away}</span>
               </div>
             </div>

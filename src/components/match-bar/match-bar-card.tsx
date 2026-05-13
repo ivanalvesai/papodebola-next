@@ -1,4 +1,4 @@
-import Image from "next/image";
+import { TeamLogo } from "@/components/ui/team-logo";
 
 interface MatchBarCardProps {
   homeTeam: string;
@@ -44,18 +44,7 @@ export function MatchBarCard({
       <div className="space-y-1.5">
         {/* Home */}
         <div className="flex items-center gap-2">
-          {homeLogo ? (
-            <Image
-              src={homeLogo}
-              alt=""
-              width={20}
-              height={20}
-              className="rounded-full"
-              unoptimized
-            />
-          ) : (
-            <div className="w-5 h-5 rounded-full bg-body" />
-          )}
+          <TeamLogo src={homeLogo} size={20} />
           <span className="text-xs font-semibold text-text-primary truncate flex-1">
             {homeTeam}
           </span>
@@ -68,18 +57,7 @@ export function MatchBarCard({
 
         {/* Away */}
         <div className="flex items-center gap-2">
-          {awayLogo ? (
-            <Image
-              src={awayLogo}
-              alt=""
-              width={20}
-              height={20}
-              className="rounded-full"
-              unoptimized
-            />
-          ) : (
-            <div className="w-5 h-5 rounded-full bg-body" />
-          )}
+          <TeamLogo src={awayLogo} size={20} />
           <span className="text-xs font-semibold text-text-primary truncate flex-1">
             {awayTeam}
           </span>

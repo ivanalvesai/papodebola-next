@@ -1,10 +1,10 @@
 import type { Metadata } from "next";
-import Image from "next/image";
 import Link from "next/link";
 import { TEAM_BY_SLUG, ALL_CLUSTER_TEAMS } from "@/lib/config";
 import { getTeamNextEvents } from "@/lib/data/team";
 import { notFound } from "next/navigation";
 import { Calendar } from "lucide-react";
+import { TeamLogo } from "@/components/ui/team-logo";
 
 export const revalidate = 3600;
 
@@ -54,11 +54,11 @@ export default async function ProximosJogosPage({ params }: { params: Promise<{ 
                 {/* Match */}
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2">
-                    <Image src={`/img/team/${m.homeId}/image`} alt="" width={22} height={22} className="rounded-full" unoptimized />
+                    <TeamLogo teamId={m.homeId} size={22} />
                     <span className="text-sm font-semibold text-text-primary truncate">{m.home}</span>
                   </div>
                   <div className="flex items-center gap-2 mt-1">
-                    <Image src={`/img/team/${m.awayId}/image`} alt="" width={22} height={22} className="rounded-full" unoptimized />
+                    <TeamLogo teamId={m.awayId} size={22} />
                     <span className="text-sm font-semibold text-text-primary truncate">{m.away}</span>
                   </div>
                 </div>

@@ -1,9 +1,9 @@
 import type { Metadata } from "next";
-import Image from "next/image";
 import Link from "next/link";
 import { TEAM_BY_SLUG, ALL_CLUSTER_TEAMS } from "@/lib/config";
 import { getTeamPageData } from "@/lib/data/team";
 import { notFound } from "next/navigation";
+import { TeamLogo } from "@/components/ui/team-logo";
 
 export const revalidate = 1800;
 
@@ -44,7 +44,7 @@ export default async function JogoHojePage({ params }: { params: Promise<{ slug:
             <div className="text-xs font-bold text-green uppercase mb-4">{todayMatch.league}</div>
             <div className="flex items-center justify-center gap-8">
               <div className="flex flex-col items-center gap-2">
-                <Image src={`/img/team/${todayMatch.homeId}/image`} alt="" width={56} height={56} className="rounded-full" unoptimized />
+                <TeamLogo teamId={todayMatch.homeId} size={56} />
                 <span className="text-sm font-bold">{todayMatch.home}</span>
               </div>
               <div className="text-center">
@@ -56,7 +56,7 @@ export default async function JogoHojePage({ params }: { params: Promise<{ slug:
                 <div className="text-sm text-text-muted mt-1">{todayMatch.statusText}</div>
               </div>
               <div className="flex flex-col items-center gap-2">
-                <Image src={`/img/team/${todayMatch.awayId}/image`} alt="" width={56} height={56} className="rounded-full" unoptimized />
+                <TeamLogo teamId={todayMatch.awayId} size={56} />
                 <span className="text-sm font-bold">{todayMatch.away}</span>
               </div>
             </div>

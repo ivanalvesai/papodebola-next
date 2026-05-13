@@ -1,11 +1,11 @@
 "use client";
 
 import Link from "next/link";
-import Image from "next/image";
 import { usePathname } from "next/navigation";
 import { ChevronDown, Menu } from "lucide-react";
 import { useState, useRef, useEffect } from "react";
 import { useSidePanel } from "./side-panel-context";
+import { TeamLogo } from "@/components/ui/team-logo";
 import { PANEL_TEAMS_BR, SPORTS } from "@/lib/config";
 
 export function MainNav() {
@@ -76,14 +76,7 @@ export function MainNav() {
                       onClick={() => setOpenDropdown(null)}
                       className="flex items-center gap-2.5 py-2 px-2.5 rounded-md text-sm text-text-secondary hover:text-green hover:bg-green-light transition-colors"
                     >
-                      <Image
-                        src={`/img/team/${team.id}/image`}
-                        alt=""
-                        width={22}
-                        height={22}
-                        className="rounded-full"
-                        unoptimized
-                      />
+                      <TeamLogo teamId={team.id} size={22} />
                       <span className="font-medium">{team.name}</span>
                     </Link>
                   ))}

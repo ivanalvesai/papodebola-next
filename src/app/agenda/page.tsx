@@ -1,8 +1,8 @@
 import type { Metadata } from "next";
-import Image from "next/image";
 import { getCBFCalendar } from "@/lib/data/cbf-calendar";
 import { Calendar } from "lucide-react";
 import { PageBreadcrumb } from "@/components/seo/page-breadcrumb";
+import { TeamLogo } from "@/components/ui/team-logo";
 
 export const revalidate = 43200;
 
@@ -54,14 +54,10 @@ export default async function AgendaPage() {
                     {/* Teams */}
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2 text-sm">
-                        {m.homeId && (
-                          <Image src={`/img/team/${m.homeId}/image`} alt="" width={20} height={20} className="rounded-full" unoptimized />
-                        )}
+                        <TeamLogo teamId={m.homeId} size={20} />
                         <span className="font-semibold truncate">{m.home}</span>
                         <span className="text-text-muted mx-1">vs</span>
-                        {m.awayId && (
-                          <Image src={`/img/team/${m.awayId}/image`} alt="" width={20} height={20} className="rounded-full" unoptimized />
-                        )}
+                        <TeamLogo teamId={m.awayId} size={20} />
                         <span className="font-semibold truncate">{m.away}</span>
                       </div>
                     </div>

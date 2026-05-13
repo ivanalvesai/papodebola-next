@@ -1,4 +1,4 @@
-import Image from "next/image";
+import { TeamLogo } from "@/components/ui/team-logo";
 import type { ChampionshipMatch } from "@/types/match";
 
 interface NextMatchWidgetProps {
@@ -34,16 +34,7 @@ export function NextMatchWidget({ match }: NextMatchWidgetProps) {
       <div className="flex items-center justify-center gap-4">
         {/* Home */}
         <div className="flex flex-col items-center gap-1.5">
-          {match.homeId && (
-            <Image
-              src={`/img/team/${match.homeId}/image`}
-              alt=""
-              width={40}
-              height={40}
-              className="rounded-full"
-              unoptimized
-            />
-          )}
+          <TeamLogo teamId={match.homeId} size={40} />
           <span className="text-xs font-semibold text-text-primary text-center">
             {match.home}
           </span>
@@ -53,16 +44,7 @@ export function NextMatchWidget({ match }: NextMatchWidgetProps) {
 
         {/* Away */}
         <div className="flex flex-col items-center gap-1.5">
-          {match.awayId && (
-            <Image
-              src={`/img/team/${match.awayId}/image`}
-              alt=""
-              width={40}
-              height={40}
-              className="rounded-full"
-              unoptimized
-            />
-          )}
+          <TeamLogo teamId={match.awayId} size={40} />
           <span className="text-xs font-semibold text-text-primary text-center">
             {match.away}
           </span>

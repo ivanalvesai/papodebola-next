@@ -1,10 +1,10 @@
 "use client";
 
 import Link from "next/link";
-import Image from "next/image";
 import { X, ChevronDown } from "lucide-react";
 import { useState } from "react";
 import { useSidePanel } from "./side-panel-context";
+import { TeamLogo } from "@/components/ui/team-logo";
 import { PANEL_TEAMS_BR, PANEL_TEAMS_EU, type TeamInfo } from "@/lib/config";
 
 function TeamItem({ team }: { team: TeamInfo }) {
@@ -13,14 +13,7 @@ function TeamItem({ team }: { team: TeamInfo }) {
       href={`/futebol/times/${team.slug}`}
       className="flex items-center gap-3 px-5 py-2.5 text-sm text-text-secondary hover:bg-green-light hover:text-green transition-colors"
     >
-      <Image
-        src={`/img/team/${team.id}/image`}
-        alt={team.name}
-        width={24}
-        height={24}
-        className="rounded-full"
-        unoptimized
-      />
+      <TeamLogo teamId={team.id} alt={team.name} size={24} />
       {team.name}
     </Link>
   );

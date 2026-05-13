@@ -1,13 +1,13 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import Image from "next/image";
 import { useParams } from "next/navigation";
 import { TOURNAMENT_BY_SLUG } from "@/lib/config";
 import { translateStatus } from "@/lib/translations";
 import { enrichStandingsWithForm } from "@/lib/standings-utils";
 import { RoundNav } from "@/components/championship/round-nav";
 import { PageBreadcrumb } from "@/components/seo/page-breadcrumb";
+import { TeamLogo } from "@/components/ui/team-logo";
 import { ChevronUp, ChevronDown, Minus } from "lucide-react";
 import type { ChampionshipData } from "@/types/tournament";
 import type { StandingRow, FormResult } from "@/types/standings";
@@ -138,7 +138,7 @@ export default function CampeonatoPage() {
                         </td>
                         <td className="py-2 px-2">
                           <div className="flex items-center gap-2">
-                            <Image src={`/img/team/${r.teamId}/image`} alt="" width={18} height={18} className="rounded-full" unoptimized />
+                            <TeamLogo teamId={r.teamId} size={18} />
                             <span className="font-semibold text-text-primary">{r.team}</span>
                           </div>
                         </td>
@@ -193,14 +193,14 @@ export default function CampeonatoPage() {
                 return (
                   <div key={m.id} className="px-4 py-3">
                     <div className="flex items-center gap-2 text-xs">
-                      <Image src={`/img/team/${m.homeId}/image`} alt="" width={20} height={20} className="rounded-full" unoptimized />
+                      <TeamLogo teamId={m.homeId} size={20} />
                       <span className="font-semibold flex-1 truncate">{m.home}</span>
                       {hasScore ? (
                         <span className="font-bold text-sm">{m.homeScore}</span>
                       ) : null}
                     </div>
                     <div className="flex items-center gap-2 text-xs mt-1">
-                      <Image src={`/img/team/${m.awayId}/image`} alt="" width={20} height={20} className="rounded-full" unoptimized />
+                      <TeamLogo teamId={m.awayId} size={20} />
                       <span className="font-semibold flex-1 truncate">{m.away}</span>
                       {hasScore ? (
                         <span className="font-bold text-sm">{m.awayScore}</span>

@@ -1,6 +1,6 @@
-import Image from "next/image";
 import Link from "next/link";
 import { ListOrdered, ChevronUp, ChevronDown, Minus } from "lucide-react";
+import { TeamLogo } from "@/components/ui/team-logo";
 import type { StandingsGroup, FormResult } from "@/types/standings";
 
 interface StandingsWidgetProps {
@@ -72,14 +72,7 @@ export function StandingsWidget({ standings }: StandingsWidgetProps) {
                           {r.pos}
                         </span>
                         <PosArrow change={r.posChange} />
-                        <Image
-                          src={`/img/team/${r.teamId}/image`}
-                          alt=""
-                          width={18}
-                          height={18}
-                          className="rounded-full"
-                          unoptimized
-                        />
+                        <TeamLogo teamId={r.teamId} size={18} />
                         <span className="font-semibold text-text-primary truncate max-w-[80px]">
                           {r.team}
                         </span>
