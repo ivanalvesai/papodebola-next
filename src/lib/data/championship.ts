@@ -44,22 +44,24 @@ export async function getChampionshipData(
   // Fetch standings
   const standings = await getStandings(id, seasonId, 7200);
 
-  // Fetch matches: 5 rounds back (for form dots) + 2 ahead (for schedule)
+  // Fetch all rounds from 1 to currentRound+2.
+  // Past rounds (< currentRound) are finalized and never change → TTL 24h.
+  // Current and future (>= currentRound) → TTL 2h.
   const matchesByRound: Record<number, ChampionshipMatch[]> = {};
-  const startRound = Math.max(1, currentRound - 5);
   const endRound = Math.min(totalRounds, currentRound + 2);
 
-  for (let r = startRound; r <= endRound; r++) {
+  for (let r = 1; r <= endRound; r++) {
+    const ttl = r < currentRound ? 86400 : 7200;
     const data = await fetchAllSports<any>(
       `tournament/${id}/season/${seasonId}/matches/round/${r}`,
-      7200
+      ttl
     );
 
     if (data?.events) {
       matchesByRound[r] = data.events.map((e: any) => normalizeMatch(e, r));
     }
 
-    await new Promise((resolve) => setTimeout(resolve, 300));
+    await new Promise((resolve) => setTimeout(resolve, 150));
   }
 
   return {
