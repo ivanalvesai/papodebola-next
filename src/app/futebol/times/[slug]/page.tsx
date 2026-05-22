@@ -1,10 +1,10 @@
 import type { Metadata } from "next";
-import Image from "next/image";
 import Link from "next/link";
 import { TEAM_BY_SLUG, ALL_CLUSTER_TEAMS } from "@/lib/config";
 import { getTeamPageData } from "@/lib/data/team";
 import { notFound } from "next/navigation";
 import { ArrowRight, Calendar, Trophy, BarChart3, Tv, Users } from "lucide-react";
+import { TeamLogo } from "@/components/ui/team-logo";
 
 export const revalidate = 3600;
 
@@ -81,7 +81,7 @@ export default async function TeamHubPage({
               </h2>
               <div className="flex items-center justify-center gap-6">
                 <div className="flex flex-col items-center gap-1">
-                  <Image src={`/img/team/${data.todayMatch.homeId}/image`} alt="" width={40} height={40} className="rounded-full" unoptimized />
+                  <TeamLogo teamId={data.todayMatch.homeId} size={40} />
                   <span className="text-xs font-semibold">{data.todayMatch.home}</span>
                 </div>
                 <div className="text-center">
@@ -93,7 +93,7 @@ export default async function TeamHubPage({
                   <div className="text-[10px] text-text-muted mt-1">{data.todayMatch.league}</div>
                 </div>
                 <div className="flex flex-col items-center gap-1">
-                  <Image src={`/img/team/${data.todayMatch.awayId}/image`} alt="" width={40} height={40} className="rounded-full" unoptimized />
+                  <TeamLogo teamId={data.todayMatch.awayId} size={40} />
                   <span className="text-xs font-semibold">{data.todayMatch.away}</span>
                 </div>
               </div>

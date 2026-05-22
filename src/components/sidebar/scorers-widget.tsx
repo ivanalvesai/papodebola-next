@@ -1,5 +1,5 @@
-import Image from "next/image";
 import { Goal } from "lucide-react";
+import { TeamLogo } from "@/components/ui/team-logo";
 import type { Scorer } from "@/types/team";
 
 interface ScorersWidgetProps {
@@ -34,13 +34,11 @@ export function ScorersWidget({ scorers }: ScorersWidgetProps) {
               </span>
 
               <div className="w-9 h-9 rounded-full bg-body overflow-hidden shrink-0">
-                <Image
+                <TeamLogo
                   src={`/img/player/${item.player.id}/image`}
                   alt={item.player.name}
-                  width={36}
-                  height={36}
+                  size={36}
                   className="w-full h-full object-cover"
-                  unoptimized
                 />
               </div>
 

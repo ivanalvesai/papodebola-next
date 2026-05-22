@@ -1,10 +1,10 @@
 "use client";
 
-import Image from "next/image";
 import Link from "next/link";
 import { Heart, X, ChevronRight } from "lucide-react";
 import { useState } from "react";
 import { useMyTeam } from "@/components/layout/my-team-context";
+import { TeamLogo } from "@/components/ui/team-logo";
 import { ALL_CLUSTER_TEAMS } from "@/lib/config";
 
 export function MyTeamWidget() {
@@ -31,14 +31,7 @@ export function MyTeamWidget() {
           href={`/futebol/times/${myTeam.slug}`}
           className="flex items-center gap-3 px-4 py-3 hover:bg-card-hover transition-colors"
         >
-          <Image
-            src={`/img/team/${myTeam.id}/image`}
-            alt={myTeam.name}
-            width={40}
-            height={40}
-            className="rounded-full"
-            unoptimized
-          />
+          <TeamLogo teamId={myTeam.id} alt={myTeam.name} size={40} />
           <div className="flex-1">
             <div className="text-sm font-bold text-text-primary">{myTeam.name}</div>
             <div className="text-[10px] text-text-muted">Ver pagina do time</div>
@@ -118,14 +111,7 @@ export function MyTeamWidget() {
             }}
             className="flex items-center gap-2.5 w-full px-4 py-2 text-left text-sm text-text-secondary hover:text-green hover:bg-green-light transition-colors"
           >
-            <Image
-              src={`/img/team/${team.id}/image`}
-              alt=""
-              width={22}
-              height={22}
-              className="rounded-full"
-              unoptimized
-            />
+            <TeamLogo teamId={team.id} size={22} />
             {team.name}
           </button>
         ))}
