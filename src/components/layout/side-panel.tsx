@@ -144,7 +144,7 @@ export function SidePanel() {
             Gaúcho
           </Link>
           <Link href="/municipal" onClick={close} className="block px-5 py-2.5 text-sm text-text-secondary hover:bg-green-light hover:text-green transition-colors">
-            Municipal (SdP)
+            Municipal (Santana de Parnaíba)
           </Link>
         </div>
 
