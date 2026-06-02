@@ -141,63 +141,92 @@ function parseClassification(html) {
     .map(([n, t]) => ({ name: Object.keys(grouped).length > 1 ? `Grupo ${n}` : "Classificacao", teams: t }));
 }
 
-function parseMatches(html) {
+// Map each round (data-rodada) to its phase + label from the tab nav.
+// Ex: data-rodada="4" → { phase: "Primeira Fase", label: "5ª Rodada - Grupos" }
+function parseRoundMeta(html) {
+  const meta = {};
+  const re = /<span data-rodada="(\d+)"[^>]*>\s*([^<]+?)\s*<br\s*\/?>\s*<small[^>]*>([\s\S]*?)<\/small>/g;
+  let m;
+  while ((m = re.exec(html)) !== null) {
+    const idx = parseInt(m[1]);
+    const phaseRaw = dec(m[2]);
+    meta[idx] = {
+      // "PRIMEIRA FASE" → "Primeira Fase"
+      phase: phaseRaw.toLowerCase().replace(/(^|\s)\S/g, (c) => c.toUpperCase()),
+      label: dec(m[3].replace(/<[^>]+>/g, " ")),
+    };
+  }
+  return meta;
+}
+
+// Parse a single <a href="/SisGel-PUB/jogo/..."> block into a match object.
+function parseGameBlock(gb, round, meta) {
+  // Date: "sex - 10/04/2026" or just "10/04/2026"
+  const dateM = gb.match(/(\d{2}\/\d{2}\/\d{4})/);
+  // Time: "19h30" or "19:30" or standalone after date
+  const timeM = gb.match(/(\d{1,2}h\d{2}|\d{2}:\d{2})/);
+  // Venue
+  const venueM = gb.match(/(?:EST[AÁ]DIO|CAMPO|QUADRA)[^<]*/i);
+
+  // Home team: text BEFORE first avatar in first partida-item
+  const homeM = gb.match(/partida-item">\s*\n?\s*([A-ZÀ-Ü][^\n<]{2,40}?)\s*<div class="time-partida-avatar"/);
+  // Away team: text AFTER second avatar (Time B)
+  const awayM = gb.match(/alt="Time B"[^>]*>[^<]*<\/div>\s*\n?\s*([A-ZÀ-Ü][^\n<]{2,40}?)\s*<\/div>/);
+
+  // Scores
+  const scores = [];
+  const sRe = /font-size:\s*x-large[^>]*>\s*(\d+)\s*</g;
+  let sm;
+  while ((sm = sRe.exec(gb)) !== null) scores.push(parseInt(sm[1]));
+
+  // Status
+  const statusM = gb.match(/partida-situacao">([^<]+)/);
+
+  const home = homeM ? dec(homeM[1]) : "?";
+  const away = awayM ? dec(awayM[1]) : "?";
+
+  if (home === "?" && away === "?") return null;
+
+  return {
+    round,
+    phase: meta?.phase || "",
+    roundLabel: meta?.label || "",
+    home, away,
+    homeScore: scores.length >= 2 ? scores[0] : null,
+    awayScore: scores.length >= 2 ? scores[1] : null,
+    date: dateM?.[1] || "",
+    time: timeM?.[1] || "",
+    venue: venueM ? dec(venueM[0]) : "",
+    status: statusM ? dec(statusM[1]) : "",
+    homeBadgeLocal: "",
+    awayBadgeLocal: "",
+  };
+}
+
+function parseMatches(html, roundMeta) {
   const matches = [];
-  const blocks = html.split(/href="\/SisGel-PUB\/jogo\//);
 
-  for (let j = 1; j < blocks.length; j++) {
-    const gb = blocks[j].substring(0, 3000);
+  // Segment the HTML by round container so every game is reliably attributed
+  // to its round. The prefecture numbers rounds 0-indexed (data-rodada="4" is
+  // the "5ª Rodada"), so the displayed round is data-rodada + 1.
+  const re = /<li class="rodada[^"]*" data-rodada="(\d+)">/g;
+  const bounds = [];
+  let m;
+  while ((m = re.exec(html)) !== null) bounds.push({ idx: parseInt(m[1]), start: m.index });
 
-    // Round — find active rodada from context
-    let round = 0;
-    const pos = html.indexOf(blocks[j].substring(0, 50));
-    if (pos > 0) {
-      const ctx = html.substring(Math.max(0, pos - 5000), pos);
-      const rms = ctx.match(/data-rodada="(\d+)"/g);
-      if (rms) round = parseInt(rms[rms.length - 1].match(/\d+/)[0]) || 0;
-    }
+  if (bounds.length === 0) return matches;
 
-    // Date: "sex - 10/04/2026" or just "10/04/2026"
-    const dateM = gb.match(/(\d{2}\/\d{2}\/\d{4})/);
-    // Time: "19h30" or "19:30" or standalone after date
-    const timeM = gb.match(/(\d{1,2}h\d{2}|\d{2}:\d{2})/);
-    // Venue
-    const venueM = gb.match(/(?:EST[AÁ]DIO|CAMPO|QUADRA)[^<]*/i);
+  for (let k = 0; k < bounds.length; k++) {
+    const segEnd = k + 1 < bounds.length ? bounds[k + 1].start : html.length;
+    const seg = html.substring(bounds[k].start, segEnd);
+    const dataRodada = bounds[k].idx;
+    const round = dataRodada + 1;
+    const meta = roundMeta[dataRodada];
 
-    // Home team: text BEFORE first avatar in first partida-item
-    const homeM = gb.match(/partida-item">\s*\n?\s*([A-ZÀ-Ü][^\n<]{2,40}?)\s*<div class="time-partida-avatar"/);
-    // Away team: text AFTER second avatar (Time B)
-    const awayM = gb.match(/alt="Time B"[^>]*>[^<]*<\/div>\s*\n?\s*([A-ZÀ-Ü][^\n<]{2,40}?)\s*<\/div>/);
-
-    // Scores
-    const scores = [];
-    const sRe = /font-size:\s*x-large[^>]*>\s*(\d+)\s*</g;
-    let sm;
-    while ((sm = sRe.exec(gb)) !== null) scores.push(parseInt(sm[1]));
-
-    // Status
-    const statusM = gb.match(/partida-situacao">([^<]+)/);
-
-    // Badges
-    const badgeA = gb.match(/alt="Time A"[^>]*src="([^"]+)"/);
-    const badgeB = gb.match(/alt="Time B"[^>]*src="([^"]+)"/);
-
-    const home = homeM ? dec(homeM[1]) : "?";
-    const away = awayM ? dec(awayM[1]) : "?";
-
-    if (home !== "?" || away !== "?") {
-      matches.push({
-        round,
-        home, away,
-        homeScore: scores.length >= 2 ? scores[0] : null,
-        awayScore: scores.length >= 2 ? scores[1] : null,
-        date: dateM?.[1] || "",
-        time: timeM?.[1] || "",
-        venue: venueM ? dec(venueM[0]) : "",
-        status: statusM ? dec(statusM[1]) : "",
-        homeBadgeLocal: "",
-        awayBadgeLocal: "",
-      });
+    const blocks = seg.split(/href="\/SisGel-PUB\/jogo\//);
+    for (let j = 1; j < blocks.length; j++) {
+      const match = parseGameBlock(blocks[j].substring(0, 3000), round, meta);
+      if (match) matches.push(match);
     }
   }
   return matches;
@@ -230,7 +259,8 @@ async function scrapeOne(entry) {
   const pageName = nameM ? dec(nameM[1]) : entry.name;
 
   const groups = parseClassification(html);
-  const matches = parseMatches(html);
+  const roundMeta = parseRoundMeta(html);
+  const matches = parseMatches(html, roundMeta);
   const allBadges = extractAllBadges(html);
   const totalTeams = groups.reduce((s, g) => s + g.teams.length, 0);
 
@@ -248,10 +278,17 @@ async function scrapeOne(entry) {
   const byRound = {};
   for (const m of matches) { const k = m.round || 0; if (!byRound[k]) byRound[k] = []; byRound[k].push(m); }
 
+  // round (1-indexed) → { phase, label } for the UI header
+  const roundMetaByDisplay = {};
+  for (const [idx, meta] of Object.entries(roundMeta)) {
+    roundMetaByDisplay[parseInt(idx) + 1] = meta;
+  }
+
   return {
     name: pageName, slug: slug(pageName),
     city: "Santana de Parnaiba", state: "SP", year: "2026",
     url: entry.url, groups, matches, matchesByRound: byRound,
+    roundMeta: roundMetaByDisplay,
     totalRounds: Object.keys(byRound).length,
     updatedAt: new Date().toISOString(),
   };
