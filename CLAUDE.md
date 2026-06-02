@@ -73,6 +73,24 @@ Proxy de imagens Sofascore (`/img/team/*`, `/img/player/*`) funciona em prod e d
 
 **Dev tem `proxy_read_timeout 600s`** pra suportar requests longos (ex: POST do botão Promover).
 
+### Cache-Control: prod NÃO deixa CDN cachear HTML (2026-06-02)
+
+O `papodebola.com.br.conf` tem um `map $upstream_http_content_type $pdb_cc` (topo do arquivo, contexto http) + override no `location /`:
+
+```nginx
+map $upstream_http_content_type $pdb_cc {
+    default              $upstream_http_cache_control;   # estáticos: mantém o original
+    "~*text/html"        "private, no-store, must-revalidate";
+    "~*text/x-component" "private, no-store, must-revalidate";   # RSC
+}
+# ... dentro do location / :
+proxy_hide_header Cache-Control;
+add_header Cache-Control $pdb_cc always;
+add_header Strict-Transport-Security "max-age=31536000" always;   # re-add: add_header no location anula o herdado
+```
+
+**Por quê:** o Next.js manda `Cache-Control: s-maxage=31536000` (1 ano) nas páginas pré-renderizadas. Se a CDN cacheia esse HTML, um deploy seguinte apaga os chunks JS que o HTML referencia → 404 do chunk → página trava ("Algo deu errado" / spinner infinito). Com `no-store` só no HTML/RSC, os `/_next/static/*` continuam `immutable` (cacheados pra sempre, hash muda por build) e o HTML sempre vem fresco. Backup do conf original em `*.conf.bak.TIMESTAMP`. Ver Troubleshooting "Página quebra após deploy".
+
 ---
 
 ## Fluxo de deploy — dev primeiro, depois promove
@@ -443,6 +461,21 @@ Os crons "Ofertas Tech do Dia" e "Ofertas Canais (Telegram/WhatsApp)" do `/home/
 
 ---
 
+## Campeonato Municipal (SisGel — Santana de Parnaíba)
+
+`scripts/scrape-sisgel.js` raspa os campeonatos da prefeitura (HTML, regex) 2x/dia (cron `0 8,20`), gera `data/sisgel.json` e baixa escudos pra `public/escudos-municipal/`. `update-sisgel.sh` roda o scraper no workspace **de prod** e faz `docker cp` pro container (volume `/app/data` é compartilhado → dev e prod veem o mesmo arquivo). Frontend: `/municipal` (client component) lê via `/api/municipal`.
+
+**Particularidades do HTML da prefeitura (descobertas em 2026-06-02):**
+
+- **Rodadas são 0-indexed no site:** cada rodada é um `<li class="rodada" data-rodada="N">` e a nav usa `<span data-rodada="N">`. A "5ª Rodada" é `data-rodada="4"`. O scraper faz **`round = N + 1`** pra bater com a prefeitura.
+- **Parse por container, não por proximidade:** `parseMatches` segmenta o HTML por container de rodada e parseia os jogos dentro de cada um. (A versão antiga detectava rodada via `indexOf` + lookback de 5000 chars e **descartava jogos** no fim de containers longos — a rodada 5 vinha com só 2 dos 6 jogos.)
+- **Fase:** `parseRoundMeta` lê fase + rótulo da nav (ex: `Primeira Fase`, `5ª Rodada - Grupos`) e expõe em `roundMeta[round]`. A página mostra a fase acima do número da rodada.
+- **Nomes divergem entre abas:** a aba EQUIPES usa nome completo ("UNIÃO DO PARQUE"), os blocos de jogo usam abreviado ("U PARQUE"). Por isso o mapa de escudos é por nome e os dois conjuntos quase não se sobrepõem.
+- **Escudos re-baixados todo run:** `downloadBadges` antes pulava arquivo já existente (`if !exists`), então um escudo errado/stale nunca era corrigido (o União do Morro ficou com o escudo do Flamengo de um scrape antigo). Agora re-baixa sempre e só grava se os bytes mudarem (evita churn no git).
+- **Atenção no promote:** o cron de prod baixa escudos novos como **untracked** no workspace de prod; o merge do `promote.sh` pode abortar por conflito. Solução: `git clean -fd public/escudos-municipal` no workspace de prod antes de promover (o merge restaura as versões commitadas).
+
+---
+
 ## Cluster SEO de Times
 
 **37 times × 6 páginas = 222 URLs**
@@ -612,6 +645,28 @@ curl -X POST -H 'Content-Type: application/json' \
   -d '{"secret":"<REVALIDATION_SECRET>","paths":["/","/noticias"]}' \
   https://www.papodebola.com.br/api/revalidate
 ```
+
+### Página quebra após deploy ("Algo deu errado" / spinner infinito só na prod)
+
+Sintoma clássico (visto em 2026-06-02 com `/municipal`): **dev funciona, prod quebra**, e o "Purge Everything" do Cloudflare não resolve. Causa: o Cloudflare guardou em cache o HTML **antigo** de uma página que você editou; esse HTML aponta pra um chunk JS (`/_next/static/chunks/XXX.js`) que o rebuild apagou → 404 do chunk → a página não hidrata.
+
+**Por que só a página editada quebra:** páginas que você não tocou mantêm o mesmo hash de chunk, então o HTML cacheado ainda acha o arquivo. Só a editada muda de hash.
+
+**Diagnóstico rápido (a origem quase sempre está OK — o problema é a CDN):**
+```bash
+# 1) chunk que a ORIGEM serve (sem Cloudflare) — deve dar 200
+curl -s http://127.0.0.1:3000/SUA_ROTA | grep -o '/_next/static/chunks/[^"]*\.js' | head -1
+# 2) chunk que o CLOUDFLARE serve — se for diferente e der 404, é cache da CDN
+curl -s https://www.papodebola.com.br/SUA_ROTA | grep -o '/_next/static/chunks/[^"]*\.js' | head -1
+# 3) prova: cache-buster ignora o cache da CDN e mostra o build certo
+curl -s 'https://www.papodebola.com.br/SUA_ROTA?cb=123' | grep -o '/_next/static/chunks/[^"]*\.js' | head -1
+```
+Se a origem (`:3000`) está certa e o Cloudflare está errado, **NÃO adianta reimplantar** — o deploy já está em prod, o cache da CDN é que está velho.
+
+**Correções:**
+1. **Permanente (já aplicada):** nginx manda `no-store` no HTML — ver seção "Cache-Control" acima. Isso evita o problema em deploys futuros, mas **não limpa a entrada já cacheada**.
+2. **Limpar a entrada presa:** "Purge Everything" às vezes não pega essa página (regra de cache / Always Online segurando). Tente **purge pela URL específica** (`https://www.papodebola.com.br/SUA_ROTA` + a versão apex), ou ligue **Development Mode** (Caching → Configuration) por 3h pra bypassar todo o cache na hora.
+3. Não há token de API do Cloudflare no servidor — purge/regras só pelo dashboard.
 
 ### Quero reativar a geração automática de artigos
 Hoje desligada (ver "Sistema de artigos"). Antes de descomentar o cron `*/30 ... update.sh`, adicione dedupe semântico no `build-articles.js` (hash do título canonicalizado contra `articles.json`) ou troque as fontes RSS — caso contrário o spam de cassinos e a duplicação de "ciberseguranca-lidera-crescimento-de-vagas-no-brasil" voltam na primeira hora.
