@@ -16,16 +16,21 @@ interface Group {
 }
 
 interface Match {
-  round: number; home: string; away: string;
+  round: number; phase?: string; roundLabel?: string; home: string; away: string;
   homeScore: number | null; awayScore: number | null;
   date: string; time: string; venue: string; status: string;
   homeBadgeLocal: string; awayBadgeLocal: string;
 }
 
+interface RoundMeta {
+  phase?: string; label?: string;
+}
+
 interface Championship {
   name: string; city: string; state: string; year: string;
   groups: Group[]; matches: Match[];
-  matchesByRound: Record<string, Match[]>; totalRounds: number; updatedAt: string;
+  matchesByRound: Record<string, Match[]>; roundMeta?: Record<string, RoundMeta>;
+  totalRounds: number; updatedAt: string;
 }
 
 export default function MunicipalPage() {
@@ -71,6 +76,9 @@ export default function MunicipalPage() {
   if (!champ) return null;
   const rounds = Object.keys(champ.matchesByRound || {}).map(Number).sort((a, b) => a - b);
   const roundMatches = champ.matchesByRound?.[String(selectedRound)] || [];
+  const meta = champ.roundMeta?.[String(selectedRound)] || {};
+  const roundPhase = meta.phase || roundMatches[0]?.phase || "";
+  const roundLabel = meta.label || roundMatches[0]?.roundLabel || `${selectedRound}ª Rodada`;
 
   return (
     <div className="mx-auto max-w-[1240px] px-4 py-8">
@@ -187,9 +195,16 @@ export default function MunicipalPage() {
               >
                 <ChevronLeft className="h-4 w-4" />
               </button>
-              <span className="text-sm font-semibold text-text-primary">
-                Rodada {selectedRound}
-              </span>
+              <div className="flex flex-col items-center leading-tight">
+                {roundPhase && (
+                  <span className="text-[10px] font-bold uppercase tracking-wide text-green">
+                    {roundPhase}
+                  </span>
+                )}
+                <span className="text-sm font-semibold text-text-primary">
+                  {roundLabel}
+                </span>
+              </div>
               <button
                 onClick={() => setSelectedRound((r) => Math.min(rounds[rounds.length - 1] || 0, r + 1))}
                 disabled={selectedRound >= (rounds[rounds.length - 1] || 0)}
