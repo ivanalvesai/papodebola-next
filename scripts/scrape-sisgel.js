@@ -238,13 +238,18 @@ async function downloadBadges(allBadges) {
   for (const [name, url] of Object.entries(allBadges)) {
     const fn = `${slug(name)}.png`;
     const fp = path.join(BADGES_DIR, fn);
-    if (!fs.existsSync(fp)) {
-      try {
-        const buf = await fetchBin(url);
-        if (buf.length > 100) { fs.writeFileSync(fp, buf); console.log(`    Badge: ${name}`); }
-      } catch (e) { console.error(`    Badge err ${name}: ${e.message}`); }
-      await new Promise((r) => setTimeout(r, 200));
-    }
+    // Re-download every run so badges stay fresh. The old code skipped any
+    // file that already existed, so a stale/wrong crest (ex: União do Morro
+    // ficou com o escudo do Flamengo) was never corrected. Only write when the
+    // bytes actually differ, to avoid needless git churn.
+    try {
+      const buf = await fetchBin(url);
+      if (buf.length > 100) {
+        const cur = fs.existsSync(fp) ? fs.readFileSync(fp) : null;
+        if (!cur || !cur.equals(buf)) { fs.writeFileSync(fp, buf); console.log(`    Badge: ${name}`); }
+      }
+    } catch (e) { console.error(`    Badge err ${name}: ${e.message}`); }
+    await new Promise((r) => setTimeout(r, 200));
     localMap[name] = `/escudos-municipal/${fn}`;
   }
   return localMap;
