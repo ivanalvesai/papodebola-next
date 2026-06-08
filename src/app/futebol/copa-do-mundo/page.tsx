@@ -17,7 +17,7 @@ export default async function CopaDoMundoPage() {
   const { groups } = await getWorldCupData();
 
   return (
-    <div className="mx-auto max-w-[1600px] px-4 py-8">
+    <div className="mx-auto max-w-[1240px] px-4 py-8">
       <PageBreadcrumb
         className="mb-4"
         items={[{ label: "Início", href: "/" }, { label: "Copa do Mundo 2026" }]}
