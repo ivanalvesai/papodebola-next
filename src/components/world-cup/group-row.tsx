@@ -107,17 +107,20 @@ function MatchMini({ m }: { m: ChampionshipMatch }) {
       <div className="text-[11px] text-text-muted text-center mb-1.5">
         {t.wd}, {t.date} &middot; {t.time}
       </div>
-      <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-1.5">
-        <div className="flex items-center justify-end gap-1.5 min-w-0">
+      <div className="flex items-center gap-2">
+        {/* Casa: escudo na ponta esquerda, nome puxando pro centro */}
+        <div className="flex items-center gap-1.5 min-w-0 flex-1">
+          <TeamLogo teamId={m.homeId} size={24} />
           <span className="text-xs font-semibold text-text-primary truncate">{m.home}</span>
-          <TeamLogo teamId={m.homeId} size={22} />
         </div>
-        <span className="text-sm font-bold text-text-primary px-1 whitespace-nowrap">
+        {/* Placar (ou "x" antes do jogo) com espaço reservado no centro */}
+        <span className="shrink-0 min-w-[48px] text-center text-sm font-bold text-text-primary whitespace-nowrap">
           {finished ? `${m.homeScore} x ${m.awayScore}` : "x"}
         </span>
-        <div className="flex items-center gap-1.5 min-w-0">
-          <TeamLogo teamId={m.awayId} size={22} />
-          <span className="text-xs font-semibold text-text-primary truncate">{m.away}</span>
+        {/* Fora: nome puxando pro centro, escudo na ponta direita */}
+        <div className="flex items-center justify-end gap-1.5 min-w-0 flex-1">
+          <span className="text-xs font-semibold text-text-primary truncate text-right">{m.away}</span>
+          <TeamLogo teamId={m.awayId} size={24} />
         </div>
       </div>
     </div>
