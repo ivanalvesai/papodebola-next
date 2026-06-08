@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Goal } from "lucide-react";
+import Image from "next/image";
 import { SearchBox } from "./search-box";
 
 export function Header() {
@@ -8,7 +8,14 @@ export function Header() {
       <div className="mx-auto max-w-[1240px] px-4 h-14 flex items-center gap-4">
         {/* Logo */}
         <Link href="/" className="flex items-center gap-2 shrink-0">
-          <Goal className="h-7 w-7 text-green" />
+          <Image
+            src="/android-chrome-512x512.png"
+            alt="Papo de Bola"
+            width={36}
+            height={36}
+            className="h-9 w-9"
+            priority
+          />
           <span className="text-lg font-bold text-text-primary tracking-tight">
             PAPO DE BOLA
           </span>
