@@ -1,6 +1,6 @@
-import Image from "next/image";
 import { ArrowRight, Repeat } from "lucide-react";
 import type { Transfer } from "@/types/team";
+import { PlayerAvatar } from "./player-avatar";
 
 interface TransfersSectionProps {
   transfers: Transfer[];
@@ -42,21 +42,8 @@ export function TransfersSection({ transfers }: TransfersSectionProps) {
               key={i}
               className="flex items-center gap-3 py-3 border-b border-border-light last:border-0"
             >
-              {/* Player photo */}
-              <div className="w-10 h-10 rounded-full bg-body overflow-hidden shrink-0 flex items-center justify-center">
-                {t.playerId ? (
-                  <Image
-                    src={`/img/player/${t.playerId}/image`}
-                    alt={t.player}
-                    width={40}
-                    height={40}
-                    className="w-full h-full object-cover"
-                    unoptimized
-                  />
-                ) : (
-                  <span className="text-text-muted text-sm">?</span>
-                )}
-              </div>
+              {/* Player photo (com fallback pras iniciais) */}
+              <PlayerAvatar player={t.player} playerId={t.playerId} />
 
               {/* Info */}
               <div className="flex-1 min-w-0">

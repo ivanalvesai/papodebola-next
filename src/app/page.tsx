@@ -4,6 +4,7 @@ import { HighlightsSection } from "@/components/home/highlights-section";
 import { NewsSection } from "@/components/home/news-section";
 import { TransfersSection } from "@/components/home/transfers-section";
 import { StandingsWidget } from "@/components/sidebar/standings-widget";
+import { WorldCupGroupsWidget } from "@/components/sidebar/world-cup-groups-widget";
 import { ScorersWidget } from "@/components/sidebar/scorers-widget";
 import { NextMatchWidget } from "@/components/sidebar/next-match-widget";
 import { RecentResultsWidget } from "@/components/sidebar/recent-results-widget";
@@ -13,7 +14,7 @@ import { getTodayMatches } from "@/lib/data/matches";
 import { getCBFUpcomingMatches } from "@/lib/data/cbf-calendar";
 import { getHighlights, getTransfers } from "@/lib/data/home";
 import { getLatestArticles } from "@/lib/data/articles";
-import { getBrasileiraoStandings } from "@/lib/data/standings";
+import { getBrasileiraoStandings, getWorldCupStandings } from "@/lib/data/standings";
 import { getTopScorers } from "@/lib/data/scorers";
 import { getChampionshipData } from "@/lib/data/championship";
 import { enrichStandingsWithForm } from "@/lib/standings-utils";
@@ -30,6 +31,7 @@ export default async function HomePage() {
     transfers,
     articles,
     rawStandings,
+    worldCupGroups,
     scorers,
     champData,
   ] = await Promise.all([
@@ -39,6 +41,7 @@ export default async function HomePage() {
     getTransfers().catch(() => []),
     getLatestArticles(20).catch(() => []),
     getBrasileiraoStandings().catch(() => []),
+    getWorldCupStandings().catch(() => []),
     getTopScorers().catch(() => []),
     getChampionshipData("brasileirao-serie-a").catch(() => null as ChampionshipData | null),
   ]);
@@ -75,6 +78,12 @@ export default async function HomePage() {
           <div className="space-y-6">
             <HighlightsSection highlights={highlights} />
             <NewsSection articles={articles} />
+            {/* Tabelas no celular: logo apos as noticias, antes do Mercado da Bola.
+                So aparece no mobile (no desktop ficam no sidebar). */}
+            <div className="space-y-6 lg:hidden">
+              <WorldCupGroupsWidget groups={worldCupGroups} />
+              <StandingsWidget standings={standings} />
+            </div>
             <TransfersSection transfers={transfers} />
           </div>
 
@@ -82,7 +91,12 @@ export default async function HomePage() {
           <aside className="space-y-6">
             <MyTeamWidget />
             <NextMatchWidget match={nextMatch} />
-            <StandingsWidget standings={standings} />
+            {/* Tabelas no desktop: Copa do Mundo antes do Brasileirao.
+                So aparece no desktop (no mobile sobem pra logo apos as noticias). */}
+            <div className="hidden lg:block space-y-6">
+              <WorldCupGroupsWidget groups={worldCupGroups} />
+              <StandingsWidget standings={standings} />
+            </div>
             <ScorersWidget scorers={scorers} />
             <RecentResultsWidget matches={todayMatches} />
           </aside>
