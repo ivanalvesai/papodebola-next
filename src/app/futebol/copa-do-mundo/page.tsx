@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Trophy } from "lucide-react";
 import { PageBreadcrumb } from "@/components/seo/page-breadcrumb";
 import { GroupRow } from "@/components/world-cup/group-row";
+import { SelecoesCarousel } from "@/components/world-cup/selecoes-carousel";
 import { getWorldCupData } from "@/lib/data/world-cup";
 
 export const revalidate = 1800;
@@ -40,6 +41,9 @@ export default async function CopaDoMundoPage() {
           ))}
         </div>
       )}
+
+      {/* Carrossel de seleções (estilo ge.globo) */}
+      <SelecoesCarousel />
     </div>
   );
 }

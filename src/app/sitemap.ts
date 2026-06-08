@@ -1,6 +1,7 @@
 import type { MetadataRoute } from "next";
 import { TEAMS, SPORTS, WP_CATEGORY_BY_SLUG } from "@/lib/config";
 import { TOURNAMENTS } from "@/lib/config";
+import { SELECOES, BRAZIL_ID } from "@/lib/selecoes";
 
 const BASE = process.env.NEXT_PUBLIC_SITE_URL || "https://papodebola.com.br";
 
@@ -72,6 +73,16 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     })
   );
 
+  // Páginas por seleção (Copa do Mundo) — Brasil já está em staticPages
+  const selecaoPages: MetadataRoute.Sitemap = SELECOES.filter(
+    (s) => s.id !== BRAZIL_ID
+  ).map((s) => ({
+    url: `${BASE}/futebol/selecoes/${s.slug}`,
+    lastModified: now,
+    changeFrequency: "daily" as const,
+    priority: 0.6,
+  }));
+
   return [
     ...staticPages,
     ...teamPages,
@@ -79,5 +90,6 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     ...sportPages,
     ...parceirosPage,
     ...newsCategoryPages,
+    ...selecaoPages,
   ];
 }
