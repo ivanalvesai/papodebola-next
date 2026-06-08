@@ -1,6 +1,7 @@
 import { fetchAllSports } from "@/lib/api/allsports";
 import { translateCountry } from "@/lib/i18n/countries";
 import { translateStatus } from "@/lib/translations";
+import { enrichStandingsWithForm } from "@/lib/standings-utils";
 import { getWorldCupStandings } from "./standings";
 import type { StandingRow } from "@/types/standings";
 import type { ChampionshipMatch } from "@/types/match";
@@ -85,7 +86,14 @@ export async function getWorldCupData(): Promise<WorldCupData> {
         .filter((m) => ids.has(m.homeId) && ids.has(m.awayId))
         .sort((a, b) => a.timestamp - b.timestamp),
     }));
-    return { name: g.name, rows: g.rows, rounds, defaultRound: pickDefaultRound(rounds, nowSec) };
+
+    // bolinhas de "últimos jogos" a partir dos jogos do próprio grupo
+    const matchesByRound: Record<number, ChampionshipMatch[]> = {};
+    for (const rd of rounds) matchesByRound[rd.round] = rd.matches;
+    const lastRound = GROUP_ROUNDS[GROUP_ROUNDS.length - 1];
+    const rows = enrichStandingsWithForm([{ name: g.name, rows: g.rows }], matchesByRound, lastRound)[0].rows;
+
+    return { name: g.name, rows, rounds, defaultRound: pickDefaultRound(rounds, nowSec) };
   });
 
   return { groups };

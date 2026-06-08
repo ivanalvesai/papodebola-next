@@ -34,7 +34,7 @@ export default async function CopaDoMundoPage() {
       {groups.length === 0 ? (
         <p className="text-text-muted text-sm py-6">Classificação indisponível no momento.</p>
       ) : (
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+        <div className="space-y-4">
           {groups.map((g) => (
             <GroupRow key={g.name} group={g} />
           ))}
