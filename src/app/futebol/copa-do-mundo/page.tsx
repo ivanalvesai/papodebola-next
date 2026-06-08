@@ -16,7 +16,7 @@ export default async function CopaDoMundoPage() {
   const { groups } = await getWorldCupData();
 
   return (
-    <div className="mx-auto max-w-[1100px] px-4 py-8">
+    <div className="mx-auto max-w-[1600px] px-4 py-8">
       <PageBreadcrumb
         className="mb-4"
         items={[{ label: "Início", href: "/" }, { label: "Copa do Mundo 2026" }]}
@@ -34,7 +34,7 @@ export default async function CopaDoMundoPage() {
       {groups.length === 0 ? (
         <p className="text-text-muted text-sm py-6">Classificação indisponível no momento.</p>
       ) : (
-        <div className="space-y-4">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
           {groups.map((g) => (
             <GroupRow key={g.name} group={g} />
           ))}

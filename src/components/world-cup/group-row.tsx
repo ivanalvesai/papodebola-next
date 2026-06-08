@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { ChevronRight } from "lucide-react";
+import { ChevronLeft, ChevronRight } from "lucide-react";
 import { TeamLogo } from "@/components/ui/team-logo";
 import type { WorldCupGroup } from "@/lib/data/world-cup";
 import type { ChampionshipMatch } from "@/types/match";
@@ -90,40 +90,52 @@ function MatchMini({ m }: { m: ChampionshipMatch }) {
 
 export function GroupRow({ group }: { group: WorldCupGroup }) {
   const rounds = group.rounds;
-  const [idx, setIdx] = useState(0);
+  // abre na rodada "atual" do grupo (proximo jogo), nao trava na rodada 1
+  const initial = Math.max(
+    0,
+    rounds.findIndex((r) => r.round === group.defaultRound)
+  );
+  const [idx, setIdx] = useState(initial);
   const current = rounds[idx] ?? rounds[0];
-  const advance = () => setIdx((i) => (i + 1) % rounds.length);
+  const prev = () => setIdx((i) => Math.max(0, i - 1));
+  const next = () => setIdx((i) => Math.min(rounds.length - 1, i + 1));
+  const atFirst = idx === 0;
+  const atLast = idx === rounds.length - 1;
 
   return (
     <div className="bg-card-bg rounded-lg border border-border-custom overflow-hidden flex">
-      {/* Classificação do grupo (esquerda) */}
+      {/* Classificação do grupo (esquerda) — cabeçalho verde, igual ao da rodada */}
       <div className="flex-1 min-w-0 border-r border-border-custom">
-        <h3 className="text-sm font-bold text-text-primary px-3 py-2 border-b border-border-custom bg-body">
-          {group.name}
-        </h3>
+        <h3 className="text-sm font-bold text-white px-3 py-2.5 bg-green">{group.name}</h3>
         <StandingsTable rows={group.rows} />
       </div>
 
-      {/* Rodada do grupo (direita) com seta pra avançar */}
+      {/* Rodada do grupo (direita) com setas pra voltar/avançar */}
       <div className="w-[120px] sm:w-[280px] shrink-0 flex flex-col">
-        <div className="flex items-center justify-between px-2 py-2 bg-green text-white">
-          <span className="text-xs font-bold whitespace-nowrap">
-            {current.round}ª Rodada
-          </span>
+        <div className="flex items-center justify-between gap-1 px-2 py-2 bg-green text-white">
           <button
             type="button"
-            onClick={advance}
-            aria-label="Avançar rodada"
-            className="flex items-center justify-center w-6 h-6 rounded-full bg-white/20 hover:bg-white/30 transition-colors"
+            onClick={prev}
+            disabled={atFirst}
+            aria-label="Rodada anterior"
+            className="flex items-center justify-center w-6 h-6 rounded-full bg-white/20 hover:bg-white/30 transition-colors disabled:opacity-30 disabled:cursor-default"
+          >
+            <ChevronLeft className="h-4 w-4" />
+          </button>
+          <span className="text-xs font-bold whitespace-nowrap">{current.round}ª Rodada</span>
+          <button
+            type="button"
+            onClick={next}
+            disabled={atLast}
+            aria-label="Próxima rodada"
+            className="flex items-center justify-center w-6 h-6 rounded-full bg-white/20 hover:bg-white/30 transition-colors disabled:opacity-30 disabled:cursor-default"
           >
             <ChevronRight className="h-4 w-4" />
           </button>
         </div>
         <div className="flex-1">
           {current.matches.length === 0 ? (
-            <p className="text-text-muted text-[11px] text-center py-4 px-2">
-              Jogos a definir
-            </p>
+            <p className="text-text-muted text-[11px] text-center py-4 px-2">Jogos a definir</p>
           ) : (
             current.matches.map((m) => <MatchMini key={m.id} m={m} />)
           )}

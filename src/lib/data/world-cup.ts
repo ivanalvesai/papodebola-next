@@ -22,6 +22,23 @@ export interface WorldCupGroup {
   name: string;
   rows: StandingRow[];
   rounds: WorldCupGroupRound[];
+  defaultRound: number; // rodada que abre por padrao (a "atual" do grupo)
+}
+
+// Escolhe a rodada a exibir: se o proximo jogo do grupo for em <=2 dias, abre na
+// rodada dele; senao fica na ultima ja iniciada; antes de tudo comecar, rodada 1.
+// Assim nao trava na rodada 1 e "pula" pro proximo confronto como os grandes sites.
+const TWO_DAYS = 2 * 86400;
+function pickDefaultRound(rounds: WorldCupGroupRound[], nowSec: number): number {
+  const all = rounds.flatMap((r) => r.matches);
+  const upcoming = all
+    .filter((m) => m.status === "notstarted")
+    .sort((a, b) => a.timestamp - b.timestamp);
+  const started = all.filter((m) => m.status !== "notstarted");
+  const next = upcoming[0];
+  if (next && next.timestamp - nowSec <= TWO_DAYS) return next.round;
+  if (started.length) return Math.max(...started.map((m) => m.round));
+  return rounds[0]?.round ?? 1;
 }
 
 export interface WorldCupData {
@@ -59,6 +76,7 @@ export async function getWorldCupData(): Promise<WorldCupData> {
   }
 
   // Associa cada jogo ao seu grupo pelos times (ambos pertencem ao mesmo grupo)
+  const nowSec = Date.now() / 1000;
   const groups: WorldCupGroup[] = standingsGroups.map((g) => {
     const ids = new Set(g.rows.map((r) => r.teamId));
     const rounds: WorldCupGroupRound[] = GROUP_ROUNDS.map((r) => ({
@@ -67,7 +85,7 @@ export async function getWorldCupData(): Promise<WorldCupData> {
         .filter((m) => ids.has(m.homeId) && ids.has(m.awayId))
         .sort((a, b) => a.timestamp - b.timestamp),
     }));
-    return { name: g.name, rows: g.rows, rounds };
+    return { name: g.name, rows: g.rows, rounds, defaultRound: pickDefaultRound(rounds, nowSec) };
   });
 
   return { groups };
