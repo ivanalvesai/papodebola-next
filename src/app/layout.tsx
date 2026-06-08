@@ -36,6 +36,10 @@ export const metadata: Metadata = {
   twitter: {
     card: "summary_large_image",
   },
+  other: {
+    // Verificacao da conta do Google AdSense (renderiza <meta name="google-adsense-account">)
+    "google-adsense-account": "ca-pub-5802007717322888",
+  },
   icons: {
     icon: [
       { url: "/favicon.ico", sizes: "32x32" },
