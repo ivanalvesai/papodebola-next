@@ -73,10 +73,10 @@ export function WorldCupGroupsWidget({ groups }: WorldCupGroupsWidgetProps) {
       </div>
 
       <Link
-        href="/noticias?cat=Copa%20do%20Mundo"
+        href="/futebol/copa-do-mundo"
         className="block text-center text-xs font-semibold text-green py-3 border-t border-border-custom hover:bg-card-hover transition-colors"
       >
-        Noticias da Copa &rarr;
+        Ver classificacao completa e jogos &rarr;
       </Link>
     </div>
   );
