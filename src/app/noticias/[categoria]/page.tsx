@@ -5,6 +5,8 @@ import { WP_CATEGORY_BY_SLUG } from "@/lib/config";
 import { NewsListView } from "@/components/news/news-list-view";
 
 export const revalidate = 1800;
+// Só os slugs conhecidos são válidos; qualquer outro vira 404 de verdade.
+export const dynamicParams = false;
 
 interface PageProps {
   params: Promise<{ categoria: string }>;
