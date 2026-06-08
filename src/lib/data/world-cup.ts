@@ -2,27 +2,30 @@ import { fetchAllSports } from "@/lib/api/allsports";
 import { translateCountry } from "@/lib/i18n/countries";
 import { translateStatus } from "@/lib/translations";
 import { getWorldCupStandings } from "./standings";
-import type { StandingsGroup } from "@/types/standings";
+import type { StandingRow } from "@/types/standings";
 import type { ChampionshipMatch } from "@/types/match";
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
 const WC = { id: 16, seasonId: 58210 } as const;
 
-// Fase de grupos = rodadas 1-3 (24 jogos cada). O mata-mata (Round of 32/16,
-// quartas, etc.) só ganha confrontos depois do sorteio pós-grupos, entao fica
-// de fora por enquanto.
+// Fase de grupos = rodadas 1-3 (24 jogos cada; 2 por grupo). O mata-mata só
+// ganha confrontos depois do sorteio pós-grupos, entao fica de fora por ora.
 const GROUP_ROUNDS = [1, 2, 3] as const;
 
-export interface WorldCupMatchday {
+export interface WorldCupGroupRound {
   round: number;
-  name: string;
   matches: ChampionshipMatch[];
 }
 
+export interface WorldCupGroup {
+  name: string;
+  rows: StandingRow[];
+  rounds: WorldCupGroupRound[];
+}
+
 export interface WorldCupData {
-  groups: StandingsGroup[];
-  matchdays: WorldCupMatchday[];
+  groups: WorldCupGroup[];
 }
 
 function normalizeMatch(e: any, round: number): ChampionshipMatch {
@@ -42,21 +45,30 @@ function normalizeMatch(e: any, round: number): ChampionshipMatch {
 }
 
 export async function getWorldCupData(): Promise<WorldCupData> {
-  const groups = await getWorldCupStandings();
+  const standingsGroups = await getWorldCupStandings();
 
-  const matchdays: WorldCupMatchday[] = [];
+  // Busca os jogos de cada rodada (todos os grupos juntos)
+  const roundMatches: Record<number, ChampionshipMatch[]> = {};
   for (const r of GROUP_ROUNDS) {
     const data = await fetchAllSports<any>(
       `tournament/${WC.id}/season/${WC.seasonId}/matches/round/${r}`,
       1800
     );
-    const matches = (data?.events || [])
-      .map((e: any) => normalizeMatch(e, r))
-      .sort((a: ChampionshipMatch, b: ChampionshipMatch) => a.timestamp - b.timestamp);
-    matchdays.push({ round: r, name: `${r}ª Rodada`, matches });
-    // pausa curta pra nao estourar o semaphore/rate-limit da AllSportsApi
+    roundMatches[r] = (data?.events || []).map((e: any) => normalizeMatch(e, r));
     await new Promise((resolve) => setTimeout(resolve, 150));
   }
 
-  return { groups, matchdays };
+  // Associa cada jogo ao seu grupo pelos times (ambos pertencem ao mesmo grupo)
+  const groups: WorldCupGroup[] = standingsGroups.map((g) => {
+    const ids = new Set(g.rows.map((r) => r.teamId));
+    const rounds: WorldCupGroupRound[] = GROUP_ROUNDS.map((r) => ({
+      round: r,
+      matches: (roundMatches[r] || [])
+        .filter((m) => ids.has(m.homeId) && ids.has(m.awayId))
+        .sort((a, b) => a.timestamp - b.timestamp),
+    }));
+    return { name: g.name, rows: g.rows, rounds };
+  });
+
+  return { groups };
 }
