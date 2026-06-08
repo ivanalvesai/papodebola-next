@@ -49,15 +49,17 @@ function GroupTable({ group }: { group: StandingsGroup }) {
 export function WorldCupGroupsWidget({ groups }: WorldCupGroupsWidgetProps) {
   if (groups.length === 0) return null;
 
+  // Card inteiro é clicável → pagina da tabela completa. Por isso é um unico
+  // <Link> externo (nada de <a> aninhado dentro).
   return (
-    <div className="bg-card-bg rounded-lg border border-border-custom">
-      <Link
-        href="/futebol/copa-do-mundo"
-        className="block text-sm font-bold text-text-primary px-4 py-3 border-b border-border-custom flex items-center gap-2 hover:bg-card-hover transition-colors"
-      >
+    <Link
+      href="/futebol/copa-do-mundo"
+      className="block bg-card-bg rounded-lg border border-border-custom hover:border-green/50 transition-colors"
+    >
+      <div className="text-sm font-bold text-text-primary px-4 py-3 border-b border-border-custom flex items-center gap-2">
         <Trophy className="h-4 w-4 text-green" />
-        Copa do Mundo 2026 &middot; Grupos
-      </Link>
+        Copa do Mundo 2026
+      </div>
 
       {/* J = jogos, P = pontos · verde = classificados (2 primeiros) */}
       <div className="px-4 pt-2 text-[10px] text-text-muted flex items-center gap-3">
@@ -75,12 +77,9 @@ export function WorldCupGroupsWidget({ groups }: WorldCupGroupsWidgetProps) {
         ))}
       </div>
 
-      <Link
-        href="/futebol/copa-do-mundo"
-        className="block text-center text-xs font-semibold text-green py-3 border-t border-border-custom hover:bg-card-hover transition-colors"
-      >
+      <div className="text-center text-xs font-semibold text-green py-3 border-t border-border-custom">
         Ver classificacao completa e jogos &rarr;
-      </Link>
-    </div>
+      </div>
+    </Link>
   );
 }
