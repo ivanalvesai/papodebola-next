@@ -145,13 +145,15 @@ export function GroupRow({ group }: { group: WorldCupGroup }) {
     <div className="bg-card-bg rounded-lg border border-border-custom overflow-hidden flex flex-col lg:flex-row">
       {/* Classificação do grupo — cabeçalho verde, igual ao da rodada */}
       <div className="flex-1 min-w-0 lg:border-r border-border-custom">
-        <h3 className="text-base font-bold text-white px-4 py-3 bg-green">{group.name}</h3>
+        <h3 className="h-12 flex items-center text-base font-bold text-white px-4 bg-green">
+          {group.name}
+        </h3>
         <StandingsTable rows={group.rows} />
       </div>
 
       {/* Rodada do grupo com setas pra voltar/avançar */}
       <div className="w-full lg:w-[300px] shrink-0 flex flex-col border-t lg:border-t-0 border-border-custom">
-        <div className="flex items-center justify-between gap-1 px-3 py-3 bg-green text-white">
+        <div className="h-12 flex items-center justify-between gap-1 px-3 bg-green text-white">
           <button
             type="button"
             onClick={prev}
