@@ -51,10 +51,13 @@ export function WorldCupGroupsWidget({ groups }: WorldCupGroupsWidgetProps) {
 
   return (
     <div className="bg-card-bg rounded-lg border border-border-custom">
-      <h3 className="text-sm font-bold text-text-primary px-4 py-3 border-b border-border-custom flex items-center gap-2">
+      <Link
+        href="/futebol/copa-do-mundo"
+        className="block text-sm font-bold text-text-primary px-4 py-3 border-b border-border-custom flex items-center gap-2 hover:bg-card-hover transition-colors"
+      >
         <Trophy className="h-4 w-4 text-green" />
         Copa do Mundo 2026 &middot; Grupos
-      </h3>
+      </Link>
 
       {/* J = jogos, P = pontos · verde = classificados (2 primeiros) */}
       <div className="px-4 pt-2 text-[10px] text-text-muted flex items-center gap-3">
