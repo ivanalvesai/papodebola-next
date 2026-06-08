@@ -124,6 +124,15 @@ export async function fetchAllSports<T>(
     console.warn(`SportsProxy failed, falling back to direct API: ${endpoint}`);
   }
 
+  // No build SEM proxy (dev), pula o fetch direto: a AllSportsApi as vezes demora
+  // >60s (ex: matches do dia ~17MB) e estoura o timeout do static generation,
+  // quebrando o build inteiro. ISR popula em runtime no 1o acesso/revalidate.
+  // (Prod ja pula porque o proxy nao resolve no builder — ver acima.)
+  if (isBuildPhase) {
+    console.warn(`Build: skip direct AllSports (dev), ISR popula em runtime: ${endpoint}`);
+    return null;
+  }
+
   const result = await fetchFromUrl<T>(
     `${DIRECT_BASE}/${endpoint}`,
     {
