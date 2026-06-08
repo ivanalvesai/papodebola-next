@@ -130,7 +130,7 @@ export default async function SelecaoBrasileiraPage() {
 
           <div className="text-center mt-6">
             <Link
-              href="/noticias?cat=Sele%C3%A7%C3%A3o%20Brasileira"
+              href="/noticias/selecao-brasileira"
               className="inline-block text-sm font-semibold text-green hover:text-green-hover"
             >
               Ver todas as notícias da Seleção &rarr;

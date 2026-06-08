@@ -1,5 +1,5 @@
 import type { MetadataRoute } from "next";
-import { TEAMS, SPORTS } from "@/lib/config";
+import { TEAMS, SPORTS, WP_CATEGORY_BY_SLUG } from "@/lib/config";
 import { TOURNAMENTS } from "@/lib/config";
 
 const BASE = process.env.NEXT_PUBLIC_SITE_URL || "https://papodebola.com.br";
@@ -62,5 +62,22 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     { url: `${BASE}/parceiros`, changeFrequency: "monthly" as const, priority: 0.3 },
   ];
 
-  return [...staticPages, ...teamPages, ...champPages, ...sportPages, ...parceirosPage];
+  // Categorias de notícias (URLs limpas /noticias/{slug})
+  const newsCategoryPages: MetadataRoute.Sitemap = Object.keys(WP_CATEGORY_BY_SLUG).map(
+    (slug) => ({
+      url: `${BASE}/noticias/${slug}`,
+      lastModified: now,
+      changeFrequency: "daily" as const,
+      priority: 0.7,
+    })
+  );
+
+  return [
+    ...staticPages,
+    ...teamPages,
+    ...champPages,
+    ...sportPages,
+    ...parceirosPage,
+    ...newsCategoryPages,
+  ];
 }

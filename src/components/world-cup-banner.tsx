@@ -37,7 +37,7 @@ export function WorldCupBanner() {
 
   return (
     <Link
-      href="/noticias?cat=Copa%20do%20Mundo"
+      href="/noticias/copa-do-mundo"
       className="block"
       style={{
         background: "linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%)",

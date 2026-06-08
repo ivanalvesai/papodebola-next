@@ -160,6 +160,22 @@ export const WP_CATEGORIES = [
   'Futebol Brasileiro',
 ] as const;
 
+// Slug de categoria pra URLs limpas (/noticias/brasileirao em vez de ?cat=Brasileirão).
+// Melhor pra SEO. Ex: 'Seleção Brasileira' -> 'selecao-brasileira'.
+export function slugifyCategory(name: string): string {
+  return name
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[̀-ͯ]/g, '')
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-|-$/g, '');
+}
+
+// slug -> nome da categoria (usado pela rota /noticias/[categoria])
+export const WP_CATEGORY_BY_SLUG: Record<string, string> = Object.fromEntries(
+  WP_CATEGORIES.map((c) => [slugifyCategory(c), c])
+);
+
 // Brasileirão Série A: all 20 teams (for nav, side panel, etc.)
 const SERIE_A_SLUGS = [
   'palmeiras','flamengo','sao-paulo','fluminense','bahia','athletico-pr',
