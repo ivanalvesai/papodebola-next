@@ -4,6 +4,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { Clock, Pen, BookOpen, Tag, Trophy } from "lucide-react";
 import { getArticleBySlug, getRelatedArticles } from "@/lib/data/articles";
+import { slugifyCategory, WP_CATEGORY_BY_SLUG } from "@/lib/config";
 import { ShareButtons } from "@/components/article/share-buttons";
 import { ArticleSchema } from "@/components/seo/article-schema";
 import { PageBreadcrumb } from "@/components/seo/page-breadcrumb";
@@ -100,6 +101,11 @@ export default async function ArticlePage({
   const paragraphsHtml = formatParagraphs(article.rewrittenText);
   const author = article.author || "Redacao Papo de Bola";
 
+  // Link da categoria em URL limpa; se nao for uma das categorias conhecidas,
+  // cai pra /noticias (evita 404 numa categoria fora da lista).
+  const catSlug = slugifyCategory(article.category);
+  const catHref = WP_CATEGORY_BY_SLUG[catSlug] ? `/noticias/${catSlug}` : "/noticias";
+
   return (
     <>
       <ArticleSchema article={article} />
@@ -112,7 +118,7 @@ export default async function ArticlePage({
             items={[
               { label: "Início", href: "/" },
               { label: "Notícias", href: "/noticias" },
-              { label: article.category, href: `/noticias?cat=${encodeURIComponent(article.category)}` },
+              { label: article.category, href: catHref },
               { label: article.rewrittenTitle },
             ]}
           />
@@ -134,7 +140,7 @@ export default async function ArticlePage({
 
           {/* Category */}
           <Link
-            href={`/noticias?cat=${encodeURIComponent(article.category)}`}
+            href={catHref}
             className="text-xs font-bold uppercase tracking-wider text-green hover:underline"
           >
             {article.category}
@@ -186,7 +192,7 @@ export default async function ArticlePage({
               </Link>
             ))}
             <Link
-              href={`/noticias?cat=${encodeURIComponent(article.category)}`}
+              href={catHref}
               className="inline-flex items-center gap-1 px-3.5 py-1.5 bg-body border border-border-custom rounded-full text-xs font-semibold text-text-secondary hover:bg-green hover:text-white hover:border-green transition-colors"
             >
               <Trophy className="h-3 w-3" />

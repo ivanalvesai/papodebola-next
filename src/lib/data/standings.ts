@@ -1,5 +1,6 @@
 import { fetchAllSports } from "@/lib/api/allsports";
 import { TOURNAMENTS } from "@/lib/config";
+import { translateCountry } from "@/lib/i18n/countries";
 import type { StandingsGroup, StandingRow } from "@/types/standings";
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
@@ -46,4 +47,22 @@ export async function getBrasileiraoStandings(): Promise<StandingsGroup[]> {
   const t = TOURNAMENTS.BRASILEIRAO_A;
   if (!t.seasonId) return [];
   return getStandings(t.id, t.seasonId);
+}
+
+// Copa do Mundo 2026 (Sofascore tournament 16 / season 58210).
+// Mantido fora de TOURNAMENTS de propósito: é temporário (sai da home quando a
+// Copa acabar) e a página /futebol/[slug] só renderiza 1 grupo, então não vale
+// expor /futebol/copa-do-mundo. A home mostra todos os grupos via widget próprio.
+const WORLD_CUP = { id: 16, seasonId: 58210 } as const;
+
+// Retorna só os 12 grupos (A–L), traduzidos pra PT-BR. A API também devolve um
+// grupo "Third-placed teams" (ranking dos 3os colocados) que filtramos fora.
+export async function getWorldCupStandings(): Promise<StandingsGroup[]> {
+  const groups = await getStandings(WORLD_CUP.id, WORLD_CUP.seasonId);
+  return groups
+    .filter((g) => /^group\s/i.test(g.name))
+    .map((g) => ({
+      name: g.name.replace(/^group/i, "Grupo"),
+      rows: g.rows.map((r) => ({ ...r, team: translateCountry(r.team) })),
+    }));
 }

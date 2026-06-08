@@ -1,58 +1,43 @@
 import type { Metadata } from "next";
 import Image from "next/image";
 import Link from "next/link";
+import { Newspaper } from "lucide-react";
 import { getArticles } from "@/lib/data/articles";
 import { PageBreadcrumb } from "@/components/seo/page-breadcrumb";
-import { Newspaper, Trophy } from "lucide-react";
 
 export const revalidate = 1800;
 
 export const metadata: Metadata = {
-  title: "Seleção Brasileira - Notícias, Convocados e Jogos",
+  title: "Futebol: notícias, jogos e classificações",
   description:
-    "Tudo sobre a Seleção Brasileira de futebol: convocações, jogos, Copa do Mundo 2026, Eliminatórias Sul-Americanas e notícias atualizadas.",
+    "Futebol brasileiro e mundial: últimas notícias, Brasileirão, Copa do Mundo 2026, Libertadores, Champions League e mais no Papo de Bola.",
+  alternates: { canonical: "/futebol" },
 };
 
-export default async function SelecaoBrasileiraPage() {
-  const { articles } = await getArticles({
-    category: "Seleção Brasileira",
-    perPage: 12,
-  }).catch(() => ({ articles: [], total: 0 }));
+export default async function FutebolPage() {
+  const { articles } = await getArticles({ perPage: 13 }).catch(() => ({
+    articles: [],
+    total: 0,
+  }));
 
   const [featured, ...rest] = articles;
 
   return (
-    <div className="mx-auto max-w-[1000px] px-4 py-8">
+    <div className="mx-auto max-w-[1240px] px-4 py-8">
       <PageBreadcrumb
         className="mb-4"
-        items={[
-          { label: "Início", href: "/" },
-          { label: "Futebol", href: "/futebol" },
-          { label: "Seleção Brasileira" },
-        ]}
+        items={[{ label: "Início", href: "/" }, { label: "Futebol" }]}
       />
 
-      {/* Hero */}
-      <div className="bg-gradient-to-br from-green to-green-hover rounded-lg p-6 mb-8 text-white">
-        <div className="flex items-center gap-3 mb-2">
-          <Trophy className="h-8 w-8" />
-          <h1 className="text-2xl font-bold">Seleção Brasileira</h1>
-        </div>
-        <p className="text-sm opacity-95">
-          Pentacampeã do mundo. Acompanhe convocações, jogos das Eliminatórias, amistosos e a caminhada rumo à Copa do Mundo 2026.
-        </p>
-      </div>
-
-      <h2 className="text-lg font-bold text-text-primary mb-4 flex items-center gap-2">
-        <Newspaper className="h-5 w-5 text-green" />
-        Últimas notícias
-      </h2>
+      <h1 className="text-xl font-bold text-text-primary mb-6 flex items-center gap-2">
+        <Newspaper className="h-6 w-6 text-green" />
+        Futebol
+      </h1>
 
       {articles.length === 0 ? (
-        <div className="bg-card-bg rounded-lg border border-border-custom p-8 text-center">
-          <p className="text-text-muted text-sm">
-            Nenhuma notícia encontrada sobre a Seleção Brasileira no momento.
-          </p>
+        <div className="bg-card-bg rounded-lg border border-border-custom p-12 text-center">
+          <Newspaper className="h-12 w-12 text-text-muted mx-auto mb-3" />
+          <p className="text-text-muted">Nenhuma noticia encontrada</p>
         </div>
       ) : (
         <>
@@ -79,9 +64,9 @@ export default async function SelecaoBrasileiraPage() {
                   <div className="text-xs font-bold text-green uppercase mb-2">
                     {featured.category}
                   </div>
-                  <h3 className="text-xl font-bold text-text-primary leading-tight mb-3 group-hover:text-green transition-colors">
+                  <h2 className="text-xl font-bold text-text-primary leading-tight mb-3 group-hover:text-green transition-colors">
                     {featured.rewrittenTitle}
-                  </h3>
+                  </h2>
                   <p className="text-sm text-text-muted line-clamp-3">
                     {featured.rewrittenText.substring(0, 200)}...
                   </p>
@@ -114,9 +99,12 @@ export default async function SelecaoBrasileiraPage() {
                   )}
                 </div>
                 <div className="p-4">
-                  <h4 className="text-sm font-semibold text-text-primary leading-tight line-clamp-2 mb-2 group-hover:text-green transition-colors">
+                  <div className="text-[10px] font-bold text-green uppercase mb-1.5">
+                    {article.category}
+                  </div>
+                  <h3 className="text-sm font-semibold text-text-primary leading-tight line-clamp-2 mb-2 group-hover:text-green transition-colors">
                     {article.rewrittenTitle}
-                  </h4>
+                  </h3>
                   <div className="text-[11px] text-text-muted">
                     {new Date(article.pubDate).toLocaleDateString("pt-BR", {
                       day: "2-digit",
@@ -128,12 +116,12 @@ export default async function SelecaoBrasileiraPage() {
             ))}
           </div>
 
-          <div className="text-center mt-6">
+          <div className="text-center mt-8">
             <Link
-              href="/noticias/selecao-brasileira"
+              href="/noticias"
               className="inline-block text-sm font-semibold text-green hover:text-green-hover"
             >
-              Ver todas as notícias da Seleção &rarr;
+              Ver todas as notícias &rarr;
             </Link>
           </div>
         </>

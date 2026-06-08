@@ -127,7 +127,7 @@ export function MainNav() {
                   <li><div className="my-1 border-t border-border-custom" /></li>
                   {[
                     { label: "Selecao Brasileira", href: "/futebol/selecao-brasileira" },
-                    { label: "Copa do Mundo 2026", href: "/noticias?cat=Copa%20do%20Mundo" },
+                    { label: "Copa do Mundo 2026", href: "/futebol/copa-do-mundo" },
                   ].map((l) => (
                     <li key={l.href}>
                       <Link href={l.href} prefetch={false} onClick={() => setOpenDropdown(null)} className="block py-1.5 px-2 text-sm text-text-secondary hover:text-green hover:bg-green-light rounded transition-colors">

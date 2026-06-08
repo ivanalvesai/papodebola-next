@@ -1,23 +1,47 @@
 import type { Metadata } from "next";
 import Image from "next/image";
 import Link from "next/link";
-import { getArticles } from "@/lib/data/articles";
-import { PageBreadcrumb } from "@/components/seo/page-breadcrumb";
+import { notFound } from "next/navigation";
 import { Newspaper, Trophy } from "lucide-react";
+import { getArticles } from "@/lib/data/articles";
+import { SELECOES, SELECAO_BY_SLUG, BRAZIL_ID } from "@/lib/selecoes";
+import { PageBreadcrumb } from "@/components/seo/page-breadcrumb";
+import { TeamLogo } from "@/components/ui/team-logo";
 
 export const revalidate = 1800;
+export const dynamicParams = false;
 
-export const metadata: Metadata = {
-  title: "Seleção Brasileira - Notícias, Convocados e Jogos",
-  description:
-    "Tudo sobre a Seleção Brasileira de futebol: convocações, jogos, Copa do Mundo 2026, Eliminatórias Sul-Americanas e notícias atualizadas.",
-};
+interface PageProps {
+  params: Promise<{ slug: string }>;
+}
 
-export default async function SelecaoBrasileiraPage() {
-  const { articles } = await getArticles({
-    category: "Seleção Brasileira",
-    perPage: 12,
-  }).catch(() => ({ articles: [], total: 0 }));
+export function generateStaticParams() {
+  // Brasil tem página própria; não gera /selecoes/brasil
+  return SELECOES.filter((s) => s.id !== BRAZIL_ID).map((s) => ({ slug: s.slug }));
+}
+
+export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
+  const { slug } = await params;
+  const s = SELECAO_BY_SLUG[slug];
+  if (!s) return {};
+  return {
+    title: `Seleção de ${s.name}: notícias e jogos na Copa do Mundo 2026`,
+    description: `Tudo sobre a seleção de ${s.name} na Copa do Mundo 2026: jogos, grupo e últimas notícias no Papo de Bola.`,
+    alternates: { canonical: `/futebol/selecoes/${slug}` },
+  };
+}
+
+export default async function SelecaoPage({ params }: PageProps) {
+  const { slug } = await params;
+  const selecao = SELECAO_BY_SLUG[slug];
+  if (!selecao || selecao.id === BRAZIL_ID) notFound();
+
+  // Conteúdo da seleção = artigos marcados com o país (tag). Ao publicar um
+  // artigo com a tag do país, ele aparece aqui automaticamente.
+  const { articles } = await getArticles({ tag: selecao.name, perPage: 12 }).catch(() => ({
+    articles: [],
+    total: 0,
+  }));
 
   const [featured, ...rest] = articles;
 
@@ -27,31 +51,41 @@ export default async function SelecaoBrasileiraPage() {
         className="mb-4"
         items={[
           { label: "Início", href: "/" },
-          { label: "Futebol", href: "/futebol" },
-          { label: "Seleção Brasileira" },
+          { label: "Copa do Mundo 2026", href: "/futebol/copa-do-mundo" },
+          { label: selecao.name },
         ]}
       />
 
       {/* Hero */}
-      <div className="bg-gradient-to-br from-green to-green-hover rounded-lg p-6 mb-8 text-white">
-        <div className="flex items-center gap-3 mb-2">
-          <Trophy className="h-8 w-8" />
-          <h1 className="text-2xl font-bold">Seleção Brasileira</h1>
+      <div className="bg-gradient-to-br from-green to-green-hover rounded-lg p-6 mb-8 text-white flex items-center gap-4">
+        <div className="w-16 h-16 rounded-full overflow-hidden bg-white/15 flex items-center justify-center shrink-0">
+          <TeamLogo teamId={selecao.id} alt={selecao.name} size={56} className="object-cover" />
         </div>
-        <p className="text-sm opacity-95">
-          Pentacampeã do mundo. Acompanhe convocações, jogos das Eliminatórias, amistosos e a caminhada rumo à Copa do Mundo 2026.
-        </p>
+        <div>
+          <h1 className="text-2xl font-bold">Seleção de {selecao.name}</h1>
+          <p className="text-sm opacity-95">
+            Jogos, grupo e notícias rumo à Copa do Mundo 2026.
+          </p>
+        </div>
       </div>
 
-      <h2 className="text-lg font-bold text-text-primary mb-4 flex items-center gap-2">
-        <Newspaper className="h-5 w-5 text-green" />
-        Últimas notícias
-      </h2>
+      <div className="flex items-center justify-between mb-4">
+        <h2 className="text-lg font-bold text-text-primary flex items-center gap-2">
+          <Newspaper className="h-5 w-5 text-green" />
+          Últimas notícias
+        </h2>
+        <Link
+          href="/futebol/copa-do-mundo"
+          className="text-xs font-semibold text-green hover:text-green-hover flex items-center gap-1"
+        >
+          <Trophy className="h-3.5 w-3.5" /> Tabela da Copa
+        </Link>
+      </div>
 
       {articles.length === 0 ? (
         <div className="bg-card-bg rounded-lg border border-border-custom p-8 text-center">
           <p className="text-text-muted text-sm">
-            Nenhuma notícia encontrada sobre a Seleção Brasileira no momento.
+            Ainda não há notícias sobre a seleção de {selecao.name}. Volte em breve.
           </p>
         </div>
       ) : (
@@ -126,15 +160,6 @@ export default async function SelecaoBrasileiraPage() {
                 </div>
               </Link>
             ))}
-          </div>
-
-          <div className="text-center mt-6">
-            <Link
-              href="/noticias/selecao-brasileira"
-              className="inline-block text-sm font-semibold text-green hover:text-green-hover"
-            >
-              Ver todas as notícias da Seleção &rarr;
-            </Link>
           </div>
         </>
       )}

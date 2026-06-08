@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 import { jwtVerify } from "jose";
+import { slugifyCategory, WP_CATEGORY_BY_SLUG } from "@/lib/config";
 
 const SECRET = new TextEncoder().encode(
   process.env.JWT_SECRET || "papodebola-dev-secret"
@@ -37,9 +38,32 @@ export async function middleware(request: NextRequest) {
     return NextResponse.rewrite(new URL("/not-found", request.url));
   }
 
+  // Redireciona o ?cat= legado pras URLs limpas (/noticias/brasileirao) — 308.
+  // Em middleware pra garantir o redirect real antes do cache (a pagina /noticias
+  // e estatica e nao re-roda no runtime por query string).
+  if (request.nextUrl.pathname === "/noticias") {
+    const cat = request.nextUrl.searchParams.get("cat");
+    if (cat) {
+      const slug = slugifyCategory(cat);
+      if (WP_CATEGORY_BY_SLUG[slug]) {
+        const url = request.nextUrl.clone();
+        url.pathname = `/noticias/${slug}`;
+        url.searchParams.delete("cat");
+        return NextResponse.redirect(url, 308);
+      }
+    }
+  }
+
   return NextResponse.next();
 }
 
 export const config = {
-  matcher: ["/painel-pdb-9x/:path*", "/studio-pdb/:path*", "/api/kanban/:path*", "/api/promote/:path*", "/admin/:path*"],
+  matcher: [
+    "/painel-pdb-9x/:path*",
+    "/studio-pdb/:path*",
+    "/api/kanban/:path*",
+    "/api/promote/:path*",
+    "/admin/:path*",
+    "/noticias",
+  ],
 };
