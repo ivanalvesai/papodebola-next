@@ -6,7 +6,7 @@ import Image from "next/image";
 import { Newspaper, Loader2 } from "lucide-react";
 import type { Article } from "@/types/article";
 
-const PAGE_SIZE = 20;
+const PAGE_SIZE = 20; // lote buscado na API (== perPage do load inicial, sem pular itens)
 
 function formatDate(d: string) {
   return new Date(d).toLocaleDateString("pt-BR", {
@@ -61,17 +61,25 @@ interface NewsFeedProps {
   initial: Article[];
   /** Nome da categoria WP pra filtrar (?cat=). Ausente = todas. */
   category?: string;
-  /** Pagina ja representada por `initial` (default 1). O scroll busca a partir da proxima. */
+  /** Pagina ja representada por `initial` (default 1). O scroll/botao busca a partir da proxima. */
   startPage?: number;
   /** Slugs ja exibidos fora do feed (ex: destaques da home), pra nao repetir. */
   excludeSlugs?: string[];
-  /** Destino do "Ver todas" quando acabar o scroll. */
+  /** Destino do "Ver todas" quando acabar. */
   seeAllHref?: string;
+  /** true (default) = rolagem infinita; false = so botao "Mostrar mais" (ex: home). */
+  infinite?: boolean;
+  /** Quantos itens exibir de inicio no modo botao (default: todos do `initial`). */
+  initialVisible?: number;
+  /** Quantos revelar a cada "Mostrar mais" no modo botao (default 10). */
+  step?: number;
 }
 
 /**
- * Feed de noticias em coluna unica com rolagem infinita (IntersectionObserver).
- * Carrega o proximo lote so quando o sentinel se aproxima da viewport — pagina leve.
+ * Feed de noticias em coluna unica (foto a esquerda, titulo + trecho a direita).
+ * - infinite=true: rolagem infinita via IntersectionObserver (carrega sob demanda).
+ * - infinite=false: mostra `initialVisible` itens e cresce so no clique de "Mostrar mais"
+ *   (assim a pagina tem fim e da pra chegar no rodape — usado na home).
  */
 export function NewsFeed({
   initial,
@@ -79,18 +87,23 @@ export function NewsFeed({
   startPage = 1,
   excludeSlugs = [],
   seeAllHref = "/noticias",
+  infinite = true,
+  initialVisible,
+  step = 10,
 }: NewsFeedProps) {
   const [feed, setFeed] = useState<Article[]>(initial);
   const [page, setPage] = useState(startPage);
   const [hasMore, setHasMore] = useState(true);
   const [loading, setLoading] = useState(false);
+  const [visible, setVisible] = useState(initialVisible ?? initial.length);
 
   const seen = useRef<Set<string>>(
     new Set([...excludeSlugs, ...initial.map((a) => a.slug)])
   );
   const sentinelRef = useRef<HTMLDivElement | null>(null);
 
-  const loadMore = useCallback(async () => {
+  // Busca o proximo lote na API e anexa ao feed.
+  const fetchMore = useCallback(async () => {
     if (loading || !hasMore) return;
     setLoading(true);
     try {
@@ -117,18 +130,33 @@ export function NewsFeed({
     }
   }, [loading, hasMore, page, category]);
 
+  // Botao "Mostrar mais" (modo nao-infinito): revela o que ja veio antes de buscar mais.
+  const showMore = useCallback(async () => {
+    if (loading) return;
+    if (visible < feed.length) {
+      setVisible((v) => v + step);
+      return;
+    }
+    if (hasMore) {
+      await fetchMore();
+      setVisible((v) => v + step);
+    }
+  }, [loading, visible, feed.length, hasMore, step, fetchMore]);
+
+  // Observer so no modo infinito: carrega quando o sentinel se aproxima da viewport.
   useEffect(() => {
+    if (!infinite) return;
     const el = sentinelRef.current;
     if (!el || !hasMore) return;
     const io = new IntersectionObserver(
       (entries) => {
-        if (entries[0].isIntersecting) loadMore();
+        if (entries[0].isIntersecting) fetchMore();
       },
       { rootMargin: "400px 0px" }
     );
     io.observe(el);
     return () => io.disconnect();
-  }, [loadMore, hasMore]);
+  }, [infinite, fetchMore, hasMore]);
 
   if (feed.length === 0) {
     return (
@@ -138,16 +166,19 @@ export function NewsFeed({
     );
   }
 
+  const items = infinite ? feed : feed.slice(0, visible);
+  const canLoadMore = infinite ? hasMore : visible < feed.length || hasMore;
+
   return (
     <>
       <div>
-        {feed.map((a) => (
+        {items.map((a) => (
           <FeedItem key={a.slug} article={a} />
         ))}
       </div>
 
-      {/* Sentinel + estado de carregamento */}
-      <div ref={sentinelRef} className="h-px w-full" aria-hidden />
+      {/* Sentinel so no modo infinito */}
+      {infinite && <div ref={sentinelRef} className="h-px w-full" aria-hidden />}
 
       <div className="mt-5 text-center">
         {loading ? (
@@ -155,9 +186,9 @@ export function NewsFeed({
             <Loader2 className="h-4 w-4 animate-spin" />
             Carregando mais noticias...
           </span>
-        ) : hasMore ? (
+        ) : canLoadMore ? (
           <button
-            onClick={loadMore}
+            onClick={infinite ? fetchMore : showMore}
             className="inline-flex items-center gap-1.5 text-sm font-semibold text-green transition-colors hover:text-green-hover"
           >
             Mostrar mais
