@@ -68,21 +68,21 @@ function FeaturedCard({ article, big }: { article: Article; big?: boolean }) {
   );
 }
 
-/** Item compacto do feed (miniatura + titulo + data). */
+/** Item do feed estilo ge.globo: imagem a esquerda, editoria + titulo + trecho a direita. */
 function FeedItem({ article }: { article: Article }) {
   return (
     <Link
       href={`/artigos/${article.slug}`}
-      className="group -m-2 flex gap-3 rounded-lg p-2 transition-colors hover:bg-card-hover"
+      className="group flex gap-4 border-t border-border-light py-4 first:border-t-0 first:pt-0"
     >
-      <div className="h-16 w-24 shrink-0 overflow-hidden rounded bg-body">
+      <div className="aspect-[16/9] w-28 shrink-0 overflow-hidden rounded bg-body sm:w-44">
         {article.image ? (
           <Image
             src={article.image}
             alt=""
-            width={96}
-            height={64}
-            className="h-full w-full object-cover"
+            width={176}
+            height={99}
+            className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
             unoptimized
           />
         ) : (
@@ -92,13 +92,16 @@ function FeedItem({ article }: { article: Article }) {
         )}
       </div>
       <div className="min-w-0 flex-1">
-        <div className="mb-0.5 text-[10px] font-bold uppercase leading-4 text-green">
+        <div className="mb-1 text-[11px] font-semibold uppercase tracking-wide text-text-muted">
           {article.category}
         </div>
-        <div className="line-clamp-2 text-sm font-semibold leading-tight text-text-primary transition-colors group-hover:text-green">
+        <h3 className="line-clamp-2 text-base font-bold leading-snug text-text-primary transition-colors group-hover:text-green">
           {article.rewrittenTitle}
-        </div>
-        <div className="mt-1 text-[11px] text-text-muted">{formatDate(article.pubDate)}</div>
+        </h3>
+        <p className="mt-1 line-clamp-2 text-sm leading-snug text-text-muted">
+          {article.rewrittenText.slice(0, 160)}
+        </p>
+        <div className="mt-1.5 text-[11px] text-text-muted">{formatDate(article.pubDate)}</div>
       </div>
     </Link>
   );
@@ -185,9 +188,9 @@ export function NewsSection({ articles }: NewsSectionProps) {
         </div>
       )}
 
-      {/* Feed com rolagem infinita */}
+      {/* Feed em coluna unica (uma noticia abaixo da outra) com rolagem infinita */}
       {feed.length > 0 && (
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+        <div>
           {feed.map((a) => (
             <FeedItem key={a.slug} article={a} />
           ))}
