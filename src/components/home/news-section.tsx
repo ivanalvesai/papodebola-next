@@ -87,11 +87,16 @@ export function NewsSection({ articles }: NewsSectionProps) {
         </div>
       )}
 
-      {/* Feed em coluna unica com rolagem infinita (os 3 destaques ficam de fora). */}
+      {/* Feed em coluna unica (os 3 destaques ficam de fora). Na home SEM rolagem
+          infinita: mostra 10 e cresce so no botao "Mostrar mais" — assim a pagina
+          tem fim e da pra chegar no rodape. (A pagina da Copa mantem o scroll.) */}
       <NewsFeed
         initial={articles.slice(3)}
         excludeSlugs={featured.map((a) => a.slug)}
         seeAllHref="/noticias"
+        infinite={false}
+        initialVisible={10}
+        step={10}
       />
     </section>
   );
