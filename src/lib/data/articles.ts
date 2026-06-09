@@ -31,7 +31,10 @@ function stripHtml(html: string): string {
 function normalizeArticle(post: any, categories: Record<number, string>, tags: Record<number, string>): Article {
   const title = stripHtml(post.title?.rendered || "");
   const slug = post.slug || generateSlug(title);
-  const content = stripHtml(post.content?.rendered || "").slice(0, 5000);
+  const contentHtml = post.content?.rendered || "";
+  // Versao em texto puro: usada para meta description, excerpt nas listas e
+  // contagem de palavras. A exibicao do artigo usa contentHtml (HTML real).
+  const content = stripHtml(contentHtml).slice(0, 5000);
 
   const postCategories = (post.categories || []).map((id: number) => categories[id]).filter(Boolean);
   const postTags = (post.tags || []).map((id: number) => tags[id]).filter(Boolean);
@@ -47,6 +50,7 @@ function normalizeArticle(post: any, categories: Record<number, string>, tags: R
     originalTitle: title,
     rewrittenTitle: title,
     rewrittenText: content,
+    contentHtml,
     slug,
     source: "WordPress",
     image,
