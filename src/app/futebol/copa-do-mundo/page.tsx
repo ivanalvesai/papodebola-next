@@ -3,7 +3,9 @@ import { Trophy } from "lucide-react";
 import { PageBreadcrumb } from "@/components/seo/page-breadcrumb";
 import { GroupRow } from "@/components/world-cup/group-row";
 import { SelecoesCarousel } from "@/components/world-cup/selecoes-carousel";
+import { WorldCupScorers } from "@/components/world-cup/world-cup-scorers";
 import { getWorldCupData } from "@/lib/data/world-cup";
+import { getWorldCupScorers } from "@/lib/data/scorers";
 
 export const revalidate = 1800;
 
@@ -14,7 +16,10 @@ export const metadata: Metadata = {
 };
 
 export default async function CopaDoMundoPage() {
-  const { groups } = await getWorldCupData();
+  const [{ groups }, scorers] = await Promise.all([
+    getWorldCupData(),
+    getWorldCupScorers(),
+  ]);
 
   return (
     <div className="mx-auto max-w-[1240px] px-4 py-8">
@@ -41,6 +46,9 @@ export default async function CopaDoMundoPage() {
           ))}
         </div>
       )}
+
+      {/* Artilharia: logo apos as tabelas de grupos, antes das selecoes */}
+      <WorldCupScorers scorers={scorers} />
 
       {/* Carrossel de seleções (estilo ge.globo) */}
       <SelecoesCarousel />
