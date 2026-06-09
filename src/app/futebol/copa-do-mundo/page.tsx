@@ -1,11 +1,15 @@
 import type { Metadata } from "next";
-import { Trophy } from "lucide-react";
+import { Trophy, Newspaper } from "lucide-react";
 import { PageBreadcrumb } from "@/components/seo/page-breadcrumb";
 import { GroupRow } from "@/components/world-cup/group-row";
 import { SelecoesCarousel } from "@/components/world-cup/selecoes-carousel";
 import { WorldCupScorers } from "@/components/world-cup/world-cup-scorers";
+import { NewsFeed } from "@/components/news/news-feed";
 import { getWorldCupData } from "@/lib/data/world-cup";
 import { getWorldCupScorers } from "@/lib/data/scorers";
+import { getArticles } from "@/lib/data/articles";
+
+const COPA_CATEGORY = "Copa do Mundo";
 
 export const revalidate = 1800;
 
@@ -16,9 +20,10 @@ export const metadata: Metadata = {
 };
 
 export default async function CopaDoMundoPage() {
-  const [{ groups }, scorers] = await Promise.all([
+  const [{ groups }, scorers, cupNews] = await Promise.all([
     getWorldCupData(),
     getWorldCupScorers(),
+    getArticles({ category: COPA_CATEGORY, perPage: 20 }),
   ]);
 
   return (
@@ -52,6 +57,25 @@ export default async function CopaDoMundoPage() {
 
       {/* Carrossel de seleções (estilo ge.globo) */}
       <SelecoesCarousel />
+
+      {/* Notícias da Copa: mesmo feed da home (foto + título + trecho), filtrado
+          pela categoria Copa do Mundo, com rolagem infinita. */}
+      <section className="mt-10 pt-6 border-t border-border-custom">
+        <h2 className="text-lg font-bold text-text-primary flex items-center gap-2">
+          <Newspaper className="h-5 w-5 text-green" />
+          Notícias da Copa do Mundo
+        </h2>
+        <p className="text-xs text-text-muted mb-4">
+          Últimas notícias, bastidores e análises da Copa do Mundo 2026
+        </p>
+        <div className="max-w-[760px]">
+          <NewsFeed
+            initial={cupNews.articles}
+            category={COPA_CATEGORY}
+            seeAllHref="/noticias/copa-do-mundo"
+          />
+        </div>
+      </section>
     </div>
   );
 }
