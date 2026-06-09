@@ -1,6 +1,7 @@
 import { WorldCupBanner } from "@/components/world-cup-banner";
 import { MatchBar } from "@/components/match-bar/match-bar";
-import { HighlightsSection } from "@/components/home/highlights-section";
+// Destaques e Melhores Momentos desativado temporariamente (reativar depois).
+// import { HighlightsSection } from "@/components/home/highlights-section";
 import { NewsSection } from "@/components/home/news-section";
 import { TransfersSection } from "@/components/home/transfers-section";
 import { StandingsWidget } from "@/components/sidebar/standings-widget";
@@ -12,7 +13,7 @@ import { MyTeamWidget } from "@/components/sidebar/my-team-widget";
 
 import { getTodayMatches } from "@/lib/data/matches";
 import { getCBFUpcomingMatches } from "@/lib/data/cbf-calendar";
-import { getHighlights, getTransfers } from "@/lib/data/home";
+import { getTransfers } from "@/lib/data/home"; // getHighlights desativado (ver Destaques)
 import { getLatestArticles } from "@/lib/data/articles";
 import { getBrasileiraoStandings, getWorldCupStandings } from "@/lib/data/standings";
 import { getTopScorers } from "@/lib/data/scorers";
@@ -27,7 +28,7 @@ export default async function HomePage() {
   const [
     todayMatches,
     cbfUpcoming,
-    highlights,
+    // highlights,  // Destaques desativado temporariamente
     transfers,
     articles,
     rawStandings,
@@ -37,7 +38,7 @@ export default async function HomePage() {
   ] = await Promise.all([
     getTodayMatches().catch(() => []),
     getCBFUpcomingMatches().catch(() => []),
-    getHighlights().catch(() => []),
+    // getHighlights().catch(() => []),  // Destaques desativado temporariamente
     getTransfers().catch(() => []),
     getLatestArticles(20).catch(() => []),
     getBrasileiraoStandings().catch(() => []),
@@ -76,7 +77,8 @@ export default async function HomePage() {
         <div className="grid grid-cols-1 lg:grid-cols-[1fr_340px] gap-6">
           {/* Main content */}
           <div className="space-y-6">
-            <HighlightsSection highlights={highlights} />
+            {/* Destaques e Melhores Momentos — desativado temporariamente, reativar depois:
+            <HighlightsSection highlights={highlights} /> */}
             <NewsSection articles={articles} />
             {/* Tabelas no celular: logo apos as noticias, antes do Mercado da Bola.
                 So aparece no mobile (no desktop ficam no sidebar). */}
