@@ -26,6 +26,9 @@ COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
 
 RUN mkdir -p /app/data && chown nextjs:nodejs /app/data
 RUN mkdir -p /app/.ssh && chown nextjs:nodejs /app/.ssh && chmod 700 /app/.ssh
+# Cache ISR/dados do Next persistido em volume (sobrevive ao deploy). Criar o dir
+# com dono nextjs garante que o volume nasca com permissao de escrita correta.
+RUN mkdir -p /app/.next/cache && chown -R nextjs:nodejs /app/.next/cache
 
 USER nextjs
 EXPOSE 3000

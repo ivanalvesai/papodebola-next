@@ -9,6 +9,9 @@ services:
       - .env.local
     volumes:
       - pdb-data:/app/data
+      # Cache do Next (ISR + dados da API) persistido entre deploys: o site serve
+      # os dados antigos e so troca quando a API responde de novo (nao fica vazio).
+      - pdb-next-cache:/app/.next/cache
     extra_hosts:
       - "host.docker.internal:host-gateway"
     networks:
@@ -16,3 +19,4 @@ services:
 
 volumes:
   pdb-data:
+  pdb-next-cache:
