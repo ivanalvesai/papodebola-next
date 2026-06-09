@@ -91,14 +91,15 @@ export default async function HomePage() {
 
           {/* Sidebar */}
           <aside className="space-y-6">
-            <MyTeamWidget />
-            <NextMatchWidget match={nextMatch} />
-            {/* Tabelas no desktop: Copa do Mundo antes do Brasileirao.
-                So aparece no desktop (no mobile sobem pra logo apos as noticias). */}
+            {/* Tabelas no topo do sidebar (desktop): Copa do Mundo 2026 alinhada com
+                as Ultimas Noticias + Brasileirao logo abaixo. So no desktop; no mobile
+                sobem pra logo apos as noticias (ver bloco lg:hidden no main). */}
             <div className="hidden lg:block space-y-6">
               <WorldCupGroupsWidget groups={worldCupGroups} />
               <StandingsWidget standings={standings} />
             </div>
+            <MyTeamWidget />
+            <NextMatchWidget match={nextMatch} />
             <ScorersWidget scorers={scorers} />
             <RecentResultsWidget matches={todayMatches} />
           </aside>
