@@ -51,6 +51,17 @@ export async function generateMetadata({
   };
 }
 
+// Sanitizacao leve do HTML vindo do WordPress (CMS proprio, autores confiaveis):
+// remove apenas vetores de XSS e mantem a estrutura editorial (h2/h3/listas/links,
+// inclusive os estilos inline da caixa "Neste artigo").
+function sanitizeHtml(html: string): string {
+  return html
+    .replace(/<script\b[^>]*>[\s\S]*?<\/script>/gi, "")
+    .replace(/<style\b[^>]*>[\s\S]*?<\/style>/gi, "")
+    .replace(/\son\w+\s*=\s*("[^"]*"|'[^']*'|[^\s>]+)/gi, "")
+    .replace(/(href|src)\s*=\s*("|')\s*javascript:[^"']*\2/gi, '$1=$2#$2');
+}
+
 function formatParagraphs(text: string): string {
   return text
     .split(/\n\n|\n/)
@@ -98,7 +109,11 @@ export default async function ArticlePage({
     .filter((w) => w.length > 0).length;
   const readingTime = Math.max(1, Math.ceil(wordCount / 200));
 
-  const paragraphsHtml = formatParagraphs(article.rewrittenText);
+  // Preferimos o HTML real do WordPress (h2/h3/listas/links com espacamento);
+  // fallback para o texto puro embrulhado em <p> caso o post nao traga HTML.
+  const bodyHtml = article.contentHtml?.trim()
+    ? sanitizeHtml(article.contentHtml)
+    : formatParagraphs(article.rewrittenText);
   const author = article.author || "Redacao Papo de Bola";
 
   // Link da categoria em URL limpa; se nao for uma das categorias conhecidas,
@@ -173,7 +188,7 @@ export default async function ArticlePage({
       <div className="mx-auto max-w-[680px] px-4 py-12">
         <article
           className="prose-article"
-          dangerouslySetInnerHTML={{ __html: paragraphsHtml }}
+          dangerouslySetInnerHTML={{ __html: bodyHtml }}
         />
       </div>
 
@@ -257,18 +272,108 @@ export default async function ArticlePage({
           margin-bottom: 32px;
           text-align: left;
         }
-        .prose-article p strong {
+        .prose-article strong {
           font-weight: 700;
           color: #1A1D23;
-          font-size: 17px;
-          letter-spacing: 0.02em;
+        }
+        .prose-article h2 {
+          font-size: 26px;
+          font-weight: 700;
+          color: #1A1D23;
+          line-height: 1.3;
+          margin: 48px 0 16px;
+          scroll-margin-top: 90px;
+        }
+        .prose-article h3 {
+          font-size: 21px;
+          font-weight: 700;
+          color: #1A1D23;
+          line-height: 1.35;
+          margin: 36px 0 12px;
+          scroll-margin-top: 90px;
+        }
+        .prose-article h2:first-child,
+        .prose-article h3:first-child {
+          margin-top: 0;
+        }
+        .prose-article a {
+          color: #00965E;
+          font-weight: 600;
+          text-decoration: underline;
+          text-underline-offset: 2px;
+        }
+        .prose-article a:hover {
+          color: #007a4d;
+        }
+        .prose-article ul,
+        .prose-article ol {
+          margin: 0 0 32px;
+          padding-left: 24px;
+        }
+        .prose-article li {
+          font-size: 18px;
+          line-height: 1.9;
+          color: #333;
+          margin-bottom: 10px;
+        }
+        .prose-article ul { list-style: disc; }
+        .prose-article ol { list-style: decimal; }
+        .prose-article blockquote {
+          border-left: 4px solid #00965E;
+          padding: 4px 0 4px 18px;
+          margin: 0 0 32px;
+          color: #555;
+          font-style: italic;
+        }
+        .prose-article img {
+          max-width: 100%;
+          height: auto;
+          border-radius: 8px;
+          margin: 8px 0 32px;
+          display: block;
+        }
+        .prose-article figure { margin: 0 0 32px; }
+        .prose-article figcaption {
+          font-size: 13px;
+          color: #777;
+          margin-top: 8px;
+          text-align: center;
+        }
+        .prose-article table {
+          width: 100%;
+          border-collapse: collapse;
+          margin: 0 0 32px;
+          font-size: 16px;
+        }
+        .prose-article th,
+        .prose-article td {
+          border: 1px solid #e2e5e9;
+          padding: 10px 12px;
+          text-align: left;
+          vertical-align: top;
+        }
+        .prose-article th {
+          background: #f8f9fa;
+          font-weight: 700;
+          color: #1A1D23;
+        }
+        .prose-article hr {
+          border: 0;
+          border-top: 1px solid #e2e5e9;
+          margin: 40px 0;
         }
         @media (max-width: 768px) {
-          .prose-article p {
+          .prose-article p,
+          .prose-article li {
             font-size: 17px;
             line-height: 1.9;
-            margin-bottom: 28px;
           }
+          .prose-article p { margin-bottom: 28px; }
+          .prose-article h2 { font-size: 23px; margin: 40px 0 14px; }
+          .prose-article h3 { font-size: 19px; margin: 32px 0 10px; }
+          .prose-article table { font-size: 14px; }
+          .prose-article th,
+          .prose-article td { padding: 8px 9px; }
         }
       `}</style>
     </>

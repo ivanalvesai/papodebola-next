@@ -2,6 +2,8 @@ export interface Article {
   originalTitle: string;
   rewrittenTitle: string;
   rewrittenText: string;
+  /** HTML rico do WordPress (h2/h3/listas/links), preservado para exibicao. */
+  contentHtml?: string;
   slug: string;
   source: "Manual" | "WordPress";
   image: string;
