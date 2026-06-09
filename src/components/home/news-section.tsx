@@ -63,8 +63,8 @@ export function NewsSection({ articles }: NewsSectionProps) {
 
             {/* Content */}
             <div className="flex-1 min-w-0">
-              <div className="text-[10px] font-bold text-green uppercase">
-                Papo de Bola
+              <div className="text-[10px] font-bold text-green uppercase leading-4 mb-0.5">
+                {article.category}
               </div>
               <div className="text-sm font-semibold text-text-primary leading-tight line-clamp-2 group-hover:text-green transition-colors">
                 {article.rewrittenTitle}

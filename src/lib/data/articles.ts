@@ -15,15 +15,32 @@ function generateSlug(title: string): string {
     .slice(0, 60);
 }
 
-function stripHtml(html: string): string {
-  return html
-    .replace(/<[^>]+>/g, "")
+// Decodifica entidades HTML (incl. numericas decimais e hex) para texto puro.
+// O WordPress devolve title.rendered com entidades como &#8216; / &#8217;
+// (aspas curvas), &#8230; (reticencias) etc. — sem isso, aparecem cruas no titulo.
+function decodeEntities(s: string): string {
+  return s
+    .replace(/&#x([0-9a-fA-F]+);/g, (_, h) => String.fromCodePoint(parseInt(h, 16)))
+    .replace(/&#(\d+);/g, (_, n) => String.fromCodePoint(parseInt(n, 10)))
     .replace(/&nbsp;/g, " ")
-    .replace(/&amp;/g, "&")
+    .replace(/&hellip;/g, "…")
+    .replace(/&ndash;/g, "–")
+    .replace(/&mdash;/g, "—")
+    .replace(/&lsquo;/g, "‘")
+    .replace(/&rsquo;/g, "’")
+    .replace(/&ldquo;/g, "“")
+    .replace(/&rdquo;/g, "”")
+    .replace(/&laquo;/g, "«")
+    .replace(/&raquo;/g, "»")
+    .replace(/&quot;/g, '"')
+    .replace(/&apos;/g, "'")
     .replace(/&lt;/g, "<")
     .replace(/&gt;/g, ">")
-    .replace(/&quot;/g, '"')
-    .replace(/&#039;/g, "'")
+    .replace(/&amp;/g, "&"); // &amp; por ultimo para nao re-decodificar
+}
+
+function stripHtml(html: string): string {
+  return decodeEntities(html.replace(/<[^>]+>/g, " "))
     .replace(/\s+/g, " ")
     .trim();
 }
