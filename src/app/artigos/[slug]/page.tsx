@@ -138,20 +138,10 @@ export default async function ArticlePage({
             ]}
           />
 
-          {/* Image */}
-          {article.image && (
-            <div className="rounded-md overflow-hidden mb-7">
-              <Image
-                src={article.image}
-                alt={article.rewrittenTitle}
-                width={800}
-                height={480}
-                className="w-full max-h-[480px] object-cover"
-                priority
-                unoptimized
-              />
-            </div>
-          )}
+          {/* Imagem destacada NAO e exibida no topo do artigo de proposito:
+              ela ja aparece nos cards da home, entao aqui fica so o titulo.
+              Continua sendo usada no OG/SEO (generateMetadata) e nos cards
+              da home (article.image). */}
 
           {/* Category */}
           <Link
