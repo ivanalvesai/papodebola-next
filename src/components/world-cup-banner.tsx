@@ -58,7 +58,7 @@ export function WorldCupBanner() {
           <CountdownUnit value={time.secs} label="Seg" />
         </div>
         <span className="bg-yellow-400 text-[#1a1a2e] px-4 py-1.5 rounded text-[11px] font-bold uppercase tracking-wide whitespace-nowrap">
-          Acompanhe &rarr;
+          Acompanhe
         </span>
       </div>
     </Link>
