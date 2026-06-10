@@ -50,3 +50,6 @@ rebuild.sh
 watch-rebuild.sh
 logs/
 docker-compose.override.yml
+# backups locais (ex: rebuild.sh.bak.TIMESTAMP criados ao editar no servidor)
+*.bak
+*.bak.*
