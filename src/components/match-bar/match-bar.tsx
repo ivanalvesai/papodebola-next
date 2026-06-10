@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef } from "react";
+import { useState, useRef, useMemo } from "react";
 import { CalendarDays, CalendarClock, ChevronLeft, ChevronRight } from "lucide-react";
 import Link from "next/link";
 import { MatchBarCard } from "./match-bar-card";
@@ -10,6 +10,18 @@ interface MatchBarProps {
   todayMatches: NormalizedMatch[];
   cbfUpcoming: CBFMatch[];
 }
+
+// Ordem na barra: ao vivo/intervalo primeiro, depois os que ainda vao comecar,
+// e os encerrados (e adiados/cancelados) por ultimo — assim o jogo de agora fica
+// logo a vista, sem precisar rolar por cima dos que ja acabaram.
+const STATUS_PRIORITY: Record<NormalizedMatch["status"], number> = {
+  live: 0,
+  halftime: 0,
+  scheduled: 1,
+  finished: 2,
+  postponed: 3,
+  cancelled: 3,
+};
 
 export function MatchBar({ todayMatches, cbfUpcoming }: MatchBarProps) {
   const [tab, setTab] = useState<"today" | "upcoming">("today");
@@ -21,7 +33,19 @@ export function MatchBar({ todayMatches, cbfUpcoming }: MatchBarProps) {
     }
   }
 
-  const matches = tab === "today" ? todayMatches : [];
+  // Ordena os jogos de hoje por relevancia (status) e, dentro do grupo, por horario.
+  const todaySorted = useMemo(
+    () =>
+      [...todayMatches].sort((a, b) => {
+        const pa = STATUS_PRIORITY[a.status] ?? 2;
+        const pb = STATUS_PRIORITY[b.status] ?? 2;
+        if (pa !== pb) return pa - pb;
+        return a.time.localeCompare(b.time);
+      }),
+    [todayMatches]
+  );
+
+  const matches = tab === "today" ? todaySorted : [];
 
   return (
     <div className="bg-surface border-b border-border-custom">
