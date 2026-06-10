@@ -3,7 +3,10 @@
 import { useState, useEffect } from "react";
 import Link from "next/link";
 
-const TARGET = new Date("2026-06-11T00:00:00-03:00").getTime();
+// Abertura da Copa = jogo inaugural Mexico x Africa do Sul, 11/06/2026 as 16h de
+// Brasilia (offset -03:00, Brasil sem horario de verao). Antes apontava pra meia-noite
+// (00:00), o que deixava o contador ~16h adiantado em relacao ao inicio real.
+const TARGET = new Date("2026-06-11T16:00:00-03:00").getTime();
 
 function calcTimeLeft() {
   const diff = TARGET - Date.now();
