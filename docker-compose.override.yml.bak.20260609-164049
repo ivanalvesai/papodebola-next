@@ -1,0 +1,21 @@
+# docker-compose.override.yml - so no workspace dev (gitignored)
+services:
+  nextjs:
+    container_name: papodebola-next-dev
+    ports: !override
+      - "3001:3000"
+    volumes: !override
+      - pdb-data-shared:/app/data
+      - /var/promote-keys/promote_executor:/app/.ssh/promote_executor:ro
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    environment:
+      - PROMOTE_SSH_KEY=/app/.ssh/promote_executor
+      - PROMOTE_SSH_HOST=host.docker.internal
+      - PROMOTE_SSH_USER=ivan
+      - PROMOTE_SSH_PORT=1822
+
+volumes:
+  pdb-data-shared:
+    external: true
+    name: papodebola-next_pdb-data

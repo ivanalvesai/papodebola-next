@@ -1,0 +1,58 @@
+#!/bin/bash
+# rebuild.sh (DEV) - Rebuild do container dev com rollback
+# Uso: bash /home/ivan/papodebola-next-dev/rebuild.sh
+
+set -e
+cd /home/ivan/papodebola-next-dev
+
+STAMP=$(date +%Y-%m-%d_%H-%M-%S)
+LOG_DIR=/home/ivan/papodebola-next-dev/logs
+LOG=$LOG_DIR/rebuild_$STAMP.log
+mkdir -p $LOG_DIR
+IMAGE=papodebola-next-dev-nextjs:latest
+PREV_IMAGE=papodebola-next-dev-nextjs:previous
+
+log(){ echo "[rebuild-dev] $(date '+%H:%M:%S') $*" | tee -a "$LOG"; }
+
+log 'iniciando'
+
+if docker image inspect $IMAGE > /dev/null 2>&1; then
+  log 'tag :previous'
+  docker tag $IMAGE $PREV_IMAGE 2>&1 | tee -a "$LOG" > /dev/null
+fi
+
+log 'docker compose build'
+if ! docker compose build 2>&1 | tee -a "$LOG"; then
+  log 'BUILD FALHOU - container atual intacto'
+  exit 1
+fi
+
+log 'docker compose up -d'
+docker compose up -d 2>&1 | tee -a "$LOG"
+
+log 'health check em :3001 (30s)'
+HEALTHY=0
+for i in {1..15}; do
+  sleep 2
+  if curl -sf --max-time 3 http://localhost:3001 > /dev/null 2>&1; then
+    HEALTHY=1
+    log "OK apos ${i}x2s"
+    break
+  fi
+done
+
+if [ $HEALTHY -eq 0 ]; then
+  log 'FALHA - rollback'
+  if docker image inspect $PREV_IMAGE > /dev/null 2>&1; then
+    docker tag $PREV_IMAGE $IMAGE 2>&1 | tee -a "$LOG"
+    docker compose up -d 2>&1 | tee -a "$LOG"
+    log 'rollback OK'
+    exit 2
+  else
+    log 'sem :previous - impossivel rollback'
+    exit 3
+  fi
+fi
+
+docker image prune -f > /dev/null 2>&1
+log 'concluido'
