@@ -2,6 +2,8 @@ import { fetchAllSports } from "@/lib/api/allsports";
 import { translateCountry } from "@/lib/i18n/countries";
 import { translateStatus } from "@/lib/translations";
 import { matchDateSlug, matchPairSlug } from "@/lib/world-cup-match-url";
+import { getWorldCupStandings } from "./standings";
+import type { StandingsGroup } from "@/types/standings";
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
@@ -55,6 +57,20 @@ export async function resolveWorldCupMatch(
         matchDateSlug(f.timestamp) === dateSlug &&
         matchPairSlug(f.homeId, f.awayId, f.home, f.away) === pairSlug
     ) || null
+  );
+}
+
+// Grupo (classificação) que contém os dois times do jogo.
+export async function getMatchGroup(
+  homeId: number,
+  awayId: number
+): Promise<StandingsGroup | null> {
+  const groups = await getWorldCupStandings();
+  return (
+    groups.find((g) => {
+      const ids = new Set(g.rows.map((r) => r.teamId));
+      return ids.has(homeId) && ids.has(awayId);
+    }) || null
   );
 }
 
