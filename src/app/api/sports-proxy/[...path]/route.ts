@@ -69,7 +69,19 @@ export async function GET(
 
   const { path } = await params;
   const endpoint = path.join("/");
-  const search = request.nextUrl.search || "";
+
+  // TTL pedido pelo chamador (fetchAllSports) via `_pdbttl`. Permite que dados
+  // ao vivo (placar/lances) cacheiem só ~25s em vez dos 1800s padrão. Removido
+  // antes de repassar pro upstream. Default 1800, clamp [10, 86400].
+  const sp = new URLSearchParams(request.nextUrl.searchParams);
+  let revalidate = 1800;
+  const ttlParam = sp.get("_pdbttl");
+  if (ttlParam) {
+    const n = parseInt(ttlParam, 10);
+    if (Number.isFinite(n)) revalidate = Math.min(86400, Math.max(10, n));
+  }
+  sp.delete("_pdbttl");
+  const search = sp.toString() ? `?${sp.toString()}` : "";
   const upstream = `${UPSTREAM_BASE}/${endpoint}${search}`;
 
   try {
@@ -78,7 +90,7 @@ export async function GET(
         "x-rapidapi-key": process.env.ALLSPORTS_API_KEY!,
         "x-rapidapi-host": process.env.ALLSPORTS_API_HOST!,
       },
-      next: { revalidate: 1800 },
+      next: { revalidate },
     });
 
     const rawBody = await res.text();
@@ -89,7 +101,7 @@ export async function GET(
       status: res.status,
       headers: {
         "content-type": ct,
-        "x-proxy-cache-hint": "1800",
+        "x-proxy-cache-hint": String(revalidate),
       },
     });
   } catch (e) {

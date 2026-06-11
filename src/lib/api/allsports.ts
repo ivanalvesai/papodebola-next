@@ -109,8 +109,10 @@ export async function fetchAllSports<T>(
   const isBuildPhase = process.env.NEXT_PHASE === "phase-production-build";
 
   if (proxyUrl && proxyToken) {
+    // Propaga o TTL pro proxy (senão ele cacheia 1800s fixos e o ao vivo trava).
+    const sep = endpoint.includes("?") ? "&" : "?";
     const result = await fetchFromUrl<T>(
-      `${proxyUrl}/${endpoint}`,
+      `${proxyUrl}/${endpoint}${sep}_pdbttl=${revalidate}`,
       { "x-proxy-auth": proxyToken },
       revalidate,
       `SportsProxy[${endpoint}]`

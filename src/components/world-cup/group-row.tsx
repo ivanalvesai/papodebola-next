@@ -1,8 +1,10 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { TeamLogo } from "@/components/ui/team-logo";
+import { worldCupMatchHref } from "@/lib/world-cup-match-url";
 import type { WorldCupGroup } from "@/lib/data/world-cup";
 import type { ChampionshipMatch } from "@/types/match";
 import type { StandingRow, FormResult } from "@/types/standings";
@@ -100,8 +102,10 @@ function StandingsTable({ rows }: { rows: StandingRow[] }) {
 }
 
 function MatchMini({ m }: { m: ChampionshipMatch }) {
-  const finished = m.homeScore !== null && m.awayScore !== null;
+  const live = m.status === "inprogress";
+  const started = m.homeScore !== null && m.awayScore !== null;
   const t = br(m.timestamp);
+  const href = worldCupMatchHref(m.timestamp, m.homeId, m.awayId, m.home, m.away);
   return (
     <div className="py-2.5 px-3 border-b border-border-light last:border-0">
       <div className="text-[11px] text-text-muted text-center mb-1.5">
@@ -115,7 +119,7 @@ function MatchMini({ m }: { m: ChampionshipMatch }) {
         </div>
         {/* Placar no centro (ou "X" antes do jogo) com largura reservada */}
         <span className="shrink-0 min-w-[56px] px-2 text-center text-sm font-bold text-text-primary whitespace-nowrap">
-          {finished ? `${m.homeScore} X ${m.awayScore}` : "X"}
+          {started ? `${m.homeScore} X ${m.awayScore}` : "X"}
         </span>
         {/* Fora: escudo ao lado do placar, nome na ponta */}
         <div className="flex items-center gap-1.5 min-w-0">
@@ -123,6 +127,20 @@ function MatchMini({ m }: { m: ChampionshipMatch }) {
           <span className="text-xs font-semibold text-text-primary truncate">{m.away}</span>
         </div>
       </div>
+
+      {/* Selo AO VIVO clicável (abaixo do confronto) -> página do jogo */}
+      {live && (
+        <div className="mt-1.5 flex justify-center">
+          <Link
+            href={href}
+            className="inline-flex items-center gap-1.5 rounded-full bg-red px-2.5 py-1 text-[11px] font-bold text-white transition-opacity hover:opacity-90"
+          >
+            <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-white" />
+            AO VIVO {m.statusDesc && <span className="font-semibold">· {m.statusDesc}</span>}
+            <ChevronRight className="h-3 w-3" />
+          </Link>
+        </div>
+      )}
     </div>
   );
 }
