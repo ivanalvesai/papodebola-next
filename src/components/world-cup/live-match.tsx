@@ -157,6 +157,26 @@ const COMM: Record<string, { label: string; key?: boolean }> = {
   resumed: { label: "Jogo retomado" },
 };
 
+// motivo do cartão (EN da API) -> PT-BR
+const REASON_PT: Record<string, string> = {
+  Foul: "Falta",
+  "Serious foul": "Falta grave",
+  "Professional foul": "Falta profissional",
+  "Professional foul last man": "Falta profissional (último homem)",
+  "Last man": "Último homem",
+  "Violent conduct": "Conduta violenta",
+  "Unsporting behaviour": "Conduta antidesportiva",
+  Handball: "Mão na bola",
+  Dissent: "Reclamação",
+  Argument: "Discussão",
+  "Time wasting": "Perda de tempo",
+  "Dangerous play": "Jogo perigoso",
+  "Foul and abusive language": "Linguagem ofensiva",
+};
+function reasonPT(r: string): string {
+  return REASON_PT[r] || r;
+}
+
 // foto do jogador (lance-chave); cai pra bandeira do time se não houver foto
 function PlayerAvatar({
   playerId,
@@ -230,7 +250,12 @@ function CommentaryRow({ c, event }: { c: MatchCommentary; event: MatchEvent }) 
               )}
             </div>
           ) : (
-            c.player && <p className="truncate text-sm text-text-secondary">{c.player}</p>
+            <div className="leading-tight">
+              {c.player && <p className="truncate text-sm text-text-secondary">{c.player}</p>}
+              {(isYellow || isRed) && c.reason && (
+                <p className="text-[11px] text-text-muted">Motivo: {reasonPT(c.reason)}</p>
+              )}
+            </div>
           )}
         </div>
       </div>
