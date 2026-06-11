@@ -6,7 +6,7 @@ import { getTeamPageData } from "@/lib/data/team";
 import { notFound } from "next/navigation";
 import { Users } from "lucide-react";
 
-export const revalidate = 1800;
+export const revalidate = 43200;
 
 export async function generateStaticParams() {
   return ALL_CLUSTER_TEAMS.map((t) => ({ slug: t.slug }));

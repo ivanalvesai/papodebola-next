@@ -34,7 +34,7 @@ export async function getChampionshipData(
   // Fetch rounds info
   const roundsData = await fetchAllSports<any>(
     `tournament/${id}/season/${seasonId}/rounds`,
-    7200
+    21600
   );
 
   const currentRound = roundsData?.currentRound?.round || 1;
@@ -42,16 +42,16 @@ export async function getChampionshipData(
   const rounds = Array.from({ length: totalRounds }, (_, i) => i + 1);
 
   // Fetch standings
-  const standings = await getStandings(id, seasonId, 7200);
+  const standings = await getStandings(id, seasonId, 21600);
 
-  // Fetch all rounds from 1 to currentRound+2.
+  // Fetch rounds from 1 to currentRound+1.
   // Past rounds (< currentRound) are finalized and never change → TTL 24h.
-  // Current and future (>= currentRound) → TTL 2h.
+  // Current and next (>= currentRound) → TTL 6h.
   const matchesByRound: Record<number, ChampionshipMatch[]> = {};
-  const endRound = Math.min(totalRounds, currentRound + 2);
+  const endRound = Math.min(totalRounds, currentRound + 1);
 
   for (let r = 1; r <= endRound; r++) {
-    const ttl = r < currentRound ? 86400 : 7200;
+    const ttl = r < currentRound ? 86400 : 21600;
     const data = await fetchAllSports<any>(
       `tournament/${id}/season/${seasonId}/matches/round/${r}`,
       ttl
@@ -61,7 +61,7 @@ export async function getChampionshipData(
       matchesByRound[r] = data.events.map((e: any) => normalizeMatch(e, r));
     }
 
-    await new Promise((resolve) => setTimeout(resolve, 150));
+    await new Promise((resolve) => setTimeout(resolve, 250));
   }
 
   return {

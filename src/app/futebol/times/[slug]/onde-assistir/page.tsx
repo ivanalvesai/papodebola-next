@@ -6,7 +6,7 @@ import { notFound } from "next/navigation";
 import { Tv } from "lucide-react";
 import { TeamLogo } from "@/components/ui/team-logo";
 
-export const revalidate = 1800;
+export const revalidate = 86400;
 
 export async function generateStaticParams() {
   return ALL_CLUSTER_TEAMS.map((t) => ({ slug: t.slug }));
