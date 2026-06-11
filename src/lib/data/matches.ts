@@ -59,7 +59,9 @@ function normalizeEvent(event: any): NormalizedMatch {
   return {
     id: `api_${event.id}`,
     apiId: event.id,
-    league: event.tournament?.uniqueTournament?.name || event.tournament?.name || "",
+    league: isWorldCup
+      ? "Copa do Mundo"
+      : event.tournament?.uniqueTournament?.name || event.tournament?.name || "",
     leagueId,
     country: event.tournament?.category?.name || "",
     homeTeam: isWorldCup ? translateCountry(event.homeTeam?.name || "") : event.homeTeam?.name || "",

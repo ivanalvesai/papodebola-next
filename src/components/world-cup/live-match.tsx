@@ -2,12 +2,14 @@
 
 import { useEffect, useState, useCallback } from "react";
 import type { ComponentType, ReactNode } from "react";
+import Image from "next/image";
 import { TeamLogo } from "@/components/ui/team-logo";
-import { ArrowDown, ArrowUp, Repeat, Activity, Users, BarChart3, Trophy } from "lucide-react";
+import { Activity, Users, BarChart3, Trophy } from "lucide-react";
 import type {
   MatchDetail,
   MatchEvent,
   MatchIncident,
+  MatchCommentary,
   MatchStatItem,
   TeamLineup,
   LineupPlayer,
@@ -114,113 +116,127 @@ function Section({
   );
 }
 
-// ---- lance a lance ----
-function IncidentIcon({ inc }: { inc: MatchIncident }) {
-  if (inc.type === "goal") return <span className="text-base leading-none">⚽</span>;
-  if (inc.type === "card")
-    return (
-      <span
-        className={`inline-block h-4 w-3 rounded-[2px] ${
-          inc.cls === "red" ? "bg-red" : "bg-yellow-400"
-        }`}
-      />
-    );
-  if (inc.type === "substitution") return <Repeat className="h-4 w-4 text-text-muted" />;
-  return null;
+// ---- lance a lance (commentary, PT-BR) ----
+// tipo do commentary (EN) -> rótulo PT-BR; key = lance importante (com foto do jogador)
+const COMM: Record<string, { label: string; key?: boolean }> = {
+  goal: { label: "GOL!", key: true },
+  penaltyGoal: { label: "GOL de pênalti!", key: true },
+  ownGoal: { label: "Gol contra", key: true },
+  penaltyMissed: { label: "Pênalti perdido", key: true },
+  penaltySaved: { label: "Pênalti defendido", key: true },
+  penaltyAwarded: { label: "Pênalti marcado!", key: true },
+  yellowCard: { label: "Cartão amarelo", key: true },
+  secondYellowCard: { label: "2º amarelo (vermelho)", key: true },
+  redCard: { label: "Cartão vermelho", key: true },
+  varDecision: { label: "Revisão do VAR", key: true },
+  substitution: { label: "Substituição", key: true },
+  freeKickWon: { label: "Falta a favor" },
+  freeKickLost: { label: "Falta" },
+  foul: { label: "Falta" },
+  shotOffTarget: { label: "Finalização para fora" },
+  attemptSaved: { label: "Defesa do goleiro" },
+  shotSaved: { label: "Defesa do goleiro" },
+  shotBlocked: { label: "Finalização bloqueada" },
+  attemptBlocked: { label: "Finalização bloqueada" },
+  post: { label: "Na trave!" },
+  hitWoodwork: { label: "Na trave!" },
+  cornerKick: { label: "Escanteio" },
+  corner: { label: "Escanteio" },
+  offside: { label: "Impedimento" },
+  handball: { label: "Mão na bola" },
+  throwIn: { label: "Lateral" },
+  goalKick: { label: "Tiro de meta" },
+  injury: { label: "Atendimento médico" },
+  delay: { label: "Jogo paralisado" },
+  resumed: { label: "Jogo retomado" },
+};
+
+// foto do jogador (lance-chave); cai pra bandeira do time se não houver foto
+function PlayerAvatar({
+  playerId,
+  teamId,
+  size = 44,
+}: {
+  playerId: number | null;
+  teamId: number;
+  size?: number;
+}) {
+  const [err, setErr] = useState(false);
+  const src = !err && playerId ? `/img/player/${playerId}/image` : `/img/team/${teamId}/image`;
+  return (
+    <Image
+      src={src}
+      alt=""
+      width={size}
+      height={size}
+      unoptimized
+      onError={() => setErr(true)}
+      className="shrink-0 rounded-full bg-body object-cover"
+    />
+  );
 }
 
-function IncidentRow({ inc }: { inc: MatchIncident }) {
-  if (inc.type === "period" || inc.type === "injuryTime") {
-    const label =
-      inc.text === "HT" ? "Intervalo" : inc.text === "FT" ? "Fim de jogo" : inc.text || "—";
+function CommentaryRow({ c, event }: { c: MatchCommentary; event: MatchEvent }) {
+  const info = COMM[c.type] || { label: "Lance do jogo" };
+  const teamId = c.isHome == null ? 0 : c.isHome ? event.homeId : event.awayId;
+  const teamName = c.isHome ? event.home : event.away;
+  const min = c.minute != null ? `${c.minute}'` : "";
+  const isGoal = c.type === "goal" || c.type === "penaltyGoal";
+
+  if (info.key) {
+    const isRed = c.type === "redCard" || c.type === "secondYellowCard";
+    const headline = isGoal ? `⚽ GOL DO ${teamName.toUpperCase()}!` : info.label;
     return (
-      <div className="my-1 flex items-center gap-2 py-1">
-        <div className="h-px flex-1 bg-border-light" />
-        <span className="text-[11px] font-semibold uppercase tracking-wide text-text-muted">
-          {label}
-        </span>
-        <div className="h-px flex-1 bg-border-light" />
+      <div
+        className={`flex items-center gap-3 rounded-lg border p-3 ${
+          isGoal
+            ? "border-green bg-green/5"
+            : isRed
+              ? "border-red bg-red/5"
+              : "border-border-light bg-card-bg"
+        }`}
+      >
+        <PlayerAvatar playerId={c.playerId} teamId={teamId} size={44} />
+        <div className="min-w-0 flex-1">
+          <div className="flex items-center gap-1.5">
+            {min && <span className="text-[11px] font-bold tabular-nums text-text-muted">{min}</span>}
+            {teamId > 0 && <TeamLogo teamId={teamId} size={16} />}
+          </div>
+          <p className="text-sm font-bold text-text-primary">{headline}</p>
+          {c.player && <p className="truncate text-sm text-text-secondary">{c.player}</p>}
+        </div>
       </div>
     );
   }
 
-  const min = inc.minute != null ? `${inc.minute}${inc.addedTime ? `+${inc.addedTime}` : ""}'` : "";
-  const body = (
-    <div className="min-w-0 flex-1">
-      {inc.type === "goal" && (
-        <p className="text-sm font-semibold text-text-primary">
-          ⚽ {inc.player || "Gol"}{" "}
-          {inc.homeScore != null && (
-            <span className="font-bold text-green">
-              {inc.homeScore}-{inc.awayScore}
-            </span>
-          )}
-          {inc.assist && (
-            <span className="block text-[11px] font-normal text-text-muted">
-              assistência: {inc.assist}
-            </span>
-          )}
-        </p>
-      )}
-      {inc.type === "card" && (
-        <p className="text-sm text-text-primary">
-          {inc.cls === "red" ? "Cartão vermelho" : "Cartão amarelo"} — {inc.player || ""}
-        </p>
-      )}
-      {inc.type === "substitution" && (
-        <p className="text-sm text-text-primary">
-          {inc.playerIn && (
-            <span className="inline-flex items-center gap-1 text-green">
-              <ArrowUp className="h-3 w-3" />
-              {inc.playerIn}
-            </span>
-          )}{" "}
-          {inc.playerOut && (
-            <span className="inline-flex items-center gap-1 text-text-muted">
-              <ArrowDown className="h-3 w-3" />
-              {inc.playerOut}
-            </span>
-          )}
-        </p>
-      )}
-      {!["goal", "card", "substitution"].includes(inc.type) && inc.player && (
-        <p className="text-sm text-text-primary">{inc.player}</p>
-      )}
-    </div>
-  );
-
-  const alignRight = inc.isHome === false;
+  // lance normal: bandeira do time + rótulo PT
   return (
-    <div
-      className={`flex items-center gap-3 border-b border-border-light py-2.5 last:border-0 ${
-        alignRight ? "flex-row-reverse text-right" : ""
-      }`}
-    >
+    <div className="flex items-center gap-3 border-b border-border-light py-2 last:border-0">
       <span className="w-9 shrink-0 text-center text-xs font-bold tabular-nums text-text-muted">
         {min}
       </span>
-      <span className="shrink-0">
-        <IncidentIcon inc={inc} />
-      </span>
-      {body}
+      {teamId > 0 ? <TeamLogo teamId={teamId} size={18} /> : <span className="w-[18px] shrink-0" />}
+      <p className="min-w-0 flex-1 text-sm text-text-primary">
+        {info.label}
+        {c.player && <span className="text-text-muted"> — {c.player}</span>}
+      </p>
     </div>
   );
 }
 
-function Timeline({ incidents, live }: { incidents: MatchIncident[]; live: boolean }) {
-  const hasReal = incidents.some((i) => i.type !== "period");
-  if (!hasReal)
+function CommentaryFeed({ items, event }: { items: MatchCommentary[]; event: MatchEvent }) {
+  if (!items.length)
     return (
       <p className="py-10 text-center text-sm text-text-muted">
-        {live
-          ? "Sem lances ainda. Gols, cartões e substituições aparecem aqui em tempo real."
-          : "O lance a lance começa quando a bola rolar. Gols, cartões e substituições em tempo real."}
+        {event.live
+          ? "Aguardando os próximos lances..."
+          : "O lance a lance começa quando a bola rolar — gols, cartões e lances importantes em tempo real."}
       </p>
     );
   return (
-    <div>
-      {incidents.map((inc, i) => (
-        <IncidentRow key={i} inc={inc} />
+    <div className="space-y-2">
+      {items.map((c) => (
+        <CommentaryRow key={c.id} c={c} event={event} />
       ))}
     </div>
   );
@@ -450,6 +466,7 @@ export function LiveMatch({
 }) {
   const [event, setEvent] = useState(initial.event);
   const [incidents, setIncidents] = useState(initial.incidents);
+  const [commentary, setCommentary] = useState(initial.commentary);
   const [stats, setStats] = useState(initial.stats);
   const [mounted, setMounted] = useState(false);
 
@@ -462,6 +479,7 @@ export function LiveMatch({
       const data = await res.json();
       if (data?.event) setEvent(data.event);
       if (Array.isArray(data?.incidents)) setIncidents(data.incidents);
+      if (Array.isArray(data?.commentary)) setCommentary(data.commentary);
       if (Array.isArray(data?.stats)) setStats(data.stats);
     } catch {
       /* tenta de novo no próximo ciclo */
@@ -499,7 +517,7 @@ export function LiveMatch({
         {/* Meio: lance a lance */}
         <div className="order-1 lg:order-2">
           <Section title="Lance a lance" icon={Activity}>
-            <Timeline incidents={incidents} live={event.live} />
+            <CommentaryFeed items={commentary} event={event} />
           </Section>
         </div>
 
