@@ -18,8 +18,8 @@ export async function generateMetadata({
 }): Promise<Metadata> {
   const { data, slug } = await params;
   const fixture = await resolveWorldCupMatch(data, slug);
-  if (!fixture) return { title: "Jogo não encontrado | Papo de Bola" };
-  const title = `${fixture.home} x ${fixture.away} ao vivo - Copa do Mundo 2026 | Papo de Bola`;
+  if (!fixture) notFound();
+  const title = `${fixture.home} x ${fixture.away} ao vivo - Copa do Mundo 2026`;
   return {
     title,
     description: `${fixture.home} x ${fixture.away} pela Copa do Mundo 2026: placar ao vivo, lance a lance, escalações e estatísticas em tempo real (horário de Brasília).`,
