@@ -4,7 +4,7 @@ import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
 import { PageBreadcrumb } from "@/components/seo/page-breadcrumb";
 import { LiveMatch } from "@/components/world-cup/live-match";
-import { resolveWorldCupMatch, getMatchDetail } from "@/lib/data/match-detail";
+import { resolveWorldCupMatch, getMatchDetail, getMatchGroup } from "@/lib/data/match-detail";
 
 // Curto: a página acompanha jogo ao vivo (o cliente também faz polling).
 export const revalidate = 30;
@@ -36,10 +36,13 @@ export default async function JogoCopaPage({
   const fixture = await resolveWorldCupMatch(data, slug);
   if (!fixture) notFound();
 
-  const detail = await getMatchDetail(fixture.id);
+  const [detail, group] = await Promise.all([
+    getMatchDetail(fixture.id),
+    getMatchGroup(fixture.homeId, fixture.awayId),
+  ]);
 
   return (
-    <div className="mx-auto max-w-[760px] px-4 py-6">
+    <div className="mx-auto max-w-[1240px] px-4 py-6">
       <PageBreadcrumb
         className="mb-3"
         items={[
@@ -65,7 +68,7 @@ export default async function JogoCopaPage({
       </h1>
 
       {detail ? (
-        <LiveMatch matchId={fixture.id} initial={detail} />
+        <LiveMatch matchId={fixture.id} initial={detail} group={group} />
       ) : (
         <p className="py-10 text-center text-sm text-text-muted">
           Dados do jogo indisponíveis no momento. Atualize em instantes.
