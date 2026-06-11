@@ -158,9 +158,20 @@ export interface MatchStatItem {
   awayNum: number;
 }
 
+export interface MatchCommentary {
+  id: number;
+  type: string;
+  text: string;
+  isHome: boolean | null;
+  player: string | null;
+  playerId: number | null;
+  minute: number | null;
+}
+
 export interface MatchDetail {
   event: MatchEvent;
   incidents: MatchIncident[];
+  commentary: MatchCommentary[];
   home: TeamLineup | null;
   away: TeamLineup | null;
   lineupsConfirmed: boolean;
@@ -230,6 +241,57 @@ function toNum(v: any): number {
   return m ? parseFloat(m[0]) : 0;
 }
 
+// Nomes de estatística EN -> PT-BR (a AllSportsApi devolve em inglês).
+const STAT_PT: Record<string, string> = {
+  "Ball possession": "Posse de bola",
+  "Expected goals": "Gols esperados (xG)",
+  "Total shots": "Finalizações",
+  "Shots on target": "Finalizações no alvo",
+  "Shots off target": "Finalizações para fora",
+  "Blocked shots": "Finalizações bloqueadas",
+  "Shots inside box": "Finalizações na área",
+  "Shots outside box": "Finalizações fora da área",
+  "Big chances": "Grandes chances",
+  "Big chances missed": "Grandes chances perdidas",
+  "Big chances scored": "Grandes chances convertidas",
+  "Corner kicks": "Escanteios",
+  Corners: "Escanteios",
+  Offsides: "Impedimentos",
+  Fouls: "Faltas",
+  "Yellow cards": "Cartões amarelos",
+  "Red cards": "Cartões vermelhos",
+  "Free kicks": "Tiros livres",
+  "Throw-ins": "Laterais",
+  "Goal kicks": "Tiros de meta",
+  Saves: "Defesas",
+  "Goalkeeper saves": "Defesas do goleiro",
+  "Total saves": "Defesas",
+  Passes: "Passes",
+  "Accurate passes": "Passes certos",
+  "Long balls": "Bolas longas",
+  Crosses: "Cruzamentos",
+  Dribbles: "Dribles",
+  "Total tackles": "Desarmes",
+  Tackles: "Desarmes",
+  Interceptions: "Interceptações",
+  Clearances: "Cortes",
+  "Counter attacks": "Contra-ataques",
+  "Counterattacks": "Contra-ataques",
+  Duels: "Duelos",
+  "Duels won": "Duelos vencidos",
+  "Aerials won": "Duelos aéreos vencidos",
+  "Hit woodwork": "Na trave",
+  "Touches in penalty area": "Toques na área",
+  "Final third entries": "Entradas no último terço",
+  "Fouled in final third": "Faltas sofridas no ataque",
+};
+function translateStat(name: string): string {
+  if (!name) return "";
+  if (STAT_PT[name]) return STAT_PT[name];
+  const hit = Object.keys(STAT_PT).find((k) => k.toLowerCase() === name.toLowerCase());
+  return hit ? STAT_PT[hit] : name;
+}
+
 function normalizeStats(raw: any): MatchStatItem[] {
   const periods: any[] = raw?.statistics || [];
   const all = periods.find((p) => p?.period === "ALL") || periods[0];
@@ -238,7 +300,7 @@ function normalizeStats(raw: any): MatchStatItem[] {
   for (const g of all.groups || []) {
     for (const it of g.statisticsItems || []) {
       out.push({
-        name: it?.name || "",
+        name: translateStat(it?.name || ""),
         home: String(it?.home ?? ""),
         away: String(it?.away ?? ""),
         homeNum: toNum(it?.home),
@@ -247,6 +309,19 @@ function normalizeStats(raw: any): MatchStatItem[] {
     }
   }
   return out;
+}
+
+function normalizeCommentary(raw: any): MatchCommentary[] {
+  const list: any[] = raw?.comments || [];
+  return list.map((c) => ({
+    id: c?.id ?? c?.sequence ?? 0,
+    type: c?.type || "",
+    text: c?.text || "",
+    isHome: typeof c?.isHome === "boolean" ? c.isHome : null,
+    player: c?.player?.name || null,
+    playerId: c?.player?.id || null,
+    minute: typeof c?.time === "number" ? c.time : null,
+  }));
 }
 
 // TTL curto p/ ao vivo, longo p/ encerrado. Recebe o status já conhecido.
@@ -264,15 +339,17 @@ export async function getMatchDetail(id: number): Promise<MatchDetail | null> {
   const event = normalizeEvent(eventRaw.event);
   const ttl = liveTtl(event.statusType);
 
-  const [incRaw, lineRaw, statRaw] = await Promise.all([
+  const [incRaw, lineRaw, statRaw, commRaw] = await Promise.all([
     fetchAllSports<any>(`match/${id}/incidents`, ttl),
     fetchAllSports<any>(`match/${id}/lineups`, event.statusType === "finished" ? 86400 : 3600),
     fetchAllSports<any>(`match/${id}/statistics`, ttl),
+    fetchAllSports<any>(`match/${id}/commentary`, ttl),
   ]);
 
   return {
     event,
     incidents: normalizeIncidents(incRaw),
+    commentary: normalizeCommentary(commRaw),
     home: normalizeLineup(lineRaw?.home),
     away: normalizeLineup(lineRaw?.away),
     lineupsConfirmed: !!lineRaw?.confirmed,
@@ -284,6 +361,7 @@ export async function getMatchDetail(id: number): Promise<MatchDetail | null> {
 export interface MatchLive {
   event: MatchEvent;
   incidents: MatchIncident[];
+  commentary: MatchCommentary[];
   stats: MatchStatItem[];
 }
 
@@ -292,9 +370,15 @@ export async function getMatchLive(id: number): Promise<MatchLive | null> {
   if (!eventRaw?.event) return null;
   const event = normalizeEvent(eventRaw.event);
   const ttl = liveTtl(event.statusType);
-  const [incRaw, statRaw] = await Promise.all([
+  const [incRaw, statRaw, commRaw] = await Promise.all([
     fetchAllSports<any>(`match/${id}/incidents`, ttl),
     fetchAllSports<any>(`match/${id}/statistics`, ttl),
+    fetchAllSports<any>(`match/${id}/commentary`, ttl),
   ]);
-  return { event, incidents: normalizeIncidents(incRaw), stats: normalizeStats(statRaw) };
+  return {
+    event,
+    incidents: normalizeIncidents(incRaw),
+    commentary: normalizeCommentary(commRaw),
+    stats: normalizeStats(statRaw),
+  };
 }
