@@ -31,7 +31,7 @@ export function CopaLiveProvider({ children }: { children: ReactNode }) {
       }
     };
     load();
-    const t = setInterval(load, 30000);
+    const t = setInterval(load, 15000);
     return () => {
       alive = false;
       clearInterval(t);

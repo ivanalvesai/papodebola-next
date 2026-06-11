@@ -1,63 +1,30 @@
-"use client";
-
-import { useState, useEffect } from "react";
 import Link from "next/link";
 
-// Abertura da Copa = jogo inaugural Mexico x Africa do Sul, 11/06/2026 as 16h de
-// Brasilia (offset -03:00, Brasil sem horario de verao). Antes apontava pra meia-noite
-// (00:00), o que deixava o contador ~16h adiantado em relacao ao inicio real.
-const TARGET = new Date("2026-06-11T16:00:00-03:00").getTime();
-
-function calcTimeLeft() {
-  const diff = TARGET - Date.now();
-  if (diff <= 0) return { days: 0, hours: 0, mins: 0, secs: 0 };
-  return {
-    days: Math.floor(diff / 86400000),
-    hours: Math.floor((diff % 86400000) / 3600000),
-    mins: Math.floor((diff % 3600000) / 60000),
-    secs: Math.floor((diff % 60000) / 1000),
-  };
-}
-
-function CountdownUnit({ value, label }: { value: number; label: string }) {
-  return (
-    <div className="bg-white/15 rounded px-2 py-1 text-center min-w-[40px]">
-      <div className="text-base font-bold text-yellow-400 leading-none">
-        {String(value).padStart(2, "0")}
-      </div>
-      <div className="text-[8px] text-white/60 uppercase">{label}</div>
-    </div>
-  );
-}
-
+// A Copa começou (11/06/2026) — banner comemorativo em dourado, "rumo ao hexa".
+// (Antes era contagem regressiva pra abertura; removida quando a bola rolou.)
 export function WorldCupBanner() {
-  const [time, setTime] = useState(calcTimeLeft);
-
-  useEffect(() => {
-    const id = setInterval(() => setTime(calcTimeLeft()), 1000);
-    return () => clearInterval(id);
-  }, []);
-
   return (
     <Link
       href="/futebol/copa-do-mundo"
       className="block"
       style={{
-        background: "linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%)",
+        background:
+          "linear-gradient(135deg, #8a6c1b 0%, #c9a227 22%, #f3d774 45%, #fbe6a6 52%, #f3d774 60%, #c9a227 80%, #8a6c1b 100%)",
       }}
     >
-      <div className="flex items-center justify-center gap-5 px-5 py-2.5 flex-wrap">
-        <span className="text-xl">&#127482;&#127480; &#127474;&#127485; &#127464;&#127462;</span>
-        <span className="text-[15px] font-bold text-white uppercase tracking-wider">
-          Copa do Mundo <span className="text-yellow-400">2026</span>
+      <div className="mx-auto flex max-w-[1240px] flex-wrap items-center justify-center gap-3 px-5 py-3">
+        <span className="text-xl leading-none">🏆</span>
+        <span
+          className="text-center text-[15px] font-extrabold uppercase tracking-wide"
+          style={{ color: "#0a4d2e" }}
+        >
+          A Copa do Mundo começou:{" "}
+          <span style={{ color: "#063d22" }}>Rumo ao Hexa!</span>
         </span>
-        <div className="flex gap-1.5">
-          <CountdownUnit value={time.days} label="Dias" />
-          <CountdownUnit value={time.hours} label="Horas" />
-          <CountdownUnit value={time.mins} label="Min" />
-          <CountdownUnit value={time.secs} label="Seg" />
-        </div>
-        <span className="bg-yellow-400 text-[#1a1a2e] px-4 py-1.5 rounded text-[11px] font-bold uppercase tracking-wide whitespace-nowrap">
+        <span
+          className="whitespace-nowrap rounded px-4 py-1.5 text-[11px] font-bold uppercase tracking-wide text-white shadow-sm"
+          style={{ background: "#00643f" }}
+        >
           Acompanhe
         </span>
       </div>
