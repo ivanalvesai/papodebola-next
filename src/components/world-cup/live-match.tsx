@@ -4,7 +4,7 @@ import { useEffect, useState, useCallback } from "react";
 import type { ComponentType, ReactNode } from "react";
 import Image from "next/image";
 import { TeamLogo } from "@/components/ui/team-logo";
-import { Activity, Users, BarChart3, Trophy } from "lucide-react";
+import { Activity, Users, BarChart3, Trophy, ArrowUp, ArrowDown } from "lucide-react";
 import type {
   MatchDetail,
   MatchEvent,
@@ -192,6 +192,7 @@ function CommentaryRow({ c, event }: { c: MatchCommentary; event: MatchEvent }) 
   if (info.key) {
     const isRed = c.type === "redCard" || c.type === "secondYellowCard";
     const isYellow = c.type === "yellowCard";
+    const isSub = c.type === "substitution";
     const headline = isGoal ? `⚽ GOL DO ${teamName.toUpperCase()}!` : info.label;
     return (
       <div
@@ -205,14 +206,32 @@ function CommentaryRow({ c, event }: { c: MatchCommentary; event: MatchEvent }) 
                 : "border-border-light bg-card-bg"
         }`}
       >
-        <PlayerAvatar playerId={c.playerId} teamId={teamId} size={44} />
+        {/* na substituição, a foto é de quem entra */}
+        <PlayerAvatar playerId={isSub ? c.playerInId : c.playerId} teamId={teamId} size={44} />
         <div className="min-w-0 flex-1">
           <div className="flex items-center gap-1.5">
             {min && <span className="text-[11px] font-bold tabular-nums text-text-muted">{min}</span>}
             {teamId > 0 && <TeamLogo teamId={teamId} size={16} />}
           </div>
           <p className="text-sm font-bold text-text-primary">{headline}</p>
-          {c.player && <p className="truncate text-sm text-text-secondary">{c.player}</p>}
+          {isSub ? (
+            <div className="leading-tight">
+              {c.playerIn && (
+                <p className="flex items-center gap-1 text-sm font-semibold text-green">
+                  <ArrowUp className="h-3.5 w-3.5 shrink-0" />
+                  <span className="truncate">Entra: {c.playerIn}</span>
+                </p>
+              )}
+              {c.playerOut && (
+                <p className="flex items-center gap-1 text-sm font-semibold text-red">
+                  <ArrowDown className="h-3.5 w-3.5 shrink-0" />
+                  <span className="truncate">Sai: {c.playerOut}</span>
+                </p>
+              )}
+            </div>
+          ) : (
+            c.player && <p className="truncate text-sm text-text-secondary">{c.player}</p>
+          )}
         </div>
       </div>
     );

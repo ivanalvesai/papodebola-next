@@ -165,6 +165,9 @@ export interface MatchCommentary {
   isHome: boolean | null;
   player: string | null;
   playerId: number | null;
+  playerIn: string | null;
+  playerInId: number | null;
+  playerOut: string | null;
   minute: number | null;
 }
 
@@ -320,6 +323,9 @@ function normalizeCommentary(raw: any): MatchCommentary[] {
     isHome: typeof c?.isHome === "boolean" ? c.isHome : null,
     player: c?.player?.name || null,
     playerId: c?.player?.id || null,
+    playerIn: c?.playerIn?.name || null,
+    playerInId: c?.playerIn?.id || null,
+    playerOut: c?.playerOut?.name || null,
     minute: typeof c?.time === "number" ? c.time : null,
   }));
 }
