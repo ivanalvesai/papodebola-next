@@ -120,8 +120,14 @@ function Section({
 // tipo do commentary (EN) -> rótulo PT-BR; key = lance importante (com foto do jogador)
 const COMM: Record<string, { label: string; key?: boolean }> = {
   goal: { label: "GOL!", key: true },
+  scoreChange: { label: "GOL!", key: true },
   penaltyGoal: { label: "GOL de pênalti!", key: true },
   ownGoal: { label: "Gol contra", key: true },
+  matchStarted: { label: "Começou o jogo!" },
+  firstHalfEnded: { label: "Fim do 1º tempo" },
+  halfTime: { label: "Intervalo" },
+  secondHalfStarted: { label: "Começa o 2º tempo" },
+  matchEnded: { label: "Fim de jogo" },
   penaltyMissed: { label: "Pênalti perdido", key: true },
   penaltySaved: { label: "Pênalti defendido", key: true },
   penaltyAwarded: { label: "Pênalti marcado!", key: true },
@@ -181,7 +187,7 @@ function CommentaryRow({ c, event }: { c: MatchCommentary; event: MatchEvent }) 
   const teamId = c.isHome == null ? 0 : c.isHome ? event.homeId : event.awayId;
   const teamName = c.isHome ? event.home : event.away;
   const min = c.minute != null ? `${c.minute}'` : "";
-  const isGoal = c.type === "goal" || c.type === "penaltyGoal";
+  const isGoal = c.type === "goal" || c.type === "scoreChange" || c.type === "penaltyGoal";
 
   if (info.key) {
     const isRed = c.type === "redCard" || c.type === "secondYellowCard";
