@@ -69,7 +69,11 @@ Configs em `/www/server/panel/vhost/nginx/`:
 - `development.papodebola.com.br.conf` → proxy `127.0.0.1:3001` (dev, HTTP only, SSL via Cloudflare Flexible)
 - `admin.papodebola.com.br.conf` → WordPress :8091
 
-Proxy de imagens Sofascore (`/img/team/*`, `/img/player/*`) funciona em prod e dev (cada um com seu `proxy_cache_path`).
+**Proxy de imagens (logos de time/jogador `/img/team/*`, `/img/player/*`) — só o DEV bate no Sofascore (desde 2026-06-11).** Segue a mesma regra dos dados: apenas um ambiente consulta a API externa, o outro reaproveita.
+- **Dev** (`development.papodebola.com.br.conf`): `proxy_pass https://api.sofascore.app/api/v1/{team,player}/` direto, com `proxy_cache` (zone `img_cache_pdb_dev`). É o único que contata o Sofascore.
+- **Prod** (`papodebola.com.br.conf`): `proxy_pass http://127.0.0.1:80/img/{team,player}/` + `proxy_set_header Host development.papodebola.com.br` → cai no vhost do dev (loopback interno). Mantém cache próprio (`img_cache_pdb`) e só encaminha *miss* pro dev. **Nunca apontar prod direto pro Sofascore.**
+- Ambos os blocks têm hardening contra rate-limit/IP block do Sofascore: `proxy_cache_use_stale ... http_403 http_429 ...` (serve cópia cacheada se o upstream der 403), `proxy_cache_valid 403/429 30s`, `proxy_cache_lock on`, `proxy_cache_background_update on`, `max_size=3g`. Ver Troubleshooting "Logos de times/jogadores sumiram".
+- Por que: antes prod e dev batiam direto no Sofascore → dobrava requisições → Sofascore bloqueou o IP do servidor → todos os escudos quebraram (prod e dev). Backups dos confs: `*.bak.20260611-*`.
 
 **Dev tem `proxy_read_timeout 600s`** pra suportar requests longos (ex: POST do botão Promover).
 
@@ -632,6 +636,24 @@ tail /home/ivan/papodebola-next/logs/promote-audit.log
 
 ### Container dev não responde mas prod tá OK
 Proxy vai falhar → prod faz fallback direto pra AllSportsApi → gasta quota. Arrume o dev ASAP ou desative temporariamente `SPORTS_PROXY_URL` no `.env.local` do prod e recrie o container.
+
+### Logos de times/jogadores sumiram (escudos quebrados em prod e dev)
+
+Sintoma (visto em 2026-06-11): **todos** os escudos/fotos somem em prod E dev ao mesmo tempo. As imagens (`/img/team/*`, `/img/player/*`) são um proxy nginx que bate no Sofascore — **separado** da API de dados (AllSportsApi).
+
+**Diagnóstico:** de fora dá 200, mas um burst de ~40 logos dá 403 em todos. No servidor:
+```bash
+curl -s -o /dev/null -w '%{http_code}\n' -H 'Referer: https://www.sofascore.com/' \
+  https://api.sofascore.app/api/v1/team/1963/image    # 403 = IP do servidor bloqueado pelo Sofascore
+```
+Causa: requisições demais ao Sofascore (cache frio / dois ambientes batendo direto) → rate-limit → bloqueio do IP. Como o 403 não era cacheado, o nginx martelava e mantinha o bloqueio.
+
+**Correções (já aplicadas, ver seção "Proxy de imagens"):**
+1. Prod passou a consultar via dev (loopback), só dev bate no Sofascore.
+2. `proxy_cache_use_stale ... http_403 ...` serve a cópia cacheada mesmo com upstream 403 → restaura os logos já cacheados na hora.
+3. `max_size=3g` (fim da eviction churn) + `proxy_cache_valid 403/429 30s` (throttle).
+
+**Recuperação:** logos já cacheados voltam imediato; os nunca-cacheados voltam quando o Sofascore desbloquear o IP (auto-cura ao parar de martelar). Melhoria pendente: Cache Rule "Cache Everything" pra `/img/*` no dashboard Cloudflare (hoje `Cf-Cache-Status: DYNAMIC`) tira quase toda a carga do origin.
 
 ### Post deletado no WP continua aparecendo no site
 Verifique se o mu-plugin `papodebola-revalidate` está carregado:
