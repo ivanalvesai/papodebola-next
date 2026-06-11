@@ -242,8 +242,21 @@ function CommentaryFeed({ items, event }: { items: MatchCommentary[]; event: Mat
           : "O lance a lance começa quando a bola rolar — gols, cartões e lances importantes em tempo real."}
       </p>
     );
+  // A API não manda um comentário de "fim do 1º tempo"; mostramos a fase atual
+  // (Intervalo / Encerrado) pelo status do evento, no topo (mais recente).
+  const phase =
+    event.statusType === "finished"
+      ? "Fim de jogo"
+      : event.statusDesc === "Intervalo"
+        ? "Intervalo"
+        : null;
   return (
     <div className="space-y-2">
+      {phase && (
+        <div className="rounded-md bg-body py-2 text-center text-xs font-bold uppercase tracking-wide text-text-muted">
+          {phase}
+        </div>
+      )}
       {items.map((c) => (
         <CommentaryRow key={c.id} c={c} event={event} />
       ))}
@@ -318,11 +331,10 @@ function Marks({ m }: { m?: PlayerMark }) {
   return (
     <span className="ml-1 inline-flex items-center gap-1 align-middle">
       {m.goals > 0 && (
-        <span className="inline-flex items-center gap-0.5" title={`${m.goals} gol(s)`}>
-          {/* bolinha verde do gol (clara, igual ao quadradinho do cartão) */}
-          <span className="inline-block h-2.5 w-2.5 rounded-full bg-green" />
+        <span className="inline-flex items-center text-[13px] leading-none" title={`${m.goals} gol(s)`}>
+          ⚽
           {m.goals > 1 && (
-            <span className="text-[10px] font-bold leading-none text-green">{m.goals}</span>
+            <span className="ml-0.5 text-[10px] font-bold text-text-primary">{m.goals}</span>
           )}
         </span>
       )}
