@@ -5,6 +5,7 @@ import Link from "next/link";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { TeamLogo } from "@/components/ui/team-logo";
 import { worldCupMatchHref } from "@/lib/world-cup-match-url";
+import { useLiveScore } from "./copa-live-provider";
 import type { WorldCupGroup } from "@/lib/data/world-cup";
 import type { ChampionshipMatch } from "@/types/match";
 import type { StandingRow, FormResult } from "@/types/standings";
@@ -102,45 +103,53 @@ function StandingsTable({ rows }: { rows: StandingRow[] }) {
 }
 
 function MatchMini({ m }: { m: ChampionshipMatch }) {
-  const live = m.status === "inprogress";
-  const started = m.homeScore !== null && m.awayScore !== null;
+  // Override ao vivo (placar/status) vindo do polling; cai pro dado estático se ausente.
+  const ls = useLiveScore(m.id);
+  const statusType = ls?.statusType || m.status;
+  const isLive = statusType === "inprogress";
+  const homeScore = ls?.homeScore ?? m.homeScore;
+  const awayScore = ls?.awayScore ?? m.awayScore;
+  const statusDesc = ls?.statusDesc || m.statusDesc;
+  const started = homeScore !== null && awayScore !== null;
   const t = br(m.timestamp);
   const href = worldCupMatchHref(m.timestamp, m.homeId, m.awayId, m.home, m.away);
-  return (
-    <div className="py-2.5 px-3 border-b border-border-light last:border-0">
-      <div className="text-[11px] text-text-muted text-center mb-1.5">
-        {t.wd}, {t.date} &middot; {t.time}
-      </div>
-      <div className="grid grid-cols-[1fr_auto_1fr] items-center">
-        {/* Casa: nome na ponta, escudo ao lado do placar */}
-        <div className="flex items-center justify-end gap-1.5 min-w-0">
-          <span className="text-xs font-semibold text-text-primary truncate">{m.home}</span>
-          <TeamLogo teamId={m.homeId} size={24} />
-        </div>
-        {/* Placar no centro (ou "X" antes do jogo) com largura reservada */}
-        <span className="shrink-0 min-w-[56px] px-2 text-center text-sm font-bold text-text-primary whitespace-nowrap">
-          {started ? `${m.homeScore} X ${m.awayScore}` : "X"}
-        </span>
-        {/* Fora: escudo ao lado do placar, nome na ponta */}
-        <div className="flex items-center gap-1.5 min-w-0">
-          <TeamLogo teamId={m.awayId} size={24} />
-          <span className="text-xs font-semibold text-text-primary truncate">{m.away}</span>
-        </div>
-      </div>
 
-      {/* Selo AO VIVO clicável (abaixo do confronto) -> página do jogo */}
-      {live && (
-        <div className="mt-1.5 flex justify-center">
-          <Link
-            href={href}
-            className="inline-flex items-center gap-1.5 rounded-full bg-red px-2.5 py-1 text-[11px] font-bold text-white transition-opacity hover:opacity-90"
-          >
-            <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-white" />
-            AO VIVO {m.statusDesc && <span className="font-semibold">· {m.statusDesc}</span>}
-            <ChevronRight className="h-3 w-3" />
-          </Link>
+  return (
+    <div className="border-b border-border-light last:border-0">
+      {/* Confronto inteiro clicável -> página do jogo */}
+      <Link href={href} className="block px-3 py-2.5 transition-colors hover:bg-body/60">
+        <div className="mb-1.5 text-center text-[11px] text-text-muted">
+          {t.wd}, {t.date} &middot; {t.time}
         </div>
-      )}
+        <div className="grid grid-cols-[1fr_auto_1fr] items-center">
+          <div className="flex min-w-0 items-center justify-end gap-1.5">
+            <span className="truncate text-xs font-semibold text-text-primary">{m.home}</span>
+            <TeamLogo teamId={m.homeId} size={24} />
+          </div>
+          <span
+            className={`min-w-[56px] shrink-0 whitespace-nowrap px-2 text-center text-sm font-bold ${
+              isLive ? "text-red" : "text-text-primary"
+            }`}
+          >
+            {started ? `${homeScore} X ${awayScore}` : "X"}
+          </span>
+          <div className="flex min-w-0 items-center gap-1.5">
+            <TeamLogo teamId={m.awayId} size={24} />
+            <span className="truncate text-xs font-semibold text-text-primary">{m.away}</span>
+          </div>
+        </div>
+
+        {/* Selo AO VIVO (atualiza placar e linka pra página) */}
+        {isLive && (
+          <div className="mt-1.5 flex justify-center">
+            <span className="inline-flex items-center gap-1.5 rounded-full bg-red px-2.5 py-1 text-[11px] font-bold text-white">
+              <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-white" />
+              AO VIVO {statusDesc && <span className="font-semibold">&middot; {statusDesc}</span>}
+              <ChevronRight className="h-3 w-3" />
+            </span>
+          </div>
+        )}
+      </Link>
     </div>
   );
 }

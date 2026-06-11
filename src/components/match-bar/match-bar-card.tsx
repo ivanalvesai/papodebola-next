@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { TeamLogo } from "@/components/ui/team-logo";
 
 interface MatchBarCardProps {
@@ -11,6 +12,7 @@ interface MatchBarCardProps {
   status: string;
   statusText: string;
   league: string;
+  href?: string;
 }
 
 export function MatchBarCard({
@@ -24,16 +26,17 @@ export function MatchBarCard({
   status,
   statusText,
   league,
+  href,
 }: MatchBarCardProps) {
   const isLive = status === "live";
   const isFinished = status === "finished";
   const hasScore = homeScore !== null && awayScore !== null;
 
-  return (
+  const card = (
     <div
       className={`flex-shrink-0 w-[180px] bg-card-bg rounded-lg border p-3 ${
-        isLive ? "border-red" : "border-border-custom"
-      }`}
+        href ? "transition-colors hover:border-green" : ""
+      } ${isLive ? "border-red" : "border-border-custom"}`}
     >
       {/* League */}
       <div className="text-[10px] text-text-muted font-semibold truncate mb-2 uppercase">
@@ -88,4 +91,13 @@ export function MatchBarCard({
       </div>
     </div>
   );
+
+  if (href) {
+    return (
+      <Link href={href} className="block">
+        {card}
+      </Link>
+    );
+  }
+  return card;
 }

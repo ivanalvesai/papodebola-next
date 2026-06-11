@@ -68,10 +68,15 @@ export default async function HomePage() {
     }
   }
 
+  // Durante a Copa, a barra de cima mostra os jogos da Copa do dia (com link pra
+  // página do jogo ao vivo). Sem jogos da Copa hoje, cai pros jogos gerais.
+  const copaToday = todayMatches.filter((m) => m.href);
+  const barMatches = copaToday.length ? copaToday : todayMatches;
+
   return (
     <>
       <WorldCupBanner />
-      <MatchBar todayMatches={todayMatches} cbfUpcoming={cbfUpcoming} />
+      <MatchBar todayMatches={barMatches} cbfUpcoming={cbfUpcoming} />
 
       <div className="mx-auto max-w-[1240px] px-4 py-6">
         <div className="grid grid-cols-1 lg:grid-cols-[1fr_340px] gap-6">

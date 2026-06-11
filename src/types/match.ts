@@ -16,6 +16,9 @@ export interface NormalizedMatch {
   statusText: string;
   minute: string;
   category: string;
+  homeId?: number;
+  awayId?: number;
+  href?: string; // link pra página do jogo (só jogos da Copa, por ora)
 }
 
 export interface ChampionshipMatch {

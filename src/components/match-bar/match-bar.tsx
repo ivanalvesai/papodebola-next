@@ -115,6 +115,7 @@ export function MatchBar({ todayMatches, cbfUpcoming }: MatchBarProps) {
                 status={m.status}
                 statusText={m.statusText}
                 league={m.league}
+                href={m.href}
               />
             ))}
 
