@@ -38,6 +38,16 @@ export const SELECAO_BY_SLUG: Record<string, Selecao> = Object.fromEntries(
   SELECOES.map((s) => [s.slug, s])
 );
 
+export const SELECAO_BY_ID: Record<number, Selecao> = Object.fromEntries(
+  SELECOES.map((s) => [s.id, s])
+);
+
+// Slug de uma seleção pelo id Sofascore (usado pra montar a URL do jogo).
+// Fallback: se o id não estiver no mapa (ex: time fora das 48), slugifica o nome dado.
+export function selecaoSlugById(id: number, fallbackName?: string): string {
+  return SELECAO_BY_ID[id]?.slug || (fallbackName ? slugifyCategory(fallbackName) : String(id));
+}
+
 // Link da seleção: Brasil vai pra página dedicada; as outras pra /selecoes/[slug]
 export function selecaoHref(s: Selecao): string {
   return s.id === BRAZIL_ID ? "/futebol/selecao-brasileira" : `/futebol/selecoes/${s.slug}`;
