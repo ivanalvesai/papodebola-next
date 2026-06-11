@@ -330,6 +330,61 @@ function normalizeCommentary(raw: any): MatchCommentary[] {
   }));
 }
 
+// Converte um incidente-chave (gol/cartão/sub/VAR) em item de feed.
+function incidentToFeedItem(i: any): MatchCommentary {
+  const t = i?.incidentType;
+  let type = t;
+  if (t === "goal") type = "scoreChange";
+  else if (t === "card")
+    type = i?.incidentClass === "red" || i?.incidentClass === "yellowRed" ? "redCard" : "yellowCard";
+  else if (t === "substitution") type = "substitution";
+  else if (t === "varDecision") type = "varDecision";
+  return {
+    id: 1_000_000_000 + (i?.id || 0), // offset pra não colidir com id de commentary
+    type,
+    text: "",
+    isHome: typeof i?.isHome === "boolean" ? i.isHome : null,
+    player: i?.player?.name || null,
+    playerId: i?.player?.id || null,
+    playerIn: i?.playerIn?.name || null,
+    playerInId: i?.playerIn?.id || null,
+    playerOut: i?.playerOut?.name || null,
+    minute: typeof i?.time === "number" ? i.time : null,
+  };
+}
+
+// Mescla os incidents (gols/cartões/subs SEMPRE completos) no feed de commentary,
+// que às vezes não marca todos os gols. Insere por minuto os que faltam, sem duplicar.
+function mergeFeed(commentary: MatchCommentary[], incRaw: any): MatchCommentary[] {
+  const KEY = ["goal", "card", "substitution", "varDecision"];
+  const incs: any[] = (incRaw?.incidents || []).filter((i: any) => KEY.includes(i?.incidentType));
+  const result = [...commentary];
+  const isGoalType = (x: MatchCommentary) =>
+    ["scoreChange", "goal", "penaltyGoal"].includes(x.type);
+
+  for (const raw of incs) {
+    const item = incidentToFeedItem(raw);
+    const dup = result.some((x) => {
+      if (item.type === "scoreChange") return isGoalType(x) && x.player === item.player;
+      if (item.type === "yellowCard" || item.type === "redCard")
+        return x.type === item.type && x.player === item.player;
+      if (item.type === "substitution")
+        return (
+          x.type === "substitution" &&
+          (x.playerIn === item.playerIn || x.playerOut === item.playerOut)
+        );
+      return x.type === item.type && x.minute === item.minute;
+    });
+    if (dup) continue;
+    const idx = result.findIndex(
+      (x) => x.minute != null && item.minute != null && x.minute < item.minute
+    );
+    if (idx === -1) result.push(item);
+    else result.splice(idx, 0, item);
+  }
+  return result;
+}
+
 // TTL curto p/ ao vivo, longo p/ encerrado. Recebe o status já conhecido.
 function liveTtl(statusType: string, liveSecs = 10, doneSecs = 86400, soonSecs = 600): number {
   if (statusType === "inprogress") return liveSecs;
@@ -355,7 +410,7 @@ export async function getMatchDetail(id: number): Promise<MatchDetail | null> {
   return {
     event,
     incidents: normalizeIncidents(incRaw),
-    commentary: normalizeCommentary(commRaw),
+    commentary: mergeFeed(normalizeCommentary(commRaw), incRaw),
     home: normalizeLineup(lineRaw?.home),
     away: normalizeLineup(lineRaw?.away),
     lineupsConfirmed: !!lineRaw?.confirmed,
@@ -384,7 +439,7 @@ export async function getMatchLive(id: number): Promise<MatchLive | null> {
   return {
     event,
     incidents: normalizeIncidents(incRaw),
-    commentary: normalizeCommentary(commRaw),
+    commentary: mergeFeed(normalizeCommentary(commRaw), incRaw),
     stats: normalizeStats(statRaw),
   };
 }
