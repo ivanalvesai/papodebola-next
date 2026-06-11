@@ -5,7 +5,7 @@ import { Radio } from "lucide-react";
 import type { NormalizedMatch } from "@/types/match";
 import { PageBreadcrumb } from "@/components/seo/page-breadcrumb";
 
-export const revalidate = 300;
+export const revalidate = 900;
 
 export const metadata: Metadata = {
   title: "Jogos Ao Vivo - Placares em Tempo Real",

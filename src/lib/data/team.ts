@@ -60,13 +60,13 @@ function normalizeTeamMatch(event: any): TeamMatch {
 }
 
 export async function getTeamNextEvents(teamId: number): Promise<TeamMatch[]> {
-  const data = await fetchAllSports<any>(`team/${teamId}/matches/next/0`, 3600);
+  const data = await fetchAllSports<any>(`team/${teamId}/matches/next/0`, 43200);
   if (!data?.events) return [];
   return data.events.map(normalizeTeamMatch);
 }
 
 export async function getTeamPreviousEvents(teamId: number): Promise<TeamMatch[]> {
-  const data = await fetchAllSports<any>(`team/${teamId}/matches/previous/0`, 3600);
+  const data = await fetchAllSports<any>(`team/${teamId}/matches/previous/0`, 43200);
   if (!data?.events) return [];
   return data.events.map(normalizeTeamMatch).reverse();
 }

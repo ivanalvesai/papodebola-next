@@ -6,7 +6,7 @@ import { notFound } from "next/navigation";
 import { ArrowRight, Calendar, Trophy, BarChart3, Tv, Users } from "lucide-react";
 import { TeamLogo } from "@/components/ui/team-logo";
 
-export const revalidate = 3600;
+export const revalidate = 21600;
 
 export async function generateStaticParams() {
   return ALL_CLUSTER_TEAMS.map((t) => ({ slug: t.slug }));
