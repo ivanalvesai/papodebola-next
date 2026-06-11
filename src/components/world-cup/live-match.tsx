@@ -257,56 +257,139 @@ function StatsBars({ stats }: { stats: MatchStatItem[] }) {
   );
 }
 
-// ---- campo + escalação ----
-const LINE_ORDER: Record<string, number> = { G: 0, D: 1, M: 2, F: 3 };
-function Dot({ p }: { p: LineupPlayer }) {
+// ---- escalação em 2 colunas (estilo ge.globo) ----
+const POS_PT: Record<string, string> = { G: "GOL", D: "DEF", M: "MEI", F: "ATA" };
+
+interface PlayerMark {
+  goals: number;
+  yellow: boolean;
+  red: boolean;
+}
+function buildMarks(incidents: MatchIncident[]): Record<string, PlayerMark> {
+  const map: Record<string, PlayerMark> = {};
+  for (const inc of incidents) {
+    const name = inc.player;
+    if (!name) continue;
+    const m = (map[name] ||= { goals: 0, yellow: false, red: false });
+    if (inc.type === "goal") m.goals++;
+    if (inc.type === "card") {
+      if (inc.cls === "red" || inc.cls === "yellowRed") m.red = true;
+      else m.yellow = true;
+    }
+  }
+  return map;
+}
+
+function Marks({ m }: { m?: PlayerMark }) {
+  if (!m) return null;
   return (
-    <div className="flex w-12 flex-col items-center gap-1">
-      <div className="flex h-7 w-7 items-center justify-center rounded-full bg-white text-[11px] font-bold text-green shadow">
+    <span className="ml-1 inline-flex items-center gap-0.5 align-middle">
+      {m.goals > 0 && (
+        <span className="text-[10px] leading-none">
+          {"⚽".repeat(Math.min(m.goals, 3))}
+        </span>
+      )}
+      {m.yellow && !m.red && (
+        <span className="inline-block h-3 w-2 rounded-[1px] bg-yellow-400" />
+      )}
+      {m.red && <span className="inline-block h-3 w-2 rounded-[1px] bg-red" />}
+    </span>
+  );
+}
+
+function PlayerRow({
+  p,
+  marks,
+  dim,
+}: {
+  p: LineupPlayer;
+  marks: Record<string, PlayerMark>;
+  dim: boolean;
+}) {
+  return (
+    <div className="flex items-start gap-1.5 py-1">
+      <span className="w-4 shrink-0 text-right text-[10px] tabular-nums text-text-muted">
         {p.number ?? ""}
-      </div>
-      <span className="max-w-[56px] truncate text-[9px] font-medium text-white">
-        {p.name.split(" ").slice(-1)[0]}
       </span>
+      <div className="min-w-0 leading-tight">
+        <p className={`truncate text-xs font-medium ${dim ? "text-text-muted" : "text-text-primary"}`}>
+          {p.name}
+          <Marks m={marks[p.name]} />
+        </p>
+        <p className="text-[10px] text-text-muted">{POS_PT[p.position] || p.position}</p>
+      </div>
     </div>
   );
 }
-function PitchHalf({ team, flip }: { team: TeamLineup; flip: boolean }) {
-  const lines: Record<string, LineupPlayer[]> = { G: [], D: [], M: [], F: [] };
-  for (const p of team.starters) (lines[p.position] || (lines[p.position] = [])).push(p);
-  let keys = Object.keys(lines)
-    .filter((k) => lines[k]?.length)
-    .sort((a, b) => (LINE_ORDER[a] ?? 9) - (LINE_ORDER[b] ?? 9));
-  if (flip) keys = keys.reverse();
+
+function TeamColumn({
+  team,
+  teamId,
+  name,
+  marks,
+}: {
+  team: TeamLineup;
+  teamId: number;
+  name: string;
+  marks: Record<string, PlayerMark>;
+}) {
   return (
-    <div className="flex flex-1 flex-col justify-around gap-2 py-2">
-      {keys.map((k) => (
-        <div key={k} className="flex justify-around">
-          {lines[k].map((p) => (
-            <Dot key={p.id} p={p} />
-          ))}
-        </div>
+    <div className="min-w-0">
+      <div className="mb-2 flex items-center gap-1.5 border-b border-border-light pb-1.5">
+        <TeamLogo teamId={teamId} size={18} />
+        <span className="truncate text-xs font-bold text-text-primary">{name}</span>
+        {team.formation && (
+          <span className="ml-auto shrink-0 text-[10px] text-text-muted">{team.formation}</span>
+        )}
+      </div>
+      {team.starters.map((p) => (
+        <PlayerRow key={p.id} p={p} marks={marks} dim={false} />
       ))}
+      {team.bench.length > 0 && (
+        <>
+          <p className="mb-1 mt-3 text-[10px] font-semibold uppercase tracking-wide text-text-muted">
+            Reservas
+          </p>
+          {team.bench.map((p) => (
+            <PlayerRow key={p.id} p={p} marks={marks} dim />
+          ))}
+        </>
+      )}
     </div>
   );
 }
-function Lineups({ home, away }: { home: TeamLineup | null; away: TeamLineup | null }) {
+
+function Lineups({
+  event,
+  home,
+  away,
+  confirmed,
+  incidents,
+}: {
+  event: MatchEvent;
+  home: TeamLineup | null;
+  away: TeamLineup | null;
+  confirmed: boolean;
+  incidents: MatchIncident[];
+}) {
   if (!home?.starters.length && !away?.starters.length)
     return (
       <p className="py-6 text-center text-sm text-text-muted">
         Escalações ainda não confirmadas. Costumam sair ~1h antes do jogo.
       </p>
     );
+  const marks = buildMarks(incidents);
   return (
     <div>
-      <div className="mb-2 flex justify-between text-xs font-semibold text-text-muted">
-        <span>{home?.formation || ""}</span>
-        <span>{away?.formation || ""}</span>
-      </div>
-      <div className="flex flex-col rounded-lg bg-green/90 bg-[linear-gradient(0deg,rgba(0,0,0,0.06)_50%,transparent_50%)] bg-[length:100%_36px]">
-        {home && <PitchHalf team={home} flip={false} />}
-        <div className="h-px bg-white/40" />
-        {away && <PitchHalf team={away} flip={true} />}
+      {confirmed && (
+        <div className="mb-3 flex items-center gap-1 text-[11px] font-semibold text-green">
+          <span className="inline-block h-1.5 w-1.5 rounded-full bg-green" />
+          Escalação confirmada
+        </div>
+      )}
+      <div className="grid grid-cols-2 gap-3">
+        {home && <TeamColumn team={home} teamId={event.homeId} name={event.home} marks={marks} />}
+        {away && <TeamColumn team={away} teamId={event.awayId} name={event.away} marks={marks} />}
       </div>
     </div>
   );
@@ -400,7 +483,13 @@ export function LiveMatch({
         {/* Esquerda: escalação + estatísticas */}
         <div className="order-2 space-y-4 lg:order-1">
           <Section title="Escalação" icon={Users}>
-            <Lineups home={initial.home} away={initial.away} />
+            <Lineups
+              event={event}
+              home={initial.home}
+              away={initial.away}
+              confirmed={initial.lineupsConfirmed}
+              incidents={incidents}
+            />
           </Section>
           <Section title="Estatísticas" icon={BarChart3}>
             <StatsBars stats={stats} />
