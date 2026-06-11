@@ -78,7 +78,7 @@ export async function getWorldCupLiveScores(): Promise<WorldCupLiveScore[]> {
   const cr = rd?.currentRound?.round || 1;
   const data = await fetchAllSports<any>(
     `tournament/${WC.id}/season/${WC.seasonId}/matches/round/${cr}`,
-    30 // curto: placar ao vivo
+    15 // curto: placar ao vivo
   );
   return (data?.events || []).map((e: any) => ({
     id: e.id,
@@ -325,7 +325,7 @@ function normalizeCommentary(raw: any): MatchCommentary[] {
 }
 
 // TTL curto p/ ao vivo, longo p/ encerrado. Recebe o status já conhecido.
-function liveTtl(statusType: string, liveSecs = 25, doneSecs = 86400, soonSecs = 600): number {
+function liveTtl(statusType: string, liveSecs = 10, doneSecs = 86400, soonSecs = 600): number {
   if (statusType === "inprogress") return liveSecs;
   if (statusType === "finished") return doneSecs;
   return soonSecs; // notstarted
@@ -334,7 +334,7 @@ function liveTtl(statusType: string, liveSecs = 25, doneSecs = 86400, soonSecs =
 // Detalhe completo (server render inicial). Busca o event primeiro pra saber o
 // status e adaptar o TTL do resto (não martela a API em jogo encerrado).
 export async function getMatchDetail(id: number): Promise<MatchDetail | null> {
-  const eventRaw = await fetchAllSports<any>(`match/${id}`, 30);
+  const eventRaw = await fetchAllSports<any>(`match/${id}`, 10);
   if (!eventRaw?.event) return null;
   const event = normalizeEvent(eventRaw.event);
   const ttl = liveTtl(event.statusType);
@@ -366,7 +366,7 @@ export interface MatchLive {
 }
 
 export async function getMatchLive(id: number): Promise<MatchLive | null> {
-  const eventRaw = await fetchAllSports<any>(`match/${id}`, 25);
+  const eventRaw = await fetchAllSports<any>(`match/${id}`, 10);
   if (!eventRaw?.event) return null;
   const event = normalizeEvent(eventRaw.event);
   const ttl = liveTtl(event.statusType);

@@ -532,7 +532,7 @@ export function LiveMatch({
 
   useEffect(() => {
     if (event.statusType === "finished") return;
-    const intervalMs = event.statusType === "inprogress" ? 30000 : 60000;
+    const intervalMs = event.statusType === "inprogress" ? 12000 : 60000;
     const t = setInterval(poll, intervalMs);
     return () => clearInterval(t);
   }, [event.statusType, poll]);
