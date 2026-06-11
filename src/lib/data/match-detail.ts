@@ -134,6 +134,7 @@ export interface MatchDetail {
   incidents: MatchIncident[];
   home: TeamLineup | null;
   away: TeamLineup | null;
+  lineupsConfirmed: boolean;
   stats: MatchStatItem[];
 }
 
@@ -245,6 +246,7 @@ export async function getMatchDetail(id: number): Promise<MatchDetail | null> {
     incidents: normalizeIncidents(incRaw),
     home: normalizeLineup(lineRaw?.home),
     away: normalizeLineup(lineRaw?.away),
+    lineupsConfirmed: !!lineRaw?.confirmed,
     stats: normalizeStats(statRaw),
   };
 }
