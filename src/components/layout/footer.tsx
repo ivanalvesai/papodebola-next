@@ -64,7 +64,7 @@ export function Footer() {
         </div>
 
         <div className="mt-8 pt-6 border-t border-white/10 text-center text-sm text-text-muted">
-          &copy; {new Date().getFullYear()} Papo de Bola. Todos os direitos
+          &copy; 2004&ndash;{new Date().getFullYear()} Papo de Bola. Todos os direitos
           reservados.
         </div>
       </div>

@@ -168,6 +168,7 @@ export interface MatchCommentary {
   playerIn: string | null;
   playerInId: number | null;
   playerOut: string | null;
+  reason: string | null; // motivo do cartão (ex: Foul, Violent conduct)
   minute: number | null;
 }
 
@@ -326,6 +327,7 @@ function normalizeCommentary(raw: any): MatchCommentary[] {
     playerIn: c?.playerIn?.name || null,
     playerInId: c?.playerIn?.id || null,
     playerOut: c?.playerOut?.name || null,
+    reason: c?.reason || null,
     minute: typeof c?.time === "number" ? c.time : null,
   }));
 }
@@ -349,6 +351,7 @@ function incidentToFeedItem(i: any): MatchCommentary {
     playerIn: i?.playerIn?.name || null,
     playerInId: i?.playerIn?.id || null,
     playerOut: i?.playerOut?.name || null,
+    reason: i?.reason || null,
     minute: typeof i?.time === "number" ? i.time : null,
   };
 }
@@ -357,10 +360,22 @@ function incidentToFeedItem(i: any): MatchCommentary {
 // que às vezes não marca todos os gols. Insere por minuto os que faltam, sem duplicar.
 function mergeFeed(commentary: MatchCommentary[], incRaw: any): MatchCommentary[] {
   const KEY = ["goal", "card", "substitution", "varDecision"];
-  const incs: any[] = (incRaw?.incidents || []).filter((i: any) => KEY.includes(i?.incidentType));
+  const allInc: any[] = incRaw?.incidents || [];
+  const incs: any[] = allInc.filter((i: any) => KEY.includes(i?.incidentType));
   const result = [...commentary];
   const isGoalType = (x: MatchCommentary) =>
     ["scoreChange", "goal", "penaltyGoal"].includes(x.type);
+
+  // motivo do cartão só existe nos incidents → injeta no item de cartão do feed
+  const cardReason: Record<string, string> = {};
+  for (const i of allInc) {
+    if (i?.incidentType === "card" && i?.player?.name && i?.reason)
+      cardReason[i.player.name] = i.reason;
+  }
+  for (const x of result) {
+    if ((x.type === "yellowCard" || x.type === "redCard") && !x.reason && x.player && cardReason[x.player])
+      x.reason = cardReason[x.player];
+  }
 
   for (const raw of incs) {
     const item = incidentToFeedItem(raw);
