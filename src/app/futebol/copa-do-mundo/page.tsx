@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Trophy, Newspaper } from "lucide-react";
 import { PageBreadcrumb } from "@/components/seo/page-breadcrumb";
 import { GroupRow } from "@/components/world-cup/group-row";
+import { CopaLiveProvider } from "@/components/world-cup/copa-live-provider";
 import { SelecoesCarousel } from "@/components/world-cup/selecoes-carousel";
 import { WorldCupScorers } from "@/components/world-cup/world-cup-scorers";
 import { NewsFeed } from "@/components/news/news-feed";
@@ -45,11 +46,13 @@ export default async function CopaDoMundoPage() {
       {groups.length === 0 ? (
         <p className="text-text-muted text-sm py-6">Classificação indisponível no momento.</p>
       ) : (
-        <div className="space-y-4">
-          {groups.map((g) => (
-            <GroupRow key={g.name} group={g} />
-          ))}
-        </div>
+        <CopaLiveProvider>
+          <div className="space-y-4">
+            {groups.map((g) => (
+              <GroupRow key={g.name} group={g} />
+            ))}
+          </div>
+        </CopaLiveProvider>
       )}
 
       {/* Artilharia: logo apos as tabelas de grupos, antes das selecoes */}

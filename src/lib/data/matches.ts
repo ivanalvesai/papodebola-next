@@ -1,9 +1,15 @@
 import { fetchAllSports } from "@/lib/api/allsports";
 import { getLeagueCategory } from "@/lib/config";
 import { translateStatus } from "@/lib/translations";
+import { translateCountry } from "@/lib/i18n/countries";
+import { SELECAO_BY_ID } from "@/lib/selecoes";
+import { worldCupMatchHref } from "@/lib/world-cup-match-url";
 import type { NormalizedMatch } from "@/types/match";
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
+
+// uniqueTournament id da Copa do Mundo 2026 no Sofascore/AllSports.
+const WORLD_CUP_LEAGUE_ID = 16;
 
 function mapStatus(event: any): {
   status: NormalizedMatch["status"];
@@ -40,6 +46,14 @@ function normalizeEvent(event: any): NormalizedMatch {
   const awayId = event.awayTeam?.id;
   const leagueId = event.tournament?.uniqueTournament?.id;
 
+  // Jogo da Copa → nome em PT-BR e link pra página do jogo ao vivo.
+  const isWorldCup = leagueId === WORLD_CUP_LEAGUE_ID;
+  const inSelecoes = !!SELECAO_BY_ID[homeId] && !!SELECAO_BY_ID[awayId];
+  const href =
+    isWorldCup && inSelecoes
+      ? worldCupMatchHref(event.startTimestamp || 0, homeId, awayId, event.homeTeam?.name, event.awayTeam?.name)
+      : undefined;
+
   const ts = event.startTimestamp ? new Date(event.startTimestamp * 1000) : new Date();
 
   return {
@@ -48,8 +62,8 @@ function normalizeEvent(event: any): NormalizedMatch {
     league: event.tournament?.uniqueTournament?.name || event.tournament?.name || "",
     leagueId,
     country: event.tournament?.category?.name || "",
-    homeTeam: event.homeTeam?.name || "",
-    awayTeam: event.awayTeam?.name || "",
+    homeTeam: isWorldCup ? translateCountry(event.homeTeam?.name || "") : event.homeTeam?.name || "",
+    awayTeam: isWorldCup ? translateCountry(event.awayTeam?.name || "") : event.awayTeam?.name || "",
     homeScore: event.homeScore?.current ?? null,
     awayScore: event.awayScore?.current ?? null,
     homeLogo: homeId ? `/img/team/${homeId}/image` : null,
@@ -60,6 +74,9 @@ function normalizeEvent(event: any): NormalizedMatch {
     statusText,
     minute,
     category: leagueId ? getLeagueCategory(leagueId) : "all",
+    homeId,
+    awayId,
+    href,
   };
 }
 

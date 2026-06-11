@@ -60,6 +60,35 @@ export async function resolveWorldCupMatch(
   );
 }
 
+// Placares/status ao vivo da rodada atual da Copa — consumido pelo polling da
+// tabela (CopaLiveProvider) pra atualizar o placar e mostrar o selo AO VIVO.
+export interface WorldCupLiveScore {
+  id: number;
+  homeScore: number | null;
+  awayScore: number | null;
+  statusType: string; // notstarted | inprogress | finished
+  statusDesc: string;
+}
+
+export async function getWorldCupLiveScores(): Promise<WorldCupLiveScore[]> {
+  const rd = await fetchAllSports<any>(
+    `tournament/${WC.id}/season/${WC.seasonId}/rounds`,
+    21600
+  );
+  const cr = rd?.currentRound?.round || 1;
+  const data = await fetchAllSports<any>(
+    `tournament/${WC.id}/season/${WC.seasonId}/matches/round/${cr}`,
+    30 // curto: placar ao vivo
+  );
+  return (data?.events || []).map((e: any) => ({
+    id: e.id,
+    homeScore: e.homeScore?.current ?? null,
+    awayScore: e.awayScore?.current ?? null,
+    statusType: e.status?.type || "",
+    statusDesc: translateStatus(e.status?.description) || "",
+  }));
+}
+
 // Grupo (classificação) que contém os dois times do jogo.
 export async function getMatchGroup(
   homeId: number,
