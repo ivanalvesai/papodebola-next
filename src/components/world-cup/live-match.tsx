@@ -191,6 +191,7 @@ function CommentaryRow({ c, event }: { c: MatchCommentary; event: MatchEvent }) 
 
   if (info.key) {
     const isRed = c.type === "redCard" || c.type === "secondYellowCard";
+    const isYellow = c.type === "yellowCard";
     const headline = isGoal ? `⚽ GOL DO ${teamName.toUpperCase()}!` : info.label;
     return (
       <div
@@ -199,7 +200,9 @@ function CommentaryRow({ c, event }: { c: MatchCommentary; event: MatchEvent }) 
             ? "border-green bg-green/5"
             : isRed
               ? "border-red bg-red/5"
-              : "border-border-light bg-card-bg"
+              : isYellow
+                ? "border-yellow-400 bg-yellow-400/10"
+                : "border-border-light bg-card-bg"
         }`}
       >
         <PlayerAvatar playerId={c.playerId} teamId={teamId} size={44} />
@@ -282,6 +285,14 @@ function StatsBars({ stats }: { stats: MatchStatItem[] }) {
 // ---- escalação em 2 colunas (estilo ge.globo) ----
 const POS_PT: Record<string, string> = { G: "GOL", D: "DEF", M: "MEI", F: "ATA" };
 
+// Nome longo não cabe na coluna estreita (e empurra o ícone de gol/cartão) →
+// usa só o sobrenome (ex: "Julián Quiñones" → "Quiñones").
+function shortPlayerName(name: string): string {
+  if (name.length <= 13) return name;
+  const parts = name.trim().split(/\s+/);
+  return parts.length > 1 ? parts[parts.length - 1] : name;
+}
+
 interface PlayerMark {
   goals: number;
   yellow: boolean;
@@ -305,16 +316,22 @@ function buildMarks(incidents: MatchIncident[]): Record<string, PlayerMark> {
 function Marks({ m }: { m?: PlayerMark }) {
   if (!m) return null;
   return (
-    <span className="ml-1 inline-flex items-center gap-0.5 align-middle">
+    <span className="ml-1 inline-flex items-center gap-1 align-middle">
       {m.goals > 0 && (
-        <span className="text-[10px] leading-none">
-          {"⚽".repeat(Math.min(m.goals, 3))}
+        <span className="inline-flex items-center gap-0.5" title={`${m.goals} gol(s)`}>
+          {/* bolinha verde do gol (clara, igual ao quadradinho do cartão) */}
+          <span className="inline-block h-2.5 w-2.5 rounded-full bg-green" />
+          {m.goals > 1 && (
+            <span className="text-[10px] font-bold leading-none text-green">{m.goals}</span>
+          )}
         </span>
       )}
       {m.yellow && !m.red && (
-        <span className="inline-block h-3 w-2 rounded-[1px] bg-yellow-400" />
+        <span className="inline-block h-3 w-2 rounded-[1px] bg-yellow-400" title="Cartão amarelo" />
       )}
-      {m.red && <span className="inline-block h-3 w-2 rounded-[1px] bg-red" />}
+      {m.red && (
+        <span className="inline-block h-3 w-2 rounded-[1px] bg-red" title="Cartão vermelho" />
+      )}
     </span>
   );
 }
@@ -334,10 +351,19 @@ function PlayerRow({
         {p.number ?? ""}
       </span>
       <div className="min-w-0 leading-tight">
-        <p className={`truncate text-xs font-medium ${dim ? "text-text-muted" : "text-text-primary"}`}>
-          {p.name}
-          <Marks m={marks[p.name]} />
-        </p>
+        <div className="flex items-center gap-1">
+          <p
+            className={`truncate text-xs font-medium ${
+              dim ? "text-text-muted" : "text-text-primary"
+            }`}
+          >
+            {shortPlayerName(p.name)}
+          </p>
+          {/* ícone fora do nome (shrink-0) → nunca é cortado pelo truncate */}
+          <span className="shrink-0">
+            <Marks m={marks[p.name]} />
+          </span>
+        </div>
         <p className="text-[10px] text-text-muted">{POS_PT[p.position] || p.position}</p>
       </div>
     </div>
