@@ -261,16 +261,30 @@ function PlayerAvatar({
   teamId: number;
   size?: number;
 }) {
-  const [err, setErr] = useState(false);
-  const src = !err && playerId ? `/img/player/${playerId}/image` : `/img/team/${teamId}/image`;
+  // A foto do jogador pode bater no rate limit (6 req/s) da API quando é "fria"
+  // (1ª vez). Em vez de cair direto na bandeira, re-tenta algumas vezes (com
+  // cache-buster pra furar o 429 cacheado) — quando libera, carrega e fica cacheada.
+  const [attempt, setAttempt] = useState(0);
+  const [failed, setFailed] = useState(false);
+  const usePlayer = !!playerId && !failed;
+  const src = usePlayer
+    ? `/img/player/${playerId}/image${attempt > 0 ? `?r=${attempt}` : ""}`
+    : `/img/team/${teamId}/image`;
   return (
     <Image
+      key={src}
       src={src}
       alt=""
       width={size}
       height={size}
       unoptimized
-      onError={() => setErr(true)}
+      onError={() => {
+        if (usePlayer && attempt < 4) {
+          setTimeout(() => setAttempt((a) => a + 1), 2000);
+        } else {
+          setFailed(true);
+        }
+      }}
       className="shrink-0 rounded-full bg-body object-cover"
     />
   );
