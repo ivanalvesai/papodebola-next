@@ -1,10 +1,19 @@
 "use client";
 
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState, useCallback, useRef } from "react";
 import type { ComponentType, ReactNode } from "react";
 import Image from "next/image";
 import { TeamLogo } from "@/components/ui/team-logo";
-import { Activity, Users, BarChart3, Trophy, ArrowUp, ArrowDown } from "lucide-react";
+import {
+  Activity,
+  Users,
+  BarChart3,
+  Trophy,
+  ArrowUp,
+  ArrowDown,
+  Volume2,
+  VolumeX,
+} from "lucide-react";
 import type {
   MatchDetail,
   MatchEvent,
@@ -15,6 +24,51 @@ import type {
   LineupPlayer,
 } from "@/lib/data/match-detail";
 import type { StandingsGroup, StandingRow } from "@/types/standings";
+
+// ---- som de gol (torcida, sintetizado via Web Audio) ----
+let sharedCtx: AudioContext | null = null;
+function getAudioCtx(): AudioContext | null {
+  if (typeof window === "undefined") return null;
+  const AC = window.AudioContext || (window as unknown as { webkitAudioContext?: typeof AudioContext }).webkitAudioContext;
+  if (!AC) return null;
+  if (!sharedCtx) sharedCtx = new AC();
+  if (sharedCtx.state === "suspended") sharedCtx.resume().catch(() => {});
+  return sharedCtx;
+}
+// roar de torcida: ruído filtrado com swell (sobe rápido, sustenta, decai)
+function playGoalRoar() {
+  const ctx = getAudioCtx();
+  if (!ctx) return;
+  try {
+    const now = ctx.currentTime;
+    const dur = 2.6;
+    const buf = ctx.createBuffer(1, Math.floor(ctx.sampleRate * dur), ctx.sampleRate);
+    const data = buf.getChannelData(0);
+    for (let i = 0; i < data.length; i++) data[i] = Math.random() * 2 - 1;
+    const src = ctx.createBufferSource();
+    src.buffer = buf;
+    const bp = ctx.createBiquadFilter();
+    bp.type = "bandpass";
+    bp.frequency.value = 700;
+    bp.Q.value = 0.6;
+    const lp = ctx.createBiquadFilter();
+    lp.type = "lowpass";
+    lp.frequency.value = 2200;
+    const gain = ctx.createGain();
+    gain.gain.setValueAtTime(0.0001, now);
+    gain.gain.exponentialRampToValueAtTime(0.5, now + 0.35);
+    gain.gain.setValueAtTime(0.5, now + 1.4);
+    gain.gain.exponentialRampToValueAtTime(0.0001, now + dur);
+    src.connect(bp);
+    bp.connect(lp);
+    lp.connect(gain);
+    gain.connect(ctx.destination);
+    src.start(now);
+    src.stop(now + dur);
+  } catch {
+    /* navegador bloqueou o áudio: ignora */
+  }
+}
 
 // ---- cronômetro ao vivo (minuto do jogo) ----
 function useTicker(active: boolean) {
@@ -46,14 +100,34 @@ function countdown(target: number): string | null {
 }
 
 // ---- cabeçalho (placar / status / cronômetro) ----
-function Header({ event, mounted }: { event: MatchEvent; mounted: boolean }) {
+function Header({
+  event,
+  mounted,
+  soundOn,
+  onToggleSound,
+}: {
+  event: MatchEvent;
+  mounted: boolean;
+  soundOn: boolean;
+  onToggleSound: () => void;
+}) {
   useTicker(mounted && event.statusType !== "finished");
   const minute = liveMinute(event);
   const cd = mounted && event.statusType === "notstarted" ? countdown(event.startTimestamp) : null;
   const showScore = event.statusType !== "notstarted";
 
   return (
-    <div className="rounded-lg border border-border-custom bg-card-bg p-5">
+    <div className="relative rounded-lg border border-border-custom bg-card-bg p-5">
+      {/* liga/desliga som do gol */}
+      <button
+        type="button"
+        onClick={onToggleSound}
+        title={soundOn ? "Som do gol ligado" : "Som do gol desligado"}
+        aria-label={soundOn ? "Desligar som do gol" : "Ligar som do gol"}
+        className="absolute right-3 top-3 flex h-8 w-8 items-center justify-center rounded-full text-text-muted transition-colors hover:bg-body hover:text-text-primary"
+      >
+        {soundOn ? <Volume2 className="h-4 w-4" /> : <VolumeX className="h-4 w-4" />}
+      </button>
       <div className="mb-4 flex justify-center">
         {event.live ? (
           <span className="inline-flex items-center gap-1.5 rounded-full bg-red px-3 py-1 text-xs font-bold text-white">
@@ -564,8 +638,32 @@ export function LiveMatch({
   const [commentary, setCommentary] = useState(initial.commentary);
   const [stats, setStats] = useState(initial.stats);
   const [mounted, setMounted] = useState(false);
+  const [soundOn, setSoundOn] = useState(true);
+  const soundOnRef = useRef(true);
+  soundOnRef.current = soundOn;
+  const prevGoals = useRef<number | null>(null);
 
   useEffect(() => setMounted(true), []);
+
+  // desbloqueia o áudio no 1º toque/clique do usuário (exigência dos navegadores)
+  useEffect(() => {
+    const unlock = () => getAudioCtx();
+    window.addEventListener("pointerdown", unlock, { once: true });
+    return () => window.removeEventListener("pointerdown", unlock);
+  }, []);
+
+  // toca o som de torcida quando o placar aumenta (gol), exceto no carregamento
+  useEffect(() => {
+    const total = (event.homeScore ?? 0) + (event.awayScore ?? 0);
+    if (prevGoals.current == null) {
+      prevGoals.current = total;
+      return;
+    }
+    if (total > prevGoals.current && soundOnRef.current && event.statusType !== "notstarted") {
+      playGoalRoar();
+    }
+    prevGoals.current = total;
+  }, [event.homeScore, event.awayScore, event.statusType]);
 
   const poll = useCallback(async () => {
     try {
@@ -590,7 +688,15 @@ export function LiveMatch({
 
   return (
     <div className="space-y-4">
-      <Header event={event} mounted={mounted} />
+      <Header
+        event={event}
+        mounted={mounted}
+        soundOn={soundOn}
+        onToggleSound={() => {
+          getAudioCtx(); // gesto do usuário: desbloqueia o áudio
+          setSoundOn((s) => !s);
+        }}
+      />
 
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-[300px_minmax(0,1fr)_280px]">
         {/* Esquerda: escalação + estatísticas */}
