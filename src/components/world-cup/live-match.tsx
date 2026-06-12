@@ -359,14 +359,17 @@ function CommentaryRow({ c, event }: { c: MatchCommentary; event: MatchEvent }) 
 }
 
 function CommentaryFeed({ items, event }: { items: MatchCommentary[]; event: MatchEvent }) {
-  if (!items.length)
+  const started = event.statusType === "inprogress" || event.statusType === "finished";
+  const hasStart = items.some((c) => c.type === "matchStarted");
+
+  // pré-jogo, sem lances ainda
+  if (!items.length && !started)
     return (
       <p className="py-10 text-center text-sm text-text-muted">
-        {event.live
-          ? "Aguardando os próximos lances..."
-          : "O lance a lance começa quando a bola rolar — gols, cartões e lances importantes em tempo real."}
+        O lance a lance começa quando a bola rolar — gols, cartões e lances importantes em tempo real.
       </p>
     );
+
   // A API não manda um comentário de "fim do 1º tempo"; mostramos a fase atual
   // (Intervalo / Encerrado) pelo status do evento, no topo (mais recente).
   const phase =
@@ -375,6 +378,7 @@ function CommentaryFeed({ items, event }: { items: MatchCommentary[]; event: Mat
       : event.statusDesc === "Intervalo"
         ? "Intervalo"
         : null;
+
   return (
     <div className="space-y-2">
       {phase && (
@@ -385,6 +389,18 @@ function CommentaryFeed({ items, event }: { items: MatchCommentary[]; event: Mat
       {items.map((c) => (
         <CommentaryRow key={c.id} c={c} event={event} />
       ))}
+      {/* marcador de início garantido (mesmo se o commentary da API travar/atrasar) */}
+      {started && !hasStart && (
+        <div className="flex items-center gap-3 border-t border-border-light pt-2">
+          <span className="w-9 shrink-0 text-center text-xs font-bold tabular-nums text-text-muted">
+            1&prime;
+          </span>
+          <span className="inline-block h-2.5 w-2.5 shrink-0 rounded-full bg-green" />
+          <p className="text-sm font-semibold text-text-primary">
+            Começa o jogo entre {event.home} e {event.away}!
+          </p>
+        </div>
+      )}
     </div>
   );
 }
