@@ -175,13 +175,23 @@ Protegido por JWT (mesmo do painel) + SSH com forced command + token no header.
 
 ---
 
-## Arquitetura de API (economia de quota)
+## Arquitetura de API (economia de banda)
+
+> **Plano Pro $19.99/mês = requests ILIMITADOS.** NÃO existe cota de 10k req/mês
+> (entendimento antigo, corrigido em 2026-06-11). Os limites reais são:
+> - **Rate limit: 6 req/s** → estourar vira HTTP 429 (cadência interna fica em ~4 req/s).
+> - **Bandwidth: 10 GB/mês** incluídos, depois $0,001/MB → é o **único custo** real.
+>
+> Logo, "economia" aqui é de **banda/rate-limit**, não de contagem de requisições.
+> Pode encurtar TTL de dados live/hoje sem medo de quota; só evite respostas gigantes
+> (ver [[incidente_sports_proxy_2mb]]) e bursts acima de 6 req/s.
 
 ```
                            ┌─────────────────────┐
                            │   AllSportsApi      │
                            │   (RapidAPI Pro)    │
-                           │   10k req/mês       │
+                           │  req ilimitado      │
+                           │  6 req/s · 10GB/mês │
                            └──────────▲──────────┘
                                       │
                       ┌───────────────┘
@@ -255,13 +265,16 @@ Endpoints `events/live` deprecated retornam `HTTP 404 text/plain` (não JSON) �
 
 ### Estimativa de consumo mensal
 
-| API | req/dia | req/mês | % plano |
-|---|---|---|---|
-| CBF | 6 | 180 | — (grátis) |
-| **AllSportsApi (só dev)** | ~130 | ~3.900 | **~39% do Pro** |
-| **Antes (dev+prod separados)** | ~260 | ~7.800 | ~78% |
+Como o plano é **ilimitado em requisições**, a "estimativa" abaixo é só ordem de grandeza —
+o que importa é **não passar de 6 req/s** (rate limit) e **ficar dentro de 10 GB/mês** (banda).
 
-Prod build **não gasta quota** (proxy não resolve no builder, skip direct, ISR popula depois).
+| API | req/dia | req/mês | Observação |
+|---|---|---|---|
+| CBF | 6 | 180 | grátis |
+| **AllSportsApi (só dev)** | ~130 | ~3.900 | sem limite de contagem; pesa só na banda |
+| **Antes (dev+prod separados)** | ~260 | ~7.800 | manter só-dev reduz banda pela metade |
+
+Prod build **não bate na API** (proxy não resolve no builder, skip direct, ISR popula depois).
 
 ---
 
@@ -635,7 +648,7 @@ tail /home/ivan/papodebola-next/logs/promote-audit.log
 ```
 
 ### Container dev não responde mas prod tá OK
-Proxy vai falhar → prod faz fallback direto pra AllSportsApi → gasta quota. Arrume o dev ASAP ou desative temporariamente `SPORTS_PROXY_URL` no `.env.local` do prod e recrie o container.
+Proxy vai falhar → prod faz fallback direto pra AllSportsApi → dois ambientes batendo na API (mais banda + risco de passar de 6 req/s e tomar 429). Arrume o dev ASAP ou desative temporariamente `SPORTS_PROXY_URL` no `.env.local` do prod e recrie o container.
 
 ### Logos de times/jogadores sumiram (escudos quebrados em prod e dev)
 

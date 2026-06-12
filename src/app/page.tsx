@@ -1,5 +1,6 @@
 import { WorldCupBanner } from "@/components/world-cup-banner";
 import { MatchBar } from "@/components/match-bar/match-bar";
+import { CopaLiveProvider } from "@/components/world-cup/copa-live-provider";
 // Destaques e Melhores Momentos desativado temporariamente (reativar depois).
 // import { HighlightsSection } from "@/components/home/highlights-section";
 import { NewsSection } from "@/components/home/news-section";
@@ -76,7 +77,16 @@ export default async function HomePage() {
   return (
     <>
       <WorldCupBanner />
-      <MatchBar todayMatches={barMatches} cbfUpcoming={cbfUpcoming} />
+      {/* Com jogo da Copa hoje, embrulha a barra no provider de placar ao vivo
+          (mesmo polling de 15s da tabela da Copa, endpoint cacheado: N clientes
+          = 1 chamada à API). Sem jogo da Copa, barra normal sem polling. */}
+      {copaToday.length ? (
+        <CopaLiveProvider>
+          <MatchBar todayMatches={barMatches} cbfUpcoming={cbfUpcoming} />
+        </CopaLiveProvider>
+      ) : (
+        <MatchBar todayMatches={barMatches} cbfUpcoming={cbfUpcoming} />
+      )}
 
       <div className="mx-auto max-w-[1240px] px-4 py-6">
         <div className="grid grid-cols-1 lg:grid-cols-[1fr_340px] gap-6">
