@@ -1,7 +1,5 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
-import Link from "next/link";
-import { ArrowLeft } from "lucide-react";
 import { PageBreadcrumb } from "@/components/seo/page-breadcrumb";
 import { LiveMatch } from "@/components/world-cup/live-match";
 import { resolveWorldCupMatch, getMatchDetail, getMatchGroup } from "@/lib/data/match-detail";
@@ -51,14 +49,6 @@ export default async function JogoCopaPage({
           { label: `${fixture.home} x ${fixture.away}` },
         ]}
       />
-
-      <Link
-        href="/futebol/copa-do-mundo"
-        className="mb-4 inline-flex items-center gap-1 text-sm font-medium text-green hover:underline"
-      >
-        <ArrowLeft className="h-4 w-4" />
-        Voltar para a Copa do Mundo
-      </Link>
 
       <h1 className="mb-4 text-lg font-bold text-text-primary">
         {fixture.home} x {fixture.away}
