@@ -681,10 +681,28 @@ export function LiveMatch({
 
   useEffect(() => {
     if (event.statusType === "finished") return;
-    const intervalMs = event.statusType === "inprogress" ? 12000 : 60000;
-    const t = setInterval(poll, intervalMs);
-    return () => clearInterval(t);
-  }, [event.statusType, poll]);
+    let cancelled = false;
+    let timer: ReturnType<typeof setTimeout>;
+    const nextDelay = () => {
+      if (event.statusType === "inprogress") return 12000; // ao vivo: 12s
+      // pré-jogo: aperta pra 15s perto do apito (≤5min), senão 45s
+      const toKickoff = event.startTimestamp - Date.now() / 1000;
+      return toKickoff <= 300 ? 15000 : 45000;
+    };
+    const tick = async () => {
+      if (cancelled) return;
+      await poll();
+      if (!cancelled) schedule();
+    };
+    const schedule = () => {
+      timer = setTimeout(tick, nextDelay());
+    };
+    schedule();
+    return () => {
+      cancelled = true;
+      clearTimeout(timer);
+    };
+  }, [event.statusType, event.startTimestamp, poll]);
 
   return (
     <div className="space-y-4">
