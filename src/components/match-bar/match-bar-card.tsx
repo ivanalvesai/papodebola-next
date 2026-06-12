@@ -1,7 +1,11 @@
+"use client";
+
 import Link from "next/link";
 import { TeamLogo } from "@/components/ui/team-logo";
+import { useLiveScore } from "@/components/world-cup/copa-live-provider";
 
 interface MatchBarCardProps {
+  id?: string;
   homeTeam: string;
   awayTeam: string;
   homeLogo: string | null;
@@ -15,7 +19,16 @@ interface MatchBarCardProps {
   href?: string;
 }
 
+// statusType do feed ao vivo (Sofascore) → status que o card entende.
+function mapLiveStatus(t: string): string {
+  if (t === "inprogress") return "live";
+  if (t === "finished") return "finished";
+  if (t === "notstarted") return "scheduled";
+  return "";
+}
+
 export function MatchBarCard({
+  id,
   homeTeam,
   awayTeam,
   homeLogo,
@@ -28,9 +41,20 @@ export function MatchBarCard({
   league,
   href,
 }: MatchBarCardProps) {
-  const isLive = status === "live";
-  const isFinished = status === "finished";
-  const hasScore = homeScore !== null && awayScore !== null;
+  // Placar ao vivo do CopaLiveProvider (polling 15s). Sem provider/sem jogo no
+  // mapa, `ls` é undefined e o card usa os valores do server render (ISR).
+  // O id vem como `api_<eventId>` (normalizeEvent); o mapa ao vivo é por eventId
+  // numérico do Sofascore, então tira o prefixo antes de converter.
+  const numericId = id ? Number(id.replace(/^api_/, "")) : -1;
+  const ls = useLiveScore(Number.isFinite(numericId) ? numericId : -1);
+  const homeScoreV = ls?.homeScore ?? homeScore;
+  const awayScoreV = ls?.awayScore ?? awayScore;
+  const statusV = ls ? mapLiveStatus(ls.statusType) || status : status;
+  const statusTextV = ls?.statusDesc || statusText;
+
+  const isLive = statusV === "live";
+  const isFinished = statusV === "finished";
+  const hasScore = homeScoreV !== null && awayScoreV !== null;
 
   const card = (
     <div
@@ -53,7 +77,7 @@ export function MatchBarCard({
           </span>
           {hasScore && (
             <span className={`text-sm font-bold ${isLive ? "text-red" : "text-text-primary"}`}>
-              {homeScore}
+              {homeScoreV}
             </span>
           )}
         </div>
@@ -66,7 +90,7 @@ export function MatchBarCard({
           </span>
           {hasScore && (
             <span className={`text-sm font-bold ${isLive ? "text-red" : "text-text-primary"}`}>
-              {awayScore}
+              {awayScoreV}
             </span>
           )}
         </div>
@@ -77,7 +101,7 @@ export function MatchBarCard({
         {isLive ? (
           <span className="inline-flex items-center gap-1 text-[10px] font-bold text-red uppercase">
             <span className="w-1.5 h-1.5 rounded-full bg-red animate-pulse" />
-            {statusText}
+            {statusTextV}
           </span>
         ) : isFinished ? (
           <span className="text-[10px] font-semibold text-text-muted">

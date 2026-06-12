@@ -105,6 +105,7 @@ export function MatchBar({ todayMatches, cbfUpcoming }: MatchBarProps) {
             matches.map((m) => (
               <MatchBarCard
                 key={m.id}
+                id={m.id}
                 homeTeam={m.homeTeam}
                 awayTeam={m.awayTeam}
                 homeLogo={m.homeLogo}
