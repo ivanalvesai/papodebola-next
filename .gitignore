@@ -53,3 +53,6 @@ docker-compose.override.yml
 # backups locais (ex: rebuild.sh.bak.TIMESTAMP criados ao editar no servidor)
 *.bak
 *.bak.*
+
+# Anthropic key (translation test) - NUNCA commitar
+papo-de-bola-ipa.txt

@@ -1,13 +1,18 @@
 import fs from "node:fs";
 import path from "node:path";
 
-// Tradutor EN->PT via LibreTranslate self-hosted (sem custo de token).
-// Estratégia: a request NUNCA bloqueia esperando tradução. Retorna só o que já
-// está em cache; o que falta é traduzido em background (lotes pequenos) e fica
-// pronto pro próximo poll. Cache em disco no volume compartilhado (dev+prod).
-const LT_URL = process.env.LIBRETRANSLATE_URL; // ex: http://host.docker.internal:5000
-const CACHE_FILE = path.join(process.cwd(), "data", "translations-en-pt.json");
-const CHUNK = 12; // ~2s por lote no LibreTranslate
+// Tradutor EN->PT. Backends:
+//  - Claude (Anthropic) se ANTHROPIC_TRANSLATE_KEY setado  → qualidade boa
+//  - LibreTranslate self-hosted (LIBRETRANSLATE_URL) como fallback
+// A request NUNCA bloqueia: retorna só o cache; o resto traduz em background.
+// Cache em disco no volume compartilhado (dev+prod), separado por backend.
+const ANTHROPIC_KEY = process.env.ANTHROPIC_TRANSLATE_KEY;
+const LT_URL = process.env.LIBRETRANSLATE_URL;
+const USE_CLAUDE = !!ANTHROPIC_KEY;
+const BACKEND = USE_CLAUDE ? "claude" : "libre";
+const CACHE_FILE = path.join(process.cwd(), "data", `translations-${BACKEND}.json`);
+const CHUNK = USE_CLAUDE ? 25 : 12;
+const CLAUDE_MODEL = "claude-haiku-4-5-20251001";
 
 let cache: Record<string, string> | null = null;
 let dirty = false;
@@ -40,6 +45,7 @@ function saveCache() {
   }
 }
 
+// ---- backend LibreTranslate ----
 async function ltBatch(qs: string[]): Promise<string[] | null> {
   if (!LT_URL || qs.length === 0) return null;
   try {
@@ -57,6 +63,52 @@ async function ltBatch(qs: string[]): Promise<string[] | null> {
   }
 }
 
+// ---- backend Claude (Anthropic) ----
+async function claudeBatch(qs: string[]): Promise<string[] | null> {
+  if (!ANTHROPIC_KEY || qs.length === 0) return null;
+  const numbered = qs.map((q, i) => `${i + 1}. ${q}`).join("\n");
+  try {
+    const res = await fetch("https://api.anthropic.com/v1/messages", {
+      method: "POST",
+      headers: {
+        "x-api-key": ANTHROPIC_KEY,
+        "anthropic-version": "2023-06-01",
+        "content-type": "application/json",
+      },
+      body: JSON.stringify({
+        model: CLAUDE_MODEL,
+        max_tokens: 2048,
+        system:
+          "Você traduz narração de futebol do inglês para o português do Brasil. " +
+          "Tradução natural, fluida e concisa, como num lance a lance ao vivo. " +
+          "Mantenha nomes de jogadores, seleções e clubes exatamente como estão. " +
+          "Responda APENAS as traduções, uma por linha, no formato 'N. tradução', " +
+          "na mesma ordem e numeração da entrada, sem nenhum texto extra.",
+        messages: [{ role: "user", content: numbered }],
+      }),
+      signal: AbortSignal.timeout(25000),
+    });
+    if (!res.ok) return null;
+    const data = await res.json();
+    const text: string = data?.content?.[0]?.text || "";
+    const out: string[] = new Array(qs.length).fill("");
+    for (const line of text.split("\n")) {
+      const m = line.match(/^\s*(\d+)[.)]\s*(.+)$/);
+      if (m) {
+        const idx = parseInt(m[1], 10) - 1;
+        if (idx >= 0 && idx < qs.length) out[idx] = m[2].trim();
+      }
+    }
+    return out;
+  } catch {
+    return null;
+  }
+}
+
+function translateBatch(qs: string[]): Promise<string[] | null> {
+  return USE_CLAUDE ? claudeBatch(qs) : ltBatch(qs);
+}
+
 // traduz em background (lotes), popula o cache; não é aguardado pela request
 async function backgroundTranslate(texts: string[]) {
   const todo = texts.filter((t) => !inFlight.has(t));
@@ -66,7 +118,7 @@ async function backgroundTranslate(texts: string[]) {
   try {
     for (let i = 0; i < todo.length; i += CHUNK) {
       const chunk = todo.slice(i, i + CHUNK);
-      const tr = await ltBatch(chunk);
+      const tr = await translateBatch(chunk);
       if (tr) {
         chunk.forEach((t, j) => {
           const v = tr[j];
