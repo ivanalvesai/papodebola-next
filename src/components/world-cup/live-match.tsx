@@ -682,17 +682,19 @@ export function LiveMatch({
     return () => window.removeEventListener("pointerdown", unlock);
   }, []);
 
-  // toca o som de torcida quando o placar aumenta (gol), exceto no carregamento
+  // toca o som de torcida quando SAI UM GOL NOVO (recorde de gols), no placar.
+  // Usa highwater (maior total já visto) pra NÃO tocar 2x se o placar oscilar
+  // (1→0→1 por inconsistência de cache/provedor entre polls).
   useEffect(() => {
     const total = (event.homeScore ?? 0) + (event.awayScore ?? 0);
     if (prevGoals.current == null) {
       prevGoals.current = total;
       return;
     }
-    if (total > prevGoals.current && soundOnRef.current && event.statusType !== "notstarted") {
-      playGoalRoar();
+    if (total > prevGoals.current) {
+      if (soundOnRef.current && event.statusType !== "notstarted") playGoalRoar();
+      prevGoals.current = total; // só sobe o recorde; placar caindo não re-arma o som
     }
-    prevGoals.current = total;
   }, [event.homeScore, event.awayScore, event.statusType]);
 
   const poll = useCallback(async () => {
