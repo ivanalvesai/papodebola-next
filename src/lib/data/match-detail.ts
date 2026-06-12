@@ -2,6 +2,7 @@ import { fetchAllSports } from "@/lib/api/allsports";
 import { translateCountry } from "@/lib/i18n/countries";
 import { translateStatus } from "@/lib/translations";
 import { matchDateSlug, matchPairSlug } from "@/lib/world-cup-match-url";
+import { translateEnPt } from "@/lib/services/translate";
 import { getWorldCupStandings } from "./standings";
 import type { StandingsGroup } from "@/types/standings";
 
@@ -162,6 +163,7 @@ export interface MatchCommentary {
   id: number;
   type: string;
   text: string;
+  textPt: string | null; // texto traduzido pra PT-BR (LibreTranslate)
   isHome: boolean | null;
   player: string | null;
   playerId: number | null;
@@ -321,6 +323,7 @@ function normalizeCommentary(raw: any): MatchCommentary[] {
     id: c?.id ?? c?.sequence ?? 0,
     type: c?.type || "",
     text: c?.text || "",
+    textPt: null,
     isHome: typeof c?.isHome === "boolean" ? c.isHome : null,
     player: c?.player?.name || null,
     playerId: c?.player?.id || null,
@@ -345,6 +348,7 @@ function incidentToFeedItem(i: any): MatchCommentary {
     id: 1_000_000_000 + (i?.id || 0), // offset pra não colidir com id de commentary
     type,
     text: "",
+    textPt: null,
     isHome: typeof i?.isHome === "boolean" ? i.isHome : null,
     player: i?.player?.name || null,
     playerId: i?.player?.id || null,
@@ -376,6 +380,7 @@ function mergeFeed(commentary: MatchCommentary[], incRaw: any): MatchCommentary[
     if ((x.type === "yellowCard" || x.type === "redCard") && !x.reason && x.player && cardReason[x.player])
       x.reason = cardReason[x.player];
   }
+  // (a tradução do texto é aplicada depois, em translateFeed)
 
   for (const raw of incs) {
     const item = incidentToFeedItem(raw);
@@ -398,6 +403,15 @@ function mergeFeed(commentary: MatchCommentary[], incRaw: any): MatchCommentary[
     else result.splice(idx, 0, item);
   }
   return result;
+}
+
+// Traduz o texto (EN) de cada lance pra PT-BR via LibreTranslate (com cache).
+async function translateFeed(feed: MatchCommentary[]): Promise<MatchCommentary[]> {
+  const texts = feed.map((f) => f.text).filter((t): t is string => !!t);
+  if (!texts.length) return feed;
+  const map = await translateEnPt(texts);
+  for (const f of feed) if (f.text && map[f.text]) f.textPt = map[f.text];
+  return feed;
 }
 
 // TTL curto p/ ao vivo, longo p/ encerrado. Recebe o status já conhecido.
@@ -425,7 +439,7 @@ export async function getMatchDetail(id: number): Promise<MatchDetail | null> {
   return {
     event,
     incidents: normalizeIncidents(incRaw),
-    commentary: mergeFeed(normalizeCommentary(commRaw), incRaw),
+    commentary: await translateFeed(mergeFeed(normalizeCommentary(commRaw), incRaw)),
     home: normalizeLineup(lineRaw?.home),
     away: normalizeLineup(lineRaw?.away),
     lineupsConfirmed: !!lineRaw?.confirmed,
@@ -454,7 +468,7 @@ export async function getMatchLive(id: number): Promise<MatchLive | null> {
   return {
     event,
     incidents: normalizeIncidents(incRaw),
-    commentary: mergeFeed(normalizeCommentary(commRaw), incRaw),
+    commentary: await translateFeed(mergeFeed(normalizeCommentary(commRaw), incRaw)),
     stats: normalizeStats(statRaw),
   };
 }

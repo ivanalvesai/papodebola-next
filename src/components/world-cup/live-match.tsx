@@ -255,6 +255,7 @@ function CommentaryRow({ c, event }: { c: MatchCommentary; event: MatchEvent }) 
               {(isYellow || isRed) && c.reason && (
                 <p className="text-[11px] text-text-muted">Motivo: {reasonPT(c.reason)}</p>
               )}
+              {c.textPt && <p className="mt-0.5 text-[11px] text-text-muted">{c.textPt}</p>}
             </div>
           )}
         </div>
@@ -270,8 +271,14 @@ function CommentaryRow({ c, event }: { c: MatchCommentary; event: MatchEvent }) 
       </span>
       {teamId > 0 ? <TeamLogo teamId={teamId} size={18} /> : <span className="w-[18px] shrink-0" />}
       <p className="min-w-0 flex-1 text-sm text-text-primary">
-        {info.label}
-        {c.player && <span className="text-text-muted"> — {c.player}</span>}
+        {c.textPt ? (
+          c.textPt
+        ) : (
+          <>
+            {info.label}
+            {c.player && <span className="text-text-muted"> — {c.player}</span>}
+          </>
+        )}
       </p>
     </div>
   );
