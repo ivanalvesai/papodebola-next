@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import Link from "next/link";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { TeamLogo } from "@/components/ui/team-logo";
@@ -115,24 +115,6 @@ function MatchMini({ m }: { m: ChampionshipMatch }) {
   const t = br(m.timestamp);
   const href = worldCupMatchHref(m.timestamp, m.homeId, m.awayId, m.home, m.away);
 
-  // "Veja como foi": sinaliza que o card leva pra página do jogo (lance a lance,
-  // estatísticas). Aparece ~1h depois do fim. Como não temos o horário exato do
-  // apito final, estimamos: jogo de grupo dura ~2h, então kickoff + 3h ≈ 1h após
-  // o fim. Calculado só no cliente (após mount) pra não quebrar a hidratação com
-  // o "agora", e re-checado a cada minuto enquanto a página está aberta.
-  const [showRecap, setShowRecap] = useState(false);
-  useEffect(() => {
-    if (!isFinished) {
-      setShowRecap(false);
-      return;
-    }
-    const recapAtMs = (m.timestamp + 3 * 3600) * 1000;
-    const tick = () => setShowRecap(Date.now() >= recapAtMs);
-    tick();
-    const id = setInterval(tick, 60000);
-    return () => clearInterval(id);
-  }, [isFinished, m.timestamp]);
-
   return (
     <div className="border-b border-border-light last:border-0">
       {/* Confronto inteiro clicável -> página do jogo */}
@@ -169,9 +151,9 @@ function MatchMini({ m }: { m: ChampionshipMatch }) {
           </div>
         )}
 
-        {/* "Veja como foi": ~1h após o fim, sinaliza que dá pra clicar e ver o
-            lance a lance / estatísticas do jogo. */}
-        {showRecap && !isLive && (
+        {/* "Veja como foi": assim que o jogo termina, sinaliza que dá pra clicar
+            e ver o lance a lance / estatísticas do jogo. */}
+        {isFinished && (
           <div className="mt-1.5 flex justify-center">
             <span className="inline-flex items-center gap-1 rounded-full border border-green/40 bg-green/10 px-2.5 py-1 text-[11px] font-bold text-green">
               Veja como foi
