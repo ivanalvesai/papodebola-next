@@ -107,6 +107,7 @@ function MatchMini({ m }: { m: ChampionshipMatch }) {
   const ls = useLiveScore(m.id);
   const statusType = ls?.statusType || m.status;
   const isLive = statusType === "inprogress";
+  const isFinished = statusType === "finished";
   const homeScore = ls?.homeScore ?? m.homeScore;
   const awayScore = ls?.awayScore ?? m.awayScore;
   const statusDesc = ls?.statusDesc || m.statusDesc;
@@ -145,6 +146,17 @@ function MatchMini({ m }: { m: ChampionshipMatch }) {
             <span className="inline-flex items-center gap-1.5 rounded-full bg-red px-2.5 py-1 text-[11px] font-bold text-white">
               <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-white" />
               AO VIVO {statusDesc && <span className="font-semibold">&middot; {statusDesc}</span>}
+              <ChevronRight className="h-3 w-3" />
+            </span>
+          </div>
+        )}
+
+        {/* "Veja como foi": assim que o jogo termina, sinaliza que dá pra clicar
+            e ver o lance a lance / estatísticas do jogo. */}
+        {isFinished && (
+          <div className="mt-1.5 flex justify-center">
+            <span className="inline-flex items-center gap-1 rounded-full border border-green/40 bg-green/10 px-2.5 py-1 text-[11px] font-bold text-green">
+              Veja como foi
               <ChevronRight className="h-3 w-3" />
             </span>
           </div>
