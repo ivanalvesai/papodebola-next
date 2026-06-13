@@ -72,6 +72,7 @@ function normalizeEvent(event: any): NormalizedMatch {
     awayLogo: awayId ? `/img/team/${awayId}/image` : null,
     time: ts.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit", timeZone: "America/Sao_Paulo" }),
     date: ts.toISOString().split("T")[0],
+    timestamp: event.startTimestamp || 0,
     status,
     statusText,
     minute,
@@ -82,11 +83,13 @@ function normalizeEvent(event: any): NormalizedMatch {
   };
 }
 
-export async function getTodayMatches(): Promise<NormalizedMatch[]> {
-  const now = new Date();
-  const d = now.getDate();
-  const m = now.getMonth() + 1;
-  const y = now.getFullYear();
+// Jogos de uma data (offset em dias a partir de hoje). offset=0 hoje, 1 amanha, etc.
+async function getMatchesOnOffset(offset: number): Promise<NormalizedMatch[]> {
+  const dt = new Date();
+  dt.setDate(dt.getDate() + offset);
+  const d = dt.getDate();
+  const m = dt.getMonth() + 1;
+  const y = dt.getFullYear();
 
   const data = await fetchAllSports<any>(
     `matches/${d}/${m}/${y}`,
@@ -97,20 +100,30 @@ export async function getTodayMatches(): Promise<NormalizedMatch[]> {
   return data.events.map(normalizeEvent);
 }
 
+export async function getTodayMatches(): Promise<NormalizedMatch[]> {
+  return getMatchesOnOffset(0);
+}
+
 export async function getTomorrowMatches(): Promise<NormalizedMatch[]> {
-  const tomorrow = new Date();
-  tomorrow.setDate(tomorrow.getDate() + 1);
-  const d = tomorrow.getDate();
-  const m = tomorrow.getMonth() + 1;
-  const y = tomorrow.getFullYear();
+  return getMatchesOnOffset(1);
+}
 
-  const data = await fetchAllSports<any>(
-    `matches/${d}/${m}/${y}`,
-    3600
-  );
-
-  if (!data?.events) return [];
-  return data.events.map(normalizeEvent);
+// Barra da home durante a Copa: jogos da Copa de hoje + proximos 2 dias, sem
+// duplicar e ordenados por horario real. Mostra os jogos de madrugada (ex: 01:00
+// do dia seguinte) com a data no card, pra ninguem perder por causa do horario.
+export async function getWorldCupBarMatches(): Promise<NormalizedMatch[]> {
+  const days = await Promise.all([0, 1, 2].map((o) => getMatchesOnOffset(o).catch(() => [])));
+  const seen = new Set<string>();
+  const wc: NormalizedMatch[] = [];
+  for (const list of days) {
+    for (const match of list) {
+      if (match.href && !seen.has(match.id)) {
+        seen.add(match.id);
+        wc.push(match);
+      }
+    }
+  }
+  return wc.sort((a, b) => (a.timestamp || 0) - (b.timestamp || 0));
 }
 
 export async function getLiveMatches(): Promise<NormalizedMatch[]> {

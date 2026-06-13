@@ -33,13 +33,19 @@ export function MatchBar({ todayMatches, cbfUpcoming }: MatchBarProps) {
     }
   }
 
-  // Ordena os jogos de hoje por relevancia (status) e, dentro do grupo, por horario.
+  // Ordena por relevancia (status) e, dentro do grupo, por horario REAL (timestamp).
+  // Usar timestamp e nao a string "HH:MM" porque a barra pode ter jogos de dias
+  // diferentes (madrugada do dia seguinte) — senao 01:00 de amanha viria antes de
+  // 19:00 de hoje. Fallback pro horario textual se faltar timestamp.
   const todaySorted = useMemo(
     () =>
       [...todayMatches].sort((a, b) => {
         const pa = STATUS_PRIORITY[a.status] ?? 2;
         const pb = STATUS_PRIORITY[b.status] ?? 2;
         if (pa !== pb) return pa - pb;
+        const ta = a.timestamp || 0;
+        const tb = b.timestamp || 0;
+        if (ta && tb && ta !== tb) return ta - tb;
         return a.time.localeCompare(b.time);
       }),
     [todayMatches]
@@ -113,6 +119,7 @@ export function MatchBar({ todayMatches, cbfUpcoming }: MatchBarProps) {
                 homeScore={m.homeScore}
                 awayScore={m.awayScore}
                 time={m.time}
+                timestamp={m.timestamp}
                 status={m.status}
                 statusText={m.statusText}
                 league={m.league}
