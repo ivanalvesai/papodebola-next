@@ -13,6 +13,7 @@ interface MatchBarCardProps {
   homeScore: number | null;
   awayScore: number | null;
   time: string;
+  timestamp?: number;
   status: string;
   statusText: string;
   league: string;
@@ -36,6 +37,7 @@ export function MatchBarCard({
   homeScore,
   awayScore,
   time,
+  timestamp,
   status,
   statusText,
   league,
@@ -55,6 +57,17 @@ export function MatchBarCard({
   const isLive = statusV === "live";
   const isFinished = statusV === "finished";
   const hasScore = homeScoreV !== null && awayScoreV !== null;
+
+  // Data do jogo (dd/MM em horario de Brasilia). A barra pode ter jogos de dias
+  // diferentes (madrugada do dia seguinte), entao mostra a data junto do horario
+  // pra deixar claro que tal jogo nao e hoje. timeZone fixo => sem mismatch de hidratacao.
+  const dateLabel = timestamp
+    ? new Date(timestamp * 1000).toLocaleDateString("pt-BR", {
+        day: "2-digit",
+        month: "2-digit",
+        timeZone: "America/Sao_Paulo",
+      })
+    : "";
 
   const card = (
     <div
@@ -109,7 +122,7 @@ export function MatchBarCard({
           </span>
         ) : (
           <span className="text-xs font-semibold text-text-secondary">
-            {time || statusText}
+            {dateLabel && time ? `${dateLabel} · ${time}` : time || statusText}
           </span>
         )}
       </div>

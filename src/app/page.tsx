@@ -12,7 +12,7 @@ import { NextMatchWidget } from "@/components/sidebar/next-match-widget";
 import { RecentResultsWidget } from "@/components/sidebar/recent-results-widget";
 import { MyTeamWidget } from "@/components/sidebar/my-team-widget";
 
-import { getTodayMatches } from "@/lib/data/matches";
+import { getTodayMatches, getWorldCupBarMatches } from "@/lib/data/matches";
 import { getCBFUpcomingMatches } from "@/lib/data/cbf-calendar";
 import { getTransfers } from "@/lib/data/home"; // getHighlights desativado (ver Destaques)
 import { getLatestArticles } from "@/lib/data/articles";
@@ -28,6 +28,7 @@ export const revalidate = 1800;
 export default async function HomePage() {
   const [
     todayMatches,
+    copaBar,
     cbfUpcoming,
     // highlights,  // Destaques desativado temporariamente
     transfers,
@@ -38,6 +39,7 @@ export default async function HomePage() {
     champData,
   ] = await Promise.all([
     getTodayMatches().catch(() => []),
+    getWorldCupBarMatches().catch(() => []),
     getCBFUpcomingMatches().catch(() => []),
     // getHighlights().catch(() => []),  // Destaques desativado temporariamente
     getTransfers().catch(() => []),
@@ -69,9 +71,10 @@ export default async function HomePage() {
     }
   }
 
-  // Durante a Copa, a barra de cima mostra os jogos da Copa do dia (com link pra
-  // página do jogo ao vivo). Sem jogos da Copa hoje, cai pros jogos gerais.
-  const copaToday = todayMatches.filter((m) => m.href);
+  // Durante a Copa, a barra de cima mostra os jogos da Copa de hoje + proximos 2
+  // dias (com link pra página do jogo ao vivo), ordenados por horario real e com
+  // a data no card. Sem jogos da Copa, cai pros jogos gerais de hoje.
+  const copaToday = copaBar;
   const barMatches = copaToday.length ? copaToday : todayMatches;
 
   return (

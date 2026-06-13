@@ -12,6 +12,7 @@ export interface NormalizedMatch {
   awayLogo: string | null;
   time: string;
   date: string;
+  timestamp: number; // startTimestamp do evento (segundos) — usado pra ordenar cronologicamente
   status: "live" | "scheduled" | "finished" | "halftime" | "postponed" | "cancelled";
   statusText: string;
   minute: string;
