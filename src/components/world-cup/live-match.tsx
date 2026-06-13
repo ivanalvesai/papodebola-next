@@ -69,6 +69,22 @@ function playGoalRoar() {
     /* navegador bloqueou o áudio: ignora */
   }
 }
+// destrava o Web Audio no iOS: tocar um buffer silencioso DENTRO de um gesto do
+// usuário é o que realmente libera o áudio no Safari mobile (resume() sozinho
+// às vezes não basta).
+function unlockAudio() {
+  const ctx = getAudioCtx();
+  if (!ctx) return;
+  try {
+    const buf = ctx.createBuffer(1, 1, ctx.sampleRate);
+    const src = ctx.createBufferSource();
+    src.buffer = buf;
+    src.connect(ctx.destination);
+    src.start(0);
+  } catch {
+    /* ignora */
+  }
+}
 
 // ---- cronômetro ao vivo (minuto do jogo) ----
 function useTicker(active: boolean) {
@@ -677,7 +693,7 @@ export function LiveMatch({
 
   // desbloqueia o áudio no 1º toque/clique do usuário (exigência dos navegadores)
   useEffect(() => {
-    const unlock = () => getAudioCtx();
+    const unlock = () => unlockAudio();
     window.addEventListener("pointerdown", unlock, { once: true });
     return () => window.removeEventListener("pointerdown", unlock);
   }, []);
@@ -743,8 +759,10 @@ export function LiveMatch({
         mounted={mounted}
         soundOn={soundOn}
         onToggleSound={() => {
-          getAudioCtx(); // gesto do usuário: desbloqueia o áudio
-          setSoundOn((s) => !s);
+          const next = !soundOn;
+          unlockAudio(); // gesto do usuário: desbloqueia o áudio (robusto no iOS)
+          if (next) playGoalRoar(); // ao LIGAR, toca o som na hora pra confirmar
+          setSoundOn(next);
         }}
       />
 
