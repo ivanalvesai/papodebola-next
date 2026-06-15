@@ -103,7 +103,7 @@ export function MainNav() {
               <div className="absolute top-full left-0 bg-surface border border-border-custom rounded-lg shadow-lg p-2 z-50 min-w-[220px]">
                 <ul className="space-y-0.5">
                   {[
-                    { label: "Jogos de Hoje", href: "/agenda" },
+                    { label: "Agenda do Futebol", href: "/agenda/futebol" },
                     { label: "Onde Assistir", href: "/futebol/onde-assistir" },
                   ].map((l) => (
                     <li key={l.href}>
@@ -174,17 +174,17 @@ export function MainNav() {
             )}
           </li>
 
-          {/* Jogos de Hoje (label aponta pra /agenda — CBF calendar) */}
+          {/* Agenda geral multiesporte (/agenda) */}
           <li className="hidden sm:block">
             <Link
               href="/agenda"
               className={`block px-3 py-3 font-semibold whitespace-nowrap transition-colors ${
-                pathname === "/agenda"
+                pathname === "/agenda" || pathname.startsWith("/agenda/")
                   ? "text-green border-b-2 border-green"
                   : "text-text-secondary hover:text-green"
               }`}
             >
-              Jogos de Hoje
+              Agenda
             </Link>
           </li>
 

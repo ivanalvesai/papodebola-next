@@ -87,7 +87,7 @@ export function MatchBar({ todayMatches, cbfUpcoming }: MatchBarProps) {
         </button>
         <div className="flex-1" />
         <Link
-          href="/agenda"
+          href="/agenda/futebol"
           className="text-xs text-green font-semibold hover:text-green-hover transition-colors"
         >
           Ver todos &rsaquo;
