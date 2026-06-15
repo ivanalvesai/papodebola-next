@@ -36,6 +36,7 @@ function toCard(e: AgendaEvent): MatchBarCardProps {
     status,
     statusText: e.status || (status === "live" ? "Ao Vivo" : ""),
     league: e.league,
+    href: e.href,
   };
 }
 

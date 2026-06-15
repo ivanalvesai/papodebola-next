@@ -1,6 +1,8 @@
 import { fetchAllSports } from "@/lib/api/allsports";
 import { translateStatus } from "@/lib/translations";
 import { translateCountry } from "@/lib/i18n/countries";
+import { SELECAO_BY_ID } from "@/lib/selecoes";
+import { worldCupMatchHref } from "@/lib/world-cup-match-url";
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
@@ -60,6 +62,7 @@ export interface AgendaEvent {
   statusType: string;
   time: string;
   timestamp: number;
+  href?: string; // link pra página do jogo (só jogos da Copa entre seleções)
 }
 
 export interface AgendaLeagueGroup {
@@ -85,22 +88,37 @@ function shouldTranslateNames(sportSlug: string, leagueId: number | undefined): 
 function normalize(event: any, sportSlug: string): AgendaEvent {
   const ts = event.startTimestamp ? new Date(event.startTimestamp * 1000) : new Date();
   const leagueId = event.tournament?.uniqueTournament?.id;
+  const isWC = sportSlug === "futebol" && leagueId === WORLD_CUP_ID;
   const translate = shouldTranslateNames(sportSlug, leagueId);
   const homeName = event.homeTeam?.name || event.homeTeam?.shortName || "";
   const awayName = event.awayTeam?.name || event.awayTeam?.shortName || "";
+  const homeId = event.homeTeam?.id || 0;
+  const awayId = event.awayTeam?.id || 0;
+
+  // Jogo da Copa entre seleções → link pra página do jogo (usa o nome ORIGINAL
+  // como fallback do slug, já que selecaoSlugById prefere o id de qualquer forma).
+  const href =
+    isWC && SELECAO_BY_ID[homeId] && SELECAO_BY_ID[awayId]
+      ? worldCupMatchHref(event.startTimestamp || 0, homeId, awayId, homeName, awayName)
+      : undefined;
+
   return {
     id: event.id,
-    league: event.tournament?.uniqueTournament?.name || event.tournament?.name || "",
+    // "FIFA World Cup" vem em inglês da API — exibe "Copa do Mundo" (igual à home).
+    league: isWC
+      ? "Copa do Mundo"
+      : event.tournament?.uniqueTournament?.name || event.tournament?.name || "",
     home: translate ? translateCountry(homeName) : homeName,
     away: translate ? translateCountry(awayName) : awayName,
-    homeId: event.homeTeam?.id || 0,
-    awayId: event.awayTeam?.id || 0,
+    homeId,
+    awayId,
     homeScore: event.homeScore?.current ?? null,
     awayScore: event.awayScore?.current ?? null,
     status: translateStatus(event.status?.description) || translateStatus(event.status?.type) || "",
     statusType: event.status?.type || "",
     time: ts.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit", timeZone: "America/Sao_Paulo" }),
     timestamp: event.startTimestamp || 0,
+    href,
   };
 }
 
