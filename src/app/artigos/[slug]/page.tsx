@@ -2,12 +2,47 @@ import type { Metadata } from "next";
 import Image from "next/image";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { Clock, Pen, BookOpen, Tag, Trophy } from "lucide-react";
+import { Clock, Pen, BookOpen, Tag, Trophy, Radio, CalendarDays, Newspaper } from "lucide-react";
 import { getArticleBySlug, getRelatedArticles } from "@/lib/data/articles";
 import { slugifyCategory, WP_CATEGORY_BY_SLUG } from "@/lib/config";
+import { getBrasileiraoStandings } from "@/lib/data/standings";
 import { ShareButtons } from "@/components/article/share-buttons";
 import { ArticleSchema } from "@/components/seo/article-schema";
 import { PageBreadcrumb } from "@/components/seo/page-breadcrumb";
+import { StandingsWidget } from "@/components/sidebar/standings-widget";
+
+// Sidebar de engajamento do artigo (desktop): empurra o leitor de SEO pra
+// próxima sessão em vez de virar beco sem saída. Reusa a classificação real.
+function ArticleSidebar({ standings }: { standings: Awaited<ReturnType<typeof getBrasileiraoStandings>> }) {
+  const ctas = [
+    { href: "/jogos-de-hoje", label: "Jogos de hoje", icon: CalendarDays },
+    { href: "/futebol/copa-do-mundo", label: "Copa do Mundo 2026", icon: Trophy },
+    { href: "/ao-vivo", label: "Placar ao vivo", icon: Radio },
+    { href: "/noticias", label: "Últimas notícias", icon: Newspaper },
+  ];
+  return (
+    <div className="space-y-4">
+      <div className="rounded-lg border border-border-custom bg-surface p-4">
+        <h3 className="mb-3 text-xs font-bold uppercase tracking-wider text-text-muted">
+          Continue no Papo de Bola
+        </h3>
+        <div className="space-y-1">
+          {ctas.map((c) => (
+            <Link
+              key={c.href}
+              href={c.href}
+              className="flex items-center gap-2 rounded-md px-2 py-2 text-sm font-semibold text-text-secondary transition-colors hover:bg-green-light hover:text-green"
+            >
+              <c.icon className="h-4 w-4 shrink-0 text-green" />
+              {c.label}
+            </Link>
+          ))}
+        </div>
+      </div>
+      {standings.length > 0 && <StandingsWidget standings={standings} />}
+    </div>
+  );
+}
 
 export const revalidate = 1800;
 
@@ -88,11 +123,10 @@ export default async function ArticlePage({
   const article = await getArticleBySlug(slug);
   if (!article) notFound();
 
-  const related = await getRelatedArticles(
-    article.category,
-    article.slug,
-    4
-  ).catch(() => []);
+  const [related, standings] = await Promise.all([
+    getRelatedArticles(article.category, article.slug, 4).catch(() => []),
+    getBrasileiraoStandings().catch(() => []),
+  ]);
 
   const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://papodebola.com.br";
   const articleUrl = `${siteUrl}/artigos/${article.slug}`;
@@ -175,52 +209,75 @@ export default async function ArticlePage({
         </div>
       </section>
 
-      {/* Content */}
-      <div className="mx-auto max-w-[680px] px-4 py-12">
-        <article
-          className="prose-article"
-          dangerouslySetInnerHTML={{ __html: bodyHtml }}
-        />
-      </div>
+      {/* Content + sidebar de engajamento (sidebar só no desktop) */}
+      <div className="mx-auto max-w-[1040px] px-4 py-12 lg:grid lg:grid-cols-[minmax(0,1fr)_300px] lg:gap-10 lg:items-start">
+        <div className="mx-auto w-full max-w-[680px] min-w-0 lg:mx-0 lg:max-w-none">
+          <article
+            className="prose-article"
+            dangerouslySetInnerHTML={{ __html: bodyHtml }}
+          />
 
-      {/* Tags */}
-      {article.tags && article.tags.length > 0 && (
-        <div className="mx-auto max-w-[680px] px-4 pb-6">
-          <div className="flex gap-2 flex-wrap">
-            {article.tags.map((tag) => (
+          {/* Tags */}
+          {article.tags && article.tags.length > 0 && (
+            <div className="flex gap-2 flex-wrap pt-8">
+              {article.tags.map((tag) => (
+                <Link
+                  key={tag}
+                  href={`/noticias?cat=${encodeURIComponent(tag)}`}
+                  className="inline-flex items-center gap-1 px-3.5 py-1.5 bg-body border border-border-custom rounded-full text-xs font-semibold text-text-secondary hover:bg-green hover:text-white hover:border-green transition-colors"
+                >
+                  <Tag className="h-3 w-3" />
+                  {tag}
+                </Link>
+              ))}
               <Link
-                key={tag}
-                href={`/noticias?cat=${encodeURIComponent(tag)}`}
+                href={catHref}
                 className="inline-flex items-center gap-1 px-3.5 py-1.5 bg-body border border-border-custom rounded-full text-xs font-semibold text-text-secondary hover:bg-green hover:text-white hover:border-green transition-colors"
               >
-                <Tag className="h-3 w-3" />
-                {tag}
+                <Trophy className="h-3 w-3" />
+                {article.category}
               </Link>
-            ))}
-            <Link
-              href={catHref}
-              className="inline-flex items-center gap-1 px-3.5 py-1.5 bg-body border border-border-custom rounded-full text-xs font-semibold text-text-secondary hover:bg-green hover:text-white hover:border-green transition-colors"
-            >
-              <Trophy className="h-3 w-3" />
-              {article.category}
-            </Link>
+            </div>
+          )}
+
+          {/* Share */}
+          <div className="mt-8 border-t-2 border-border-custom pt-8">
+            <h4 className="text-xs font-semibold uppercase tracking-wider text-text-muted mb-4">
+              Compartilhar
+            </h4>
+            <ShareButtons url={articleUrl} title={article.rewrittenTitle} />
           </div>
         </div>
-      )}
 
-      {/* Share */}
-      <div className="mx-auto max-w-[680px] px-4 py-8 border-t-2 border-border-custom">
-        <h4 className="text-xs font-semibold uppercase tracking-wider text-text-muted mb-4">
-          Compartilhar
-        </h4>
-        <ShareButtons url={articleUrl} title={article.rewrittenTitle} />
+        <aside className="mt-10 hidden lg:mt-0 lg:block lg:sticky lg:top-4">
+          <ArticleSidebar standings={standings} />
+        </aside>
       </div>
 
       {/* Related */}
+      {/* CTAs de engajamento no mobile (a sidebar é só desktop) */}
+      <div className="mx-auto max-w-[680px] px-4 pb-2 lg:hidden">
+        <div className="flex flex-wrap gap-2">
+          {[
+            { href: "/jogos-de-hoje", label: "Jogos de hoje" },
+            { href: "/futebol/copa-do-mundo", label: "Copa do Mundo" },
+            { href: "/ao-vivo", label: "Placar ao vivo" },
+          ].map((c) => (
+            <Link
+              key={c.href}
+              href={c.href}
+              className="inline-flex items-center gap-1 rounded-full bg-green px-3.5 py-1.5 text-xs font-semibold text-white transition-opacity hover:opacity-90"
+            >
+              {c.label}
+            </Link>
+          ))}
+        </div>
+      </div>
+
       {related.length > 0 && (
         <div className="mx-auto max-w-[680px] px-4 py-8 border-t-2 border-border-custom">
           <h3 className="text-base font-bold uppercase text-text-primary mb-5">
-            Leia Tambem
+            Leia Também
           </h3>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             {related.map((r) => (

@@ -3,8 +3,12 @@ import { translateStatus } from "@/lib/translations";
 import { translateCountry } from "@/lib/i18n/countries";
 import { SELECAO_BY_ID } from "@/lib/selecoes";
 import { worldCupMatchHref } from "@/lib/world-cup-match-url";
+import { TOURNAMENTS } from "@/lib/config";
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
+
+// leagueId (uniqueTournament.id) → slug da página do campeonato em /futebol/[slug].
+const FUTEBOL_SLUG_BY_ID = new Map(Object.values(TOURNAMENTS).map((t) => [t.id, t.slug]));
 
 // Agenda GERAL multiesporte (curada): por dia, só as competições principais de
 // cada modalidade. Filtra por uniqueTournament.id do Sofascore — assim a agenda
@@ -95,12 +99,18 @@ function normalize(event: any, sportSlug: string): AgendaEvent {
   const homeId = event.homeTeam?.id || 0;
   const awayId = event.awayTeam?.id || 0;
 
-  // Jogo da Copa entre seleções → link pra página do jogo (usa o nome ORIGINAL
-  // como fallback do slug, já que selecaoSlugById prefere o id de qualquer forma).
-  const href =
-    isWC && SELECAO_BY_ID[homeId] && SELECAO_BY_ID[awayId]
-      ? worldCupMatchHref(event.startTimestamp || 0, homeId, awayId, homeName, awayName)
-      : undefined;
+  // Link do card: Copa → página do jogo (lance a lance); futebol não-Copa →
+  // página do campeonato (se tiver); outros esportes → página do esporte. Assim
+  // nenhum card é beco sem saída (recupera o 2º pageview).
+  let href: string | undefined;
+  if (isWC && SELECAO_BY_ID[homeId] && SELECAO_BY_ID[awayId]) {
+    href = worldCupMatchHref(event.startTimestamp || 0, homeId, awayId, homeName, awayName);
+  } else if (sportSlug === "futebol") {
+    const slug = FUTEBOL_SLUG_BY_ID.get(leagueId);
+    if (slug) href = `/futebol/${slug}`;
+  } else if (sportSlug) {
+    href = `/${sportSlug}`;
+  }
 
   return {
     id: event.id,
