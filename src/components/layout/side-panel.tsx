@@ -143,7 +143,10 @@ export function SidePanel() {
           <Link href="/futebol/gaucho" onClick={close} className="block px-5 py-2.5 text-sm text-text-secondary hover:bg-green-light hover:text-green transition-colors">
             Gaúcho
           </Link>
-          <Link href="/municipal" onClick={close} className="block px-5 py-2.5 text-sm text-text-secondary hover:bg-green-light hover:text-green transition-colors">
+          <Link href="/sp/santana-de-parnaiba" onClick={close} className="block px-5 py-2.5 text-sm text-text-secondary hover:bg-green-light hover:text-green transition-colors">
+            Santana de Parnaíba
+          </Link>
+          <Link href="/sp/santana-de-parnaiba/municipal" onClick={close} className="block px-5 py-2.5 text-sm text-text-secondary hover:bg-green-light hover:text-green transition-colors">
             Municipal (Santana de Parnaíba)
           </Link>
         </div>
