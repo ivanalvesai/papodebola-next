@@ -4,6 +4,7 @@ import { SportPageContent } from "@/components/sports/sport-page-content";
 export const revalidate = 86400;
 
 export const metadata: Metadata = {
+  alternates: { canonical: "/futebol-americano" },
   title: "Futebol Americano - NFL, Jogos e Super Bowl",
   description:
     "NFL, playoffs, Super Bowl e calendário completo. Jogos ao vivo, resultados e classificação de conferências.",

@@ -19,6 +19,7 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
   return {
     title: `Estatisticas do ${team.name} 2026 - Numeros e Desempenho`,
     description: `Estatisticas completas do ${team.name} na temporada 2026. Artilheiros, desempenho, classificacao e mais.`,
+    alternates: { canonical: `/futebol/times/${slug}/estatisticas` },
   };
 }
 

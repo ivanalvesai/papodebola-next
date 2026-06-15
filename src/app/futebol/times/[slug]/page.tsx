@@ -23,6 +23,7 @@ export async function generateMetadata({
   return {
     title: `${team.name} - Noticias, Jogos e Classificacao`,
     description: `Tudo sobre o ${team.name}: noticias, jogos de hoje, proximos jogos, escalacao, estatisticas e onde assistir ao vivo.`,
+    alternates: { canonical: `/futebol/times/${slug}` },
   };
 }
 

@@ -6,6 +6,7 @@ import { PageBreadcrumb } from "@/components/seo/page-breadcrumb";
 export const revalidate = 86400;
 
 export const metadata: Metadata = {
+  alternates: { canonical: "/basquete" },
   title: "Basquete - NBA, Resultados e Classificação",
   description:
     "Cobertura de basquete: NBA, campeonatos e jogos ao vivo. Resultados, classificação e calendário completo.",

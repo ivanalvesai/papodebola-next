@@ -3,7 +3,8 @@ import { Handshake, Mail } from "lucide-react";
 import { PageBreadcrumb } from "@/components/seo/page-breadcrumb";
 
 export const metadata: Metadata = {
-  title: "Parceiros - Papo de Bola",
+  alternates: { canonical: "/parceiros" },
+  title: "Parceiros",
   description:
     "Seja um parceiro do Papo de Bola. Divulgação, publieditoriais e parcerias comerciais.",
 };

@@ -26,6 +26,7 @@ export async function generateMetadata({
   return {
     title: article.rewrittenTitle,
     description: desc,
+    alternates: { canonical: `/artigos/${slug}` },
     openGraph: {
       title: article.rewrittenTitle,
       description: desc,

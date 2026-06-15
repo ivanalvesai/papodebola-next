@@ -19,6 +19,7 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
   return {
     title: `Proximos Jogos do ${team.name} - Calendario 2026`,
     description: `Calendario completo dos proximos jogos do ${team.name} em 2026. Datas, horarios, adversarios e campeonatos.`,
+    alternates: { canonical: `/futebol/times/${slug}/proximos-jogos` },
   };
 }
 

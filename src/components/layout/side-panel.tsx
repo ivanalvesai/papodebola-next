@@ -100,7 +100,7 @@ export function SidePanel() {
           <Link href="/noticias" onClick={close} className="block px-5 py-2.5 text-sm font-semibold text-text-primary hover:bg-green-light hover:text-green transition-colors">
             Notícias
           </Link>
-          <Link href="/agenda" onClick={close} className="block px-5 py-2.5 text-sm font-semibold text-text-primary hover:bg-green-light hover:text-green transition-colors">
+          <Link href="/jogos-de-hoje" onClick={close} className="block px-5 py-2.5 text-sm font-semibold text-text-primary hover:bg-green-light hover:text-green transition-colors">
             Jogos de Hoje
           </Link>
           <Link href="/futebol/selecao-brasileira" onClick={close} className="block px-5 py-2.5 text-sm font-semibold text-text-primary hover:bg-green-light hover:text-green transition-colors">

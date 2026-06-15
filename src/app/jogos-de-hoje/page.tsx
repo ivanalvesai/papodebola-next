@@ -10,8 +10,10 @@ import type { MatchBarCardProps } from "@/components/match-bar/match-bar-card";
 export const revalidate = 1800;
 
 export const metadata: Metadata = {
-  title: "Agenda Esportiva - Jogos de Hoje de Todos os Esportes",
-  description: "Agenda esportiva do dia: futebol, basquete, vôlei, NFL e mais. Horários (de Brasília) dos principais campeonatos, dia a dia.",
+  title: "Agenda de Jogos de Hoje",
+  description:
+    "Confira os jogos de hoje no Brasil e no mundo com cobertura completa no Papo de Bola.",
+  alternates: { canonical: "/jogos-de-hoje" },
 };
 
 function isoOf(dt: Date): string {
@@ -34,6 +36,7 @@ function toCard(e: AgendaEvent): MatchBarCardProps {
     status,
     statusText: e.status || (status === "live" ? "Ao Vivo" : ""),
     league: e.league,
+    href: e.href,
   };
 }
 
@@ -68,11 +71,11 @@ export default async function AgendaPage({
     <div className="mx-auto max-w-[1240px] px-4 py-8">
       <PageBreadcrumb
         className="mb-4"
-        items={[{ label: "Início", href: "/" }, { label: "Agenda" }]}
+        items={[{ label: "Início", href: "/" }, { label: "Jogos de Hoje" }]}
       />
       <h1 className="text-xl font-bold text-text-primary mb-4 flex items-center gap-2">
         <CalendarDays className="h-6 w-6 text-green" />
-        Agenda Esportiva
+        Jogos de Hoje
       </h1>
 
       <AgendaTabs active="geral" />
@@ -88,7 +91,7 @@ export default async function AgendaPage({
           return (
             <Link
               key={iso}
-              href={iso === todayISO ? "/agenda" : `/agenda?d=${iso}`}
+              href={iso === todayISO ? "/jogos-de-hoje" : `/jogos-de-hoje?d=${iso}`}
               scroll={false}
               className={`flex flex-col items-center shrink-0 w-[72px] py-2 rounded-lg border text-center transition-colors ${
                 isSel

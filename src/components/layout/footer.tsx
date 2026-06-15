@@ -31,7 +31,7 @@ export function Footer() {
                 </Link>
               </li>
               <li>
-                <Link href="/agenda" className="text-text-muted hover:text-white transition-colors">
+                <Link href="/jogos-de-hoje" className="text-text-muted hover:text-white transition-colors">
                   Jogos de Hoje
                 </Link>
               </li>

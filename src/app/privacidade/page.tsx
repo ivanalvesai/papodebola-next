@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Shield } from "lucide-react";
 
 export const metadata: Metadata = {
+  alternates: { canonical: "/privacidade" },
   title: "Politica de Privacidade",
   description: "Politica de Privacidade do Papo de Bola conforme a LGPD.",
 };
