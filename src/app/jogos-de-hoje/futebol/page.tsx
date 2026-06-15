@@ -9,8 +9,9 @@ export const revalidate = 43200;
 
 export const metadata: Metadata = {
   alternates: { canonical: "/jogos-de-hoje/futebol" },
-  title: "Agenda do Futebol Brasileiro - Jogos, Datas e Horários",
-  description: "Calendario completo do futebol brasileiro: Brasileirao Serie A e B e Copa do Brasil. Datas, horarios, rodadas e estadios.",
+  title: "Jogos de Futebol: Agenda, Datas e Horários",
+  description:
+    "Acompanhe os jogos de futebol de hoje no Brasil e no mundo com datas, horários e informações atualizadas.",
 };
 
 export default async function AgendaFutebolPage() {

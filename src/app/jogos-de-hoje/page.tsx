@@ -12,7 +12,7 @@ export const revalidate = 1800;
 export const metadata: Metadata = {
   title: "Agenda de Jogos de Hoje",
   description:
-    "Confira a agenda dos jogos de hoje e todos os jogos no Brasil e ao redor do mundo. Acesse papodebola.com.br",
+    "Confira os jogos de hoje no Brasil e no mundo com cobertura completa no Papo de Bola.",
   alternates: { canonical: "/jogos-de-hoje" },
 };
 
