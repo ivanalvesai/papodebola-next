@@ -5,34 +5,60 @@ import type { CBFMatch } from "@/types/match";
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
-// Team name → Sofascore ID mapping
+// Team name → Sofascore ID. IDs de Série A/B validados contra a classificação
+// (tournament 325/390) em 2026-06-15 — a numeração antiga da Série B estava errada
+// (ex: Avaí vinha vazio e Cuiabá pegava o escudo do Avaí).
 const TEAM_MAP: Record<string, number> = {
+  // Série A
   "Palmeiras": 1963, "Flamengo": 5981, "Corinthians": 1957, "São Paulo": 1981,
-  "Santos": 1968, "Fluminense": 1961, "Botafogo": 1958, "Vasco da Gama": 1974,
-  "Vasco": 1974, "Grêmio": 5926, "Internacional": 1966, "Atlético Mineiro": 1977,
-  "Atlético-MG": 1977, "Cruzeiro": 1954, "Bahia": 1955, "Fortaleza": 2020,
-  "Athletico Paranaense": 1967, "Athletico-PR": 1967, "Red Bull Bragantino": 1999,
-  "Bragantino": 1999, "Coritiba": 1982, "Goiás": 1996, "Ceará": 2001,
-  "Sport": 1947, "Vitória": 1962, "EC Vitória": 1962, "Juventude": 1998, "Cuiabá": 7315,
-  "América-MG": 1997, "Avaí": 2002, "Chapecoense": 21845, "Ponte Preta": 2004,
-  "Guarani": 2003, "CRB": 2006, "CSA": 2008, "Náutico": 1945,
-  "ABC": 1942, "Remo": 2012, "Sampaio Corrêa": 2012, "Londrina": 2013, "Operário-PR": 2014,
-  "Tombense": 7316, "Mirassol": 21982, "Novorizontino": 7317,
-  "Vila Nova": 2005, "Paysandu": 1964, "Ituano": 7318, "Amazonas": 390895,
-  "Athletic": 448023, "Botafogo-SP": 7319, "Ceará SC": 2001,
-  "Santos FC": 1968, "São Paulo FC": 1981, "Sport Recife": 1947,
-  "Fluminense FC": 1961, "Fortaleza EC": 2020,
+  "Santos": 1968, "Fluminense": 1961, "Botafogo": 1958, "Vasco da Gama": 1974, "Vasco": 1974,
+  "Grêmio": 5926, "Internacional": 1966, "Atlético Mineiro": 1977, "Atlético-MG": 1977,
+  "Cruzeiro": 1954, "Bahia": 1955, "Athletico Paranaense": 1967, "Athletico-PR": 1967,
+  "Athletico": 1967, "Red Bull Bragantino": 1999, "Bragantino": 1999, "Coritiba": 1982,
+  "Vitória": 1962, "EC Vitória": 1962, "Mirassol": 21982, "Chapecoense": 21845, "Remo": 2012,
+  // Série B (ids corrigidos pela classificação)
+  "Fortaleza": 2020, "Ceará": 2001, "Goiás": 1960, "Avaí": 7315, "Criciúma": 1984,
+  "Juventude": 1980, "Náutico": 2011, "Ponte Preta": 1969, "Vila Nova": 2021,
+  "Sport Recife": 1959, "Sport": 1959, "Botafogo-SP": 1979, "Cuiabá": 49202,
+  "Operário-PR": 39634, "Operário": 39634, "Athletic": 342775, "Athletic Club": 342775,
+  "Atlético Goianiense": 7314, "CRB": 22032, "Londrina": 2022, "São Bernardo": 47504,
+  "Grêmio Novorizontino": 135514, "Novorizontino": 135514,
+  "América-MG": 1973, "América Mineiro": 1973, "América": 1973,
+  // Outros (Copa do Brasil / divisões menores — best-effort, não validados na classificação)
+  "Paysandu": 1964, "Amazonas": 390895, "ABC": 1942,
 };
 
+// Tokens genéricos removidos antes de casar o nome: a CBF passou a mandar sufixos
+// como "SAF", "F.C.", "S.A.F." que quebravam o match exato ("Londrina SAF" etc.).
+const SUFFIX_TOKENS = new Set([
+  "saf", "fc", "ec", "sc", "ac", "f", "c", "s", "a",
+  "futebol", "clube", "esporte", "esportivo", "esportes", "regatas", "de", "do", "da",
+]);
+
+function smartKey(name: string): string {
+  return name
+    .normalize("NFD")
+    .replace(/[̀-ͯ]/g, "")
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, " ")
+    .trim()
+    .split(/\s+/)
+    .filter((t) => t && !SUFFIX_TOKENS.has(t))
+    .join(" ");
+}
+
+// Mapa normalizado (1ª ocorrência vence). Resolve nomes com sufixo/pontuação sem
+// precisar de uma entrada por variação.
+const TEAM_MAP_SMART: Record<string, number> = {};
+for (const [name, id] of Object.entries(TEAM_MAP)) {
+  const k = smartKey(name);
+  if (k && !(k in TEAM_MAP_SMART)) TEAM_MAP_SMART[k] = id;
+}
+
 function getTeamId(name: string): number | null {
-  if (TEAM_MAP[name]) return TEAM_MAP[name];
-  // Fuzzy: normalize and try
-  const normalized = name.normalize("NFD").replace(/[\u0300-\u036f]/g, "");
-  for (const [key, id] of Object.entries(TEAM_MAP)) {
-    const keyNorm = key.normalize("NFD").replace(/[\u0300-\u036f]/g, "");
-    if (keyNorm.toLowerCase() === normalized.toLowerCase()) return id;
-  }
-  return null;
+  if (TEAM_MAP[name] != null) return TEAM_MAP[name];
+  const k = smartKey(name);
+  return TEAM_MAP_SMART[k] ?? null;
 }
 
 function parseMatch(jogo: any): CBFMatch {
