@@ -7,9 +7,9 @@ import { NewsListView } from "@/components/news/news-list-view";
 export const revalidate = 1800;
 
 export const metadata: Metadata = {
-  title: "Noticias de Futebol",
+  title: "Notícias de Futebol",
   description:
-    "Ultimas noticias de futebol brasileiro e mundial. Brasileirao, Copa do Brasil, Libertadores, Champions League e mais.",
+    "Últimas notícias de futebol brasileiro e mundial. Brasileirão, Copa do Brasil, Libertadores, Champions League e mais.",
   alternates: { canonical: "/noticias" },
 };
 

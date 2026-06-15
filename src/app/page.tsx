@@ -84,6 +84,10 @@ export default async function HomePage() {
 
   return (
     <>
+      {/* H1 da home (acessível, sem alterar o layout) — sinal de tópico principal. */}
+      <h1 className="sr-only">
+        Papo de Bola — Futebol brasileiro e mundial: notícias, jogos ao vivo e classificações
+      </h1>
       <WorldCupBanner />
       {/* Com jogo da Copa hoje, embrulha a barra no provider de placar ao vivo
           (mesmo polling de 15s da tabela da Copa, endpoint cacheado: N clientes

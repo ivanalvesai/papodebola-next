@@ -9,6 +9,7 @@ import { Footer } from "@/components/layout/footer";
 import { CookieConsent } from "@/components/layout/cookie-consent";
 import { SidePanelProvider } from "@/components/layout/side-panel-context";
 import { MyTeamProvider } from "@/components/layout/my-team-context";
+import { SiteSchema } from "@/components/seo/site-schema";
 
 const openSans = Open_Sans({
   variable: "--font-sans",
@@ -25,7 +26,7 @@ export const metadata: Metadata = {
   description:
     "Portal de futebol brasileiro e mundial com notícias, placares ao vivo, classificações, transferências e muito mais.",
   metadataBase: new URL(
-    process.env.NEXT_PUBLIC_SITE_URL || "https://papodebola.com.br"
+    process.env.NEXT_PUBLIC_SITE_URL || "https://www.papodebola.com.br"
   ),
   openGraph: {
     siteName: "Papo de Bola",
@@ -60,6 +61,7 @@ export default function RootLayout({
         <Script id="gtm-head" strategy="afterInteractive">
           {`(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src='https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);})(window,document,'script','dataLayer','GTM-MMRXG48R');`}
         </Script>
+        <SiteSchema />
       </head>
       <body className="min-h-screen flex flex-col bg-body font-sans text-text-primary">
         <noscript>
