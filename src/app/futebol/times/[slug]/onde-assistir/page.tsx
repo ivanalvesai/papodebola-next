@@ -19,6 +19,7 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
   return {
     title: `Onde Assistir ${team.name} Hoje - Transmissao Ao Vivo`,
     description: `Saiba onde assistir ao jogo do ${team.name} hoje ao vivo. TV, streaming e opcoes de transmissao.`,
+    alternates: { canonical: `/futebol/times/${slug}/onde-assistir` },
   };
 }
 

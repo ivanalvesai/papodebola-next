@@ -4,6 +4,7 @@ import { SportPageContent } from "@/components/sports/sport-page-content";
 export const revalidate = 86400;
 
 export const metadata: Metadata = {
+  alternates: { canonical: "/boxe" },
   title: "Boxe - Lutas, Resultados e Cinturões",
   description:
     "Acompanhe o boxe mundial. Lutas, resultados, campeões, cinturões WBA/WBC/IBF/WBO e calendário completo.",

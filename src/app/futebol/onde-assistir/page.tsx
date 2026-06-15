@@ -8,6 +8,7 @@ import type { NormalizedMatch } from "@/types/match";
 export const revalidate = 1800;
 
 export const metadata: Metadata = {
+  alternates: { canonical: "/futebol/onde-assistir" },
   title: "Onde Assistir Futebol Hoje - Transmissão Ao Vivo",
   description:
     "Onde assistir aos jogos de futebol de hoje. TV aberta, pay-per-view e streaming. Brasileirão, Libertadores, Champions League e mais.",

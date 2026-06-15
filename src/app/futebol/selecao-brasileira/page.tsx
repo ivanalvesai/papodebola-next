@@ -8,6 +8,7 @@ import { Newspaper, Trophy } from "lucide-react";
 export const revalidate = 1800;
 
 export const metadata: Metadata = {
+  alternates: { canonical: "/futebol/selecao-brasileira" },
   title: "Seleção Brasileira - Notícias, Convocados e Jogos",
   description:
     "Tudo sobre a Seleção Brasileira de futebol: convocações, jogos, Copa do Mundo 2026, Eliminatórias Sul-Americanas e notícias atualizadas.",

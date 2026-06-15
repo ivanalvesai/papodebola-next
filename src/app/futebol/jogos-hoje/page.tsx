@@ -8,6 +8,7 @@ import type { NormalizedMatch } from "@/types/match";
 export const revalidate = 1800;
 
 export const metadata: Metadata = {
+  alternates: { canonical: "/futebol/jogos-hoje" },
   title: "Jogos de Futebol Hoje - Placares e Horários",
   description:
     "Todos os jogos de futebol de hoje: Brasileirão, Copa do Brasil, Libertadores, Champions League e mais. Horários, placares ao vivo e classificação.",

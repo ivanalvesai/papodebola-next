@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Goal } from "lucide-react";
 
 export const metadata: Metadata = {
+  alternates: { canonical: "/sobre" },
   title: "Sobre",
   description: "Sobre o Papo de Bola - Portal de futebol brasileiro e mundial com noticias, placares e classificacoes.",
 };

@@ -10,8 +10,10 @@ import type { MatchBarCardProps } from "@/components/match-bar/match-bar-card";
 export const revalidate = 1800;
 
 export const metadata: Metadata = {
-  title: "Agenda Esportiva - Jogos de Hoje de Todos os Esportes",
-  description: "Agenda esportiva do dia: futebol, basquete, vôlei, NFL e mais. Horários (de Brasília) dos principais campeonatos, dia a dia.",
+  title: "Agenda de Jogos de Hoje",
+  description:
+    "Confira a agenda dos jogos de hoje e todos os jogos no Brasil e ao redor do mundo. Acesse papodebola.com.br",
+  alternates: { canonical: "/agenda" },
 };
 
 function isoOf(dt: Date): string {

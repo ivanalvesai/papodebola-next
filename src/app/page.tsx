@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import { WorldCupBanner } from "@/components/world-cup-banner";
 import { MatchBar } from "@/components/match-bar/match-bar";
 import { CopaLiveProvider } from "@/components/world-cup/copa-live-provider";
@@ -24,6 +25,10 @@ import type { ChampionshipMatch } from "@/types/match";
 import type { ChampionshipData } from "@/types/tournament";
 
 export const revalidate = 1800;
+
+export const metadata: Metadata = {
+  alternates: { canonical: "/" },
+};
 
 export default async function HomePage() {
   const [

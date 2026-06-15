@@ -4,6 +4,7 @@ import { SportPageContent } from "@/components/sports/sport-page-content";
 export const revalidate = 86400;
 
 export const metadata: Metadata = {
+  alternates: { canonical: "/volei" },
   title: "Vôlei - Superliga, Jogos e Resultados",
   description:
     "Acompanhe a Superliga de Vôlei, CEV, Mundial de Clubes. Jogos ao vivo, resultados e calendário completo.",

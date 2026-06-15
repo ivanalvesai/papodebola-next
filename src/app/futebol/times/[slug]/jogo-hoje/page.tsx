@@ -18,6 +18,7 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
   return {
     title: `Jogo do ${team.name} Hoje - Horario e Placar`,
     description: `Veja se o ${team.name} joga hoje, horario do jogo, placar ao vivo e detalhes da partida.`,
+    alternates: { canonical: `/futebol/times/${slug}/jogo-hoje` },
   };
 }
 

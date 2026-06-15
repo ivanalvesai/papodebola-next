@@ -19,6 +19,7 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
   return {
     title: `Escalacao do ${team.name} Hoje - Provavel Escalacao`,
     description: `Confira a escalacao provavel do ${team.name} para o proximo jogo. Titulares, reservas e desfalques.`,
+    alternates: { canonical: `/futebol/times/${slug}/escalacao` },
   };
 }
 

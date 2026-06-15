@@ -22,6 +22,20 @@ const nextConfig: NextConfig = {
     ],
     unoptimized: false,
   },
+  async headers() {
+    // Áreas de admin nunca devem ser indexadas (são client components protegidos
+    // por auth, sem como exportar `robots` via metadata — daí o header global).
+    return [
+      {
+        source: "/painel-pdb-9x/:path*",
+        headers: [{ key: "X-Robots-Tag", value: "noindex, nofollow" }],
+      },
+      {
+        source: "/studio-pdb/:path*",
+        headers: [{ key: "X-Robots-Tag", value: "noindex, nofollow" }],
+      },
+    ];
+  },
   async redirects() {
     return [
       { source: "/campeonato/:slug", destination: "/futebol/:slug", permanent: true },

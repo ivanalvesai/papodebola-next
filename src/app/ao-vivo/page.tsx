@@ -8,6 +8,7 @@ import { PageBreadcrumb } from "@/components/seo/page-breadcrumb";
 export const revalidate = 900;
 
 export const metadata: Metadata = {
+  alternates: { canonical: "/ao-vivo" },
   title: "Jogos Ao Vivo - Placares em Tempo Real",
   description: "Acompanhe jogos de futebol ao vivo com placares em tempo real. Brasileirao, Copa do Brasil, Libertadores, Champions League e mais.",
 };

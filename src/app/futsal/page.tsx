@@ -4,6 +4,7 @@ import { SportPageContent } from "@/components/sports/sport-page-content";
 export const revalidate = 86400;
 
 export const metadata: Metadata = {
+  alternates: { canonical: "/futsal" },
   title: "Futsal - Liga Nacional, Jogos e Resultados",
   description:
     "Acompanhe a Liga Nacional de Futsal, Copa do Brasil e torneios mundiais. Jogos ao vivo, resultados e calendário.",

@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Mail, MessageCircle } from "lucide-react";
 
 export const metadata: Metadata = {
+  alternates: { canonical: "/contato" },
   title: "Contato",
   description: "Entre em contato com o Papo de Bola. Envie sugestoes, duvidas ou parcerias.",
 };

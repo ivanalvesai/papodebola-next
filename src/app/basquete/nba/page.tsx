@@ -4,6 +4,7 @@ import { SportPageContent } from "@/components/sports/sport-page-content";
 export const revalidate = 86400;
 
 export const metadata: Metadata = {
+  alternates: { canonical: "/basquete/nba" },
   title: "NBA - Resultados, Classificação e Calendário",
   description:
     "Acompanhe a NBA: resultados, classificação das conferências, calendário de jogos e playoffs da temporada regular.",
