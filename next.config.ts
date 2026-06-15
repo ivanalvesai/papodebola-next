@@ -43,6 +43,8 @@ const nextConfig: NextConfig = {
       { source: "/agenda/:path*", destination: "/jogos-de-hoje/:path*", permanent: true },
       // /municipal virou /sp/santana-de-parnaiba/municipal (hierarquia geográfica)
       { source: "/municipal", destination: "/sp/santana-de-parnaiba/municipal", permanent: true },
+      // jogos de hoje por esporte vivem sob /jogos-de-hoje/{esporte} (futebol, volei, basquete...)
+      { source: "/futebol/jogos-hoje", destination: "/jogos-de-hoje/futebol", permanent: true },
       { source: "/campeonato/:slug", destination: "/futebol/:slug", permanent: true },
       { source: "/times/:slug", destination: "/futebol/times/:slug", permanent: true },
       { source: "/times/:slug/:sub*", destination: "/futebol/times/:slug/:sub*", permanent: true },
