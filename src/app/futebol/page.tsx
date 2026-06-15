@@ -1,9 +1,14 @@
 import type { Metadata } from "next";
 import Image from "next/image";
 import Link from "next/link";
-import { Newspaper } from "lucide-react";
+import { Newspaper, CalendarDays } from "lucide-react";
 import { getArticles } from "@/lib/data/articles";
+import { getTodayFootballByLeague } from "@/lib/data/matches";
 import { PageBreadcrumb } from "@/components/seo/page-breadcrumb";
+import { MatchCarousel } from "@/components/match-bar/match-carousel";
+import { TOURNAMENTS } from "@/lib/config";
+import type { MatchBarCardProps } from "@/components/match-bar/match-bar-card";
+import type { NormalizedMatch } from "@/types/match";
 
 export const revalidate = 1800;
 
@@ -14,11 +19,38 @@ export const metadata: Metadata = {
   alternates: { canonical: "/futebol" },
 };
 
+const SLUG_BY_ID = new Map(Object.values(TOURNAMENTS).map((t) => [t.id, t.slug]));
+
+// Link "Ver mais" do card → página do campeonato (Copa do Mundo tem rota própria).
+function leagueHref(id: number): string | undefined {
+  if (id === 16) return "/futebol/copa-do-mundo";
+  const slug = SLUG_BY_ID.get(id);
+  return slug ? `/futebol/${slug}` : undefined;
+}
+
+function toCard(m: NormalizedMatch): MatchBarCardProps {
+  return {
+    id: m.id,
+    homeTeam: m.homeTeam,
+    awayTeam: m.awayTeam,
+    homeLogo: m.homeLogo,
+    awayLogo: m.awayLogo,
+    homeScore: m.homeScore,
+    awayScore: m.awayScore,
+    time: m.time,
+    timestamp: m.timestamp,
+    status: m.status,
+    statusText: m.statusText,
+    league: m.league,
+    href: m.href,
+  };
+}
+
 export default async function FutebolPage() {
-  const { articles } = await getArticles({ perPage: 13 }).catch(() => ({
-    articles: [],
-    total: 0,
-  }));
+  const [{ articles }, footballGroups] = await Promise.all([
+    getArticles({ perPage: 13 }).catch(() => ({ articles: [], total: 0 })),
+    getTodayFootballByLeague().catch(() => []),
+  ]);
 
   const [featured, ...rest] = articles;
 
@@ -28,6 +60,27 @@ export default async function FutebolPage() {
         className="mb-4"
         items={[{ label: "Início", href: "/" }, { label: "Futebol" }]}
       />
+
+      {/* Jogos de hoje — um carrossel por campeonato */}
+      {footballGroups.length > 0 && (
+        <section className="mb-8">
+          <h2 className="text-lg font-bold text-text-primary mb-4 flex items-center gap-2">
+            <CalendarDays className="h-5 w-5 text-green" />
+            Jogos de Hoje
+          </h2>
+          <div className="space-y-4">
+            {footballGroups.map((g) => (
+              <MatchCarousel
+                key={g.leagueId}
+                title={g.league}
+                count={g.matches.length}
+                href={leagueHref(g.leagueId)}
+                matches={g.matches.map(toCard)}
+              />
+            ))}
+          </div>
+        </section>
+      )}
 
       <h1 className="text-xl font-bold text-text-primary mb-6 flex items-center gap-2">
         <Newspaper className="h-6 w-6 text-green" />

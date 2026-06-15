@@ -2,9 +2,10 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { CalendarDays } from "lucide-react";
 import { PageBreadcrumb } from "@/components/seo/page-breadcrumb";
-import { TeamLogo } from "@/components/ui/team-logo";
 import { AgendaTabs } from "@/components/agenda/agenda-tabs";
-import { getGeneralAgenda } from "@/lib/data/agenda";
+import { MatchCarousel } from "@/components/match-bar/match-carousel";
+import { getGeneralAgenda, type AgendaEvent } from "@/lib/data/agenda";
+import type { MatchBarCardProps } from "@/components/match-bar/match-bar-card";
 
 export const revalidate = 1800;
 
@@ -15,6 +16,25 @@ export const metadata: Metadata = {
 
 function isoOf(dt: Date): string {
   return `${dt.getFullYear()}-${String(dt.getMonth() + 1).padStart(2, "0")}-${String(dt.getDate()).padStart(2, "0")}`;
+}
+
+function toCard(e: AgendaEvent): MatchBarCardProps {
+  const status =
+    e.statusType === "inprogress" ? "live" : e.statusType === "finished" ? "finished" : "scheduled";
+  return {
+    id: `api_${e.id}`,
+    homeTeam: e.home,
+    awayTeam: e.away,
+    homeLogo: e.homeId ? `/img/team/${e.homeId}/image` : null,
+    awayLogo: e.awayId ? `/img/team/${e.awayId}/image` : null,
+    homeScore: e.homeScore,
+    awayScore: e.awayScore,
+    time: e.time,
+    timestamp: e.timestamp,
+    status,
+    statusText: e.status || (status === "live" ? "Ao Vivo" : ""),
+    league: e.league,
+  };
 }
 
 function parseSelected(d?: string): Date {
@@ -92,51 +112,26 @@ export default async function AgendaPage({
           </p>
         </div>
       ) : (
-        <div className="space-y-6">
+        <div className="space-y-8">
           {groups.map((group) => (
-            <div key={group.sport} className="bg-card-bg rounded-lg border border-border-custom">
-              <div className="flex items-center justify-between px-5 py-3 border-b border-border-custom">
-                <h2 className="text-sm font-bold text-text-primary uppercase">{group.sport}</h2>
+            <div key={group.sport}>
+              <div className="flex items-center justify-between mb-3">
+                <h2 className="text-base font-bold text-text-primary uppercase">{group.sport}</h2>
                 {group.sportSlug && (
                   <Link href={`/${group.sportSlug}`} className="text-xs text-green font-semibold hover:text-green-hover">
                     Ver mais &rsaquo;
                   </Link>
                 )}
               </div>
-              <div className="divide-y divide-border-light">
-                {group.events.map((e) => {
-                  const live = e.statusType === "inprogress";
-                  const finished = e.statusType === "finished";
-                  const hasScore = e.homeScore !== null && e.awayScore !== null;
-                  return (
-                    <div key={e.id} className="flex items-center gap-3 px-5 py-2.5">
-                      {/* Hora / status */}
-                      <div className="w-14 text-center shrink-0">
-                        {live ? (
-                          <span className="text-[10px] font-bold text-red uppercase">{e.status || "Ao Vivo"}</span>
-                        ) : finished ? (
-                          <span className="text-[10px] font-semibold text-text-muted">Encerrado</span>
-                        ) : (
-                          <span className="text-sm font-bold text-text-primary">{e.time}</span>
-                        )}
-                      </div>
-
-                      {/* Confronto */}
-                      <div className="flex-1 min-w-0">
-                        <div className="text-[10px] text-text-muted truncate mb-0.5">{e.league}</div>
-                        <div className="flex items-center gap-2 text-sm">
-                          <TeamLogo teamId={e.homeId || undefined} size={18} />
-                          <span className="font-semibold truncate flex-1">{e.home}</span>
-                          <span className={`shrink-0 px-2 font-bold ${live ? "text-red" : "text-text-primary"}`}>
-                            {hasScore ? `${e.homeScore} - ${e.awayScore}` : "x"}
-                          </span>
-                          <span className="font-semibold truncate flex-1 text-right">{e.away}</span>
-                          <TeamLogo teamId={e.awayId || undefined} size={18} />
-                        </div>
-                      </div>
-                    </div>
-                  );
-                })}
+              <div className="space-y-4">
+                {group.leagues.map((lg) => (
+                  <MatchCarousel
+                    key={`${group.sport}-${lg.league}`}
+                    title={lg.league}
+                    count={lg.events.length}
+                    matches={lg.events.map(toCard)}
+                  />
+                ))}
               </div>
             </div>
           ))}

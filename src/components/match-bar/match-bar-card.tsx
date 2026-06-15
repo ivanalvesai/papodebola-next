@@ -4,7 +4,7 @@ import Link from "next/link";
 import { TeamLogo } from "@/components/ui/team-logo";
 import { useLiveScore } from "@/components/world-cup/copa-live-provider";
 
-interface MatchBarCardProps {
+export interface MatchBarCardProps {
   id?: string;
   homeTeam: string;
   awayTeam: string;

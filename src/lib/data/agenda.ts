@@ -62,23 +62,37 @@ export interface AgendaEvent {
   timestamp: number;
 }
 
-export interface AgendaSportGroup {
-  sport: string;
-  sportSlug: string;
+export interface AgendaLeagueGroup {
+  league: string;
   events: AgendaEvent[];
 }
 
-function normalize(event: any, isFootball: boolean): AgendaEvent {
+export interface AgendaSportGroup {
+  sport: string;
+  sportSlug: string;
+  leagues: AgendaLeagueGroup[];
+}
+
+// Vôlei (Liga das Nações/Golden League) são seleções nacionais com nome em inglês
+// vindo da API — traduz igual à Copa do Mundo. Futebol só traduz a Copa do Mundo
+// (clubes ficam com o nome original).
+function shouldTranslateNames(sportSlug: string, leagueId: number | undefined): boolean {
+  if (sportSlug === "volei") return true;
+  if (sportSlug === "futebol" && leagueId === WORLD_CUP_ID) return true;
+  return false;
+}
+
+function normalize(event: any, sportSlug: string): AgendaEvent {
   const ts = event.startTimestamp ? new Date(event.startTimestamp * 1000) : new Date();
   const leagueId = event.tournament?.uniqueTournament?.id;
-  const isWC = isFootball && leagueId === WORLD_CUP_ID;
+  const translate = shouldTranslateNames(sportSlug, leagueId);
   const homeName = event.homeTeam?.name || event.homeTeam?.shortName || "";
   const awayName = event.awayTeam?.name || event.awayTeam?.shortName || "";
   return {
     id: event.id,
     league: event.tournament?.uniqueTournament?.name || event.tournament?.name || "",
-    home: isWC ? translateCountry(homeName) : homeName,
-    away: isWC ? translateCountry(awayName) : awayName,
+    home: translate ? translateCountry(homeName) : homeName,
+    away: translate ? translateCountry(awayName) : awayName,
     homeId: event.homeTeam?.id || 0,
     awayId: event.awayTeam?.id || 0,
     homeScore: event.homeScore?.current ?? null,
@@ -98,18 +112,41 @@ export async function getGeneralAgenda(date: Date): Promise<AgendaSportGroup[]> 
 
   const groups = await Promise.all(
     SOURCES.map(async (src) => {
-      const isFootball = src.sportSlug === "futebol";
       const data = await fetchAllSports<any>(src.endpoint(d, m, y), 1800).catch(() => null);
       const allow = new Set(src.ids);
-      const events = (data?.events || [])
+      const events: AgendaEvent[] = (data?.events || [])
         .filter((e: any) => allow.has(e.tournament?.uniqueTournament?.id))
-        .map((e: any) => normalize(e, isFootball))
-        .sort((a: AgendaEvent, b: AgendaEvent) => a.timestamp - b.timestamp)
-        .slice(0, 40);
-      return { sport: src.sport, sportSlug: src.sportSlug, events };
+        .map((e: any) => normalize(e, src.sportSlug))
+        .sort(sortForBar);
+
+      // Agrupa por campeonato preservando a ordem (eventos já ordenados por
+      // status/horário) — um carrossel por liga dentro do esporte.
+      const byLeague = new Map<string, AgendaEvent[]>();
+      for (const e of events) {
+        const key = e.league || "Outros";
+        const list = byLeague.get(key);
+        if (list) list.push(e);
+        else byLeague.set(key, [e]);
+      }
+      const leagues: AgendaLeagueGroup[] = [...byLeague.entries()].map(([league, evs]) => ({
+        league,
+        events: evs.slice(0, 40),
+      }));
+
+      return { sport: src.sport, sportSlug: src.sportSlug, leagues };
     })
   );
 
-  // Só os esportes com jogos no dia, e futebol sempre primeiro.
-  return groups.filter((g) => g.events.length > 0);
+  // Só os esportes com jogos no dia, e futebol sempre primeiro (ordem das SOURCES).
+  return groups.filter((g) => g.leagues.length > 0);
+}
+
+// Ordena ao vivo primeiro, depois agendados, encerrados por último; dentro de
+// cada grupo, por horário real.
+function sortForBar(a: AgendaEvent, b: AgendaEvent): number {
+  const pr = (t: string) => (t === "inprogress" ? 0 : t === "finished" ? 2 : 1);
+  const pa = pr(a.statusType);
+  const pb = pr(b.statusType);
+  if (pa !== pb) return pa - pb;
+  return (a.timestamp || 0) - (b.timestamp || 0);
 }

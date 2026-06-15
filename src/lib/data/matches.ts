@@ -126,6 +126,65 @@ export async function getWorldCupBarMatches(): Promise<NormalizedMatch[]> {
   return wc.sort((a, b) => (a.timestamp || 0) - (b.timestamp || 0));
 }
 
+// Campeonatos principais, na ordem que devem aparecer em /futebol. Os que não
+// estiverem aqui (ligas menores com jogo no dia) vêm depois, ordenados por
+// quantidade de jogos. Mesmos ids da agenda geral (uniqueTournament.id):
+// Copa do Mundo, Brasileirão A/B/C/D, Copa do Brasil/Nordeste, Libertadores,
+// Sul-Americana, Champions, Europa League, Premier, LaLiga, Serie A, Bundesliga,
+// Ligue 1, Eliminatórias.
+const FUTEBOL_TODAY_ORDER = [
+  16, 325, 390, 1281, 10326, 373, 1596, 384, 480, 7, 679, 17, 8, 23, 35, 34, 11, 13,
+];
+
+export interface LeagueMatchGroup {
+  leagueId: number;
+  league: string;
+  matches: NormalizedMatch[];
+}
+
+// Ordena ao vivo/intervalo primeiro, depois os que vão começar, encerrados por
+// último — e dentro de cada grupo por horário real (mesma lógica da barra "Hoje").
+function sortForBar(a: NormalizedMatch, b: NormalizedMatch): number {
+  const pr = (s: NormalizedMatch["status"]) =>
+    s === "live" || s === "halftime" ? 0 : s === "scheduled" ? 1 : 2;
+  const pa = pr(a.status);
+  const pb = pr(b.status);
+  if (pa !== pb) return pa - pb;
+  return (a.timestamp || 0) - (b.timestamp || 0);
+}
+
+// Jogos de futebol de hoje, agrupados por campeonato (um carrossel por liga em
+// /futebol). Campeonatos principais primeiro, demais por nº de jogos.
+export async function getTodayFootballByLeague(): Promise<LeagueMatchGroup[]> {
+  const matches = await getTodayMatches().catch(() => []);
+
+  const byId = new Map<number, NormalizedMatch[]>();
+  for (const m of matches) {
+    const id = m.leagueId;
+    if (id == null) continue;
+    const list = byId.get(id);
+    if (list) list.push(m);
+    else byId.set(id, [m]);
+  }
+
+  const order = new Map(FUTEBOL_TODAY_ORDER.map((id, i) => [id, i]));
+  const groups: LeagueMatchGroup[] = [];
+  for (const [id, list] of byId) {
+    list.sort(sortForBar);
+    groups.push({ leagueId: id, league: list[0].league || "Outros", matches: list });
+  }
+
+  groups.sort((a, b) => {
+    const oa = order.get(a.leagueId) ?? Infinity;
+    const ob = order.get(b.leagueId) ?? Infinity;
+    if (oa !== ob) return oa - ob;
+    if (a.matches.length !== b.matches.length) return b.matches.length - a.matches.length;
+    return a.league.localeCompare(b.league, "pt-BR");
+  });
+
+  return groups;
+}
+
 export async function getLiveMatches(): Promise<NormalizedMatch[]> {
   const data = await fetchAllSports<any>("matches/live", 300);
   if (!data?.events) return [];
