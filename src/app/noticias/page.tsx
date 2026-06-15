@@ -3,6 +3,7 @@ import { permanentRedirect } from "next/navigation";
 import { getArticles } from "@/lib/data/articles";
 import { slugifyCategory, WP_CATEGORY_BY_SLUG } from "@/lib/config";
 import { NewsListView } from "@/components/news/news-list-view";
+import { ItemListSchema } from "@/components/seo/item-list-schema";
 
 export const revalidate = 1800;
 
@@ -39,12 +40,17 @@ export default async function NoticiasPage({ searchParams }: PageProps) {
   const { articles, total } = await getArticles({ page, perPage, search });
 
   return (
-    <NewsListView
-      articles={articles}
-      total={total}
-      page={page}
-      perPage={perPage}
-      search={search}
-    />
+    <>
+      <ItemListSchema
+        items={articles.map((a) => ({ url: `/artigos/${a.slug}`, name: a.rewrittenTitle }))}
+      />
+      <NewsListView
+        articles={articles}
+        total={total}
+        page={page}
+        perPage={perPage}
+        search={search}
+      />
+    </>
   );
 }
