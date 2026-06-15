@@ -41,6 +41,8 @@ const nextConfig: NextConfig = {
       // /agenda renomeada pra /jogos-de-hoje (jun/2026) — termo mais forte de SEO
       { source: "/agenda", destination: "/jogos-de-hoje", permanent: true },
       { source: "/agenda/:path*", destination: "/jogos-de-hoje/:path*", permanent: true },
+      // /municipal virou /sp/santana-de-parnaiba/municipal (hierarquia geográfica)
+      { source: "/municipal", destination: "/sp/santana-de-parnaiba/municipal", permanent: true },
       { source: "/campeonato/:slug", destination: "/futebol/:slug", permanent: true },
       { source: "/times/:slug", destination: "/futebol/times/:slug", permanent: true },
       { source: "/times/:slug/:sub*", destination: "/futebol/times/:slug/:sub*", permanent: true },

@@ -2,8 +2,9 @@ import type { MetadataRoute } from "next";
 import { TEAMS, SPORTS, WP_CATEGORY_BY_SLUG } from "@/lib/config";
 import { TOURNAMENTS } from "@/lib/config";
 import { SELECOES, BRAZIL_ID } from "@/lib/selecoes";
+import { getArticles } from "@/lib/data/articles";
 
-const BASE = process.env.NEXT_PUBLIC_SITE_URL || "https://papodebola.com.br";
+const BASE = process.env.NEXT_PUBLIC_SITE_URL || "https://www.papodebola.com.br";
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const now = new Date();
@@ -19,6 +20,9 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     { url: `${BASE}/futebol/jogos-hoje`, lastModified: now, changeFrequency: "hourly", priority: 0.85 },
     { url: `${BASE}/futebol/onde-assistir`, lastModified: now, changeFrequency: "hourly", priority: 0.8 },
     { url: `${BASE}/futebol/selecao-brasileira`, lastModified: now, changeFrequency: "daily", priority: 0.8 },
+    { url: `${BASE}/sp`, lastModified: now, changeFrequency: "weekly", priority: 0.5 },
+    { url: `${BASE}/sp/santana-de-parnaiba`, lastModified: now, changeFrequency: "weekly", priority: 0.5 },
+    { url: `${BASE}/sp/santana-de-parnaiba/municipal`, lastModified: now, changeFrequency: "daily", priority: 0.5 },
     { url: `${BASE}/sobre`, changeFrequency: "monthly", priority: 0.3 },
     { url: `${BASE}/contato`, changeFrequency: "monthly", priority: 0.3 },
     { url: `${BASE}/privacidade`, changeFrequency: "monthly", priority: 0.2 },
@@ -85,6 +89,16 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     priority: 0.6,
   }));
 
+  // Artigos do WordPress (cauda longa). Limite de 100 do WP REST; se houver mais,
+  // paginar futuramente. Falha de rede não derruba o sitemap (catch → []).
+  const { articles } = await getArticles({ perPage: 100 }).catch(() => ({ articles: [] }));
+  const articlePages: MetadataRoute.Sitemap = articles.map((a) => ({
+    url: `${BASE}/artigos/${a.slug}`,
+    lastModified: a.updatedAt || a.pubDate ? new Date(a.updatedAt || a.pubDate) : now,
+    changeFrequency: "weekly" as const,
+    priority: 0.6,
+  }));
+
   return [
     ...staticPages,
     ...teamPages,
@@ -93,5 +107,6 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     ...parceirosPage,
     ...newsCategoryPages,
     ...selecaoPages,
+    ...articlePages,
   ];
 }

@@ -2,7 +2,22 @@
 
 import { useState, useEffect } from "react";
 import Image from "next/image";
+import Link from "next/link";
 import { Trophy, Loader2, ChevronLeft, ChevronRight, MapPin } from "lucide-react";
+
+function Breadcrumb() {
+  return (
+    <nav className="mb-4 flex flex-wrap items-center gap-1 text-xs text-text-muted">
+      <Link href="/" className="hover:text-green">Início</Link>
+      <span>/</span>
+      <Link href="/sp" className="hover:text-green">São Paulo</Link>
+      <span>/</span>
+      <Link href="/sp/santana-de-parnaiba" className="hover:text-green">Santana de Parnaíba</Link>
+      <span>/</span>
+      <span className="text-text-secondary">Municipal</span>
+    </nav>
+  );
+}
 
 interface Team {
   pos: number; name: string; pts: number; games: number;
@@ -82,6 +97,7 @@ export default function MunicipalPage() {
 
   return (
     <div className="mx-auto max-w-[1240px] px-4 py-8">
+      <Breadcrumb />
       {/* Header */}
       <div className="flex items-center gap-3 mb-4">
         <Trophy className="h-7 w-7 text-green" />

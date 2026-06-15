@@ -6,7 +6,7 @@ export const metadata: Metadata = {
   title: "Futebol Municipal de Santana de Parnaíba",
   description:
     "Tabelas, jogos e resultados dos campeonatos municipais de futebol de Santana de Parnaíba (SisGel).",
-  alternates: { canonical: "/municipal" },
+  alternates: { canonical: "/sp/santana-de-parnaiba/municipal" },
 };
 
 export default function MunicipalLayout({ children }: { children: React.ReactNode }) {

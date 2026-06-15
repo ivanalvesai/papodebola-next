@@ -21,8 +21,8 @@ export async function generateMetadata({
   const team = TEAM_BY_SLUG[slug];
   if (!team) return {};
   return {
-    title: `${team.name} - Noticias, Jogos e Classificacao`,
-    description: `Tudo sobre o ${team.name}: noticias, jogos de hoje, proximos jogos, escalacao, estatisticas e onde assistir ao vivo.`,
+    title: `${team.name} - Notícias, Jogos e Classificação`,
+    description: `Tudo sobre o ${team.name}: notícias, jogos de hoje, próximos jogos, escalação, estatísticas e onde assistir ao vivo.`,
     alternates: { canonical: `/futebol/times/${slug}` },
   };
 }
@@ -42,9 +42,9 @@ export default async function TeamHubPage({
   const clusterLinks = [
     { href: `/futebol/times/${slug}/jogo-hoje`, label: "Jogo de Hoje", desc: `Veja se o ${team.name} joga hoje, horario e detalhes`, icon: Calendar },
     { href: `/futebol/times/${slug}/onde-assistir`, label: "Onde Assistir", desc: `Saiba onde assistir ao jogo do ${team.name} ao vivo`, icon: Tv },
-    { href: `/futebol/times/${slug}/escalacao`, label: "Escalacao", desc: `Escalacao provavel do ${team.name} para o proximo jogo`, icon: Users },
-    { href: `/futebol/times/${slug}/proximos-jogos`, label: "Proximos Jogos", desc: `Calendario completo dos proximos jogos do ${team.name}`, icon: Calendar },
-    { href: `/futebol/times/${slug}/estatisticas`, label: "Estatisticas 2026", desc: `Numeros, artilheiros e desempenho do ${team.name} em 2026`, icon: BarChart3 },
+    { href: `/futebol/times/${slug}/escalacao`, label: "Escalação", desc: `Escalação provável do ${team.name} para o próximo jogo`, icon: Users },
+    { href: `/futebol/times/${slug}/proximos-jogos`, label: "Próximos Jogos", desc: `Calendário completo dos próximos jogos do ${team.name}`, icon: Calendar },
+    { href: `/futebol/times/${slug}/estatisticas`, label: "Estatísticas 2026", desc: `Números, artilheiros e desempenho do ${team.name} em 2026`, icon: BarChart3 },
   ];
 
   return (
@@ -104,10 +104,10 @@ export default async function TeamHubPage({
           {/* News */}
           <div className="bg-card-bg rounded-lg border border-border-custom p-6">
             <h2 className="text-base font-bold text-text-primary mb-4">
-              Noticias - {team.name}
+              Notícias - {team.name}
             </h2>
             {data.news.length === 0 ? (
-              <p className="text-text-muted text-sm text-center py-4">Nenhuma noticia encontrada</p>
+              <p className="text-text-muted text-sm text-center py-4">Nenhuma notícia encontrada</p>
             ) : (
               <div className="space-y-3">
                 {data.news.map((article) => (
@@ -136,7 +136,7 @@ export default async function TeamHubPage({
             <div className="bg-card-bg rounded-lg border border-border-custom p-4">
               <h3 className="text-sm font-bold text-text-primary mb-3 flex items-center gap-2">
                 <Trophy className="h-4 w-4 text-green" />
-                Brasileirao 2026
+                Brasileirão 2026
               </h3>
               <div className="flex items-center justify-between">
                 <div>
