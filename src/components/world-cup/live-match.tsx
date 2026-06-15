@@ -481,13 +481,36 @@ interface PlayerMark {
   goals: number;
   yellow: boolean;
   red: boolean;
+  // Substituições (do feed de incidentes): quem saiu ganha subOut (vermelho) com
+  // o nome de quem entrou; quem entrou ganha subIn (verde) com o nome de quem saiu.
+  subOut?: { minute: number | null; inName: string } | null;
+  subIn?: { minute: number | null; outName: string } | null;
+}
+function emptyMark(): PlayerMark {
+  return { goals: 0, yellow: false, red: false };
 }
 function buildMarks(incidents: MatchIncident[]): Record<string, PlayerMark> {
   const map: Record<string, PlayerMark> = {};
   for (const inc of incidents) {
+    if (inc.type === "substitution") {
+      // Subs vêm com playerIn/playerOut (não inc.player).
+      if (inc.playerOut) {
+        (map[inc.playerOut] ||= emptyMark()).subOut = {
+          minute: inc.minute,
+          inName: inc.playerIn || "",
+        };
+      }
+      if (inc.playerIn) {
+        (map[inc.playerIn] ||= emptyMark()).subIn = {
+          minute: inc.minute,
+          outName: inc.playerOut || "",
+        };
+      }
+      continue;
+    }
     const name = inc.player;
     if (!name) continue;
-    const m = (map[name] ||= { goals: 0, yellow: false, red: false });
+    const m = (map[name] ||= emptyMark());
     if (inc.type === "goal") m.goals++;
     if (inc.type === "card") {
       if (inc.cls === "red" || inc.cls === "yellowRed") m.red = true;
@@ -495,6 +518,11 @@ function buildMarks(incidents: MatchIncident[]): Record<string, PlayerMark> {
     }
   }
   return map;
+}
+
+// "45'" / "90+2'" — minuto do lance pra badge de substituição.
+function subMinute(min: number | null): string {
+  return min != null ? `${min}'` : "";
 }
 
 function Marks({ m }: { m?: PlayerMark }) {
@@ -528,6 +556,19 @@ function PlayerRow({
   marks: Record<string, PlayerMark>;
   dim: boolean;
 }) {
+  const m = marks[p.name];
+  const subOut = m?.subOut;
+  const subIn = m?.subIn;
+
+  // Cor do nome: saiu = vermelho, entrou = verde, senão o padrão (ou dim).
+  const nameColor = subOut
+    ? "text-red"
+    : subIn
+    ? "text-green"
+    : dim
+    ? "text-text-muted"
+    : "text-text-primary";
+
   return (
     <div className="flex items-start gap-1.5 py-1">
       <span className="w-4 shrink-0 text-right text-[10px] tabular-nums text-text-muted">
@@ -535,19 +576,38 @@ function PlayerRow({
       </span>
       <div className="min-w-0 leading-tight">
         <div className="flex items-center gap-1">
-          <p
-            className={`truncate text-xs font-medium ${
-              dim ? "text-text-muted" : "text-text-primary"
-            }`}
-          >
+          {subIn && (
+            <ArrowUp className="h-3 w-3 shrink-0 text-green" aria-label="Entrou" />
+          )}
+          <p className={`truncate text-xs font-medium ${nameColor}`}>
             {shortPlayerName(p.name)}
           </p>
+          {/* substituído: seta pra baixo + minuto, em vermelho */}
+          {subOut && (
+            <span className="inline-flex shrink-0 items-center text-[10px] font-bold text-red">
+              <ArrowDown className="h-3 w-3" aria-label="Saiu" />
+              {subMinute(subOut.minute)}
+            </span>
+          )}
+          {/* entrou: minuto em verde ao lado do nome */}
+          {subIn && subMinute(subIn.minute) && (
+            <span className="shrink-0 text-[10px] font-bold tabular-nums text-green">
+              {subMinute(subIn.minute)}
+            </span>
+          )}
           {/* ícone fora do nome (shrink-0) → nunca é cortado pelo truncate */}
           <span className="shrink-0">
-            <Marks m={marks[p.name]} />
+            <Marks m={m} />
           </span>
         </div>
         <p className="text-[10px] text-text-muted">{POS_PT[p.position] || p.position}</p>
+        {/* pareamento na escalação: quem ENTROU no lugar deste titular (verde) */}
+        {subOut?.inName && (
+          <p className="mt-0.5 flex items-center gap-0.5 text-[10px] font-semibold text-green">
+            <ArrowUp className="h-2.5 w-2.5 shrink-0" />
+            {shortPlayerName(subOut.inName)}
+          </p>
+        )}
       </div>
     </div>
   );
@@ -610,14 +670,27 @@ function Lineups({
       </p>
     );
   const marks = buildMarks(incidents);
+  const hasSubs = Object.values(marks).some((m) => m.subOut || m.subIn);
   return (
     <div>
-      {confirmed && (
-        <div className="mb-3 flex items-center gap-1 text-[11px] font-semibold text-green">
-          <span className="inline-block h-1.5 w-1.5 rounded-full bg-green" />
-          Escalação confirmada
-        </div>
-      )}
+      <div className="mb-3 flex flex-wrap items-center gap-x-3 gap-y-1">
+        {confirmed && (
+          <div className="flex items-center gap-1 text-[11px] font-semibold text-green">
+            <span className="inline-block h-1.5 w-1.5 rounded-full bg-green" />
+            Escalação confirmada
+          </div>
+        )}
+        {hasSubs && (
+          <div className="flex items-center gap-2 text-[10px] font-semibold text-text-muted">
+            <span className="flex items-center gap-0.5 text-red">
+              <ArrowDown className="h-3 w-3" /> saiu
+            </span>
+            <span className="flex items-center gap-0.5 text-green">
+              <ArrowUp className="h-3 w-3" /> entrou
+            </span>
+          </div>
+        )}
+      </div>
       <div className="grid grid-cols-2 gap-3">
         {home && <TeamColumn team={home} teamId={event.homeId} name={event.home} marks={marks} />}
         {away && <TeamColumn team={away} teamId={event.awayId} name={event.away} marks={marks} />}
