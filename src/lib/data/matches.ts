@@ -154,14 +154,17 @@ function sortForBar(a: NormalizedMatch, b: NormalizedMatch): number {
 }
 
 // Jogos de futebol de hoje, agrupados por campeonato (um carrossel por liga em
-// /futebol). Campeonatos principais primeiro, demais por nº de jogos.
+// /futebol). Só os campeonatos principais (FUTEBOL_TODAY_ORDER) pra página ficar
+// limpa estilo ge.globo — o feed global traz centenas de ligas menores. Na ordem
+// definida (Copa do Mundo, Série A/B/C, Copa do Brasil, Libertadores, etc.).
 export async function getTodayFootballByLeague(): Promise<LeagueMatchGroup[]> {
   const matches = await getTodayMatches().catch(() => []);
+  const allow = new Set(FUTEBOL_TODAY_ORDER);
 
   const byId = new Map<number, NormalizedMatch[]>();
   for (const m of matches) {
     const id = m.leagueId;
-    if (id == null) continue;
+    if (id == null || !allow.has(id)) continue;
     const list = byId.get(id);
     if (list) list.push(m);
     else byId.set(id, [m]);
@@ -174,13 +177,7 @@ export async function getTodayFootballByLeague(): Promise<LeagueMatchGroup[]> {
     groups.push({ leagueId: id, league: list[0].league || "Outros", matches: list });
   }
 
-  groups.sort((a, b) => {
-    const oa = order.get(a.leagueId) ?? Infinity;
-    const ob = order.get(b.leagueId) ?? Infinity;
-    if (oa !== ob) return oa - ob;
-    if (a.matches.length !== b.matches.length) return b.matches.length - a.matches.length;
-    return a.league.localeCompare(b.league, "pt-BR");
-  });
+  groups.sort((a, b) => (order.get(a.leagueId) ?? 0) - (order.get(b.leagueId) ?? 0));
 
   return groups;
 }
