@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { ListOrdered, ChevronUp, ChevronDown, Minus } from "lucide-react";
 import { TeamLogo } from "@/components/ui/team-logo";
+import { TEAM_BY_ID } from "@/lib/config";
 import type { StandingsGroup, FormResult } from "@/types/standings";
 
 interface StandingsWidgetProps {
@@ -72,10 +73,24 @@ export function StandingsWidget({ standings }: StandingsWidgetProps) {
                           {r.pos}
                         </span>
                         <PosArrow change={r.posChange} />
-                        <TeamLogo teamId={r.teamId} size={18} />
-                        <span className="font-semibold text-text-primary truncate max-w-[80px]">
-                          {r.team}
-                        </span>
+                        {TEAM_BY_ID[r.teamId] ? (
+                          <Link
+                            href={`/futebol/times/${TEAM_BY_ID[r.teamId].slug}`}
+                            className="flex min-w-0 items-center gap-1.5 hover:text-green"
+                          >
+                            <TeamLogo teamId={r.teamId} size={18} />
+                            <span className="font-semibold text-text-primary truncate max-w-[80px]">
+                              {r.team}
+                            </span>
+                          </Link>
+                        ) : (
+                          <>
+                            <TeamLogo teamId={r.teamId} size={18} />
+                            <span className="font-semibold text-text-primary truncate max-w-[80px]">
+                              {r.team}
+                            </span>
+                          </>
+                        )}
                       </div>
                     </td>
                     <td className="py-2 px-1 text-center font-bold text-text-primary">

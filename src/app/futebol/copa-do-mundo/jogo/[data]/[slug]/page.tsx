@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { PageBreadcrumb } from "@/components/seo/page-breadcrumb";
 import { LiveMatch } from "@/components/world-cup/live-match";
+import { SportsEventSchema } from "@/components/seo/sports-event-schema";
 import { resolveWorldCupMatch, getMatchDetail, getMatchGroup } from "@/lib/data/match-detail";
 
 // Curto: a página acompanha jogo ao vivo (o cliente também faz polling).
@@ -41,10 +42,20 @@ export default async function JogoCopaPage({
 
   return (
     <div className="mx-auto max-w-[1240px] px-4 py-6">
+      <SportsEventSchema
+        home={fixture.home}
+        away={fixture.away}
+        homeId={fixture.homeId}
+        awayId={fixture.awayId}
+        startTimestamp={fixture.timestamp}
+        statusType={detail?.event.statusType}
+        url={`/futebol/copa-do-mundo/jogo/${data}/${slug}`}
+      />
       <PageBreadcrumb
         className="mb-3"
         items={[
           { label: "Início", href: "/" },
+          { label: "Futebol", href: "/futebol" },
           { label: "Copa do Mundo 2026", href: "/futebol/copa-do-mundo" },
           { label: `${fixture.home} x ${fixture.away}` },
         ]}
