@@ -45,7 +45,7 @@ export function ArticleSchema({ article }: ArticleSchemaProps) {
       name: "Papo de Bola",
       logo: {
         "@type": "ImageObject",
-        url: `${siteUrl}/simbolo-papo-de-bola.png`,
+        url: `${siteUrl}/logotipo-papo-de-bola.png`,
       },
     },
     mainEntityOfPage: articleUrl,

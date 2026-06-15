@@ -14,8 +14,9 @@ export function SiteSchema() {
         url: `${SITE_URL}/`,
         logo: {
           "@type": "ImageObject",
-          url: `${SITE_URL}/simbolo-papo-de-bola.png`,
+          url: `${SITE_URL}/logotipo-papo-de-bola.png`,
         },
+        sameAs: ["https://www.instagram.com/papodebola.com.br/"],
       },
       {
         "@type": "WebSite",
