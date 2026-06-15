@@ -23,7 +23,10 @@ export function TeamBreadcrumb({ teamSlug, teamName, className }: TeamBreadcrumb
   const subroute = match?.[1];
   const subrouteLabel = subroute ? SUBROUTE_LABELS[subroute] : undefined;
 
-  const items: BreadcrumbItem[] = [{ label: "Início", href: "/" }];
+  const items: BreadcrumbItem[] = [
+    { label: "Início", href: "/" },
+    { label: "Futebol", href: "/futebol" },
+  ];
   if (subrouteLabel) {
     items.push({ label: teamName, href: `/futebol/times/${teamSlug}` });
     items.push({ label: subrouteLabel });

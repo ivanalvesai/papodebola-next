@@ -1,8 +1,9 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import Link from "next/link";
 import { useParams } from "next/navigation";
-import { TOURNAMENT_BY_SLUG } from "@/lib/config";
+import { TOURNAMENT_BY_SLUG, TEAM_BY_ID } from "@/lib/config";
 import { translateStatus } from "@/lib/translations";
 import { enrichStandingsWithForm } from "@/lib/standings-utils";
 import { RoundNav } from "@/components/championship/round-nav";
@@ -51,6 +52,7 @@ export default function CampeonatoPage() {
           className="mb-4"
           items={[
             { label: "Início", href: "/" },
+            { label: "Futebol", href: "/futebol" },
             { label: tournament.name },
           ]}
         />
@@ -137,10 +139,20 @@ export default function CampeonatoPage() {
                           </div>
                         </td>
                         <td className="py-2 px-2">
-                          <div className="flex items-center gap-2">
-                            <TeamLogo teamId={r.teamId} size={18} />
-                            <span className="font-semibold text-text-primary">{r.team}</span>
-                          </div>
+                          {TEAM_BY_ID[r.teamId] ? (
+                            <Link
+                              href={`/futebol/times/${TEAM_BY_ID[r.teamId].slug}`}
+                              className="flex items-center gap-2 hover:text-green"
+                            >
+                              <TeamLogo teamId={r.teamId} size={18} />
+                              <span className="font-semibold text-text-primary">{r.team}</span>
+                            </Link>
+                          ) : (
+                            <div className="flex items-center gap-2">
+                              <TeamLogo teamId={r.teamId} size={18} />
+                              <span className="font-semibold text-text-primary">{r.team}</span>
+                            </div>
+                          )}
                         </td>
                         <td className="py-2 px-1 text-center font-bold">{r.pts}</td>
                         <td className="py-2 px-1 text-center text-text-muted">{r.matches}</td>

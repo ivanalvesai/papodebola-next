@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import Image from "next/image";
 import Link from "next/link";
-import { Newspaper, CalendarDays } from "lucide-react";
+import { Newspaper, CalendarDays, Trophy } from "lucide-react";
 import { getArticles } from "@/lib/data/articles";
 import { getTodayFootballByLeague } from "@/lib/data/matches";
 import { PageBreadcrumb } from "@/components/seo/page-breadcrumb";
@@ -81,6 +81,27 @@ export default async function FutebolPage() {
           </div>
         </section>
       )}
+
+      {/* Hub de campeonatos — links internos pros silos (antes só no menu) */}
+      <section className="mb-8">
+        <h2 className="mb-3 flex items-center gap-2 text-lg font-bold text-text-primary">
+          <Trophy className="h-5 w-5 text-green" />
+          Campeonatos
+        </h2>
+        <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-4">
+          {Object.values(TOURNAMENTS)
+            .filter((t) => t.seasonId)
+            .map((t) => (
+              <Link
+                key={t.slug}
+                href={`/futebol/${t.slug}`}
+                className="rounded-lg border border-border-custom bg-card-bg px-3 py-2.5 text-sm font-semibold text-text-primary transition-colors hover:border-green hover:text-green"
+              >
+                {t.name}
+              </Link>
+            ))}
+        </div>
+      </section>
 
       <h1 className="text-xl font-bold text-text-primary mb-6 flex items-center gap-2">
         <Newspaper className="h-6 w-6 text-green" />
