@@ -16,9 +16,9 @@ export const revalidate = 1800;
 
 export const metadata: Metadata = {
   alternates: { canonical: "/futebol/copa-do-mundo" },
-  title: "Copa do Mundo 2026: tabela, grupos e jogos | Papo de Bola",
+  title: "Tabela e Jogos da Copa do Mundo 2026",
   description:
-    "Acompanhe a Copa do Mundo 2026: classificação de todos os grupos e os jogos de cada rodada, com datas e horários (horário de Brasília).",
+    "Acompanhe a Copa do Mundo 2026 com tabela, classificação dos grupos, jogos, datas e horários atualizados.",
 };
 
 export default async function CopaDoMundoPage() {

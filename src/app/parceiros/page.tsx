@@ -4,7 +4,7 @@ import { PageBreadcrumb } from "@/components/seo/page-breadcrumb";
 
 export const metadata: Metadata = {
   alternates: { canonical: "/parceiros" },
-  title: "Parceiros - Papo de Bola",
+  title: "Parceiros",
   description:
     "Seja um parceiro do Papo de Bola. Divulgação, publieditoriais e parcerias comerciais.",
 };
