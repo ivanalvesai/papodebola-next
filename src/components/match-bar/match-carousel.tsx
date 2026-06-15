@@ -15,7 +15,7 @@ interface MatchCarouselProps {
 
 // Card de campeonato com carrossel horizontal de jogos, no mesmo estilo da barra
 // "Hoje" da home (MatchBarCard) — setas pra rolar pros lados. Reutilizado em
-// /futebol (um card por campeonato) e /agenda (um card por campeonato dentro de
+// /futebol (um card por campeonato) e /jogos-de-hoje (um card por campeonato dentro de
 // cada esporte).
 export function MatchCarousel({
   title,

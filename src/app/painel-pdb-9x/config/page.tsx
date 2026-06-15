@@ -25,7 +25,7 @@ export default function AdminConfigPage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           secret: "papodebola-revalidate-secret",
-          paths: ["/", "/noticias", "/agenda"],
+          paths: ["/", "/noticias", "/jogos-de-hoje"],
         }),
       });
       const data = await res.json();

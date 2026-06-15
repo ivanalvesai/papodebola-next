@@ -3,8 +3,8 @@ import Link from "next/link";
 // Abas da seção Agenda: Geral (multiesporte) | Futebol (calendário CBF).
 export function AgendaTabs({ active }: { active: "geral" | "futebol" }) {
   const tabs = [
-    { label: "Geral", href: "/agenda", key: "geral" as const },
-    { label: "Futebol", href: "/agenda/futebol", key: "futebol" as const },
+    { label: "Geral", href: "/jogos-de-hoje", key: "geral" as const },
+    { label: "Futebol", href: "/jogos-de-hoje/futebol", key: "futebol" as const },
   ];
   return (
     <div className="flex gap-1 mb-6 border-b border-border-custom">

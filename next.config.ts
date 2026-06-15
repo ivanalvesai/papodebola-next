@@ -38,6 +38,9 @@ const nextConfig: NextConfig = {
   },
   async redirects() {
     return [
+      // /agenda renomeada pra /jogos-de-hoje (jun/2026) — termo mais forte de SEO
+      { source: "/agenda", destination: "/jogos-de-hoje", permanent: true },
+      { source: "/agenda/:path*", destination: "/jogos-de-hoje/:path*", permanent: true },
       { source: "/campeonato/:slug", destination: "/futebol/:slug", permanent: true },
       { source: "/times/:slug", destination: "/futebol/times/:slug", permanent: true },
       { source: "/times/:slug/:sub*", destination: "/futebol/times/:slug/:sub*", permanent: true },

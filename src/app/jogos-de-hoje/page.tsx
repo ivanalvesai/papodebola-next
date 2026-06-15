@@ -13,7 +13,7 @@ export const metadata: Metadata = {
   title: "Agenda de Jogos de Hoje",
   description:
     "Confira a agenda dos jogos de hoje e todos os jogos no Brasil e ao redor do mundo. Acesse papodebola.com.br",
-  alternates: { canonical: "/agenda" },
+  alternates: { canonical: "/jogos-de-hoje" },
 };
 
 function isoOf(dt: Date): string {
@@ -70,11 +70,11 @@ export default async function AgendaPage({
     <div className="mx-auto max-w-[1240px] px-4 py-8">
       <PageBreadcrumb
         className="mb-4"
-        items={[{ label: "Início", href: "/" }, { label: "Agenda" }]}
+        items={[{ label: "Início", href: "/" }, { label: "Jogos de Hoje" }]}
       />
       <h1 className="text-xl font-bold text-text-primary mb-4 flex items-center gap-2">
         <CalendarDays className="h-6 w-6 text-green" />
-        Agenda Esportiva
+        Jogos de Hoje
       </h1>
 
       <AgendaTabs active="geral" />
@@ -90,7 +90,7 @@ export default async function AgendaPage({
           return (
             <Link
               key={iso}
-              href={iso === todayISO ? "/agenda" : `/agenda?d=${iso}`}
+              href={iso === todayISO ? "/jogos-de-hoje" : `/jogos-de-hoje?d=${iso}`}
               scroll={false}
               className={`flex flex-col items-center shrink-0 w-[72px] py-2 rounded-lg border text-center transition-colors ${
                 isSel
