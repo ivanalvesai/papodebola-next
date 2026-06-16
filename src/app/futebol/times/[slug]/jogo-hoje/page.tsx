@@ -4,6 +4,8 @@ import { TEAM_BY_SLUG, ALL_CLUSTER_TEAMS } from "@/lib/config";
 import { getTeamPageData } from "@/lib/data/team";
 import { notFound } from "next/navigation";
 import { TeamLogo } from "@/components/ui/team-logo";
+import { QuickAnswer } from "@/components/seo/quick-answer";
+import { SportsEventSchema } from "@/components/seo/sports-event-schema";
 
 export const revalidate = 1800;
 
@@ -33,11 +35,36 @@ export default async function JogoHojePage({ params }: { params: Promise<{ slug:
   const { todayMatch, upcomingMatches } = data;
   const nextMatch = upcomingMatches[0] || null;
 
+  // Frase de resposta direta (featured snippet + AI Overview) pra "{time} joga hoje?".
+  const hasScore = todayMatch && todayMatch.homeScore !== null;
+  const answer = todayMatch
+    ? `Sim, o ${team.name} joga hoje: ${todayMatch.home} x ${todayMatch.away}${
+        hasScore ? ` (${todayMatch.homeScore}-${todayMatch.awayScore})` : ""
+      }, às ${todayMatch.time}${todayMatch.venue ? `, em ${todayMatch.venue}` : ""}, pela ${todayMatch.league}.`
+    : nextMatch
+      ? `Não, o ${team.name} não joga hoje. O próximo jogo é ${nextMatch.home} x ${nextMatch.away}, em ${nextMatch.date} às ${nextMatch.time}, pela ${nextMatch.league}.`
+      : `O ${team.name} não tem jogo nos próximos dias confirmado.`;
+  const schemaMatch = todayMatch || nextMatch;
+
   return (
     <div className="mx-auto max-w-[800px] px-4 py-6 space-y-6">
+      {schemaMatch && (
+        <SportsEventSchema
+          home={schemaMatch.home}
+          away={schemaMatch.away}
+          homeId={schemaMatch.homeId}
+          awayId={schemaMatch.awayId}
+          startTimestamp={schemaMatch.timestamp}
+          statusType={schemaMatch.status}
+          url={`/futebol/times/${slug}/jogo-hoje`}
+        />
+      )}
+
       <h2 className="text-lg font-bold text-text-primary">
         Jogo do {team.name} Hoje
       </h2>
+
+      <QuickAnswer>{answer}</QuickAnswer>
 
       {todayMatch ? (
         <div className="bg-card-bg rounded-lg border border-green p-6">
