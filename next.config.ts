@@ -64,6 +64,16 @@ const nextConfig: NextConfig = {
       })),
       // jogos de hoje por esporte vivem sob /jogos-de-hoje/{esporte} (futebol, volei, basquete...)
       { source: "/futebol/jogos-hoje", destination: "/jogos-de-hoje/futebol", permanent: true },
+      // Notícias de futebol moram em /futebol/{torneio|bucket}/{slug}. Os "pais" (2 seg) que NÃO
+      // têm campeonato/hub próprio redirecionam pra um destino sensato (só o path exato; o
+      // /futebol/{x}/{artigo} de 3 seg continua na rota de artigo). Os com hub (copa-do-mundo,
+      // selecao-brasileira, libertadores, sudamericana, champions-league, premier-league, la-liga,
+      // copa-do-brasil) já resolvem sozinhos.
+      { source: "/futebol/brasileirao", destination: "/futebol/brasileirao-serie-a", permanent: true },
+      { source: "/futebol/internacional", destination: "/noticias/futebol-internacional", permanent: true },
+      { source: "/futebol/mercado-da-bola", destination: "/noticias/mercado-da-bola", permanent: true },
+      { source: "/futebol/eliminatorias", destination: "/noticias/eliminatorias", permanent: true },
+      { source: "/futebol/brasileiro", destination: "/noticias/futebol-brasileiro", permanent: true },
       { source: "/campeonato/:slug", destination: "/futebol/:slug", permanent: true },
       { source: "/times/:slug", destination: "/futebol/times/:slug", permanent: true },
       { source: "/times/:slug/:sub*", destination: "/futebol/times/:slug/:sub*", permanent: true },

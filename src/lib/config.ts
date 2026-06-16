@@ -207,7 +207,23 @@ export const SPORT_WP_CATEGORY: Record<string, string> = {
 // Ex: Copa do Mundo tem hub /futebol/copa-do-mundo, então o artigo é
 // /futebol/copa-do-mundo/{slug} (precisa de rota correspondente). Categoria -> base.
 export const CATEGORY_HUB: Record<string, string> = {
+  // Futebol: tudo mora dentro de /futebol/{torneio|bucket}/{slug}. Rotas que renderizam:
+  // /futebol/[slug]/[article] (genérica) + /futebol/copa-do-mundo/[slug] e
+  // /futebol/selecao-brasileira/[slug] (essas colidem com pasta estática).
   "Copa do Mundo": "/futebol/copa-do-mundo",
+  "Seleção Brasileira": "/futebol/selecao-brasileira",
+  "Brasileirão": "/futebol/brasileirao",
+  "Brasileirão Série A": "/futebol/brasileirao",
+  "Copa do Brasil": "/futebol/copa-do-brasil",
+  "Copa Libertadores": "/futebol/libertadores",
+  "Copa Sudamericana": "/futebol/sudamericana",
+  "Champions League": "/futebol/champions-league",
+  "Premier League": "/futebol/premier-league",
+  "La Liga": "/futebol/la-liga",
+  "Futebol Internacional": "/futebol/internacional",
+  "Mercado da Bola": "/futebol/mercado-da-bola",
+  "Eliminatórias": "/futebol/eliminatorias",
+  "Futebol Brasileiro": "/futebol/brasileiro",
 };
 
 // URL canônica de uma notícia (estilo ge.globo). Ordem: (1) hub próprio (CATEGORY_HUB),
