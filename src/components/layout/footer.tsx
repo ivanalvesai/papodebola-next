@@ -35,7 +35,7 @@ function FooterColumn({
 }) {
   return (
     <div>
-      <h4 className="text-sm font-semibold mb-3 uppercase tracking-wide">{title}</h4>
+      <p className="text-sm font-semibold mb-3 uppercase tracking-wide">{title}</p>
       <ul className="space-y-2 text-sm">
         {links.map((l) => (
           <li key={l.href}>
@@ -58,7 +58,7 @@ export function Footer() {
         <div className="grid grid-cols-2 gap-8 md:grid-cols-3 lg:grid-cols-5">
           {/* Brand */}
           <div className="col-span-2 lg:col-span-1">
-            <h3 className="text-lg font-bold mb-2">Papo de Bola</h3>
+            <p className="text-lg font-bold mb-2">Papo de Bola</p>
             <p className="text-sm text-text-muted leading-relaxed">
               Portal de futebol brasileiro e mundial com notícias, placares,
               classificações e muito mais.
