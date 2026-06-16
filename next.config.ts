@@ -62,6 +62,8 @@ const nextConfig: NextConfig = {
       // 1:1 (não há páginas de jogador/jornalista), então 301 pro hub mais relevante:
       // perfis de jogador → /futebol; conteúdo editorial/mídia → /noticias.
       // Quando o conteúdo for recriado, trocar o destino pra URL específica.
+      // Páginas de craque recriadas (piloto) — 301 específico ANTES da regra genérica.
+      { source: "/vidadecraque/20050410.htm", destination: "/futebol/craques/socrates", permanent: true },
       { source: "/vidadecraque/:path*", destination: "/futebol", permanent: true },
       { source: "/goleiros/:path*", destination: "/futebol", permanent: true },
       { source: "/papodemidia/:path*", destination: "/noticias", permanent: true },
