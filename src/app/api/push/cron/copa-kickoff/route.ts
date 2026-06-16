@@ -1,5 +1,10 @@
 import { NextResponse } from "next/server";
-import { getWorldCupLiveMatches } from "@/lib/data/matches";
+import {
+  getWorldCupLiveMatches,
+  getTodayMatches,
+  getTomorrowMatches,
+  WORLD_CUP_LEAGUE_ID,
+} from "@/lib/data/matches";
 import { getNotifiedSet, markNotified } from "@/lib/data/push-kickoff-store";
 import { sendToAll } from "@/lib/services/push";
 
@@ -8,6 +13,22 @@ export const dynamic = "force-dynamic";
 // Só notifica jogos que começaram há pouco (evita avisar jogo já rolando no
 // primeiro run / após o cron ficar fora do ar).
 const KICKOFF_WINDOW_S = 20 * 60;
+// Quanto antes do horário marcado a "janela" já abre (pra pegar o apito na hora).
+const PRE_KICKOFF_S = 3 * 60;
+
+// Há algum jogo da Copa perto do horário? Usa a agenda em cache (reusada da home,
+// custo ~zero), pra só consultar o feed AO VIVO quando vale a pena.
+async function hasWorldCupMatchNear(now: number): Promise<boolean> {
+  const [today, tomorrow] = await Promise.all([
+    getTodayMatches().catch(() => []),
+    getTomorrowMatches().catch(() => []),
+  ]);
+  return [...today, ...tomorrow].some((m) => {
+    if (m.leagueId !== WORLD_CUP_LEAGUE_ID || !m.timestamp) return false;
+    const delta = now - m.timestamp; // <0 ainda vai começar, >0 já começou
+    return delta >= -PRE_KICKOFF_S && delta <= KICKOFF_WINDOW_S;
+  });
+}
 
 // Cron de "começou o jogo da Copa". Chamado a cada ~1min por um cron no servidor
 // (no dev, que é quem consulta a API). Protegido por secret (?secret=).
@@ -17,9 +38,15 @@ export async function GET(request: Request) {
     return NextResponse.json({ error: "unauthorized" }, { status: 401 });
   }
 
+  const now = Date.now() / 1000;
+
+  // Porteira: fora da janela de qualquer jogo, nem consulta o feed ao vivo.
+  if (!(await hasWorldCupMatchNear(now))) {
+    return NextResponse.json({ ok: true, skipped: "nenhum jogo perto do horario" });
+  }
+
   const live = await getWorldCupLiveMatches().catch(() => []);
   const notified = await getNotifiedSet();
-  const now = Date.now() / 1000;
 
   let sent = 0;
   let skippedOld = 0;
