@@ -11,6 +11,7 @@
  */
 
 import { fetchWP } from "@/lib/api/wordpress";
+import { articleHref } from "@/lib/config";
 
 const ANTHROPIC_URL = "https://api.anthropic.com/v1/messages";
 
@@ -159,6 +160,7 @@ function buildHtmlContent(
   rawText: string,
   focusKeyword: string,
   relatedArticles: { title: string; slug: string }[],
+  category: string,
 ): { html: string; headingCount: number; wordCount: number } {
   const lines = rawText.split("\n").filter((l: string) => l.trim());
   const htmlParts: string[] = [];
@@ -208,7 +210,7 @@ function buildHtmlContent(
   if (relatedArticles.length > 0) {
     const links = relatedArticles
       .slice(0, 3)
-      .map((a) => `<li><a href="https://papodebola.com.br/artigos/${a.slug}">${a.title}</a></li>`)
+      .map((a) => `<li><a href="https://papodebola.com.br${articleHref(category, a.slug)}">${a.title}</a></li>`)
       .join("\n    ");
     leiaHtml = `\n<div style="background:#f0fdf4;border:1px solid #bbf7d0;border-radius:8px;padding:16px 20px;margin:24px 0">
   <strong>Leia tambem:</strong>
@@ -361,7 +363,7 @@ LEMBRE-SE:
   const relatedArticles = await getRelatedSlugs(validCategory);
 
   // Build HTML content with TOC, H2 headings, and internal links
-  const { html, headingCount, wordCount } = buildHtmlContent(articleBody, focusKeyword, relatedArticles);
+  const { html, headingCount, wordCount } = buildHtmlContent(articleBody, focusKeyword, relatedArticles, validCategory);
 
   console.log(`[Writer] "${articleTitle}" — ${wordCount} words, ${headingCount} headings, keyword: "${focusKeyword}"`);
 

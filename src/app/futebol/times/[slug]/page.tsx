@@ -113,7 +113,7 @@ export default async function TeamHubPage({
                 {data.news.map((article) => (
                   <Link
                     key={article.slug}
-                    href={`/artigos/${article.slug}`}
+                    href={article.url}
                     className="block py-2 border-b border-border-light last:border-0 hover:text-green transition-colors"
                   >
                     <div className="text-sm font-semibold text-text-primary line-clamp-2">

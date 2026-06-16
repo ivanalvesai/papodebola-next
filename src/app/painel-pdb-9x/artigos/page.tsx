@@ -73,7 +73,7 @@ export default function AdminArtigosPage() {
               </div>
               <div className="flex gap-1.5 shrink-0">
                 <Link
-                  href={`/artigos/${a.slug}`}
+                  href={a.url}
                   target="_blank"
                   className="p-2 text-text-muted hover:text-green transition-colors"
                   title="Ver"

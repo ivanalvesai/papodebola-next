@@ -176,6 +176,26 @@ export const WP_CATEGORY_BY_SLUG: Record<string, string> = Object.fromEntries(
   WP_CATEGORIES.map((c) => [slugifyCategory(c), c])
 );
 
+// Rotas top-level que JÁ existem — uma categoria com esse slug colidiria com a
+// página da seção (ex: /formula-1 é a landing do esporte). Notícias dessas categorias
+// caem no fallback /artigos/{slug} em vez de /{categoria}/{slug}.
+export const RESERVED_TOP_LEVEL = new Set([
+  "ao-vivo", "artigos", "basquete", "boxe", "combate", "contato", "esports",
+  "formula-1", "futebol", "futebol-americano", "futsal", "jogos-de-hoje",
+  "noticias", "parceiros", "privacidade", "sobre", "sp", "studio-pdb", "tenis",
+  "volei", "painel-pdb-9x", "sitemap", "robots", "manifest", "llms", "img", "api",
+  "craque", "craques",
+]);
+
+// URL canônica de uma notícia: /{categoria}/{slug} (estilo ge.globo). Se a categoria
+// colide com uma rota existente, cai pro /artigos/{slug}. Fonte única da verdade do
+// caminho de artigo — usada na rota, nos cards, no sitemap e no schema.
+export function articleHref(categoryName: string, slug: string): string {
+  const cat = slugifyCategory(categoryName || "");
+  if (!cat || RESERVED_TOP_LEVEL.has(cat)) return `/artigos/${slug}`;
+  return `/${cat}/${slug}`;
+}
+
 // Brasileirão Série A: all 20 teams (for nav, side panel, etc.)
 const SERIE_A_SLUGS = [
   'palmeiras','flamengo','sao-paulo','fluminense','bahia','athletico-pr',

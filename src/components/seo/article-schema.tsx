@@ -16,7 +16,7 @@ function withTz(date: string): string {
 
 export function ArticleSchema({ article }: ArticleSchemaProps) {
   const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://www.papodebola.com.br";
-  const articleUrl = `${siteUrl}/artigos/${article.slug}`;
+  const articleUrl = `${siteUrl}${article.url}`;
   const imageUrl = article.image?.startsWith("http")
     ? article.image
     : article.image

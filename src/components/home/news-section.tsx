@@ -12,7 +12,7 @@ interface NewsSectionProps {
 function FeaturedCard({ article, big }: { article: Article; big?: boolean }) {
   return (
     <Link
-      href={`/artigos/${article.slug}`}
+      href={article.url}
       className={`group relative block overflow-hidden rounded-lg bg-body ${
         big
           ? "aspect-[16/10] lg:aspect-auto lg:row-span-2 lg:h-full"

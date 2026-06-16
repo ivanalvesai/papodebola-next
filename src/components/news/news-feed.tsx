@@ -21,7 +21,7 @@ function formatDate(d: string) {
 export function FeedItem({ article }: { article: Article }) {
   return (
     <Link
-      href={`/artigos/${article.slug}`}
+      href={article.url}
       className="group flex gap-4 border-t border-border-light py-4 first:border-t-0 first:pt-0"
     >
       <div className="aspect-[16/9] w-28 shrink-0 overflow-hidden rounded bg-body sm:w-44">

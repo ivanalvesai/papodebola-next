@@ -100,7 +100,7 @@ export function NewsListView({
           {/* Featured first article */}
           {page === 1 && articles[0] && (
             <Link
-              href={`/artigos/${articles[0].slug}`}
+              href={articles[0].url}
               className="group block bg-card-bg rounded-lg border border-border-custom overflow-hidden mb-6 hover:shadow-md transition-shadow"
             >
               <div className="grid grid-cols-1 md:grid-cols-2">
@@ -144,7 +144,7 @@ export function NewsListView({
             {articles.slice(page === 1 ? 1 : 0).map((article) => (
               <Link
                 key={article.slug}
-                href={`/artigos/${article.slug}`}
+                href={article.url}
                 className="group bg-card-bg rounded-lg border border-border-custom overflow-hidden hover:shadow-md hover:-translate-y-0.5 transition-all"
               >
                 <div className="aspect-video bg-body">

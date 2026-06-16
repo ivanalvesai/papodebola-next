@@ -42,7 +42,7 @@ export default async function NoticiasPage({ searchParams }: PageProps) {
   return (
     <>
       <ItemListSchema
-        items={articles.map((a) => ({ url: `/artigos/${a.slug}`, name: a.rewrittenTitle }))}
+        items={articles.map((a) => ({ url: a.url, name: a.rewrittenTitle }))}
       />
       <NewsListView
         articles={articles}

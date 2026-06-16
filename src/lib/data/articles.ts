@@ -1,4 +1,5 @@
 import { fetchWP } from "@/lib/api/wordpress";
+import { articleHref } from "@/lib/config";
 import type { Article } from "@/types/article";
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
@@ -65,6 +66,8 @@ function normalizeArticle(post: any, categories: Record<number, string>, tags: R
     imageCaption = (embedded.caption?.rendered || "").replace(/<[^>]+>/g, "").trim();
   }
 
+  const category = postCategories[0] || "Futebol Brasileiro";
+
   return {
     imageCaption,
     originalTitle: title,
@@ -74,13 +77,15 @@ function normalizeArticle(post: any, categories: Record<number, string>, tags: R
     slug,
     source: "WordPress",
     image,
-    category: postCategories[0] || "Futebol Brasileiro",
+    category,
     tags: postTags,
     team: postTags[0] || null,
     author: post._embedded?.author?.[0]?.name || "Redação",
     pubDate: post.date || new Date().toISOString(),
     createdAt: post.date || new Date().toISOString(),
-    url: `/artigos/${slug}`,
+    // URL canônica por categoria (/{categoria}/{slug}); fallback /artigos pra
+    // categorias que colidem com rotas existentes. Ver articleHref em config.
+    url: articleHref(category, slug),
     wpId: post.id,
   };
 }
