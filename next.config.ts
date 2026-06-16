@@ -56,6 +56,25 @@ const nextConfig: NextConfig = {
       { source: "/esporte/volei", destination: "/volei", permanent: true },
       { source: "/esporte/esports", destination: "/esports", permanent: true },
       { source: "/esporte/nfl", destination: "/futebol-americano", permanent: true },
+
+      // Site legado (.htm, 2004–2013): recupera o equity dos backlinks (Wikipedia
+      // DR97, portais) que apontam pra páginas antigas hoje em 404. Sem equivalente
+      // 1:1 (não há páginas de jogador/jornalista), então 301 pro hub mais relevante:
+      // perfis de jogador → /futebol; conteúdo editorial/mídia → /noticias.
+      // Quando o conteúdo for recriado, trocar o destino pra URL específica.
+      { source: "/vidadecraque/:path*", destination: "/futebol", permanent: true },
+      { source: "/goleiros/:path*", destination: "/futebol", permanent: true },
+      { source: "/papodemidia/:path*", destination: "/noticias", permanent: true },
+      { source: "/papoespecial/:path*", destination: "/noticias", permanent: true },
+      { source: "/24horas/:path*", destination: "/noticias", permanent: true },
+      { source: "/20perguntas/:path*", destination: "/noticias", permanent: true },
+      { source: "/toquedeclasse/:path*", destination: "/noticias", permanent: true },
+      { source: "/chutandodebrito/:path*", destination: "/noticias", permanent: true },
+      { source: "/futebolestranho/:path*", destination: "/noticias", permanent: true },
+      { source: "/futebolnarede/:path*", destination: "/noticias", permanent: true },
+      { source: "/especiais/:path*", destination: "/noticias", permanent: true },
+      { source: "/premiobrasileirao2006/:path*", destination: "/noticias", permanent: true },
+      { source: "/index.htm", destination: "/", permanent: true },
     ];
   },
 };
