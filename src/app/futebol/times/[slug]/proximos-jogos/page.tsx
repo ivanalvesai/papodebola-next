@@ -5,6 +5,8 @@ import { getTeamNextEvents } from "@/lib/data/team";
 import { notFound } from "next/navigation";
 import { Calendar } from "lucide-react";
 import { TeamLogo } from "@/components/ui/team-logo";
+import { QuickAnswer } from "@/components/seo/quick-answer";
+import { SportsEventSchema } from "@/components/seo/sports-event-schema";
 
 export const revalidate = 43200;
 
@@ -29,13 +31,35 @@ export default async function ProximosJogosPage({ params }: { params: Promise<{ 
   if (!team) notFound();
 
   const matches = await getTeamNextEvents(team.id);
+  const next = matches[0] || null;
+
+  // Resposta direta pra "próximo jogo do {time}" (featured snippet + AI Overview).
+  const answer = next
+    ? `O próximo jogo do ${team.name} é ${next.home} x ${next.away}, em ${next.date} às ${next.time}${
+        next.venue ? `, em ${next.venue}` : ""
+      }, pela ${next.league}.`
+    : `Ainda não há próximo jogo confirmado para o ${team.name}.`;
 
   return (
     <div className="mx-auto max-w-[800px] px-4 py-6 space-y-6">
+      {next && (
+        <SportsEventSchema
+          home={next.home}
+          away={next.away}
+          homeId={next.homeId}
+          awayId={next.awayId}
+          startTimestamp={next.timestamp}
+          statusType={next.status}
+          url={`/futebol/times/${slug}/proximos-jogos`}
+        />
+      )}
+
       <h2 className="text-lg font-bold text-text-primary flex items-center gap-2">
         <Calendar className="h-5 w-5 text-green" />
         Proximos Jogos do {team.name}
       </h2>
+
+      <QuickAnswer>{answer}</QuickAnswer>
 
       {matches.length === 0 ? (
         <div className="bg-card-bg rounded-lg border border-border-custom p-8 text-center">
