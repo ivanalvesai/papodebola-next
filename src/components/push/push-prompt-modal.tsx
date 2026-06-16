@@ -91,13 +91,6 @@ export function PushPromptModal() {
             "Eu quero"
           )}
         </button>
-
-        <button
-          onClick={dismiss}
-          className="mt-3 text-xs font-semibold text-text-muted hover:text-text-secondary"
-        >
-          Agora não
-        </button>
       </div>
     </div>
   );
