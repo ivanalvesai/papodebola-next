@@ -75,15 +75,22 @@ export default async function CraquePage({
       </h1>
 
       {c.image && (
-        <Image
-          src={c.image}
-          alt={c.rewrittenTitle}
-          width={760}
-          height={420}
-          className="mb-6 w-full rounded-lg object-cover"
-          priority
-          unoptimized
-        />
+        <figure className="mb-6">
+          <Image
+            src={c.image}
+            alt={c.rewrittenTitle}
+            width={760}
+            height={420}
+            className="w-full rounded-lg object-cover"
+            priority
+            unoptimized
+          />
+          {c.imageCaption && (
+            <figcaption className="mt-1.5 text-[11px] text-text-muted">
+              {c.imageCaption}
+            </figcaption>
+          )}
+        </figure>
       )}
 
       <article

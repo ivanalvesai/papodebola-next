@@ -56,14 +56,17 @@ function normalizeArticle(post: any, categories: Record<number, string>, tags: R
   const postCategories = (post.categories || []).map((id: number) => categories[id]).filter(Boolean);
   const postTags = (post.tags || []).map((id: number) => tags[id]).filter(Boolean);
 
-  // Featured image
+  // Featured image (+ legenda/crédito da imagem, p/ atribuição de licença)
   let image = "";
+  let imageCaption = "";
   const embedded = post._embedded?.["wp:featuredmedia"]?.[0];
   if (embedded?.source_url) {
     image = embedded.source_url;
+    imageCaption = (embedded.caption?.rendered || "").replace(/<[^>]+>/g, "").trim();
   }
 
   return {
+    imageCaption,
     originalTitle: title,
     rewrittenTitle: title,
     rewrittenText: content,
