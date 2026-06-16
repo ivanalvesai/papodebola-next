@@ -84,7 +84,7 @@ export function SidePanel() {
       >
         {/* Header */}
         <div className="flex items-center justify-between px-5 py-4 border-b border-border-custom">
-          <h3 className="text-base font-bold text-text-primary">Menu</h3>
+          <p className="text-base font-bold text-text-primary">Menu</p>
           <button
             onClick={close}
             className="p-1 rounded hover:bg-body transition-colors"
