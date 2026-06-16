@@ -1,4 +1,9 @@
+import Link from "next/link";
+import Image from "next/image";
+import { Newspaper } from "lucide-react";
 import { getSportData } from "@/lib/data/sports";
+import { getArticles } from "@/lib/data/articles";
+import { SPORT_WP_CATEGORY } from "@/lib/config";
 import { translateStatus } from "@/lib/translations";
 import { PageBreadcrumb, type BreadcrumbItem } from "@/components/seo/page-breadcrumb";
 
@@ -13,7 +18,14 @@ export async function SportPageContent({
   title,
   breadcrumbItems,
 }: SportPageContentProps) {
-  const data = await getSportData(sportKey);
+  const catName = SPORT_WP_CATEGORY[sportKey];
+  const [data, newsRes] = await Promise.all([
+    getSportData(sportKey),
+    catName
+      ? getArticles({ category: catName, perPage: 12 }).catch(() => ({ articles: [], total: 0 }))
+      : Promise.resolve({ articles: [], total: 0 }),
+  ]);
+  const news = newsRes.articles;
 
   return (
     <div className="mx-auto max-w-[1240px] px-4 py-8">
@@ -23,6 +35,44 @@ export async function SportPageContent({
       <div className="grid grid-cols-1 lg:grid-cols-[1fr_340px] gap-6">
         {/* Main */}
         <div className="space-y-6">
+          {/* Notícias da categoria (links pra /{esporte}/{slug}) */}
+          {news.length > 0 && (
+            <div className="bg-card-bg rounded-lg border border-border-custom p-6">
+              <h2 className="mb-4 flex items-center gap-2 text-sm font-bold uppercase text-text-primary">
+                <Newspaper className="h-4 w-4 text-green" />
+                Últimas Notícias
+              </h2>
+              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                {news.map((a) => (
+                  <Link
+                    key={a.slug}
+                    href={a.url}
+                    className="group flex gap-3 border-b border-border-light pb-4 last:border-0 sm:border-0 sm:pb-0"
+                  >
+                    <div className="aspect-[16/9] w-24 shrink-0 overflow-hidden rounded bg-body sm:w-32">
+                      {a.image ? (
+                        <Image
+                          src={a.image}
+                          alt=""
+                          width={128}
+                          height={72}
+                          className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
+                          unoptimized
+                        />
+                      ) : (
+                        <div className="flex h-full w-full items-center justify-center text-text-muted">
+                          <Newspaper className="h-5 w-5" />
+                        </div>
+                      )}
+                    </div>
+                    <h3 className="line-clamp-3 flex-1 text-sm font-semibold leading-snug text-text-primary transition-colors group-hover:text-green">
+                      {a.rewrittenTitle}
+                    </h3>
+                  </Link>
+                ))}
+              </div>
+            </div>
+          )}
           {/* Live */}
           {data && data.live.length > 0 && (
             <div className="bg-card-bg rounded-lg border border-red p-6">

@@ -176,16 +176,32 @@ export const WP_CATEGORY_BY_SLUG: Record<string, string> = Object.fromEntries(
   WP_CATEGORIES.map((c) => [slugifyCategory(c), c])
 );
 
-// Rotas top-level que JÁ existem — uma categoria com esse slug colidiria com a
-// página da seção (ex: /formula-1 é a landing do esporte). Notícias dessas categorias
-// caem no fallback /artigos/{slug} em vez de /{categoria}/{slug}.
+// Rotas top-level que NÃO podem ser usadas como categoria de URL de notícia (a notícia
+// quebraria a página/rota). As páginas de ESPORTE (formula-1, tenis, basquete...) ficam
+// DE FORA de propósito: a notícia mora em /{esporte}/{slug} (catch-all /[categoria]/[slug]
+// renderiza, sem colidir com a landing de 1 segmento) e a landing do esporte lista as
+// notícias da categoria (ver SPORT_WP_CATEGORY + SportPageContent).
 export const RESERVED_TOP_LEVEL = new Set([
-  "ao-vivo", "artigos", "basquete", "boxe", "combate", "contato", "esports",
-  "formula-1", "futebol", "futebol-americano", "futsal", "jogos-de-hoje",
-  "noticias", "parceiros", "privacidade", "sobre", "sp", "studio-pdb", "tenis",
-  "volei", "painel-pdb-9x", "sitemap", "robots", "manifest", "llms", "img", "api",
-  "craque", "craques",
+  "ao-vivo", "artigos", "contato", "futebol", "jogos-de-hoje", "noticias",
+  "parceiros", "privacidade", "sobre", "sp", "studio-pdb", "painel-pdb-9x",
+  "sitemap", "robots", "manifest", "llms", "img", "api", "craque", "craques",
 ]);
+
+// Esporte (slug da rota/landing) -> nome da categoria no WordPress. Usado pra: (1) a
+// landing do esporte listar as notícias da categoria; (2) confirmar que o slug da
+// categoria casa com a rota (ex: "Fórmula 1" -> formula-1). Esportes cujo slug de
+// categoria == rota ganham URL /{esporte}/{slug} alinhada.
+export const SPORT_WP_CATEGORY: Record<string, string> = {
+  "formula-1": "Fórmula 1",
+  "tenis": "Tênis",
+  "basquete": "Basquete",
+  "combate": "MMA",
+  "volei": "Vôlei",
+  "esports": "eSports",
+  "futebol-americano": "NFL",
+  "boxe": "Boxe",
+  "futsal": "Futsal",
+};
 
 // URL canônica de uma notícia: /{categoria}/{slug} (estilo ge.globo). Se a categoria
 // colide com uma rota existente, cai pro /artigos/{slug}. Fonte única da verdade do
