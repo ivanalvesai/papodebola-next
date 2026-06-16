@@ -6,6 +6,7 @@ import { useState } from "react";
 import { useSidePanel } from "./side-panel-context";
 import { TeamLogo } from "@/components/ui/team-logo";
 import { PANEL_TEAMS_BR, PANEL_TEAMS_EU, type TeamInfo } from "@/lib/config";
+import { PushOptIn } from "@/components/push/push-opt-in";
 
 function TeamItem({ team }: { team: TeamInfo }) {
   return (
@@ -90,6 +91,11 @@ export function SidePanel() {
           >
             <X className="h-5 w-5 text-text-muted" />
           </button>
+        </div>
+
+        {/* Alertas (web push) */}
+        <div className="border-b border-border-custom px-5 py-3">
+          <PushOptIn />
         </div>
 
         {/* Quick links */}

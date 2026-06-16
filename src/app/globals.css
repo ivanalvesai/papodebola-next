@@ -129,3 +129,25 @@
     display: none;
   }
 }
+
+/* Sino balançando (modal de notificações) */
+@keyframes pdb-bell-swing {
+  0%, 55%, 100% { transform: rotate(0); }
+  60% { transform: rotate(16deg); }
+  68% { transform: rotate(-13deg); }
+  76% { transform: rotate(9deg); }
+  84% { transform: rotate(-6deg); }
+  92% { transform: rotate(3deg); }
+}
+.animate-bell-swing {
+  animation: pdb-bell-swing 2.2s ease-in-out infinite;
+  transform-origin: top center;
+}
+
+@keyframes pdb-modal-pop {
+  from { opacity: 0; transform: translateY(8px) scale(0.96); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+.animate-modal-pop {
+  animation: pdb-modal-pop 0.25s ease-out;
+}
