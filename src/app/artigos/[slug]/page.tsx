@@ -248,9 +248,9 @@ export default async function ArticlePage({
 
           {/* Share */}
           <div className="mt-8 border-t-2 border-border-custom pt-8">
-            <h4 className="text-xs font-semibold uppercase tracking-wider text-text-muted mb-4">
+            <p className="text-xs font-semibold uppercase tracking-wider text-text-muted mb-4">
               Compartilhar
-            </h4>
+            </p>
             <ShareButtons url={articleUrl} title={article.rewrittenTitle} />
           </div>
         </div>
@@ -282,9 +282,9 @@ export default async function ArticlePage({
 
       {related.length > 0 && (
         <div className="mx-auto max-w-[680px] px-4 py-8 border-t-2 border-border-custom">
-          <h3 className="text-base font-bold uppercase text-text-primary mb-5">
+          <h2 className="text-base font-bold uppercase text-text-primary mb-5">
             Leia Também
-          </h3>
+          </h2>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             {related.map((r) => (
               <Link
