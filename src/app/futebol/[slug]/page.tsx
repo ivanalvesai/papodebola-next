@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import Link from "next/link";
 import { useParams } from "next/navigation";
 import { TOURNAMENT_BY_SLUG, TEAM_BY_ID } from "@/lib/config";
+import { matchDateSlug, matchPairSlug } from "@/lib/world-cup-match-url";
 import { translateStatus } from "@/lib/translations";
 import { enrichStandingsWithForm } from "@/lib/standings-utils";
 import { RoundNav } from "@/components/championship/round-nav";
@@ -202,8 +203,10 @@ export default function CampeonatoPage() {
                 const dt = m.timestamp ? new Date(m.timestamp * 1000) : null;
                 const hasScore = m.homeScore !== null;
 
+                const jogoHref = `/futebol/${slug}/jogo/${matchDateSlug(m.timestamp)}/${matchPairSlug(m.homeId, m.awayId, m.home, m.away)}`;
+
                 return (
-                  <div key={m.id} className="px-4 py-3">
+                  <Link key={m.id} href={jogoHref} className="block px-4 py-3 hover:bg-card-hover transition-colors">
                     <div className="flex items-center gap-2 text-xs">
                       <TeamLogo teamId={m.homeId} size={20} />
                       <span className="font-semibold flex-1 truncate">{m.home}</span>
@@ -223,7 +226,7 @@ export default function CampeonatoPage() {
                         ? `${dt.toLocaleDateString("pt-BR", { day: "2-digit", month: "2-digit" })} ${dt.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit", timeZone: "America/Sao_Paulo" })}`
                         : translateStatus(m.statusDesc) || ""}
                     </div>
-                  </div>
+                  </Link>
                 );
               })}
             </div>

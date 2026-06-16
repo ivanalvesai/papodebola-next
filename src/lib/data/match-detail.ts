@@ -4,6 +4,8 @@ import { translateStatus } from "@/lib/translations";
 import { matchDateSlug, matchPairSlug } from "@/lib/world-cup-match-url";
 import { translateEnPt } from "@/lib/services/translate";
 import { getWorldCupStandings } from "./standings";
+import { getChampionshipData } from "./championship";
+import { TOURNAMENT_BY_SLUG } from "@/lib/config";
 import type { StandingsGroup } from "@/types/standings";
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
@@ -102,6 +104,71 @@ export async function getMatchGroup(
       return ids.has(homeId) && ids.has(awayId);
     }) || null
   );
+}
+
+// ---------- Resolução data+slug -> jogo de um CAMPEONATO (Série B, Série A, etc.) ----------
+// Padrão igual ao da Copa, mas pra qualquer torneio cadastrado (TOURNAMENT_BY_SLUG).
+// Reusa getChampionshipData (já cacheado pela página do campeonato) pra achar o jogo
+// pelo slug da data + slug do confronto. O placar ao vivo vem do getMatchDetail(id).
+
+export interface ChampionshipFixture {
+  id: number;
+  homeId: number;
+  awayId: number;
+  home: string;
+  away: string;
+  timestamp: number;
+  round: number;
+  tournamentName: string;
+}
+
+export async function resolveChampionshipMatch(
+  champSlug: string,
+  dateSlug: string,
+  pairSlug: string
+): Promise<ChampionshipFixture | null> {
+  const tournament = TOURNAMENT_BY_SLUG[champSlug];
+  if (!tournament) return null;
+  const data = await getChampionshipData(champSlug);
+  if (!data) return null;
+
+  for (const matches of Object.values(data.matchesByRound)) {
+    for (const m of matches) {
+      if (
+        matchDateSlug(m.timestamp) === dateSlug &&
+        matchPairSlug(m.homeId, m.awayId, m.home, m.away) === pairSlug
+      ) {
+        return {
+          id: m.id,
+          homeId: m.homeId,
+          awayId: m.awayId,
+          home: m.home,
+          away: m.away,
+          timestamp: m.timestamp,
+          round: m.round,
+          tournamentName: tournament.name,
+        };
+      }
+    }
+  }
+  return null;
+}
+
+// href da página do jogo de um campeonato: /futebol/{champSlug}/jogo/{data}/{confronto}
+export function championshipMatchHref(
+  champSlug: string,
+  timestamp: number,
+  homeId: number,
+  awayId: number,
+  home?: string,
+  away?: string
+): string {
+  return `/futebol/${champSlug}/jogo/${matchDateSlug(timestamp)}/${matchPairSlug(
+    homeId,
+    awayId,
+    home,
+    away
+  )}`;
 }
 
 // ---------- Detalhe do jogo (event / incidents / lineups / statistics) ----------
