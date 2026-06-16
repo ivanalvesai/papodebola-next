@@ -129,6 +129,15 @@ export async function getArticles(options?: {
     if (catId) endpoint += `&categories=${catId}`;
   }
 
+  // Craques (ex: Sócrates) têm página própria em /futebol/craque/[slug] e NÃO são
+  // notícia. Excluímos a categoria das listagens (home, /noticias, /futebol, sitemap,
+  // "Leia também") pra não duplicar conteúdo nem poluir o feed — a menos que a própria
+  // categoria "Craques" seja pedida explicitamente.
+  if (category !== "Craques") {
+    const craquesId = Object.entries(categories).find(([, name]) => name === "Craques")?.[0];
+    if (craquesId) endpoint += `&categories_exclude=${craquesId}`;
+  }
+
   if (search) {
     endpoint += `&search=${encodeURIComponent(search)}`;
   }

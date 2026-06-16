@@ -1,9 +1,10 @@
 import type { Metadata } from "next";
 import Image from "next/image";
 import Link from "next/link";
-import { notFound } from "next/navigation";
+import { notFound, permanentRedirect } from "next/navigation";
 import { Clock, Pen, BookOpen, Tag, Trophy, Radio, CalendarDays, Newspaper } from "lucide-react";
 import { getArticleBySlug, getRelatedArticles } from "@/lib/data/articles";
+import { CRAQUE_SLUGS } from "@/lib/data/craques";
 import { slugifyCategory, WP_CATEGORY_BY_SLUG } from "@/lib/config";
 import { getBrasileiraoStandings } from "@/lib/data/standings";
 import { ShareButtons } from "@/components/article/share-buttons";
@@ -52,6 +53,8 @@ export async function generateMetadata({
   params: Promise<{ slug: string }>;
 }): Promise<Metadata> {
   const { slug } = await params;
+  // Craque acessado pela rota genérica → consolida na página de craque (308).
+  if (CRAQUE_SLUGS.includes(slug)) permanentRedirect(`/futebol/craque/${slug}`);
   const article = await getArticleBySlug(slug);
   if (!article) return {};
 
@@ -120,6 +123,9 @@ export default async function ArticlePage({
   params: Promise<{ slug: string }>;
 }) {
   const { slug } = await params;
+  // Craque NÃO é artigo: evita conteúdo duplicado redirecionando (308) pra
+  // /futebol/craque/[slug], que é a página canônica do craque.
+  if (CRAQUE_SLUGS.includes(slug)) permanentRedirect(`/futebol/craque/${slug}`);
   const article = await getArticleBySlug(slug);
   if (!article) notFound();
 
