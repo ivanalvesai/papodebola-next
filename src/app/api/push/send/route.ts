@@ -1,5 +1,15 @@
 import { NextResponse } from "next/server";
 import { sendToAll } from "@/lib/services/push";
+import { countSubs } from "@/lib/data/push-store";
+
+// Nº de inscritos (pro painel). Protegido pelo middleware.
+export async function GET() {
+  try {
+    return NextResponse.json({ subscribers: await countSubs() });
+  } catch {
+    return NextResponse.json({ subscribers: 0 });
+  }
+}
 
 // Protegida pelo middleware (JWT do painel). Dispara um push pra todos os
 // inscritos. Uso manual/teste agora; na Fase 2 entra o disparo automático de gol.
