@@ -3,15 +3,19 @@ import Image from "next/image";
 import { notFound } from "next/navigation";
 import { Trophy } from "lucide-react";
 import { PageBreadcrumb } from "@/components/seo/page-breadcrumb";
-import { QuickAnswer } from "@/components/seo/quick-answer";
-import { CRAQUES, getCraque } from "@/lib/data/craques";
+import { getCraques, getCraqueBySlug } from "@/lib/data/craques";
 
-export const revalidate = 86400;
+export const revalidate = 1800;
 
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || "https://www.papodebola.com.br";
 
-export function generateStaticParams() {
-  return Object.keys(CRAQUES).map((slug) => ({ slug }));
+export async function generateStaticParams() {
+  const craques = await getCraques().catch(() => []);
+  return craques.map((c) => ({ slug: c.slug }));
+}
+
+function plain(text: string, max: number): string {
+  return (text || "").replace(/\s+/g, " ").trim().slice(0, max);
 }
 
 export async function generateMetadata({
@@ -20,12 +24,13 @@ export async function generateMetadata({
   params: Promise<{ slug: string }>;
 }): Promise<Metadata> {
   const { slug } = await params;
-  const c = getCraque(slug);
+  const c = await getCraqueBySlug(slug);
   if (!c) return {};
   return {
-    title: `${c.nome}: biografia, carreira e história`,
-    description: c.resumo.slice(0, 155),
+    title: c.rewrittenTitle,
+    description: plain(c.rewrittenText, 155),
     alternates: { canonical: `/futebol/craque/${slug}` },
+    ...(c.image ? { openGraph: { images: [{ url: c.image }] } } : {}),
   };
 }
 
@@ -35,21 +40,17 @@ export default async function CraquePage({
   params: Promise<{ slug: string }>;
 }) {
   const { slug } = await params;
-  const c = getCraque(slug);
+  const c = await getCraqueBySlug(slug);
   if (!c) notFound();
 
   const personSchema = {
     "@context": "https://schema.org",
     "@type": "Person",
-    name: c.nome,
-    ...(c.apelido ? { alternateName: c.apelido } : {}),
+    name: c.rewrittenTitle,
     jobTitle: "Futebolista",
-    nationality: c.nacionalidade,
-    ...(c.birthDate ? { birthDate: c.birthDate } : {}),
-    ...(c.deathDate ? { deathDate: c.deathDate } : {}),
-    description: c.resumo,
     url: `${SITE_URL}/futebol/craque/${slug}`,
-    ...(c.imagem ? { image: `${SITE_URL}${c.imagem}` } : {}),
+    ...(c.image ? { image: c.image } : {}),
+    description: plain(c.rewrittenText, 300),
   };
 
   return (
@@ -64,72 +65,44 @@ export default async function CraquePage({
         items={[
           { label: "Início", href: "/" },
           { label: "Futebol", href: "/futebol" },
-          { label: c.nome },
+          { label: c.rewrittenTitle },
         ]}
       />
 
-      <h1 className="mb-1 flex items-center gap-2 text-2xl font-bold text-text-primary">
-        <Trophy className="h-6 w-6 text-green" />
-        {c.nome}
+      <h1 className="mb-4 flex items-center gap-2 text-2xl font-bold leading-tight text-text-primary">
+        <Trophy className="h-6 w-6 shrink-0 text-green" />
+        {c.rewrittenTitle}
       </h1>
-      <p className="mb-5 text-sm text-text-muted">
-        {c.apelido ? `"${c.apelido}" · ` : ""}
-        {c.posicao} · {c.nacionalidade}
-      </p>
 
-      <div className="mb-6">
-        <QuickAnswer>{c.resumo}</QuickAnswer>
-      </div>
+      {c.image && (
+        <Image
+          src={c.image}
+          alt={c.rewrittenTitle}
+          width={760}
+          height={420}
+          className="mb-6 w-full rounded-lg object-cover"
+          priority
+          unoptimized
+        />
+      )}
 
-      <div className="grid grid-cols-1 gap-6 lg:grid-cols-[1fr_240px] lg:items-start">
-        {/* Conteúdo */}
-        <article className="space-y-6">
-          {c.secoes.map((s) => (
-            <section key={s.titulo}>
-              <h2 className="mb-2 text-lg font-bold text-text-primary">{s.titulo}</h2>
-              {s.paragrafos.map((p, i) => (
-                <p key={i} className="mb-3 text-[15px] leading-relaxed text-text-secondary">
-                  {p}
-                </p>
-              ))}
-            </section>
-          ))}
-        </article>
+      <article
+        className="prose-craque"
+        dangerouslySetInnerHTML={{ __html: c.contentHtml || "" }}
+      />
 
-        {/* Dados rápidos */}
-        <aside className="space-y-4">
-          {c.imagem && (
-            <figure className="overflow-hidden rounded-lg border border-border-custom bg-card-bg">
-              <Image
-                src={c.imagem}
-                alt={`Foto de ${c.nome}`}
-                width={240}
-                height={300}
-                className="h-auto w-full object-cover"
-                unoptimized
-              />
-              {c.imagemCredito && (
-                <figcaption className="px-3 py-1.5 text-[10px] text-text-muted">
-                  {c.imagemCredito}
-                </figcaption>
-              )}
-            </figure>
-          )}
-          <div className="rounded-lg border border-border-custom bg-card-bg p-4">
-            <h2 className="mb-3 text-xs font-bold uppercase tracking-wide text-text-muted">
-              Ficha
-            </h2>
-            <dl className="space-y-2 text-sm">
-              {c.dadosRapidos.map((d) => (
-                <div key={d.label}>
-                  <dt className="text-[11px] uppercase text-text-muted">{d.label}</dt>
-                  <dd className="font-semibold text-text-primary">{d.valor}</dd>
-                </div>
-              ))}
-            </dl>
-          </div>
-        </aside>
-      </div>
+      <style>{`
+        .prose-craque { color: var(--color-text-secondary, #444); font-size: 15px; line-height: 1.7; }
+        .prose-craque h2 { font-size: 20px; font-weight: 700; margin: 28px 0 10px; color: var(--color-text-primary, #111); }
+        .prose-craque h3 { font-size: 17px; font-weight: 700; margin: 22px 0 8px; }
+        .prose-craque p { margin: 0 0 16px; }
+        .prose-craque ul, .prose-craque ol { margin: 0 0 16px 22px; }
+        .prose-craque li { margin-bottom: 6px; }
+        .prose-craque a { color: #00965E; text-decoration: underline; }
+        .prose-craque img { max-width: 100%; height: auto; border-radius: 8px; margin: 16px 0; }
+        .prose-craque table { width: 100%; border-collapse: collapse; margin: 16px 0; font-size: 14px; }
+        .prose-craque th, .prose-craque td { border: 1px solid var(--color-border-custom, #e5e5e5); padding: 8px; text-align: left; }
+      `}</style>
     </div>
   );
 }
