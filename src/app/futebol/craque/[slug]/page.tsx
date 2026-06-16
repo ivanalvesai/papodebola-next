@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import Image from "next/image";
 import { notFound } from "next/navigation";
 import { Trophy } from "lucide-react";
 import { PageBreadcrumb } from "@/components/seo/page-breadcrumb";
@@ -48,6 +49,7 @@ export default async function CraquePage({
     ...(c.deathDate ? { deathDate: c.deathDate } : {}),
     description: c.resumo,
     url: `${SITE_URL}/futebol/craque/${slug}`,
+    ...(c.imagem ? { image: `${SITE_URL}${c.imagem}` } : {}),
   };
 
   return (
@@ -95,7 +97,24 @@ export default async function CraquePage({
         </article>
 
         {/* Dados rápidos */}
-        <aside>
+        <aside className="space-y-4">
+          {c.imagem && (
+            <figure className="overflow-hidden rounded-lg border border-border-custom bg-card-bg">
+              <Image
+                src={c.imagem}
+                alt={`Foto de ${c.nome}`}
+                width={240}
+                height={300}
+                className="h-auto w-full object-cover"
+                unoptimized
+              />
+              {c.imagemCredito && (
+                <figcaption className="px-3 py-1.5 text-[10px] text-text-muted">
+                  {c.imagemCredito}
+                </figcaption>
+              )}
+            </figure>
+          )}
           <div className="rounded-lg border border-border-custom bg-card-bg p-4">
             <h2 className="mb-3 text-xs font-bold uppercase tracking-wide text-text-muted">
               Ficha

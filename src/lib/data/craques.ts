@@ -13,6 +13,8 @@ export interface Craque {
   nomeCompleto: string;
   apelido?: string;
   posicao: string;
+  imagem?: string; // ex: "/craques/socrates.jpg" — troque o arquivo em public/craques/ pra mudar a foto
+  imagemCredito?: string; // crédito/fonte da foto (opcional)
   nascimento: string; // "19 de fevereiro de 1954, Belém (PA)"
   falecimento?: string; // "4 de dezembro de 2011, São Paulo (SP)"
   nacionalidade: string;
@@ -44,6 +46,8 @@ export const CRAQUES: Record<string, Craque> = {
     birthDate: "1954-02-19",
     deathDate: "2011-12-04",
     legacyUrl: "/vidadecraque/20050410.htm",
+    imagem: "/craques/socrates.jpg", // suba o arquivo em public/craques/socrates.jpg
+    imagemCredito: "Foto: arquivo",
     secoes: [
       {
         titulo: "Quem foi Sócrates",
