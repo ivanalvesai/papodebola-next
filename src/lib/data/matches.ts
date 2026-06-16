@@ -187,3 +187,14 @@ export async function getLiveMatches(): Promise<NormalizedMatch[]> {
   if (!data?.events) return [];
   return data.events.map(normalizeEvent);
 }
+
+// Jogos da Copa do Mundo ao vivo AGORA (dado fresco, 30s) — pro cron de "começou
+// o jogo". Filtra pelo torneio da Copa (id 16), então pega QUALQUER fase (grupos,
+// oitavas, final…) que a API marcar como ao vivo, sem precisar de lista fixa.
+export async function getWorldCupLiveMatches(): Promise<NormalizedMatch[]> {
+  const data = await fetchAllSports<any>("matches/live", 30);
+  if (!data?.events) return [];
+  return data.events
+    .map(normalizeEvent)
+    .filter((m: NormalizedMatch) => m.leagueId === WORLD_CUP_LEAGUE_ID);
+}
