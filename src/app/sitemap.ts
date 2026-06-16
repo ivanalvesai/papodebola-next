@@ -3,6 +3,7 @@ import { TEAMS, SPORTS, WP_CATEGORY_BY_SLUG } from "@/lib/config";
 import { TOURNAMENTS } from "@/lib/config";
 import { SELECOES, BRAZIL_ID } from "@/lib/selecoes";
 import { getArticles } from "@/lib/data/articles";
+import { getCraques } from "@/lib/data/craques";
 
 const BASE = process.env.NEXT_PUBLIC_SITE_URL || "https://www.papodebola.com.br";
 
@@ -98,6 +99,16 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     priority: 0.6,
   }));
 
+  // Craques (cluster /futebol/craque/[slug]) — só os publicados. getArticles acima
+  // já exclui a categoria, então não há entrada /artigos duplicada pro mesmo conteúdo.
+  const craques = await getCraques().catch(() => []);
+  const craquePages: MetadataRoute.Sitemap = craques.map((c) => ({
+    url: `${BASE}/futebol/craque/${c.slug}`,
+    lastModified: c.updatedAt || c.pubDate ? new Date(c.updatedAt || c.pubDate) : now,
+    changeFrequency: "monthly" as const,
+    priority: 0.6,
+  }));
+
   return [
     ...staticPages,
     ...teamPages,
@@ -107,5 +118,6 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     ...newsCategoryPages,
     ...selecaoPages,
     ...articlePages,
+    ...craquePages,
   ];
 }
