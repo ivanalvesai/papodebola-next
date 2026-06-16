@@ -9,7 +9,7 @@ import type { NormalizedMatch } from "@/types/match";
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
 // uniqueTournament id da Copa do Mundo 2026 no Sofascore/AllSports.
-const WORLD_CUP_LEAGUE_ID = 16;
+export const WORLD_CUP_LEAGUE_ID = 16;
 
 function mapStatus(event: any): {
   status: NormalizedMatch["status"];
