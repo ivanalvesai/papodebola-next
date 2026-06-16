@@ -89,6 +89,9 @@ export default async function CraquePage({
         .prose-craque li { margin-bottom: 6px; }
         .prose-craque a { color: #00965E; text-decoration: underline; }
         .prose-craque img { max-width: 100%; height: auto; border-radius: 8px; margin: 16px 0; }
+        .prose-craque figure { margin: 16px 0; }
+        .prose-craque figure img { margin: 0 0 4px; }
+        .prose-craque figcaption, .prose-craque .wp-element-caption { margin-top: 4px; font-size: 12px; line-height: 1.4; color: var(--color-text-muted, #888); text-align: center; }
         .prose-craque table { width: 100%; border-collapse: collapse; margin: 16px 0; font-size: 14px; }
         .prose-craque th, .prose-craque td { border: 1px solid var(--color-border-custom, #e5e5e5); padding: 8px; text-align: left; }
       `}</style>
