@@ -840,7 +840,7 @@ export function LiveMatch({
       />
 
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-[300px_minmax(0,1fr)_280px]">
-        {/* Esquerda: escalação + estatísticas */}
+        {/* Esquerda: escalação (+ estatísticas quando a direita é o grupo, ex: Copa) */}
         <div className="order-2 space-y-4 lg:order-1">
           <Section title="Escalação" icon={Users}>
             <Lineups
@@ -851,9 +851,11 @@ export function LiveMatch({
               incidents={incidents}
             />
           </Section>
-          <Section title="Estatísticas" icon={BarChart3}>
-            <StatsBars stats={stats} />
-          </Section>
+          {group && (
+            <Section title="Estatísticas" icon={BarChart3}>
+              <StatsBars stats={stats} />
+            </Section>
+          )}
         </div>
 
         {/* Meio: lance a lance */}
@@ -863,11 +865,16 @@ export function LiveMatch({
           </Section>
         </div>
 
-        {/* Direita: classificação do grupo */}
-        <div className="order-3">
-          {group && (
+        {/* Direita: grupo (Copa) OU estatísticas (liga sem grupo, ex: Série B) — assim as 3
+            colunas ficam alinhadas: escalação · lance a lance · estatísticas. */}
+        <div className="order-3 space-y-4">
+          {group ? (
             <Section title={group.name} icon={Trophy}>
               <GroupTable group={group} homeId={event.homeId} awayId={event.awayId} />
+            </Section>
+          ) : (
+            <Section title="Estatísticas" icon={BarChart3}>
+              <StatsBars stats={stats} />
             </Section>
           )}
         </div>
