@@ -24,7 +24,7 @@ export async function generateMetadata({
   return {
     title: `${c.nome}: biografia, carreira e história`,
     description: c.resumo.slice(0, 155),
-    alternates: { canonical: `/futebol/craques/${slug}` },
+    alternates: { canonical: `/futebol/craque/${slug}` },
   };
 }
 
@@ -47,7 +47,7 @@ export default async function CraquePage({
     ...(c.birthDate ? { birthDate: c.birthDate } : {}),
     ...(c.deathDate ? { deathDate: c.deathDate } : {}),
     description: c.resumo,
-    url: `${SITE_URL}/futebol/craques/${slug}`,
+    url: `${SITE_URL}/futebol/craque/${slug}`,
   };
 
   return (
@@ -62,7 +62,6 @@ export default async function CraquePage({
         items={[
           { label: "Início", href: "/" },
           { label: "Futebol", href: "/futebol" },
-          { label: "Craques", href: "/futebol/craques" },
           { label: c.nome },
         ]}
       />
