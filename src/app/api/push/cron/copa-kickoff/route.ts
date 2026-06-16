@@ -10,11 +10,15 @@ import { sendToAll } from "@/lib/services/push";
 
 export const dynamic = "force-dynamic";
 
-// Só notifica jogos que começaram há pouco (evita avisar jogo já rolando no
-// primeiro run / após o cron ficar fora do ar).
-const KICKOFF_WINDOW_S = 20 * 60;
-// Quanto antes do horário marcado a "janela" já abre (pra pegar o apito na hora).
-const PRE_KICKOFF_S = 3 * 60;
+// "Porteira": janela em torno do HORÁRIO MARCADO em que vale a pena consultar o
+// feed ao vivo. Abre um pouco antes e fica aberta bastante depois pra cobrir
+// atraso no apito (jogo raramente começa cravado no horário).
+const GATE_BEFORE_S = 5 * 60; // abre 5min antes do horário marcado
+const GATE_AFTER_S = 30 * 60; // fecha 30min depois (cobre atraso)
+
+// Disparo: só notifica se o apito REAL (timestamp do feed ao vivo) foi nos
+// últimos 20min — evita avisar jogo já rolando no 1º run / após cron fora do ar.
+const SEND_RECENT_S = 20 * 60;
 
 // Há algum jogo da Copa perto do horário? Usa a agenda em cache (reusada da home,
 // custo ~zero), pra só consultar o feed AO VIVO quando vale a pena.
@@ -25,8 +29,8 @@ async function hasWorldCupMatchNear(now: number): Promise<boolean> {
   ]);
   return [...today, ...tomorrow].some((m) => {
     if (m.leagueId !== WORLD_CUP_LEAGUE_ID || !m.timestamp) return false;
-    const delta = now - m.timestamp; // <0 ainda vai começar, >0 já começou
-    return delta >= -PRE_KICKOFF_S && delta <= KICKOFF_WINDOW_S;
+    const delta = now - m.timestamp; // <0 ainda vai começar, >0 já passou do horário
+    return delta >= -GATE_BEFORE_S && delta <= GATE_AFTER_S;
   });
 }
 
@@ -57,7 +61,7 @@ export async function GET(request: Request) {
     if (m.status !== "live" && m.status !== "halftime") continue;
     if (notified.has(m.apiId)) continue;
 
-    const recent = m.timestamp > 0 && now - m.timestamp <= KICKOFF_WINDOW_S;
+    const recent = m.timestamp > 0 && now - m.timestamp <= SEND_RECENT_S;
     if (recent) {
       try {
         await sendToAll({
