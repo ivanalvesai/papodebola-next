@@ -21,7 +21,7 @@ export async function POST(request: NextRequest) {
     // Real-time: invalida o cache de dados de TODA notícia (tag "wp-articles"). Assim,
     // ao publicar um post, todas as listagens/landings (home, /noticias, /nba, /formula-1,
     // hubs de futebol...) regeneram com o post novo na próxima visita — sem esperar o ISR.
-    revalidateTag("wp-articles");
+    revalidateTag("wp-articles", "max");
     revalidatePath("/");
     revalidatePath("/noticias");
 
