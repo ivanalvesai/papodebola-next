@@ -7,6 +7,8 @@ export interface Article {
   slug: string;
   source: "Manual" | "WordPress";
   image: string;
+  /** Legenda/crédito da imagem destacada (p/ atribuição de licença, ex: CC BY). */
+  imageCaption?: string;
   category: string;
   tags: string[];
   team: string | null;
