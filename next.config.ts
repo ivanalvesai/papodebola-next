@@ -43,6 +43,9 @@ const nextConfig: NextConfig = {
       { source: "/agenda/:path*", destination: "/jogos-de-hoje/:path*", permanent: true },
       // /municipal virou /sp/santana-de-parnaiba/municipal (hierarquia geográfica)
       { source: "/municipal", destination: "/sp/santana-de-parnaiba/municipal", permanent: true },
+      // Basquete = NBA (NBB depois): removida a landing genérica /basquete -> /nba.
+      { source: "/basquete", destination: "/nba", permanent: true },
+      { source: "/basquete/nba", destination: "/nba", permanent: true },
       // Craques: o post do WP abre tanto em /artigos/[slug] (rota genérica) quanto em
       // /futebol/craque/[slug] (página canônica) = conteúdo duplicado. Redireciona a
       // genérica na camada de roteamento (308 real, antes do streaming do RSC, que

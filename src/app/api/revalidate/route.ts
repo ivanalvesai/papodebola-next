@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { revalidatePath } from "next/cache";
+import { revalidatePath, revalidateTag } from "next/cache";
 
 export async function POST(request: NextRequest) {
   try {
@@ -18,13 +18,17 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    // Always revalidate homepage and news
+    // Real-time: invalida o cache de dados de TODA notícia (tag "wp-articles"). Assim,
+    // ao publicar um post, todas as listagens/landings (home, /noticias, /nba, /formula-1,
+    // hubs de futebol...) regeneram com o post novo na próxima visita — sem esperar o ISR.
+    revalidateTag("wp-articles", "max");
     revalidatePath("/");
     revalidatePath("/noticias");
 
     return NextResponse.json({
       revalidated: true,
       paths: revalidated,
+      tags: ["wp-articles"],
       timestamp: new Date().toISOString(),
     });
   } catch {
