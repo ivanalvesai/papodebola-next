@@ -7,6 +7,7 @@ import { MainNav } from "@/components/layout/main-nav";
 import { SidePanelLoader } from "@/components/layout/side-panel-loader";
 import { Footer } from "@/components/layout/footer";
 import { CookieConsent } from "@/components/layout/cookie-consent";
+import { PushPromptModal } from "@/components/push/push-prompt-modal";
 import { SidePanelProvider } from "@/components/layout/side-panel-context";
 import { MyTeamProvider } from "@/components/layout/my-team-context";
 import { SiteSchema } from "@/components/seo/site-schema";
@@ -80,6 +81,7 @@ export default function RootLayout({
             <main className="flex-1">{children}</main>
             <Footer />
             <CookieConsent />
+            <PushPromptModal />
           </SidePanelProvider>
         </MyTeamProvider>
       </body>

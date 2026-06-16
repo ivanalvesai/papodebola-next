@@ -2,18 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { Bell, BellOff, BellRing, Loader2 } from "lucide-react";
-
-const VAPID_PUBLIC_KEY = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY || "";
-
-// Converte a chave pública VAPID (base64url) pro formato que o PushManager espera.
-function urlBase64ToUint8Array(base64String: string): Uint8Array<ArrayBuffer> {
-  const padding = "=".repeat((4 - (base64String.length % 4)) % 4);
-  const base64 = (base64String + padding).replace(/-/g, "+").replace(/_/g, "/");
-  const raw = atob(base64);
-  const arr = new Uint8Array(new ArrayBuffer(raw.length));
-  for (let i = 0; i < raw.length; i++) arr[i] = raw.charCodeAt(i);
-  return arr;
-}
+import { pushSupported, getSubscription, enablePush, disablePush } from "@/lib/push-client";
 
 type State = "loading" | "unsupported" | "default" | "denied" | "subscribed" | "working";
 
@@ -21,13 +10,7 @@ export function PushOptIn({ className = "" }: { className?: string }) {
   const [state, setState] = useState<State>("loading");
 
   useEffect(() => {
-    if (
-      typeof window === "undefined" ||
-      !("serviceWorker" in navigator) ||
-      !("PushManager" in window) ||
-      !("Notification" in window) ||
-      !VAPID_PUBLIC_KEY
-    ) {
+    if (!pushSupported()) {
       setState("unsupported");
       return;
     }
@@ -35,56 +18,19 @@ export function PushOptIn({ className = "" }: { className?: string }) {
       setState("denied");
       return;
     }
-    // Já inscrito?
-    navigator.serviceWorker
-      .getRegistration()
-      .then((reg) => reg?.pushManager.getSubscription())
-      .then((sub) => setState(sub ? "subscribed" : "default"))
-      .catch(() => setState("default"));
+    getSubscription().then((sub) => setState(sub ? "subscribed" : "default"));
   }, []);
 
   async function enable() {
     setState("working");
-    try {
-      const permission = await Notification.requestPermission();
-      if (permission !== "granted") {
-        setState(permission === "denied" ? "denied" : "default");
-        return;
-      }
-      const reg = await navigator.serviceWorker.register("/sw.js");
-      await navigator.serviceWorker.ready;
-      const sub = await reg.pushManager.subscribe({
-        userVisibleOnly: true,
-        applicationServerKey: urlBase64ToUint8Array(VAPID_PUBLIC_KEY),
-      });
-      const res = await fetch("/api/push/subscribe", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ subscription: sub.toJSON() }),
-      });
-      setState(res.ok ? "subscribed" : "default");
-    } catch {
-      setState("default");
-    }
+    const result = await enablePush();
+    setState(result === "subscribed" ? "subscribed" : result === "denied" ? "denied" : "default");
   }
 
   async function disable() {
     setState("working");
-    try {
-      const reg = await navigator.serviceWorker.getRegistration();
-      const sub = await reg?.pushManager.getSubscription();
-      if (sub) {
-        await fetch("/api/push/unsubscribe", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ endpoint: sub.endpoint }),
-        }).catch(() => {});
-        await sub.unsubscribe().catch(() => {});
-      }
-      setState("default");
-    } catch {
-      setState("subscribed");
-    }
+    await disablePush();
+    setState("default");
   }
 
   if (state === "loading" || state === "unsupported") return null;
