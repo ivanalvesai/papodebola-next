@@ -1,5 +1,4 @@
 import type { Metadata } from "next";
-import Image from "next/image";
 import { notFound } from "next/navigation";
 import { Trophy } from "lucide-react";
 import { PageBreadcrumb } from "@/components/seo/page-breadcrumb";
@@ -74,25 +73,8 @@ export default async function CraquePage({
         {c.rewrittenTitle}
       </h1>
 
-      {c.image && (
-        <figure className="mb-6">
-          <Image
-            src={c.image}
-            alt={c.rewrittenTitle}
-            width={760}
-            height={420}
-            className="w-full rounded-lg object-cover"
-            priority
-            unoptimized
-          />
-          {c.imageCaption && (
-            <figcaption className="mt-1.5 text-[11px] text-text-muted">
-              {c.imageCaption}
-            </figcaption>
-          )}
-        </figure>
-      )}
-
+      {/* A imagem é adicionada manualmente no corpo do post (WP), pra controlar
+          tamanho/posição. A imagem destacada continua valendo só pro OG/schema. */}
       <article
         className="prose-craque"
         dangerouslySetInnerHTML={{ __html: c.contentHtml || "" }}
