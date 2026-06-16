@@ -93,7 +93,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   // paginar futuramente. Falha de rede não derruba o sitemap (catch → []).
   const { articles } = await getArticles({ perPage: 100 }).catch(() => ({ articles: [] }));
   const articlePages: MetadataRoute.Sitemap = articles.map((a) => ({
-    url: `${BASE}/artigos/${a.slug}`,
+    url: `${BASE}${a.url}`,
     lastModified: a.updatedAt || a.pubDate ? new Date(a.updatedAt || a.pubDate) : now,
     changeFrequency: "weekly" as const,
     priority: 0.6,

@@ -59,7 +59,7 @@ export default async function SelecaoBrasileiraPage() {
         <>
           {featured && (
             <Link
-              href={`/artigos/${featured.slug}`}
+              href={featured.url}
               className="group block bg-card-bg rounded-lg border border-border-custom overflow-hidden mb-6 hover:shadow-md transition-shadow"
             >
               <div className="grid grid-cols-1 md:grid-cols-2">
@@ -95,7 +95,7 @@ export default async function SelecaoBrasileiraPage() {
             {rest.map((article) => (
               <Link
                 key={article.slug}
-                href={`/artigos/${article.slug}`}
+                href={article.url}
                 className="group bg-card-bg rounded-lg border border-border-custom overflow-hidden hover:shadow-md hover:-translate-y-0.5 transition-all"
               >
                 <div className="aspect-video bg-body">

@@ -3,11 +3,11 @@ import { notFound, permanentRedirect } from "next/navigation";
 import { getArticleBySlug, getRelatedArticles } from "@/lib/data/articles";
 import { getBrasileiraoStandings } from "@/lib/data/standings";
 import { ArticleView } from "@/components/article/article-view";
-import { CRAQUE_SLUGS } from "@/lib/data/craques";
 
-// /artigos/[slug] é o FALLBACK: só renderiza notícias de categorias que colidem com
-// rotas existentes (formula-1, tenis, esports...). As demais têm URL canônica
-// /{categoria}/{slug} e são redirecionadas (308). Craques vão pra /futebol/craque/[slug].
+// URL canônica de notícia por categoria (estilo ge.globo): /{categoria}/{slug}.
+// O segmento [categoria] no root só é alcançado quando o 1º segmento NÃO é uma rota
+// estática (futebol, basquete, noticias, sp...). Para esses casos a notícia mora em
+// /artigos/{slug} (ver RESERVED_TOP_LEVEL/articleHref em config).
 export const revalidate = 1800;
 
 function plain(text: string, max: number): string {
@@ -17,14 +17,13 @@ function plain(text: string, max: number): string {
 export async function generateMetadata({
   params,
 }: {
-  params: Promise<{ slug: string }>;
+  params: Promise<{ categoria: string; slug: string }>;
 }): Promise<Metadata> {
-  const { slug } = await params;
-  if (CRAQUE_SLUGS.includes(slug)) return {};
+  const { categoria, slug } = await params;
   const article = await getArticleBySlug(slug);
-  // Se a canônica não é /artigos (categoria não reservada), a rota redireciona; aqui
-  // só geramos metadata pro caso de fallback real.
-  if (!article || article.url !== `/artigos/${slug}`) return {};
+  // Só responde metadata se a URL bate com a canônica do artigo (senão a rota
+  // redireciona pra URL certa no componente).
+  if (!article || article.url !== `/${categoria}/${slug}`) return {};
 
   const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://papodebola.com.br";
   const desc = plain(article.rewrittenText, 155);
@@ -52,20 +51,18 @@ export async function generateMetadata({
   };
 }
 
-export default async function ArticlePage({
+export default async function CategoryArticlePage({
   params,
 }: {
-  params: Promise<{ slug: string }>;
+  params: Promise<{ categoria: string; slug: string }>;
 }) {
-  const { slug } = await params;
-  // Craque NÃO é artigo: vai pra página canônica do craque.
-  if (CRAQUE_SLUGS.includes(slug)) permanentRedirect(`/futebol/craque/${slug}`);
-
+  const { categoria, slug } = await params;
   const article = await getArticleBySlug(slug);
   if (!article) notFound();
 
-  // Categoria não reservada → URL canônica é /{categoria}/{slug}: consolida (308).
-  if (article.url !== `/artigos/${slug}`) permanentRedirect(article.url);
+  // Se a categoria na URL não bate com a canônica do artigo (ex: categoria mudou,
+  // ou é categoria reservada que mora em /artigos), redireciona pra URL certa.
+  if (article.url !== `/${categoria}/${slug}`) permanentRedirect(article.url);
 
   const [related, standings] = await Promise.all([
     getRelatedArticles(article.category, article.slug, 4).catch(() => []),
