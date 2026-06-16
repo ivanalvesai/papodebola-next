@@ -203,10 +203,19 @@ export const SPORT_WP_CATEGORY: Record<string, string> = {
   "futsal": "Futsal",
 };
 
-// URL canônica de uma notícia: /{categoria}/{slug} (estilo ge.globo). Se a categoria
-// colide com uma rota existente, cai pro /artigos/{slug}. Fonte única da verdade do
-// caminho de artigo — usada na rota, nos cards, no sitemap e no schema.
+// Categorias que têm um HUB próprio — a notícia mora ANINHADA sob o hub, não na raiz.
+// Ex: Copa do Mundo tem hub /futebol/copa-do-mundo, então o artigo é
+// /futebol/copa-do-mundo/{slug} (precisa de rota correspondente). Categoria -> base.
+export const CATEGORY_HUB: Record<string, string> = {
+  "Copa do Mundo": "/futebol/copa-do-mundo",
+};
+
+// URL canônica de uma notícia (estilo ge.globo). Ordem: (1) hub próprio (CATEGORY_HUB),
+// (2) /{categoria}/{slug} na raiz, (3) fallback /artigos/{slug} se a categoria colide com
+// rota existente. Fonte única da verdade do caminho — usada na rota, cards, sitemap, schema.
 export function articleHref(categoryName: string, slug: string): string {
+  const hub = CATEGORY_HUB[categoryName || ""];
+  if (hub) return `${hub}/${slug}`;
   const cat = slugifyCategory(categoryName || "");
   if (!cat || RESERVED_TOP_LEVEL.has(cat)) return `/artigos/${slug}`;
   return `/${cat}/${slug}`;
