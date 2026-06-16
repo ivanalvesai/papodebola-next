@@ -152,7 +152,8 @@ export async function getArticles(options?: {
     if (tagId) endpoint += `&tags=${tagId}`;
   }
 
-  const data = await fetchWP<any[]>(endpoint, noCache ? 0 : 1800);
+  // tag "wp-articles" → revalidateTag refresca toda listagem ao publicar um post (real-time).
+  const data = await fetchWP<any[]>(endpoint, noCache ? 0 : 1800, ["wp-articles"]);
   if (!data) return { articles: [], total: 0 };
 
   const articles = data.map((post: any) => normalizeArticle(post, categories, tags));
@@ -164,7 +165,7 @@ export async function getArticleBySlug(slug: string, noCache?: boolean): Promise
   const categories = await getCategories();
   const tags = await getTags();
 
-  const data = await fetchWP<any[]>(`posts?slug=${encodeURIComponent(slug)}&_embed`, noCache ? 0 : 1800);
+  const data = await fetchWP<any[]>(`posts?slug=${encodeURIComponent(slug)}&_embed`, noCache ? 0 : 1800, ["wp-articles"]);
   if (!data || data.length === 0) return null;
 
   return normalizeArticle(data[0], categories, tags);

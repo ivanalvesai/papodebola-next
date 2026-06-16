@@ -8,14 +8,15 @@ function getAuthHeader(): string {
 
 export async function fetchWP<T>(
   endpoint: string,
-  revalidate: number = 1800
+  revalidate: number = 1800,
+  tags?: string[]
 ): Promise<T | null> {
   try {
     const res = await fetch(`${WP_BASE}/${endpoint}`, {
       headers: {
         Authorization: getAuthHeader(),
       },
-      next: { revalidate },
+      next: { revalidate, ...(tags ? { tags } : {}) },
     });
 
     if (!res.ok) {

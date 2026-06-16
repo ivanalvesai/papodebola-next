@@ -194,7 +194,7 @@ export const RESERVED_TOP_LEVEL = new Set([
 export const SPORT_WP_CATEGORY: Record<string, string> = {
   "formula-1": "Fórmula 1",
   "tenis": "Tênis",
-  "basquete": "Basquete",
+  "basquete-nba": "NBA",
   "combate": "MMA",
   "volei": "Vôlei",
   "esports": "eSports",
