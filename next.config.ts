@@ -43,6 +43,25 @@ const nextConfig: NextConfig = {
       { source: "/agenda/:path*", destination: "/jogos-de-hoje/:path*", permanent: true },
       // /municipal virou /sp/santana-de-parnaiba/municipal (hierarquia geográfica)
       { source: "/municipal", destination: "/sp/santana-de-parnaiba/municipal", permanent: true },
+      // Craques: o post do WP abre tanto em /artigos/[slug] (rota genérica) quanto em
+      // /futebol/craque/[slug] (página canônica) = conteúdo duplicado. Redireciona a
+      // genérica na camada de roteamento (308 real, antes do streaming do RSC, que
+      // senão devolveria 200 e o crawler não veria o redirect). Manter em sincronia
+      // com CRAQUE_SLUGS em src/lib/data/craques.ts.
+      ...[
+        "socrates",
+        "nilton-santos",
+        "rivellino",
+        "hugo-gatti",
+        "aymore-moreira",
+        "julinho-botelho",
+        "dirceu-lopes",
+        "edgardo-andrada",
+      ].map((s) => ({
+        source: `/artigos/${s}`,
+        destination: `/futebol/craque/${s}`,
+        permanent: true,
+      })),
       // jogos de hoje por esporte vivem sob /jogos-de-hoje/{esporte} (futebol, volei, basquete...)
       { source: "/futebol/jogos-hoje", destination: "/jogos-de-hoje/futebol", permanent: true },
       { source: "/campeonato/:slug", destination: "/futebol/:slug", permanent: true },
