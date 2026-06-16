@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { Bell, BellOff, BellRing, Loader2 } from "lucide-react";
 import { pushSupported, getSubscription, enablePush, disablePush } from "@/lib/push-client";
+import { track } from "@/lib/analytics";
 
 type State = "loading" | "unsupported" | "default" | "denied" | "subscribed" | "working";
 
@@ -25,12 +26,15 @@ export function PushOptIn({ className = "" }: { className?: string }) {
     setState("working");
     const result = await enablePush();
     setState(result === "subscribed" ? "subscribed" : result === "denied" ? "denied" : "default");
+    if (result === "subscribed") track("push_subscribed", { source: "menu" });
+    else if (result === "denied") track("push_blocked", { source: "menu" });
   }
 
   async function disable() {
     setState("working");
     await disablePush();
     setState("default");
+    track("push_unsubscribed", { source: "menu" });
   }
 
   if (state === "loading" || state === "unsupported") return null;

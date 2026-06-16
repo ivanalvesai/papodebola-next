@@ -286,17 +286,23 @@ ALLSPORTS_API_KEY=...
 ALLSPORTS_API_HOST=allsportsapi2.p.rapidapi.com
 ANTHROPIC_API_KEY=...
 JWT_SECRET=...
-NEXT_PUBLIC_SITE_URL=https://papodebola.com.br
+NEXT_PUBLIC_SITE_URL=https://www.papodebola.com.br   ← www (apex 301→www); era apex, mudou 15/06
 REVALIDATION_SECRET=...
 WP_APP_PASSWORD=...
 WP_BASE_URL=https://admin.papodebola.com.br/wp-json/wp/v2
 CBF_TOKEN=Cbf@2022!
 SPORTS_PROXY_URL=http://host.docker.internal:3001/api/sports-proxy   ← só em prod
 SPORTS_PROXY_TOKEN=<token compartilhado com dev>
+# Web push (VAPID) — MESMO par em dev E prod (store de assinaturas é compartilhada)
+NEXT_PUBLIC_VAPID_PUBLIC_KEY=...
+VAPID_PUBLIC_KEY=...
+VAPID_PRIVATE_KEY=...
+VAPID_SUBJECT=mailto:contato@papodebola.com.br
 ```
 
 ### Dev (`/home/ivan/papodebola-next-dev/.env.local`)
-Mesmas variáveis **exceto** `SPORTS_PROXY_URL` (ausente, então dev chama direto).
+Mesmas variáveis **exceto** `SPORTS_PROXY_URL` (ausente, então dev chama direto). As chaves
+VAPID são **idênticas** às do prod (a store de assinaturas vive no volume compartilhado).
 
 ---
 
@@ -304,7 +310,7 @@ Mesmas variáveis **exceto** `SPORTS_PROXY_URL` (ausente, então dev chama diret
 
 | Script | Local | Função |
 |---|---|---|
-| `rebuild.sh` | `/home/ivan/papodebola-next/` e `/home/ivan/papodebola-next-dev/` | Build + tag `:previous` + up -d + health check + rollback automático se falhar |
+| `rebuild.sh` | `/home/ivan/papodebola-next/` e `/home/ivan/papodebola-next-dev/` | **Guard de disco (prune do build cache se `/` >75%)** + Build + tag `:previous` + up -d + health check + rollback automático se falhar |
 | `watch-rebuild.sh` | `/home/ivan/papodebola-next-dev/` | Loop inotifywait → debounce 5s → pull/commit/push/rebuild |
 | `promote.sh` | `/home/ivan/promote.sh` | Fetch, mostra diff, merge `development→master`, push, rebuild prod. Flag `-y` pula confirmação |
 | `promote-wrapper.sh` | `/home/ivan/promote-wrapper.sh` | Despacha `SSH_ORIGINAL_COMMAND` em `preview` / `promote-async` / `status <jobId>` |
@@ -473,8 +479,53 @@ Instalado em 2026-05-13 em `/var/www/html/wp-content/mu-plugins/` no container `
 
 **Token:** `REVALIDATION_SECRET` está hard-coded no PHP (mesmo valor do `.env.local` do prod). Se rotacionar, atualizar nos dois lugares.
 
+### Cron de push da Copa (`# copa-kickoff-push`)
+
+No crontab do user `ivan`, de 1/min, aponta pro **dev** (quem consulta a API):
+```
+* * * * * curl -fsS "https://development.papodebola.com.br/api/push/cron/copa-kickoff?secret=<REVALIDATION_SECRET>" >/dev/null 2>&1 # copa-kickoff-push
+```
+Dispara push de **"começou o jogo"** e **"GOL"** da Copa (ver seção "Web push"). **Desligar
+após a Copa** (comentar a linha). É barato: só consulta o feed ao vivo na janela dos jogos.
+
 ### Outros crons que NÃO mexem no Papo de Bola
 Os crons "Ofertas Tech do Dia" e "Ofertas Canais (Telegram/WhatsApp)" do `/home/ivan/automacao-site` continuam ativos — apontam para outro WP (`WP_USER=admin_5sr4xje0`, projeto signsimples/AI Tecnologia). Não confundir.
+
+---
+
+## Web push (VAPID) — notificações
+
+Sistema de push **próprio** (sem OneSignal), chaves VAPID, lib `web-push`. Instalado em 15/06.
+Doc completo: `docs/deploys/2026-06-15/04-web-push.md`.
+
+| Parte | Onde |
+|---|---|
+| Service worker | `public/sw.js` |
+| Opt-in: botão no menu + modal "Eu quero" | `src/components/push/*`, `src/lib/push-client.ts` |
+| Store assinaturas (volume compartilhado) | `src/lib/data/push-store.ts` → `data/push-subscriptions.json` |
+| Envio | `src/lib/services/push.ts` (`sendToAll`) |
+| Rotas | `/api/push/{subscribe,unsubscribe}` (públicas), `/api/push/send` (JWT), `/api/push/cron/copa-kickoff` (secret) |
+| Painel | aba **Notificações** (`/painel-pdb-9x/notificacoes`) |
+
+- **Chaves VAPID**: mesmas em dev e prod (store compartilhada). Ver "Envs por ambiente".
+- **Disparo automático da Copa**: o cron `copa-kickoff-push` chama o endpoint; "começou o jogo"
+  (1x, apito real ≤20min, dedup em `data/push-kickoffs.json`) e "GOL" (highwater de placar em
+  `data/push-scores.json`). Fonte = `matches/live` filtrado por torneio id 16 → **qualquer fase
+  futura funciona sem mudar código**.
+- **Gotcha**: `web-push` é bundlado no server do Next (não em `node_modules`); pra enviar fora do
+  painel, mintar JWT com `JWT_SECRET` (cookie `pdb_auth`, HS256, `jose`) e POST `/api/push/send`.
+- **iOS**: só funciona em PWA instalado (limitação Apple).
+- **Pendente**: alertas por time/campeonato (cadastro já tem campo `topics`); push ao publicar post no WP.
+
+## SEO / AI crawlers (notas 15/06)
+
+- **Host www**: `NEXT_PUBLIC_SITE_URL` aponta pro **www** (apex 301→www). Canonical/sitemap/OG batem.
+- **Bots de IA liberados**: no Cloudflare → **AI Crawl Control** → "Manage robots.txt" foi
+  **desligado**. Antes injetava `Disallow: /` pra GPTBot/ClaudeBot/Google-Extended. Agora vale o
+  `src/app/robots.ts` (`Allow: /`). Se algum dia sumirem citações em IA, conferir esse toggle.
+- **`/llms.txt`**: rota `src/app/llms.txt/route.ts` (guia pros agentes).
+- **Schemas**: `src/components/seo/` — site (Organization+WebSite+SearchAction), article (NewsArticle),
+  sports-team, sports-event, item-list, breadcrumb. Doc: `docs/deploys/2026-06-15/03-seo-marketing.md`.
 
 ---
 
@@ -539,8 +590,11 @@ URLs antigas (`/times/*` e `/campeonato/*`) têm 301 redirect em `next.config.ts
 | `/boxe` `/combate` `/esports` `/formula-1` `/futebol-americano` `/futsal` `/tenis` `/volei` | Single-page por esporte |
 | `/parceiros` | Institucional — parcerias comerciais |
 | `/artigos/[slug]` | Artigo |
-| `/noticias` `/agenda` `/ao-vivo` | Seções gerais |
-| `/municipal/*` | Futebol municipal (SisGel) |
+| `/noticias` `/ao-vivo` | Seções gerais |
+| `/jogos-de-hoje` + `/jogos-de-hoje/futebol` | Jogos de hoje (multiesporte) + calendário CBF. **Era `/agenda` (301 desde 15/06)**. Padrão futuro `/jogos-de-hoje/{esporte}` |
+| `/sp` → `/sp/santana-de-parnaiba` → `/sp/santana-de-parnaiba/municipal` | Hierarquia geográfica: estado (Paulista) → cidade (notícias + tabela 1ª div) → municipal SisGel. **`/municipal` virou 301 pra cá (15/06)** |
+
+**Redirects 301/308 (em `next.config.ts`):** `/agenda*`→`/jogos-de-hoje*`, `/municipal`→`/sp/santana-de-parnaiba/municipal`, `/futebol/jogos-hoje`→`/jogos-de-hoje/futebol` (+ os antigos `/campeonato/*`, `/times/*`, `/esporte/*`).
 
 Forçar revalidação manual:
 ```bash
@@ -562,10 +616,11 @@ curl -X POST -H 'Content-Type: application/json' \
 | Artigos | CRUD artigos WordPress |
 | Usuários | CRUD + trocar senha |
 | Jogos | Placeholder |
+| **Notificações** | Web push: nº de inscritos + envio manual (presets + form) pra todos |
 | Config | Trocar senha + limpar cache ISR |
 | **Promover** | Lista commits dev→prod + botão de promoção async |
 
-Middleware protege `/painel-pdb-9x`, `/studio-pdb`, `/api/kanban`, `/api/promote`.
+Middleware protege `/painel-pdb-9x`, `/studio-pdb`, `/api/kanban`, `/api/promote`, `/api/push/send`.
 - Sem token: **API retorna 401 JSON**, páginas redirecionam para login.
 
 ---
@@ -615,6 +670,24 @@ Após rebuild, as páginas SSG estão vazias. Soluções:
 
 ### 429 rate limit no build
 `ALLSPORTS_MAX_CONCURRENT=2` limita; retry 5× com backoff. Se ainda estourar, diminua pra 1 ou aguarde reset.
+
+### VPS inteira travou durante um build (disco cheio / build cache do Docker)
+
+Sintoma (visto em 2026-06-13): durante um `next build`, **prod + dev + signsimples + WP caem juntos**. `ping` responde (~4ms), mas **SSH trava no "banner exchange"**, todo HTTP dá **000**, e o `journalctl --list-boots` mostra um gap de minutos sem log. É **I/O lockup por disco cheio**, NÃO RAM.
+
+**Causa:** o `/` encheu (build cache do Docker chega a dezenas de GB) e o `docker compose build` escrevendo layers travou o I/O → processos em D-state → nem sshd/journald rodam.
+
+**Diagnóstico:** `df -h /` (cheio?) e `docker system df` (Build Cache gigante?). `free -h` mostra RAM sobrando → confirma que **não é RAM** (aumentar RAM não resolve).
+
+**Fix:** reboot (containers voltam pela restart policy) + liberar disco:
+```bash
+docker builder prune -f      # costuma liberar dezenas de GB
+docker image prune -f
+df -h /
+```
+Depois, rebuild **throttled** pra não travar de novo: `nohup nice -n 10 ionice -c2 -n7 bash rebuild.sh &` monitorando `uptime`/`df -h /`.
+
+**Prevenção (já aplicada):** os dois `rebuild.sh` têm um guard no topo — se `/` > 75%, rodam `docker builder prune -f` antes do build. Pendência: mover `/var/lib/docker` pra um 2º disco no ESXi (isola o Docker do disco do SO). Doc completo: `docs/deploys/2026-06-13/01-incidente-disco-build-cache.md`.
 
 ### Push bloqueado pelo pre-push hook
 Hook avisa: rode `git pull --rebase origin <branch>` e tente de novo. **Nunca use `git push --force`**.

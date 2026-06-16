@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { Bell, X, Loader2 } from "lucide-react";
 import { pushSupported, getSubscription, enablePush } from "@/lib/push-client";
+import { track } from "@/lib/analytics";
 
 const DISMISS_KEY = "pdb_push_prompt_dismissed";
 const DELAY_MS = 9000; // espera ~9s pra não competir com o banner de cookies
@@ -19,7 +20,10 @@ export function PushPromptModal() {
     let cancelled = false;
     const t = setTimeout(async () => {
       const sub = await getSubscription();
-      if (!cancelled && !sub) setOpen(true);
+      if (!cancelled && !sub) {
+        setOpen(true);
+        track("push_prompt_shown", { source: "modal" });
+      }
     }, DELAY_MS);
 
     return () => {
@@ -31,6 +35,7 @@ export function PushPromptModal() {
   function dismiss() {
     localStorage.setItem(DISMISS_KEY, "1");
     setOpen(false);
+    track("push_prompt_dismissed", { source: "modal" });
   }
 
   async function accept() {
@@ -40,7 +45,8 @@ export function PushPromptModal() {
     // Em qualquer desfecho (ativou ou bloqueou no prompt nativo), não mostra de novo.
     localStorage.setItem(DISMISS_KEY, "1");
     setOpen(false);
-    void result;
+    if (result === "subscribed") track("push_subscribed", { source: "modal" });
+    else if (result === "denied") track("push_blocked", { source: "modal" });
   }
 
   if (!open) return null;
