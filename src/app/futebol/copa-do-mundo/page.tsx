@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Trophy, Newspaper } from "lucide-react";
 import { PageBreadcrumb } from "@/components/seo/page-breadcrumb";
 import { GroupRow } from "@/components/world-cup/group-row";
+import { PhaseNav } from "@/components/world-cup/phase-nav";
 import { CopaLiveProvider } from "@/components/world-cup/copa-live-provider";
 import { SelecoesCarousel } from "@/components/world-cup/selecoes-carousel";
 import { WorldCupScorers } from "@/components/world-cup/world-cup-scorers";
@@ -44,17 +45,22 @@ export default async function CopaDoMundoPage() {
         as rodadas. Horários de Brasília. Os 2 primeiros de cada grupo avançam (destaque em verde).
       </p>
 
-      {groups.length === 0 ? (
-        <p className="text-text-muted text-sm py-6">Classificação indisponível no momento.</p>
-      ) : (
-        <CopaLiveProvider>
-          <div className="space-y-4">
-            {groups.map((g) => (
-              <GroupRow key={g.name} group={g} />
-            ))}
-          </div>
-        </CopaLiveProvider>
-      )}
+      <PhaseNav active="grupos" />
+
+      <section>
+        <h2 className="mb-4 text-lg font-bold text-text-primary">Fase de Grupos</h2>
+        {groups.length === 0 ? (
+          <p className="text-text-muted text-sm py-6">Classificação indisponível no momento.</p>
+        ) : (
+          <CopaLiveProvider>
+            <div className="space-y-4">
+              {groups.map((g) => (
+                <GroupRow key={g.name} group={g} />
+              ))}
+            </div>
+          </CopaLiveProvider>
+        )}
+      </section>
 
       {/* Artilharia: logo apos as tabelas de grupos, antes das selecoes */}
       <WorldCupScorers scorers={scorers} />

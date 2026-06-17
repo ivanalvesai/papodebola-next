@@ -2,6 +2,7 @@ import type { MetadataRoute } from "next";
 import { TEAMS, SPORTS, WP_CATEGORY_BY_SLUG } from "@/lib/config";
 import { TOURNAMENTS } from "@/lib/config";
 import { SELECOES, BRAZIL_ID } from "@/lib/selecoes";
+import { KNOCKOUT_PHASES } from "@/lib/world-cup-phases";
 import { getArticles } from "@/lib/data/articles";
 import { getCraques } from "@/lib/data/craques";
 
@@ -79,6 +80,22 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     })
   );
 
+  // Copa do Mundo: hub (fase de grupos) + páginas das fases eliminatórias
+  const copaPages: MetadataRoute.Sitemap = [
+    {
+      url: `${BASE}/futebol/copa-do-mundo`,
+      lastModified: now,
+      changeFrequency: "hourly" as const,
+      priority: 0.9,
+    },
+    ...KNOCKOUT_PHASES.map((p) => ({
+      url: `${BASE}${p.href}`,
+      lastModified: now,
+      changeFrequency: "daily" as const,
+      priority: 0.7,
+    })),
+  ];
+
   // Páginas por seleção (Copa do Mundo) — Brasil já está em staticPages
   const selecaoPages: MetadataRoute.Sitemap = SELECOES.filter(
     (s) => s.id !== BRAZIL_ID
@@ -116,6 +133,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     ...sportPages,
     ...parceirosPage,
     ...newsCategoryPages,
+    ...copaPages,
     ...selecaoPages,
     ...articlePages,
     ...craquePages,
