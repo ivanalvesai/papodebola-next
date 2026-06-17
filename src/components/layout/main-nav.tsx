@@ -7,6 +7,7 @@ import { useState, useRef, useEffect } from "react";
 import { useSidePanel } from "./side-panel-context";
 import { TeamLogo } from "@/components/ui/team-logo";
 import { PANEL_TEAMS_BR, SPORTS } from "@/lib/config";
+import { CopaNavButton } from "./copa-nav-button";
 
 export function MainNav() {
   const pathname = usePathname();
@@ -34,7 +35,7 @@ export function MainNav() {
       ref={navRef}
       className="bg-nav-bg border-b border-border-custom shadow-sm sticky top-14 z-40"
     >
-      <div className="mx-auto max-w-[1240px] px-4">
+      <div className="mx-auto max-w-[1240px] overflow-x-auto px-4 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
         <ul className="flex items-center gap-0 text-sm whitespace-nowrap">
           {/* Menu lateral */}
           <li>
@@ -200,6 +201,11 @@ export function MainNav() {
             >
               Onde Assistir
             </Link>
+          </li>
+
+          {/* Copa do Mundo — botão dourado especial (mesma cor do banner da home) */}
+          <li className="py-2 pl-2">
+            <CopaNavButton />
           </li>
         </ul>
       </div>
