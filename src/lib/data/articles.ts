@@ -67,6 +67,10 @@ function normalizeArticle(post: any, categories: Record<number, string>, tags: R
   }
 
   const category = postCategories[0] || "Futebol Brasileiro";
+  // Link customizado do card (meta `pdb_link`, registrado pelo mu-plugin pdb-card-link):
+  // se preenchido, o card na home/listagens E a URL canônica apontam pra ele (ex: página de
+  // jogo ao vivo) em vez da página do artigo. Vazio = comportamento normal (articleHref).
+  const cardLink = (post.meta?.pdb_link || "").trim();
 
   return {
     imageCaption,
@@ -83,9 +87,9 @@ function normalizeArticle(post: any, categories: Record<number, string>, tags: R
     author: post._embedded?.author?.[0]?.name || "Redação",
     pubDate: post.date || new Date().toISOString(),
     createdAt: post.date || new Date().toISOString(),
-    // URL canônica por categoria (/{categoria}/{slug}); fallback /artigos pra
-    // categorias que colidem com rotas existentes. Ver articleHref em config.
-    url: articleHref(category, slug),
+    // URL do card/canônica: link customizado (pdb_link) se houver; senão a URL por
+    // categoria (/{categoria}/{slug}); fallback /artigos. Ver articleHref em config.
+    url: cardLink || articleHref(category, slug),
     wpId: post.id,
   };
 }
