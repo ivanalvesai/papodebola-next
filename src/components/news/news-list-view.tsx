@@ -50,7 +50,7 @@ export function NewsListView({
       <PageBreadcrumb className="mb-4" items={breadcrumbItems} />
       <h1 className="text-xl font-bold text-text-primary mb-6 flex items-center gap-2">
         <Newspaper className="h-6 w-6 text-green" />
-        Noticias
+        Notícias
         {categoryName && (
           <span className="text-base font-normal text-text-muted"> / {categoryName}</span>
         )}
@@ -204,7 +204,7 @@ export function NewsListView({
                   href={pageHref(page + 1)}
                   className="px-4 py-2 text-sm font-semibold text-green border border-green rounded-lg hover:bg-green hover:text-white transition-colors"
                 >
-                  Proxima &rarr;
+                  Próxima &rarr;
                 </Link>
               )}
             </div>

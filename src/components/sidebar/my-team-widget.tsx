@@ -49,19 +49,19 @@ export function MyTeamWidget() {
             href={`/futebol/times/${myTeam.slug}/proximos-jogos`}
             className="text-[11px] text-center py-1.5 bg-body rounded text-text-secondary hover:text-green hover:bg-green-light transition-colors font-medium"
           >
-            Proximos Jogos
+            Próximos Jogos
           </Link>
           <Link
             href={`/futebol/times/${myTeam.slug}/estatisticas`}
             className="text-[11px] text-center py-1.5 bg-body rounded text-text-secondary hover:text-green hover:bg-green-light transition-colors font-medium"
           >
-            Estatisticas
+            Estatísticas
           </Link>
           <Link
             href={`/futebol/times/${myTeam.slug}/escalacao`}
             className="text-[11px] text-center py-1.5 bg-body rounded text-text-secondary hover:text-green hover:bg-green-light transition-colors font-medium"
           >
-            Escalacao
+            Escalação
           </Link>
         </div>
       </div>

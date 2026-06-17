@@ -59,7 +59,14 @@ export default function RootLayout({
   return (
     <html lang="pt-BR" className={`${openSans.variable} antialiased`}>
       <head>
-        <Script id="gtm-head" strategy="afterInteractive">
+        {/* Antecipa a conexão com os hosts de terceiros: imagens do WP (LCP de
+            home/artigos) e GTM/GA4. Reduz o tempo de handshake antes do download. */}
+        <link rel="preconnect" href="https://admin.papodebola.com.br" />
+        <link rel="dns-prefetch" href="https://admin.papodebola.com.br" />
+        <link rel="preconnect" href="https://www.googletagmanager.com" />
+        {/* GTM em lazyOnload: carrega após o navegador ficar ocioso, sem disputar
+            com a hidratação → corta o TBT. O analytics dispara um pouco depois. */}
+        <Script id="gtm-head" strategy="lazyOnload">
           {`(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src='https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);})(window,document,'script','dataLayer','GTM-MMRXG48R');`}
         </Script>
         <SiteSchema />

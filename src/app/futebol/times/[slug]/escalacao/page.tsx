@@ -42,7 +42,7 @@ export default async function EscalacaoPage({ params }: { params: Promise<{ slug
 
       {match && (
         <div className="bg-card-bg rounded-lg border border-border-custom p-4">
-          <div className="text-xs text-text-muted mb-2">Proximo jogo</div>
+          <div className="text-xs text-text-muted mb-2">Próximo jogo</div>
           <div className="flex items-center justify-center gap-4 text-sm">
             <span className="font-semibold">{match.home}</span>
             <span className="text-text-muted">vs</span>

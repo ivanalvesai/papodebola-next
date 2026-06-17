@@ -123,7 +123,7 @@ export async function SportPageContent({
           {/* Calendar */}
           {data && data.calendar.length > 0 && (
             <div className="bg-card-bg rounded-lg border border-border-custom p-6">
-              <h2 className="text-sm font-bold text-text-primary uppercase mb-4">Proximos Dias</h2>
+              <h2 className="text-sm font-bold text-text-primary uppercase mb-4">Próximos Dias</h2>
               {data.calendar.map((day) => (
                 <div key={day.date} className="mb-4 last:mb-0">
                   <div className="text-xs font-bold text-green uppercase mb-2">{day.label}</div>
@@ -166,7 +166,7 @@ export async function SportPageContent({
           {/* Standings (NBA) */}
           {data?.standings && data.standings.length > 0 && (
             <div className="bg-card-bg rounded-lg border border-border-custom">
-              <h3 className="text-sm font-bold text-text-primary px-4 py-3 border-b border-border-custom">Classificacao</h3>
+              <h3 className="text-sm font-bold text-text-primary px-4 py-3 border-b border-border-custom">Classificação</h3>
               {data.standings.map((group) => (
                 <div key={group.name || "default"}>
                   {group.name && (

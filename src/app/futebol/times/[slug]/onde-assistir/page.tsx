@@ -72,7 +72,7 @@ export default async function OndeAssistirPage({ params }: { params: Promise<{ s
                 </div>
                 <div>
                   <div className="text-sm font-semibold text-text-primary">Premiere</div>
-                  <div className="text-xs text-text-muted">Pay-per-view - Brasileirao</div>
+                  <div className="text-xs text-text-muted">Pay-per-view - Brasileirão</div>
                 </div>
               </div>
               <div className="flex items-center gap-3 p-3 bg-body rounded-lg">

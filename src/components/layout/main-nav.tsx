@@ -74,7 +74,7 @@ export function MainNav() {
             {openDropdown === "times" && (
               <div className="absolute top-full left-0 bg-surface border border-border-custom rounded-lg shadow-lg p-4 z-50 w-[460px] max-h-[70vh] overflow-y-auto">
                 <p className="text-xs font-bold text-text-muted uppercase tracking-wider mb-3">
-                  Brasileirao Serie A
+                  Brasileirão Série A
                 </p>
                 <div className="grid grid-cols-2 gap-1">
                   {PANEL_TEAMS_BR.map((team) => (
@@ -123,7 +123,7 @@ export function MainNav() {
                   ))}
                   <li><div className="my-1 border-t border-border-custom" /></li>
                   {[
-                    { label: "Brasileirao", href: "/futebol/brasileirao-serie-a" },
+                    { label: "Brasileirão", href: "/futebol/brasileirao-serie-a" },
                     { label: "Champions League", href: "/futebol/champions-league" },
                     { label: "Libertadores", href: "/futebol/libertadores" },
                   ].map((l) => (
@@ -135,7 +135,7 @@ export function MainNav() {
                   ))}
                   <li><div className="my-1 border-t border-border-custom" /></li>
                   {[
-                    { label: "Selecao Brasileira", href: "/futebol/selecao-brasileira" },
+                    { label: "Seleção Brasileira", href: "/futebol/selecao-brasileira" },
                     { label: "Copa do Mundo 2026", href: "/futebol/copa-do-mundo" },
                   ].map((l) => (
                     <li key={l.href}>

@@ -45,10 +45,8 @@ export default async function CopaDoMundoPage() {
         as rodadas. Horários de Brasília. Os 2 primeiros de cada grupo avançam (destaque em verde).
       </p>
 
-      <PhaseNav active="grupos" />
-
       <section>
-        <h2 className="mb-4 text-lg font-bold text-text-primary">Fase de Grupos</h2>
+        <PhaseNav active="grupos" />
         {groups.length === 0 ? (
           <p className="text-text-muted text-sm py-6">Classificação indisponível no momento.</p>
         ) : (

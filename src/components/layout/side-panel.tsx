@@ -186,7 +186,7 @@ export function SidePanel() {
             La Liga
           </Link>
           <Link href="/futebol/serie-a-italia" onClick={close} className="block px-5 py-2.5 text-sm text-text-secondary hover:bg-green-light hover:text-green transition-colors">
-            Serie A (Itália)
+            Série A (Itália)
           </Link>
           <Link href="/futebol/bundesliga" onClick={close} className="block px-5 py-2.5 text-sm text-text-secondary hover:bg-green-light hover:text-green transition-colors">
             Bundesliga
