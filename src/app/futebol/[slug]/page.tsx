@@ -67,7 +67,7 @@ export default function CampeonatoPage() {
   if (!tournament) {
     return (
       <div className="mx-auto max-w-[1240px] px-4 py-8 text-center">
-        <p className="text-text-muted">Campeonato nao encontrado</p>
+        <p className="text-text-muted">Campeonato não encontrado</p>
       </div>
     );
   }
@@ -129,7 +129,7 @@ export default function CampeonatoPage() {
             Classificacao
           </h2>
           {standings.length === 0 ? (
-            <p className="text-text-muted text-sm text-center py-6">Classificacao indisponivel</p>
+            <p className="text-text-muted text-sm text-center py-6">Classificação indisponível</p>
           ) : (
             <div className="overflow-x-auto">
               <table className="w-full text-xs">

@@ -98,7 +98,7 @@ export default async function JogoHojePage({ params }: { params: Promise<{ slug:
           <p className="text-text-muted text-sm mb-4">O {team.name} nao joga hoje.</p>
           {nextMatch && (
             <div>
-              <p className="text-sm text-text-secondary mb-2">Proximo jogo:</p>
+              <p className="text-sm text-text-secondary mb-2">Próximo jogo:</p>
               <div className="flex items-center justify-center gap-4">
                 <span className="text-sm font-semibold">{nextMatch.home}</span>
                 <span className="text-text-muted">vs</span>

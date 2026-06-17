@@ -57,7 +57,7 @@ export default async function EstatisticasPage({ params }: { params: Promise<{ s
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
         <div className="bg-card-bg rounded-lg border border-border-custom p-4 text-center">
           <div className="text-2xl font-bold text-green">{standingPosition?.pos || "-"}o</div>
-          <div className="text-xs text-text-muted">Posicao</div>
+          <div className="text-xs text-text-muted">Posição</div>
         </div>
         <div className="bg-card-bg rounded-lg border border-border-custom p-4 text-center">
           <div className="text-2xl font-bold text-text-primary">{standingPosition?.pts || 0}</div>
@@ -89,7 +89,7 @@ export default async function EstatisticasPage({ params }: { params: Promise<{ s
             </div>
             <div>
               <div className="text-lg font-bold text-green">{standingPosition.wins}</div>
-              <div className="text-[10px] text-text-muted uppercase">Vitorias</div>
+              <div className="text-[10px] text-text-muted uppercase">Vitórias</div>
             </div>
             <div>
               <div className="text-lg font-bold text-orange">{standingPosition.draws}</div>

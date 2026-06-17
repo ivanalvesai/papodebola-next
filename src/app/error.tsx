@@ -17,7 +17,7 @@ export default function Error({
           Algo deu errado
         </h2>
         <p className="text-text-muted mb-6">
-          Ocorreu um erro ao carregar esta pagina. Tente novamente.
+          Ocorreu um erro ao carregar esta página. Tente novamente.
         </p>
         <Button
           onClick={reset}
