@@ -30,7 +30,8 @@ export async function generateMetadata({
   const desc = articleMetaDescription(article);
 
   return {
-    title: article.rewrittenTitle,
+    // absolute: sem o sufixo "| Papo de Bola" do template do layout no title do post.
+    title: { absolute: article.rewrittenTitle },
     description: desc,
     alternates: { canonical: article.url },
     openGraph: {
