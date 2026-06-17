@@ -1,4 +1,5 @@
 import type { Article } from "@/types/article";
+import { articleMetaDescription } from "@/lib/data/articles";
 
 interface ArticleSchemaProps {
   article: Article;
@@ -31,7 +32,7 @@ export function ArticleSchema({ article }: ArticleSchemaProps) {
     "@context": "https://schema.org",
     "@type": "NewsArticle",
     headline: article.rewrittenTitle,
-    description: article.rewrittenText.substring(0, 155).replace(/\n/g, " "),
+    description: articleMetaDescription(article),
     ...(imageUrl && { image: imageUrl }),
     datePublished: withTz(article.pubDate),
     dateModified: withTz(article.updatedAt || article.pubDate),

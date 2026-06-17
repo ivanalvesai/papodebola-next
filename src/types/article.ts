@@ -2,6 +2,8 @@ export interface Article {
   originalTitle: string;
   rewrittenTitle: string;
   rewrittenText: string;
+  /** Resumo do WP (excerpt) — fonte preferida da meta description (cai pro corpo se vazio). */
+  excerpt?: string;
   /** HTML rico do WordPress (h2/h3/listas/links), preservado para exibicao. */
   contentHtml?: string;
   slug: string;
