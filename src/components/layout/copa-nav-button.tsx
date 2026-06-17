@@ -25,12 +25,12 @@ export function CopaNavButton({
       href="/futebol/copa-do-mundo"
       onClick={onClick}
       aria-label="Copa do Mundo 2026"
-      className={`pdb-copa-btn group relative inline-flex items-center gap-1.5 overflow-hidden whitespace-nowrap rounded-full font-extrabold uppercase tracking-wide text-white [text-shadow:0_1px_2px_rgba(0,0,0,0.5)] shadow-[0_2px_8px_rgba(201,162,39,0.45)] ring-1 ring-[#8a6c1b]/40 transition-transform duration-200 hover:scale-[1.04] ${
+      className={`pdb-copa-btn group relative inline-flex items-center gap-1.5 overflow-hidden whitespace-nowrap rounded-full font-extrabold uppercase tracking-wide text-black [text-shadow:0_1px_2px_rgba(255,255,255,0.5)] shadow-[0_2px_8px_rgba(201,162,39,0.45)] ring-1 ring-[#8a6c1b]/40 transition-transform duration-200 hover:scale-[1.04] ${
         full ? "w-full justify-center px-4 py-2.5 text-sm" : "px-3 py-1.5 text-[12px]"
       }`}
       style={{ background: WC_GOLD }}
     >
-      <Trophy className={`shrink-0 drop-shadow-[0_1px_1px_rgba(0,0,0,0.45)] ${full ? "h-4 w-4" : "h-3.5 w-3.5"}`} />
+      <Trophy className={`shrink-0 drop-shadow-[0_1px_1px_rgba(255,255,255,0.5)] ${full ? "h-4 w-4" : "h-3.5 w-3.5"}`} />
       <span className="relative z-[1]">Copa do Mundo</span>
       {/* brilho que varre */}
       <span aria-hidden className="pdb-copa-shine" />
