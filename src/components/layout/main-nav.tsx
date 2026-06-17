@@ -35,7 +35,15 @@ export function MainNav() {
       ref={navRef}
       className="bg-nav-bg border-b border-border-custom shadow-sm sticky top-14 z-40"
     >
-      <div className="mx-auto max-w-[1240px] px-4">
+      {/* overflow dinâmico: com dropdown aberto -> visible (submenu aparece inteiro);
+          fechado -> rola na horizontal no mobile (botão Copa travado na tela, sem vazar). */}
+      <div
+        className={`mx-auto max-w-[1240px] px-4 ${
+          openDropdown
+            ? "overflow-visible"
+            : "overflow-x-auto [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+        }`}
+      >
         <ul className="flex items-center gap-0 text-sm whitespace-nowrap">
           {/* Menu lateral */}
           <li>

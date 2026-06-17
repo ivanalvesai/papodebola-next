@@ -25,7 +25,7 @@ function FeaturedCard({ article, big }: { article: Article; big?: boolean }) {
           alt=""
           fill
           sizes={big ? "(max-width:1024px) 100vw, 40vw" : "(max-width:1024px) 100vw, 20vw"}
-          className="object-cover transition-transform duration-300 group-hover:scale-105"
+          className="object-contain transition-transform duration-300 group-hover:scale-105"
           unoptimized
           priority={big}
         />
