@@ -315,6 +315,24 @@ export function ArticleView({
           display: block;
         }
         .prose-article figure { margin: 0 0 32px; }
+        /* Alinhamento de imagens (classes do editor do WP). Sem isto, imagem menor
+           que a coluna fica encostada na esquerda (img e display:block com margem
+           lateral 0). Honra aligncenter/alignleft/alignright e o bloco Gutenberg. */
+        .prose-article img.aligncenter,
+        .prose-article figure.aligncenter,
+        .prose-article .wp-block-image.aligncenter,
+        .prose-article .aligncenter {
+          margin-left: auto;
+          margin-right: auto;
+        }
+        .prose-article .wp-block-image.aligncenter { text-align: center; }
+        .prose-article img.alignleft,
+        .prose-article figure.alignleft { float: left; margin: 8px 24px 16px 0; }
+        .prose-article img.alignright,
+        .prose-article figure.alignright { float: right; margin: 8px 0 16px 24px; }
+        .prose-article figure.alignleft,
+        .prose-article figure.alignright { max-width: 50%; }
+        .prose-article::after { content: ""; display: table; clear: both; }
         .prose-article figcaption {
           font-size: 13px;
           color: #777;
