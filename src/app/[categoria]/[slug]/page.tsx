@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { notFound, permanentRedirect } from "next/navigation";
-import { getArticleBySlug, getRelatedArticles } from "@/lib/data/articles";
+import { getArticleBySlug, getRelatedArticles, articleMetaDescription } from "@/lib/data/articles";
 import { getBrasileiraoStandings } from "@/lib/data/standings";
 import { ArticleView } from "@/components/article/article-view";
 
@@ -26,7 +26,7 @@ export async function generateMetadata({
   if (!article || article.url !== `/${categoria}/${slug}`) return {};
 
   const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://papodebola.com.br";
-  const desc = plain(article.rewrittenText, 155);
+  const desc = articleMetaDescription(article);
 
   return {
     title: article.rewrittenTitle,

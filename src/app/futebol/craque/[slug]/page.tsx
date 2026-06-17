@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import { Trophy } from "lucide-react";
 import { PageBreadcrumb } from "@/components/seo/page-breadcrumb";
 import { getCraques, getCraqueBySlug } from "@/lib/data/craques";
+import { articleMetaDescription } from "@/lib/data/articles";
 
 export const revalidate = 1800;
 
@@ -27,7 +28,7 @@ export async function generateMetadata({
   if (!c) return {};
   return {
     title: c.rewrittenTitle,
-    description: plain(c.rewrittenText, 155),
+    description: articleMetaDescription(c),
     alternates: { canonical: `/futebol/craque/${slug}` },
     ...(c.image ? { openGraph: { images: [{ url: c.image }] } } : {}),
   };

@@ -46,6 +46,19 @@ function stripHtml(html: string): string {
     .trim();
 }
 
+/**
+ * Meta description do artigo. Prefere o excerpt do WP (campo feito pra isso) e cai
+ * pro corpo. Corta em limite de palavra (~155) pra nunca truncar no meio da frase.
+ * Usado por todas as rotas de artigo + o schema NewsArticle (fonte única).
+ */
+export function articleMetaDescription(a: { excerpt?: string; rewrittenText: string }): string {
+  const raw = ((a.excerpt && a.excerpt.trim()) || a.rewrittenText || "").replace(/\s+/g, " ").trim();
+  if (raw.length <= 160) return raw;
+  const cut = raw.slice(0, 157);
+  const sp = cut.lastIndexOf(" ");
+  return (sp > 100 ? cut.slice(0, sp) : cut).trim() + "…";
+}
+
 function normalizeArticle(post: any, categories: Record<number, string>, tags: Record<number, string>): Article {
   const title = stripHtml(post.title?.rendered || "");
   const slug = post.slug || generateSlug(title);
@@ -53,6 +66,10 @@ function normalizeArticle(post: any, categories: Record<number, string>, tags: R
   // Versao em texto puro: usada para meta description, excerpt nas listas e
   // contagem de palavras. A exibicao do artigo usa contentHtml (HTML real).
   const content = stripHtml(contentHtml).slice(0, 5000);
+  // Excerpt do WP (campo próprio pra meta description). Tira o "[…]" do auto-excerpt.
+  const excerpt = stripHtml(post.excerpt?.rendered || "")
+    .replace(/\[(?:…|\.\.\.)\]\s*$/, "")
+    .trim();
 
   const postCategories = (post.categories || []).map((id: number) => categories[id]).filter(Boolean);
   const postTags = (post.tags || []).map((id: number) => tags[id]).filter(Boolean);
@@ -77,6 +94,7 @@ function normalizeArticle(post: any, categories: Record<number, string>, tags: R
     originalTitle: title,
     rewrittenTitle: title,
     rewrittenText: content,
+    excerpt,
     contentHtml,
     slug,
     source: "WordPress",
