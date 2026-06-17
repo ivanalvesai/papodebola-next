@@ -27,7 +27,16 @@ import type { ChampionshipData } from "@/types/tournament";
 export const revalidate = 1800;
 
 export const metadata: Metadata = {
+  // `absolute` evita o template "%s | Papo de Bola" do layout (senao duplicaria a marca).
+  title: { absolute: "Papo de Bola | Futebol e Esportes do Brasil e do Mundo" },
+  description:
+    "Acompanhe notícias de futebol e esportes, jogos de hoje, resultados ao vivo, tabelas, classificações e as principais competições do mundo.",
   alternates: { canonical: "/" },
+  openGraph: {
+    title: "Papo de Bola | Futebol e Esportes do Brasil e do Mundo",
+    description:
+      "Acompanhe notícias de futebol e esportes, jogos de hoje, resultados ao vivo, tabelas, classificações e as principais competições do mundo.",
+  },
 };
 
 export default async function HomePage() {
