@@ -11,7 +11,7 @@ export function ScorersWidget({ scorers }: ScorersWidgetProps) {
     <div className="bg-card-bg rounded-lg border border-border-custom">
       <h3 className="text-sm font-bold text-text-primary px-4 py-3 border-b border-border-custom flex items-center gap-2">
         <Goal className="h-4 w-4 text-green" />
-        Artilheiros - Brasileirao
+        Artilheiros - Brasileirão
       </h3>
 
       {scorers.length === 0 ? (

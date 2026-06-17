@@ -36,12 +36,12 @@ export function StandingsWidget({ standings }: StandingsWidgetProps) {
     <div className="bg-card-bg rounded-lg border border-border-custom">
       <h3 className="text-sm font-bold text-text-primary px-4 py-3 border-b border-border-custom flex items-center gap-2">
         <ListOrdered className="h-4 w-4 text-green" />
-        Classificacao - Brasileirao
+        Classificação - Brasileirão
       </h3>
 
       {rows.length === 0 ? (
         <p className="text-text-muted text-sm text-center py-6">
-          Classificacao indisponivel
+          Classificação indisponível
         </p>
       ) : (
         <div className="overflow-x-auto">

@@ -67,10 +67,8 @@ export default async function CopaFasePage({
         Navegue pelas fases da Copa &middot; horários de Brasília.
       </p>
 
-      <PhaseNav active={phase.slug} />
-
       <section>
-        <h2 className="mb-4 text-lg font-bold text-text-primary">{phase.longLabel}</h2>
+        <PhaseNav active={phase.slug} />
         <KnockoutMatches matches={matches} />
       </section>
 

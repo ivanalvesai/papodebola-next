@@ -80,7 +80,7 @@ export function MatchBar({ todayMatches, cbfUpcoming }: MatchBarProps) {
           }`}
         >
           <CalendarClock className="h-4 w-4" />
-          Proximos
+          Próximos
           <span className="ml-1 bg-body text-text-muted text-xs px-1.5 py-0.5 rounded-full">
             {cbfUpcoming.length}
           </span>

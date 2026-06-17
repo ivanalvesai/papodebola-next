@@ -12,7 +12,7 @@ export function RecentResultsWidget({ matches }: RecentResultsWidgetProps) {
     <div className="bg-card-bg rounded-lg border border-border-custom">
       <h3 className="text-sm font-bold text-text-primary px-4 py-3 border-b border-border-custom flex items-center gap-2">
         <History className="h-4 w-4 text-green" />
-        Ultimos Resultados
+        Últimos Resultados
       </h3>
 
       {finished.length === 0 ? (

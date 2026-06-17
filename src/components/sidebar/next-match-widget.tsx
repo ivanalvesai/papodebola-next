@@ -28,7 +28,7 @@ export function NextMatchWidget({ match }: NextMatchWidgetProps) {
   return (
     <div className="bg-card-bg rounded-lg border border-border-custom p-4">
       <div className="text-[10px] font-bold text-green uppercase text-center mb-3">
-        Brasileirao Serie A
+        Brasileirão Série A
       </div>
 
       <div className="flex items-center justify-center gap-4">

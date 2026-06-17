@@ -63,9 +63,9 @@ export function NewsSection({ articles }: NewsSectionProps) {
       <section className="rounded-lg border border-border-custom bg-card-bg p-6">
         <h2 className="mb-4 flex items-center gap-2 text-base font-bold text-text-primary">
           <Newspaper className="h-5 w-5 text-green" />
-          Ultimas Noticias
+          Últimas Notícias
         </h2>
-        <p className="py-6 text-center text-sm text-text-muted">Nenhuma noticia disponivel</p>
+        <p className="py-6 text-center text-sm text-text-muted">Nenhuma notícia disponível</p>
       </section>
     );
   }
@@ -74,7 +74,7 @@ export function NewsSection({ articles }: NewsSectionProps) {
     <section className="rounded-lg border border-border-custom bg-card-bg p-6">
       <h2 className="mb-4 flex items-center gap-2 text-base font-bold text-text-primary">
         <Newspaper className="h-5 w-5 text-green" />
-        Ultimas Noticias
+        Últimas Notícias
       </h2>
 
       {/* 3 destaques: 1 grande a esquerda + 2 alinhados a direita */}

@@ -27,7 +27,9 @@ export function PhaseNav({ active }: { active: string }) {
           </span>
         )}
 
-        <span className="whitespace-nowrap text-sm font-bold">{current.longLabel}</span>
+        <h2 className="whitespace-nowrap text-sm font-bold uppercase tracking-wide">
+          {current.longLabel}
+        </h2>
 
         {next ? (
           <Link href={next.href} aria-label={`Próxima fase: ${next.longLabel}`} className={`${arrowBase} hover:bg-white/30`}>
