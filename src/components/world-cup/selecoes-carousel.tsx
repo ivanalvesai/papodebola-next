@@ -41,9 +41,9 @@ export function SelecoesCarousel() {
               <div className="w-16 h-16 rounded-full overflow-hidden border border-border-custom bg-body flex items-center justify-center group-hover:border-green group-hover:shadow-md transition-all">
                 <TeamLogo teamId={s.id} alt={s.name} size={56} className="object-cover" />
               </div>
-              <span className="text-xs font-semibold text-text-primary text-center leading-tight group-hover:text-green transition-colors">
+              <h3 className="text-xs font-semibold text-text-primary text-center leading-tight group-hover:text-green transition-colors">
                 {s.name}
-              </span>
+              </h3>
             </Link>
           ))}
         </div>

@@ -62,6 +62,19 @@ function normalizeMatch(e: any, round: number): ChampionshipMatch {
   };
 }
 
+// Confrontos de uma fase eliminatória (mata-mata) por número de rodada.
+// Hoje volta vazio (chaveamento só existe após o sorteio pós-grupos); quando a
+// API tiver os jogos, a página da fase popula sozinha via ISR. Ordena por data.
+export async function getWorldCupKnockout(round: number): Promise<ChampionshipMatch[]> {
+  const data = await fetchAllSports<any>(
+    `tournament/${WC.id}/season/${WC.seasonId}/matches/round/${round}`,
+    1800
+  );
+  return (data?.events || [])
+    .map((e: any) => normalizeMatch(e, round))
+    .sort((a: ChampionshipMatch, b: ChampionshipMatch) => a.timestamp - b.timestamp);
+}
+
 export async function getWorldCupData(): Promise<WorldCupData> {
   const standingsGroups = await getWorldCupStandings();
 
