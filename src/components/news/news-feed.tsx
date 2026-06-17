@@ -24,14 +24,14 @@ export function FeedItem({ article }: { article: Article }) {
       href={article.url}
       className="group flex gap-4 border-t border-border-light py-4 first:border-t-0 first:pt-0"
     >
-      <div className="aspect-[16/9] w-28 shrink-0 overflow-hidden rounded bg-body sm:w-44">
+      <div className="aspect-[16/9] w-32 shrink-0 self-start overflow-hidden rounded bg-body sm:w-52">
         {article.image ? (
           <Image
             src={article.image}
             alt=""
-            width={176}
-            height={99}
-            className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
+            width={208}
+            height={117}
+            className="h-full w-full object-contain transition-transform duration-300 group-hover:scale-105"
             unoptimized
           />
         ) : (
