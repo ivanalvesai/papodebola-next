@@ -23,6 +23,43 @@ function normalizeMatch(event: any, round: number): ChampionshipMatch {
   };
 }
 
+// Placares ao vivo da rodada atual de um campeonato — consumido pelo polling da
+// tabela (selo AO VIVO + placar). TTL curto só na rodada atual; a lista de rounds
+// (pra achar a current) é cacheada 6h.
+export interface ChampionshipLiveScore {
+  id: number;
+  homeScore: number | null;
+  awayScore: number | null;
+  statusType: string; // notstarted | inprogress | finished
+  statusDesc: string;
+}
+
+export async function getChampionshipLiveScores(
+  slug: string
+): Promise<ChampionshipLiveScore[]> {
+  const tournament = TOURNAMENT_BY_SLUG[slug];
+  if (!tournament || !tournament.seasonId) return [];
+  const { id, seasonId } = tournament;
+
+  const roundsData = await fetchAllSports<any>(
+    `tournament/${id}/season/${seasonId}/rounds`,
+    21600
+  );
+  const cr = roundsData?.currentRound?.round || 1;
+
+  const data = await fetchAllSports<any>(
+    `tournament/${id}/season/${seasonId}/matches/round/${cr}`,
+    20 // curto: placar ao vivo
+  );
+  return (data?.events || []).map((e: any) => ({
+    id: e.id,
+    homeScore: e.homeScore?.current ?? null,
+    awayScore: e.awayScore?.current ?? null,
+    statusType: e.status?.type || "",
+    statusDesc: translateStatus(e.status?.description) || "",
+  }));
+}
+
 export async function getChampionshipData(
   slug: string
 ): Promise<ChampionshipData | null> {
