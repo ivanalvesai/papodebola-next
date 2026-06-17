@@ -356,7 +356,27 @@ const STAT_PT: Record<string, string> = {
   "Hit woodwork": "Na trave",
   "Touches in penalty area": "Toques na área",
   "Final third entries": "Entradas no último terço",
+  "Final third phase": "Jogo no último terço",
   "Fouled in final third": "Faltas sofridas no ataque",
+  "Through balls": "Passes em profundidade",
+  "Dispossessed": "Posses perdidas",
+  "Ground duels": "Duelos no chão",
+  "Aerial duels": "Duelos aéreos",
+  "Tackles won": "Desarmes certos",
+  "Recoveries": "Recuperações de bola",
+  "Goals prevented": "Gols evitados",
+  "Big saves": "Defesas difíceis",
+  "High claims": "Saídas de cruzamento",
+  // extras comuns do Sofascore (pra não vazar inglês em outros jogos)
+  "Penalty saves": "Pênaltis defendidos",
+  "Punches": "Socos do goleiro",
+  "Errors lead to shot": "Erros que viraram finalização",
+  "Errors lead to goal": "Erros que viraram gol",
+  "Big chances created": "Grandes chances criadas",
+  "Key passes": "Passes decisivos",
+  "Accurate long balls": "Bolas longas certas",
+  "Accurate crosses": "Cruzamentos certos",
+  "Goalkeeper punches": "Socos do goleiro",
 };
 function translateStat(name: string): string {
   if (!name) return "";
