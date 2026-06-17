@@ -13,7 +13,11 @@ import { getArticles } from "@/lib/data/articles";
 
 const COPA_CATEGORY = "Copa do Mundo";
 
-export const revalidate = 1800;
+// 10 min durante a Copa: a pagina re-renderiza rapido pra a tabela de pontos
+// pegar o standings fresco (TTL 5 min). Sem isso, o HTML so atualizava a cada
+// 30 min e segurava pontos errados de jogo recem-terminado. (Placar dos cards ja
+// e ao vivo via CopaLiveProvider; aqui e a tabela de classificacao.)
+export const revalidate = 600;
 
 export const metadata: Metadata = {
   alternates: { canonical: "/futebol/copa-do-mundo" },
