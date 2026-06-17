@@ -27,7 +27,8 @@ export async function generateMetadata({
   const c = await getCraqueBySlug(slug);
   if (!c) return {};
   return {
-    title: c.rewrittenTitle,
+    // absolute: sem o sufixo "| Papo de Bola" do template do layout no title do post.
+    title: { absolute: c.rewrittenTitle },
     description: articleMetaDescription(c),
     alternates: { canonical: `/futebol/craque/${slug}` },
     ...(c.image ? { openGraph: { images: [{ url: c.image }] } } : {}),
