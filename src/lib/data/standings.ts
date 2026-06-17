@@ -58,7 +58,12 @@ const WORLD_CUP = { id: 16, seasonId: 58210 } as const;
 // Retorna só os 12 grupos (A–L), traduzidos pra PT-BR. A API também devolve um
 // grupo "Third-placed teams" (ranking dos 3os colocados) que filtramos fora.
 export async function getWorldCupStandings(): Promise<StandingsGroup[]> {
-  const groups = await getStandings(WORLD_CUP.id, WORLD_CUP.seasonId);
+  // TTL curto (5 min) durante a Copa: os pontos precisam refletir o fim do jogo
+  // rapido — senao a tabela mostra placar provisorio de jogo ao vivo por muito
+  // tempo (ex: Portugal 3pts num jogo que terminou empatado). A bolinha de forma
+  // ja atualiza em ~30 min via jogos; isso alinha os pontos. O TTL e propagado ao
+  // proxy via _pdbttl, entao vale ponta-a-ponta (inclusive na prod).
+  const groups = await getStandings(WORLD_CUP.id, WORLD_CUP.seasonId, 300);
   return groups
     .filter((g) => /^group\s/i.test(g.name))
     .map((g) => ({

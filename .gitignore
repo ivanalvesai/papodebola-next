@@ -56,3 +56,9 @@ docker-compose.override.yml
 
 # Anthropic key (translation test) - NUNCA commitar
 papo-de-bola-ipa.txt
+
+# Base de conhecimento privada (grafo /graphify) - SO LOCAL, nao publicar
+/graphify-out
+/docs/knowledge
+.graphify_*
+.claude/settings.local.json
