@@ -1,7 +1,6 @@
 "use client";
 
 import Link from "next/link";
-import { Trophy } from "lucide-react";
 
 // Mesma cor dourada do banner da Copa na home (WorldCupBanner).
 const WC_GOLD =
@@ -30,7 +29,6 @@ export function CopaNavButton({
       }`}
       style={{ background: WC_GOLD }}
     >
-      <Trophy className={`shrink-0 drop-shadow-[0_1px_1px_rgba(255,255,255,0.5)] ${full ? "h-4 w-4" : "h-3.5 w-3.5"}`} />
       <span className="relative z-[1]">Copa do Mundo</span>
       {/* brilho que varre */}
       <span aria-hidden className="pdb-copa-shine" />
