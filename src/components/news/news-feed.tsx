@@ -2,7 +2,6 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import Link from "next/link";
-import Image from "next/image";
 import { Newspaper, Loader2 } from "lucide-react";
 import type { Article } from "@/types/article";
 
@@ -24,18 +23,19 @@ export function FeedItem({ article }: { article: Article }) {
       href={article.url}
       className="group flex gap-4 border-t border-border-light py-4 first:border-t-0 first:pt-0"
     >
-      <div className="aspect-[16/9] w-32 shrink-0 self-start overflow-hidden rounded bg-body sm:w-52">
+      <div className="w-32 shrink-0 self-start overflow-hidden rounded sm:w-52">
         {article.image ? (
-          <Image
+          // <img> puro: mostra a imagem na proporção NATURAL preenchendo a largura
+          // (sem cortar, sem encolher, sem distorcer). next/image forçaria uma proporção fixa.
+          // eslint-disable-next-line @next/next/no-img-element
+          <img
             src={article.image}
             alt=""
-            width={208}
-            height={117}
-            className="h-full w-full object-contain transition-transform duration-300 group-hover:scale-105"
-            unoptimized
+            loading="lazy"
+            className="block h-auto w-full transition-transform duration-300 group-hover:scale-105"
           />
         ) : (
-          <div className="flex h-full w-full items-center justify-center text-text-muted">
+          <div className="flex aspect-[16/9] w-full items-center justify-center bg-body text-text-muted">
             <Newspaper className="h-6 w-6" />
           </div>
         )}
