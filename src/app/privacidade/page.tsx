@@ -1,117 +1,212 @@
 import type { Metadata } from "next";
+import Link from "next/link";
 import { Shield } from "lucide-react";
 
 export const metadata: Metadata = {
   alternates: { canonical: "/privacidade" },
   title: "Política de Privacidade",
   description:
-    "Política de Privacidade do Papo de Bola: como coletamos, usamos e protegemos suas informações, incluindo o uso de cookies e do Google AdSense.",
+    "Política de Privacidade do Papo de Bola: como coletamos, utilizamos e protegemos seus dados, uso de cookies, Google Analytics e Google Ads, conforme a LGPD (Lei nº 13.709/2018).",
 };
 
 export default function PrivacidadePage() {
   return (
-    <div className="mx-auto max-w-[680px] px-4 py-12">
-      <h1 className="mb-6 flex items-center gap-2 text-2xl font-bold text-text-primary">
+    <div className="mx-auto max-w-[720px] px-4 py-12">
+      <h1 className="mb-2 flex items-center gap-2 text-2xl font-bold text-text-primary">
         <Shield className="h-7 w-7 text-green" />
         Política de Privacidade
       </h1>
+      <p className="mb-6 text-xs text-text-muted">Vigente desde 18 de junho de 2026.</p>
 
       <div className="space-y-4 rounded-lg border border-border-custom bg-card-bg p-8 text-sm leading-relaxed text-text-secondary">
         <p>
-          A sua privacidade é importante para nós. É política do{" "}
-          <strong className="text-text-primary">Papo de Bola</strong> respeitar a sua
-          privacidade em relação a qualquer informação sua que possamos coletar no site Papo de
-          Bola, e outros sites que possuímos e operamos.
+          Esta Política de Privacidade descreve como o{" "}
+          <strong className="text-text-primary">Papo de Bola</strong>, portal de conteúdo esportivo
+          disponível em www.papodebola.com.br, coleta, utiliza e protege as informações dos seus
+          usuários, em conformidade com a Lei Geral de Proteção de Dados (LGPD – Lei nº
+          13.709/2018).
         </p>
         <p>
-          Solicitamos informações pessoais apenas quando realmente precisamos delas para lhe
-          fornecer um serviço. Fazemo-lo por meios justos e legais, com o seu conhecimento e
-          consentimento. Também informamos por que estamos coletando e como será usado.
-        </p>
-        <p>
-          Apenas retemos as informações coletadas pelo tempo necessário para fornecer o serviço
-          solicitado. Quando armazenamos dados, protegemos dentro de meios comercialmente
-          aceitáveis para evitar perdas e roubos, bem como acesso, divulgação, cópia, uso ou
-          modificação não autorizados.
-        </p>
-        <p>
-          Não compartilhamos informações de identificação pessoal publicamente ou com terceiros,
-          exceto quando exigido por lei.
-        </p>
-        <p>
-          O nosso site pode ter links para sites externos que não são operados por nós. Esteja
-          ciente de que não temos controle sobre o conteúdo e práticas desses sites e não podemos
-          aceitar responsabilidade por suas respectivas políticas de privacidade.
-        </p>
-        <p>
-          Você é livre para recusar a nossa solicitação de informações pessoais, entendendo que
-          talvez não possamos fornecer alguns dos serviços desejados.
-        </p>
-        <p>
-          O uso continuado de nosso site será considerado como aceitação de nossas práticas em
-          torno de privacidade e informações pessoais. Se você tiver alguma dúvida sobre como
-          lidamos com dados do usuário e informações pessoais, entre em contato connosco.
+          Ao navegar em nosso portal, você concorda com as práticas descritas neste documento. Caso
+          tenha dúvidas, entre em contato conosco pelos canais indicados ao final desta política.
         </p>
 
-        <h2 className="pt-2 text-base font-bold text-text-primary">
-          Publicidade e cookies (Google AdSense)
-        </h2>
+        <h2 className="pt-2 text-base font-bold text-text-primary">1. Informações Coletadas</h2>
         <p>
-          O serviço Google AdSense que usamos para veicular publicidade usa um cookie DoubleClick
-          para veicular anúncios mais relevantes em toda a Web e limitar o número de vezes que um
-          determinado anúncio é exibido para você.
-        </p>
-        <p>
-          Para mais informações sobre o Google AdSense, consulte as FAQs oficiais sobre
-          privacidade do Google AdSense.
-        </p>
-        <p>
-          Utilizamos anúncios para compensar os custos de funcionamento deste site e fornecer
-          financiamento para futuros desenvolvimentos. Os cookies de publicidade comportamental
-          usados por este site foram projetados para garantir que você forneça os anúncios mais
-          relevantes sempre que possível, rastreando anonimamente seus interesses e apresentando
-          coisas semelhantes que possam ser do seu interesse.
-        </p>
-        <p>
-          Vários parceiros anunciam em nosso nome e os cookies de rastreamento de afiliados
-          simplesmente nos permitem ver se nossos clientes acessaram o site através de um dos sites
-          de nossos parceiros, para que possamos creditá-los adequadamente e, quando aplicável,
-          permitir que nossos parceiros afiliados ofereçam qualquer promoção que pode fornecê-lo
-          para fazer uma compra.
-        </p>
-
-        <h2 className="pt-2 text-base font-bold text-text-primary">Compromisso do Usuário</h2>
-        <p>
-          O usuário se compromete a fazer uso adequado dos conteúdos e da informação que o Papo de
-          Bola oferece no site e com caráter enunciativo, mas não limitativo:
+          O Papo de Bola coleta as seguintes categorias de dados durante a navegação em
+          www.papodebola.com.br:
         </p>
         <ul className="list-disc space-y-2 pl-5">
           <li>
-            Não se envolver em atividades que sejam ilegais ou contrárias à boa fé a à ordem
-            pública;
+            <strong className="text-text-primary">Dados de navegação anônimos:</strong> endereço
+            IP, tipo de dispositivo, navegador utilizado, páginas visitadas e tempo de permanência
+            no site.
           </li>
           <li>
-            Não difundir propaganda ou conteúdo de natureza racista, xenofóbica, jogos de sorte ou
-            azar, qualquer tipo de pornografia ilegal, de apologia ao terrorismo ou contra os
-            direitos humanos;
+            <strong className="text-text-primary">Cookies e tecnologias semelhantes:</strong>{" "}
+            utilizados para armazenar preferências e melhorar a experiência de uso (veja a Seção 2).
           </li>
           <li>
-            Não causar danos aos sistemas físicos (hardwares) e lógicos (softwares) do Papo de
-            Bola, de seus fornecedores ou terceiros, para introduzir ou disseminar vírus
-            informáticos ou quaisquer outros sistemas de hardware ou software que sejam capazes de
-            causar danos anteriormente mencionados.
+            <strong className="text-text-primary">Dados fornecidos voluntariamente:</strong> caso
+            você preencha formulários de contato, cadastro de newsletter ou comentários, poderemos
+            coletar nome, e-mail e outras informações por você informadas.
+          </li>
+        </ul>
+        <p>Não coletamos dados pessoais identificáveis sem o seu consentimento expresso.</p>
+
+        <h2 className="pt-2 text-base font-bold text-text-primary">2. Uso de Cookies</h2>
+        <p>
+          O portal www.papodebola.com.br utiliza cookies para melhorar a navegação e entender como
+          os usuários interagem com nossas páginas. Você pode gerenciar ou desativar os cookies nas
+          configurações do seu navegador.
+        </p>
+        <p>Tipos de cookies utilizados:</p>
+        <ul className="list-disc space-y-2 pl-5">
+          <li>
+            <strong className="text-text-primary">Cookies funcionais:</strong> garantem o
+            funcionamento correto do site e o armazenamento de preferências de navegação.
+          </li>
+          <li>
+            <strong className="text-text-primary">Cookies de análise:</strong> coletam dados
+            anônimos sobre o comportamento dos visitantes por meio do Google Analytics.
+          </li>
+          <li>
+            <strong className="text-text-primary">Cookies de publicidade:</strong> utilizados para
+            exibição de anúncios relevantes, em conformidade com as políticas do Google Ads.
+          </li>
+        </ul>
+        <p>A desativação de cookies pode impactar o funcionamento de algumas funcionalidades do portal.</p>
+
+        <h2 className="pt-2 text-base font-bold text-text-primary">3. Finalidade do Uso dos Dados</h2>
+        <p>As informações coletadas pelo Papo de Bola são utilizadas exclusivamente para:</p>
+        <ul className="list-disc space-y-2 pl-5">
+          <li>Melhorar a experiência de navegação e o conteúdo do portal.</li>
+          <li>Analisar o desempenho e o tráfego do site por meio do Google Analytics.</li>
+          <li>
+            Exibir anúncios relevantes ao perfil de navegação, em conformidade com as políticas do
+            Google Ads.
+          </li>
+          <li>
+            Enviar comunicações, como newsletters ou atualizações de conteúdo, caso você tenha se
+            cadastrado.
+          </li>
+          <li>Cumprir obrigações legais e regulatórias.</li>
+        </ul>
+
+        <h2 className="pt-2 text-base font-bold text-text-primary">4. Compartilhamento de Dados</h2>
+        <p>
+          O Papo de Bola não vende, troca nem transfere seus dados pessoais a terceiros sem o seu
+          consentimento. Podemos, entretanto:
+        </p>
+        <ul className="list-disc space-y-2 pl-5">
+          <li>Compartilhar dados anônimos e agregados com parceiros analíticos para fins estatísticos.</li>
+          <li>Divulgar informações quando exigido por lei, ordem judicial ou autoridade competente.</li>
+          <li>
+            Compartilhar dados com prestadores de serviço que auxiliam na operação do portal (ex.:
+            hospedagem, plataformas de e-mail marketing), sempre sob acordos de confidencialidade
+            alinhados à LGPD.
           </li>
         </ul>
 
-        <h2 className="pt-2 text-base font-bold text-text-primary">Mais informações</h2>
+        <h2 className="pt-2 text-base font-bold text-text-primary">5. Segurança das Informações</h2>
         <p>
-          Esperamos que esteja esclarecido e, como mencionado anteriormente, se houver algo que
-          você não tem certeza se precisa ou não, geralmente é mais seguro deixar os cookies
-          ativados, caso interaja com um dos recursos que você usa em nosso site.
+          O Papo de Bola adota medidas técnicas e organizacionais adequadas para proteger suas
+          informações contra acesso não autorizado, alteração, divulgação ou destruição, incluindo:
+        </p>
+        <ul className="list-disc space-y-2 pl-5">
+          <li>Uso de conexões seguras (HTTPS) em todo o portal.</li>
+          <li>Controle de acesso restrito aos sistemas internos.</li>
+          <li>Monitoramento periódico de vulnerabilidades.</li>
+        </ul>
+        <p>
+          Embora nos esforcemos para garantir a segurança dos dados, nenhum sistema é completamente
+          inviolável. Em caso de incidente de segurança que possa lhe afetar, notificaremos você
+          conforme determinado pela LGPD.
         </p>
 
-        <p className="border-t border-border-light pt-4 text-xs text-text-muted">
-          Esta política é efetiva a partir de 18 de junho de 2026.
+        <h2 className="pt-2 text-base font-bold text-text-primary">6. Seus Direitos (LGPD)</h2>
+        <p>
+          Conforme a Lei Geral de Proteção de Dados (Lei nº 13.709/2018), você tem os seguintes
+          direitos em relação aos seus dados pessoais:
+        </p>
+        <ul className="list-disc space-y-2 pl-5">
+          <li>
+            <strong className="text-text-primary">Acesso:</strong> solicitar a confirmação da
+            existência de tratamento e o acesso aos seus dados.
+          </li>
+          <li>
+            <strong className="text-text-primary">Correção:</strong> requerer a correção de dados
+            incompletos, inexatos ou desatualizados.
+          </li>
+          <li>
+            <strong className="text-text-primary">Exclusão:</strong> solicitar a eliminação dos
+            dados tratados com base no seu consentimento.
+          </li>
+          <li>
+            <strong className="text-text-primary">Portabilidade:</strong> obter seus dados em
+            formato estruturado para transferência a outro fornecedor.
+          </li>
+          <li>
+            <strong className="text-text-primary">Revogação do consentimento:</strong> retirar o
+            consentimento a qualquer momento, sem prejuízo ao tratamento realizado anteriormente.
+          </li>
+          <li>
+            <strong className="text-text-primary">Oposição:</strong> opor-se ao tratamento de dados
+            em caso de descumprimento da LGPD.
+          </li>
+        </ul>
+        <p>
+          Para exercer qualquer um desses direitos, entre em contato conosco pelo e-mail indicado ao
+          final desta política.
+        </p>
+
+        <h2 className="pt-2 text-base font-bold text-text-primary">7. Retenção de Dados</h2>
+        <p>
+          Os dados pessoais coletados pelo Papo de Bola são armazenados pelo tempo necessário para
+          cumprir as finalidades descritas nesta política, observados os prazos legais aplicáveis.
+          Após o término do tratamento, os dados serão eliminados de forma segura ou anonimizados.
+        </p>
+
+        <h2 className="pt-2 text-base font-bold text-text-primary">8. Links para Sites de Terceiros</h2>
+        <p>
+          O portal www.papodebola.com.br pode conter links para sites externos, como portais de
+          notícias, federações esportivas, redes sociais e plataformas de vídeo. O Papo de Bola não
+          se responsabiliza pelas práticas de privacidade desses sites e recomenda que você consulte
+          as respectivas políticas de privacidade antes de fornecer quaisquer informações pessoais.
+        </p>
+
+        <h2 className="pt-2 text-base font-bold text-text-primary">9. Alterações nesta Política</h2>
+        <p>
+          Esta Política de Privacidade pode ser atualizada periodicamente para refletir mudanças nas
+          nossas práticas ou na legislação aplicável. Quaisquer alterações serão publicadas nesta
+          página, com atualização da data de vigência indicada no topo do documento. Recomendamos
+          que você revise esta política regularmente.
+        </p>
+
+        <h2 className="pt-2 text-base font-bold text-text-primary">
+          10. Contato e Encarregado de Dados (DPO)
+        </h2>
+        <p>
+          Para dúvidas, solicitações ou exercício dos seus direitos previstos na LGPD, entre em
+          contato com o Papo de Bola:
+        </p>
+        <ul className="list-disc space-y-2 pl-5">
+          <li>
+            Portal:{" "}
+            <Link href="/" className="text-green hover:underline">
+              www.papodebola.com.br
+            </Link>
+          </li>
+          <li>
+            E-mail:{" "}
+            <a href="mailto:contato@papodebola.com.br" className="text-green hover:underline">
+              contato@papodebola.com.br
+            </a>
+          </li>
+        </ul>
+        <p>
+          Responderemos às solicitações no prazo de até 15 (quinze) dias úteis, conforme previsto na
+          LGPD.
         </p>
       </div>
     </div>
