@@ -65,6 +65,14 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     priority: 0.6,
   });
 
+  // Tênis: torneio com chaveamento próprio (ATP de Halle)
+  sportPages.push({
+    url: `${BASE}/tenis/halle-2026`,
+    lastModified: now,
+    changeFrequency: "daily" as const,
+    priority: 0.6,
+  });
+
   // Parceiros (institucional)
   const parceirosPage: MetadataRoute.Sitemap = [
     { url: `${BASE}/parceiros`, changeFrequency: "monthly" as const, priority: 0.3 },

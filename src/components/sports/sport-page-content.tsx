@@ -1,5 +1,6 @@
 import Link from "next/link";
 import Image from "next/image";
+import type { ReactNode } from "react";
 import { Newspaper } from "lucide-react";
 import { getSportData } from "@/lib/data/sports";
 import { getArticles } from "@/lib/data/articles";
@@ -11,12 +12,14 @@ interface SportPageContentProps {
   sportKey: string;
   title: string;
   breadcrumbItems: BreadcrumbItem[];
+  featured?: ReactNode; // destaque opcional no topo (ex: torneio com chaveamento)
 }
 
 export async function SportPageContent({
   sportKey,
   title,
   breadcrumbItems,
+  featured,
 }: SportPageContentProps) {
   const catName = SPORT_WP_CATEGORY[sportKey];
   const [data, newsRes] = await Promise.all([
@@ -35,6 +38,7 @@ export async function SportPageContent({
       <div className="grid grid-cols-1 lg:grid-cols-[1fr_340px] gap-6">
         {/* Main */}
         <div className="space-y-6">
+          {featured}
           {/* Notícias da categoria (links pra /{esporte}/{slug}) */}
           {news.length > 0 && (
             <div className="bg-card-bg rounded-lg border border-border-custom p-6">

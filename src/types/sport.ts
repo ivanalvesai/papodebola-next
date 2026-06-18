@@ -49,4 +49,8 @@ export interface SportConfig {
   hasStandings?: boolean;
   rankingType?: string;
   hasRankings?: boolean;
+  // Tênis: o feed por data (events/{d}/{m}/{y}) traz TODO o tênis mundial do dia
+  // (9MB+, estoura o cache de 2MB do Next e queima banda). Pula "hoje/calendário"
+  // nesses esportes — o conteúdo relevante vive nas páginas de torneio.
+  skipDateFeeds?: boolean;
 }
