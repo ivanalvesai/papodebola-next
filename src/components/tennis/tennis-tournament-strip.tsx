@@ -181,16 +181,24 @@ export function TennisTournamentStrip({
 
       {/* Faixa horizontal de jogos */}
       <div className="relative">
-        <button onClick={() => scroll(-320)} aria-label="Anterior" className="absolute left-0 top-0 bottom-0 z-10 flex w-7 items-center justify-center bg-gradient-to-r from-card-bg to-transparent text-text-muted hover:text-text-primary">
-          <ChevronLeft className="h-5 w-5" />
+        <button
+          onClick={() => scroll(-320)}
+          aria-label="Anterior"
+          className="absolute left-1.5 top-1/2 z-20 flex h-8 w-8 -translate-y-1/2 items-center justify-center rounded-full border border-border-custom bg-card-bg text-text-secondary shadow-md transition-colors hover:text-green"
+        >
+          <ChevronLeft className="h-4 w-4" />
         </button>
-        <div ref={scrollRef} className="flex gap-2 overflow-x-auto scrollbar-hide px-8 py-3">
+        <div ref={scrollRef} className="flex gap-2 overflow-x-auto scrollbar-hide px-11 py-3">
           {matches.map((m, i) => (
             <Card key={m.eventId || i} match={m} href={tournamentHref} />
           ))}
         </div>
-        <button onClick={() => scroll(320)} aria-label="Próximo" className="absolute right-0 top-0 bottom-0 z-10 flex w-7 items-center justify-center bg-gradient-to-l from-card-bg to-transparent text-text-muted hover:text-text-primary">
-          <ChevronRight className="h-5 w-5" />
+        <button
+          onClick={() => scroll(320)}
+          aria-label="Próximo"
+          className="absolute right-1.5 top-1/2 z-20 flex h-8 w-8 -translate-y-1/2 items-center justify-center rounded-full border border-border-custom bg-card-bg text-text-secondary shadow-md transition-colors hover:text-green"
+        >
+          <ChevronRight className="h-4 w-4" />
         </button>
       </div>
     </section>
