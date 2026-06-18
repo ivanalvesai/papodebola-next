@@ -81,11 +81,11 @@ export default function SobrePage() {
           oferecendo conteúdo gratuito, exibimos anúncios e podemos firmar parcerias comerciais. A
           publicidade nunca interfere na nossa cobertura editorial. O tratamento dos seus dados e o
           uso de cookies estão descritos na nossa{" "}
-          <Link href="/privacidade" className="text-green hover:underline">
+          <Link href="/politica-de-privacidade" className="text-green hover:underline">
             Política de Privacidade
           </Link>
           , e as regras de uso do site, nos{" "}
-          <Link href="/termos" className="text-green hover:underline">
+          <Link href="/termos-de-uso" className="text-green hover:underline">
             Termos de Uso
           </Link>
           .

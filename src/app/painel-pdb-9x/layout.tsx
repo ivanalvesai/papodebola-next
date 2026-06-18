@@ -2,10 +2,11 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { FileText, Users, Gamepad2, Settings, LogOut, Sparkles, Rocket, Bell } from "lucide-react";
+import { FileText, Users, Gamepad2, Settings, LogOut, Sparkles, Rocket, Bell, Flame } from "lucide-react";
 
 const TABS = [
   { href: "/painel-pdb-9x/artigos", label: "Artigos", icon: FileText },
+  { href: "/painel-pdb-9x/pautas", label: "Pautas", icon: Flame },
   { href: "/painel-pdb-9x/usuarios", label: "Usuarios", icon: Users },
   { href: "/painel-pdb-9x/jogos", label: "Jogos", icon: Gamepad2 },
   { href: "/painel-pdb-9x/notificacoes", label: "Notificações", icon: Bell },

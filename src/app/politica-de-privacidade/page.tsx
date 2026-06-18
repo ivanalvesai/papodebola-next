@@ -3,7 +3,7 @@ import Link from "next/link";
 import { Shield } from "lucide-react";
 
 export const metadata: Metadata = {
-  alternates: { canonical: "/privacidade" },
+  alternates: { canonical: "/politica-de-privacidade" },
   title: "Política de Privacidade",
   description:
     "Política de Privacidade do Papo de Bola: como coletamos, utilizamos e protegemos seus dados, uso de cookies, Google Analytics e Google Ads, conforme a LGPD (Lei nº 13.709/2018).",
@@ -33,8 +33,11 @@ export default function PrivacidadePage() {
 
         <h2 className="pt-2 text-base font-bold text-text-primary">1. Informações Coletadas</h2>
         <p>
-          O Papo de Bola coleta as seguintes categorias de dados durante a navegação em
-          www.papodebola.com.br:
+          O{" "}
+          <Link href="/" className="font-semibold text-green hover:underline">
+            Papo de Bola
+          </Link>{" "}
+          coleta as seguintes categorias de dados durante a navegação em www.papodebola.com.br:
         </p>
         <ul className="list-disc space-y-2 pl-5">
           <li>
