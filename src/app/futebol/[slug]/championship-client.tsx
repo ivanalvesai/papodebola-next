@@ -15,7 +15,7 @@ import type { StandingRow, FormResult } from "@/types/standings";
 import type { ChampionshipMatch } from "@/types/match";
 import type { ChampionshipLiveScore } from "@/lib/data/championship";
 
-export default function CampeonatoPage() {
+export default function ChampionshipClient() {
   const params = useParams();
   const slug = params.slug as string;
   const tournament = TOURNAMENT_BY_SLUG[slug];

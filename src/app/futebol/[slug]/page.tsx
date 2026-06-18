@@ -3,13 +3,8 @@ import { notFound } from "next/navigation";
 import { TOURNAMENT_BY_SLUG } from "@/lib/config";
 import ChampionshipClient from "./championship-client";
 
-// Slugs válidos são fixos (TOURNAMENT_BY_SLUG). dynamicParams=false → qualquer slug
-// fora da lista retorna 404 REAL (antes de renderizar), sem soft-404.
-export function generateStaticParams() {
-  return Object.keys(TOURNAMENT_BY_SLUG).map((slug) => ({ slug }));
-}
-export const dynamicParams = false;
-
+// Slug fora de TOURNAMENT_BY_SLUG -> 404 REAL (notFound no server). Com o loading.tsx
+// já fora da raiz, o notFound() volta a emitir status 404 (sem soft-404).
 export async function generateMetadata({
   params,
 }: {
