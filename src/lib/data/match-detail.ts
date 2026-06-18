@@ -74,22 +74,50 @@ export interface WorldCupLiveScore {
 }
 
 export async function getWorldCupLiveScores(): Promise<WorldCupLiveScore[]> {
+  // currentRound PRECISA estar fresco: com TTL longo (era 6h), na virada de rodada
+  // o ao vivo ficava preso na rodada anterior e os jogos do dia (ex: rodada 2) nunca
+  // recebiam placar/selo AO VIVO na home. 10min mantém atualizado sem martelar.
   const rd = await fetchAllSports<any>(
     `tournament/${WC.id}/season/${WC.seasonId}/rounds`,
-    21600
+    600
   );
-  const cr = rd?.currentRound?.round || 1;
-  const data = await fetchAllSports<any>(
-    `tournament/${WC.id}/season/${WC.seasonId}/matches/round/${cr}`,
-    15 // curto: placar ao vivo
+  const roundsList: number[] = (rd?.rounds || [])
+    .map((r: any) => r?.round)
+    .filter((n: any) => typeof n === "number");
+  const cr = rd?.currentRound?.round ?? 1;
+  // A barra da home mostra hoje+2 dias, que pode cruzar a rodada atual e a seguinte;
+  // busca as duas pra cobrir o dia de virada de rodada.
+  const idx = roundsList.indexOf(cr);
+  const targets = [cr];
+  if (idx >= 0 && roundsList[idx + 1] != null) targets.push(roundsList[idx + 1]);
+
+  const results = await Promise.all(
+    targets.map((r) =>
+      fetchAllSports<any>(`tournament/${WC.id}/season/${WC.seasonId}/matches/round/${r}`, 15)
+    )
   );
-  return (data?.events || []).map((e: any) => ({
-    id: e.id,
-    homeScore: e.homeScore?.current ?? null,
-    awayScore: e.awayScore?.current ?? null,
-    statusType: e.status?.type || "",
-    statusDesc: translateStatus(e.status?.description) || "",
-  }));
+
+  const MAX_LIVE = 4 * 60 * 60; // teto anti "inprogress" travado pelo provedor
+  const now = Date.now() / 1000;
+  const out: WorldCupLiveScore[] = [];
+  const seen = new Set<number>();
+  for (const data of results) {
+    for (const e of data?.events || []) {
+      if (seen.has(e.id)) continue;
+      seen.add(e.id);
+      let type = e?.status?.type || "";
+      const ts = e?.startTimestamp || 0;
+      if (type === "inprogress" && ts > 0 && now - ts > MAX_LIVE) type = "finished";
+      out.push({
+        id: e.id,
+        homeScore: e.homeScore?.current ?? null,
+        awayScore: e.awayScore?.current ?? null,
+        statusType: type,
+        statusDesc: translateStatus(e.status?.description) || "",
+      });
+    }
+  }
+  return out;
 }
 
 // Grupo (classificação) que contém os dois times do jogo.
