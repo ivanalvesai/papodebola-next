@@ -24,6 +24,7 @@ const FOOTER_INSTITUTIONAL = [
   { label: "Sobre", href: "/sobre" },
   { label: "Contato", href: "/contato" },
   { label: "Política de Privacidade", href: "/privacidade" },
+  { label: "Termos de Uso", href: "/termos" },
 ];
 
 function FooterColumn({

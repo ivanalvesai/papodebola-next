@@ -3,56 +3,115 @@ import { Shield } from "lucide-react";
 
 export const metadata: Metadata = {
   alternates: { canonical: "/privacidade" },
-  title: "Politica de Privacidade",
-  description: "Politica de Privacidade do Papo de Bola conforme a LGPD.",
+  title: "Política de Privacidade",
+  description:
+    "Política de Privacidade do Papo de Bola: como coletamos, usamos e protegemos suas informações, incluindo o uso de cookies e do Google AdSense.",
 };
 
 export default function PrivacidadePage() {
   return (
     <div className="mx-auto max-w-[680px] px-4 py-12">
-      <h1 className="text-2xl font-bold text-text-primary mb-6 flex items-center gap-2">
+      <h1 className="mb-6 flex items-center gap-2 text-2xl font-bold text-text-primary">
         <Shield className="h-7 w-7 text-green" />
-        Politica de Privacidade
+        Política de Privacidade
       </h1>
 
-      <div className="bg-card-bg rounded-lg border border-border-custom p-8 space-y-6 text-sm text-text-secondary leading-relaxed">
+      <div className="space-y-4 rounded-lg border border-border-custom bg-card-bg p-8 text-sm leading-relaxed text-text-secondary">
         <p>
-          Esta Politica de Privacidade descreve como o <strong className="text-text-primary">Papo de Bola</strong>{" "}
-          coleta, usa e protege as informacoes dos usuarios, em conformidade com a Lei Geral de Protecao de Dados (LGPD - Lei 13.709/2018).
+          A sua privacidade é importante para nós. É política do{" "}
+          <strong className="text-text-primary">Papo de Bola</strong> respeitar a sua
+          privacidade em relação a qualquer informação sua que possamos coletar no site Papo de
+          Bola, e outros sites que possuímos e operamos.
+        </p>
+        <p>
+          Solicitamos informações pessoais apenas quando realmente precisamos delas para lhe
+          fornecer um serviço. Fazemo-lo por meios justos e legais, com o seu conhecimento e
+          consentimento. Também informamos por que estamos coletando e como será usado.
+        </p>
+        <p>
+          Apenas retemos as informações coletadas pelo tempo necessário para fornecer o serviço
+          solicitado. Quando armazenamos dados, protegemos dentro de meios comercialmente
+          aceitáveis para evitar perdas e roubos, bem como acesso, divulgação, cópia, uso ou
+          modificação não autorizados.
+        </p>
+        <p>
+          Não compartilhamos informações de identificação pessoal publicamente ou com terceiros,
+          exceto quando exigido por lei.
+        </p>
+        <p>
+          O nosso site pode ter links para sites externos que não são operados por nós. Esteja
+          ciente de que não temos controle sobre o conteúdo e práticas desses sites e não podemos
+          aceitar responsabilidade por suas respectivas políticas de privacidade.
+        </p>
+        <p>
+          Você é livre para recusar a nossa solicitação de informações pessoais, entendendo que
+          talvez não possamos fornecer alguns dos serviços desejados.
+        </p>
+        <p>
+          O uso continuado de nosso site será considerado como aceitação de nossas práticas em
+          torno de privacidade e informações pessoais. Se você tiver alguma dúvida sobre como
+          lidamos com dados do usuário e informações pessoais, entre em contato connosco.
         </p>
 
-        <h2 className="text-base font-bold text-text-primary">1. Informacoes Coletadas</h2>
+        <h2 className="pt-2 text-base font-bold text-text-primary">
+          Publicidade e cookies (Google AdSense)
+        </h2>
         <p>
-          Coletamos informacoes de navegacao anonimas (cookies, IP, tipo de dispositivo) para melhorar a experiencia do usuario e analisar o trafego do site. Nao coletamos dados pessoais identificaveis sem o seu consentimento.
+          O serviço Google AdSense que usamos para veicular publicidade usa um cookie DoubleClick
+          para veicular anúncios mais relevantes em toda a Web e limitar o número de vezes que um
+          determinado anúncio é exibido para você.
+        </p>
+        <p>
+          Para mais informações sobre o Google AdSense, consulte as FAQs oficiais sobre
+          privacidade do Google AdSense.
+        </p>
+        <p>
+          Utilizamos anúncios para compensar os custos de funcionamento deste site e fornecer
+          financiamento para futuros desenvolvimentos. Os cookies de publicidade comportamental
+          usados por este site foram projetados para garantir que você forneça os anúncios mais
+          relevantes sempre que possível, rastreando anonimamente seus interesses e apresentando
+          coisas semelhantes que possam ser do seu interesse.
+        </p>
+        <p>
+          Vários parceiros anunciam em nosso nome e os cookies de rastreamento de afiliados
+          simplesmente nos permitem ver se nossos clientes acessaram o site através de um dos sites
+          de nossos parceiros, para que possamos creditá-los adequadamente e, quando aplicável,
+          permitir que nossos parceiros afiliados ofereçam qualquer promoção que pode fornecê-lo
+          para fazer uma compra.
         </p>
 
-        <h2 className="text-base font-bold text-text-primary">2. Uso de Cookies</h2>
+        <h2 className="pt-2 text-base font-bold text-text-primary">Compromisso do Usuário</h2>
         <p>
-          Utilizamos cookies para armazenar preferencias de navegacao e para fins analiticos. Voce pode desabilitar os cookies nas configuracoes do seu navegador.
+          O usuário se compromete a fazer uso adequado dos conteúdos e da informação que o Papo de
+          Bola oferece no site e com caráter enunciativo, mas não limitativo:
+        </p>
+        <ul className="list-disc space-y-2 pl-5">
+          <li>
+            Não se envolver em atividades que sejam ilegais ou contrárias à boa fé a à ordem
+            pública;
+          </li>
+          <li>
+            Não difundir propaganda ou conteúdo de natureza racista, xenofóbica, jogos de sorte ou
+            azar, qualquer tipo de pornografia ilegal, de apologia ao terrorismo ou contra os
+            direitos humanos;
+          </li>
+          <li>
+            Não causar danos aos sistemas físicos (hardwares) e lógicos (softwares) do Papo de
+            Bola, de seus fornecedores ou terceiros, para introduzir ou disseminar vírus
+            informáticos ou quaisquer outros sistemas de hardware ou software que sejam capazes de
+            causar danos anteriormente mencionados.
+          </li>
+        </ul>
+
+        <h2 className="pt-2 text-base font-bold text-text-primary">Mais informações</h2>
+        <p>
+          Esperamos que esteja esclarecido e, como mencionado anteriormente, se houver algo que
+          você não tem certeza se precisa ou não, geralmente é mais seguro deixar os cookies
+          ativados, caso interaja com um dos recursos que você usa em nosso site.
         </p>
 
-        <h2 className="text-base font-bold text-text-primary">3. Compartilhamento de Dados</h2>
-        <p>
-          Nao vendemos, trocamos ou transferimos suas informacoes pessoais para terceiros. Podemos compartilhar dados anonimos e agregados com parceiros analiticos.
-        </p>
-
-        <h2 className="text-base font-bold text-text-primary">4. Seguranca</h2>
-        <p>
-          Adotamos medidas de seguranca para proteger suas informacoes contra acesso nao autorizado, alteracao ou destruicao.
-        </p>
-
-        <h2 className="text-base font-bold text-text-primary">5. Seus Direitos</h2>
-        <p>
-          Conforme a LGPD, voce tem direito a acessar, corrigir, excluir e portar seus dados pessoais. Para exercer esses direitos, entre em contato conosco.
-        </p>
-
-        <h2 className="text-base font-bold text-text-primary">6. Alteracoes</h2>
-        <p>
-          Podemos atualizar esta politica periodicamente. Quaisquer alteracoes serao publicadas nesta pagina.
-        </p>
-
-        <p className="text-xs text-text-muted pt-4 border-t border-border-light">
-          Ultima atualizacao: Abril 2026
+        <p className="border-t border-border-light pt-4 text-xs text-text-muted">
+          Esta política é efetiva a partir de 18 de junho de 2026.
         </p>
       </div>
     </div>
