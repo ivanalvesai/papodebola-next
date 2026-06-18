@@ -6,7 +6,14 @@ export const metadata: Metadata = {
   alternates: { canonical: "/politica-de-privacidade" },
   title: "Política de Privacidade",
   description:
-    "Política de Privacidade do Papo de Bola: como coletamos, utilizamos e protegemos seus dados, uso de cookies, Google Analytics e Google Ads, conforme a LGPD (Lei nº 13.709/2018).",
+    "Saiba como o Papo de Bola coleta, utiliza e protege os dados dos usuários, incluindo cookies, segurança, privacidade e seus direitos pela LGPD.",
+  openGraph: {
+    title: "Política de Privacidade do Papo de Bola",
+    description:
+      "Veja como tratamos informações pessoais, cookies, segurança de dados, links externos e suas práticas de privacidade no portal Papo de Bola.",
+    url: "/politica-de-privacidade",
+    type: "article",
+  },
 };
 
 export default function PrivacidadePage() {
@@ -204,26 +211,15 @@ export default function PrivacidadePage() {
           10. Contato e Encarregado de Dados (DPO)
         </h2>
         <p>
-          Para dúvidas, solicitações ou exercício dos seus direitos previstos na LGPD, entre em
-          contato com o Papo de Bola:
-        </p>
-        <ul className="list-disc space-y-2 pl-5">
-          <li>
-            Portal:{" "}
-            <Link href="/" className="text-green hover:underline">
-              www.papodebola.com.br
-            </Link>
-          </li>
-          <li>
-            E-mail:{" "}
-            <a href="mailto:contato@papodebola.com.br" className="text-green hover:underline">
-              contato@papodebola.com.br
-            </a>
-          </li>
-        </ul>
-        <p>
-          Responderemos às solicitações no prazo de até 15 (quinze) dias úteis, conforme previsto na
-          LGPD.
+          Para dúvidas, solicitações ou exercício dos seus direitos previstos na LGPD,{" "}
+          <Link href="/contato" className="font-semibold text-green hover:underline">
+            entre em contato com o Papo de Bola
+          </Link>{" "}
+          ou envie um e-mail para{" "}
+          <a href="mailto:contato@papodebola.com.br" className="font-semibold text-green hover:underline">
+            contato@papodebola.com.br
+          </a>
+          . Responderemos no prazo de até 15 (quinze) dias úteis, conforme previsto na LGPD.
         </p>
       </div>
     </div>
