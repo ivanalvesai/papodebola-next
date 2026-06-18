@@ -25,6 +25,15 @@ export interface PautaCluster {
   items: NewsItem[]; // todas as matérias do cluster (com link pra fonte)
 }
 
+// Buscas padrão de futebol BR + mundo (usadas pelo scan automático e pela rota).
+export const DEFAULT_QUERIES = [
+  "futebol Brasil seleção",
+  "Brasileirão",
+  "Copa do Mundo seleção brasileira",
+  "futebol Europa Champions League",
+  "mercado da bola transferências",
+];
+
 const GN_BASE = "https://news.google.com/rss/search";
 
 function buildUrl(query: string, lang: "pt-BR" | "en"): string {

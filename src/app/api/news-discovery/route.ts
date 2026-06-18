@@ -1,16 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
-import { discoverPautas } from "@/lib/services/news-discovery";
+import { discoverPautas, DEFAULT_QUERIES } from "@/lib/services/news-discovery";
 
 // Descoberta de pautas (Google News RSS → dedup/cluster). NÃO publica nada — só
 // sugere. Protegido por ?secret=REVALIDATION_SECRET pra evitar abuso (bate em RSS
 // externo). Buscas padrão de futebol BR/mundo; ?q= sobrescreve (vírgula separa).
-const DEFAULT_QUERIES = [
-  "futebol Brasil seleção",
-  "Brasileirão",
-  "Copa do Mundo seleção brasileira",
-  "futebol Europa Champions League",
-  "mercado da bola transferências",
-];
 
 export async function GET(request: NextRequest) {
   const sp = request.nextUrl.searchParams;

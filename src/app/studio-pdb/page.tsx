@@ -67,6 +67,20 @@ export default function StudioPage() {
   const [galleryLoading, setGalleryLoading] = useState(false);
   const [manualImageUrl, setManualImageUrl] = useState("");
 
+  // Pré-preenche o formulário quando aberto pela aba "Pautas" do painel
+  // (/studio-pdb?titulo=...&cat=...). Roda 1x no mount (client-side).
+  useEffect(() => {
+    const sp = new URLSearchParams(window.location.search);
+    const titulo = sp.get("titulo");
+    if (!titulo) return;
+    setNewTitle(titulo);
+    const texto = sp.get("texto");
+    if (texto) setNewText(texto);
+    const cat = sp.get("cat");
+    if (cat) setNewCategory(cat);
+    setShowNewPost(true);
+  }, []);
+
   const loadPosts = useCallback(async () => {
     try {
       const res = await fetch("/api/kanban");
