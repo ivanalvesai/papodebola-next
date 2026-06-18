@@ -19,6 +19,17 @@ function fmt(iso: string): string {
   });
 }
 
+// Monta o contexto que vai pro campo Texto do Studio (vira "RESUMO" no prompt do
+// agente escritor). Manda manchetes + fontes + links das matérias do assunto.
+function studioHref(title: string, items: { source: string; title: string; link: string }[]): string {
+  const fontes = items
+    .slice(0, 5)
+    .map((i) => `• ${i.source}: ${i.title}\n  ${i.link}`)
+    .join("\n");
+  const texto = `Pauta do monitor de notícias. Escreva um artigo ORIGINAL sobre este assunto (NÃO copie das fontes; apure e reescreva com suas palavras, citando quando fizer sentido).\n\nManchetes das fontes:\n${fontes}`;
+  return `/studio-pdb?titulo=${encodeURIComponent(title)}&texto=${encodeURIComponent(texto)}`;
+}
+
 export default async function PautasPage() {
   const topics = await getHotNews();
 
@@ -71,7 +82,7 @@ export default async function PautasPage() {
                   </div>
                 </div>
                 <Link
-                  href={`/studio-pdb?titulo=${encodeURIComponent(t.title)}`}
+                  href={studioHref(t.title, t.items)}
                   target="_blank"
                   className="inline-flex shrink-0 items-center gap-1.5 rounded-lg bg-green px-3 py-2 text-xs font-semibold text-white transition-colors hover:bg-green/90"
                 >
