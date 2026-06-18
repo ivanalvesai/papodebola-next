@@ -36,8 +36,9 @@ export async function SportPageContent({
       <h1 className="text-xl font-bold text-text-primary mb-6">{title}</h1>
 
       <div className="grid grid-cols-1 lg:grid-cols-[1fr_340px] gap-6">
-        {/* Main */}
-        <div className="space-y-6">
+        {/* Main (min-w-0: sem isso, a faixa rolável de tênis empurra a largura da
+            coluna do grid e a página vaza horizontalmente na tela) */}
+        <div className="min-w-0 space-y-6">
           {featured}
           {/* Notícias da categoria (links pra /{esporte}/{slug}) */}
           {news.length > 0 && (
