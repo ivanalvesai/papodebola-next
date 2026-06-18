@@ -24,7 +24,7 @@ export function CookieConsent() {
         <p className="text-sm flex-1">
           Este site utiliza cookies para melhorar sua experiência. Ao continuar
           navegando, você concorda com nossa{" "}
-          <a href="/privacidade" className="underline text-green-light">
+          <a href="/politica-de-privacidade" className="underline text-green-light">
             Política de Privacidade
           </a>
           .

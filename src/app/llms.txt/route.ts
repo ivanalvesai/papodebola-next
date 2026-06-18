@@ -58,7 +58,8 @@ ${sports}
 
 - [Sobre](${SITE_URL}/sobre)
 - [Contato](${SITE_URL}/contato)
-- [Política de Privacidade](${SITE_URL}/privacidade)
+- [Política de Privacidade](${SITE_URL}/politica-de-privacidade)
+- [Termos de Uso](${SITE_URL}/termos-de-uso)
 `;
 
   return new Response(body, {

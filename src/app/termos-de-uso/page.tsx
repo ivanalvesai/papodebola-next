@@ -3,7 +3,7 @@ import Link from "next/link";
 import { FileText } from "lucide-react";
 
 export const metadata: Metadata = {
-  alternates: { canonical: "/termos" },
+  alternates: { canonical: "/termos-de-uso" },
   title: "Termos de Uso",
   description:
     "Conheça os Termos de Uso do Papo de Bola: regras de navegação, propriedade intelectual, condutas proibidas, privacidade e direitos dos usuários do portal.",
@@ -11,7 +11,7 @@ export const metadata: Metadata = {
     title: "Termos de Uso do Papo de Bola",
     description:
       "Saiba quais são as regras de uso do portal Papo de Bola, incluindo uso permitido, condutas proibidas, propriedade intelectual, publicidade e proteção de dados.",
-    url: "/termos",
+    url: "/termos-de-uso",
     type: "article",
   },
 };
@@ -132,7 +132,7 @@ export default function TermosPage() {
         <h2 className="pt-2 text-base font-bold text-text-primary">9. Privacidade e Proteção de Dados</h2>
         <p>
           O tratamento de dados pessoais dos usuários é regido pela{" "}
-          <Link href="/privacidade" className="font-semibold text-green hover:underline">
+          <Link href="/politica-de-privacidade" className="font-semibold text-green hover:underline">
             Política de Privacidade do Papo de Bola
           </Link>
           , em conformidade com a Lei Geral de Proteção de Dados (LGPD – Lei nº 13.709/2018). Ao
