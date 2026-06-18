@@ -6,7 +6,7 @@ import type { SportData, SportEvent, SportConfig } from "@/types/sport";
 
 const SPORT_CONFIGS: Record<string, SportConfig> = {
   "basquete-nba": { slug: "basquete-nba", api: "basketball", tournamentId: 132, seasonId: 80229, hasStandings: true },
-  tenis: { slug: "tenis", api: "tennis", rankingType: "atp", hasRankings: true },
+  tenis: { slug: "tenis", api: "tennis", rankingType: "atp", hasRankings: true, skipDateFeeds: true },
   "formula-1": { slug: "formula-1", api: "motorsport" },
   combate: { slug: "combate", api: "mma", tournamentId: 19906 },
   volei: { slug: "volei", api: "volleyball" },
@@ -15,6 +15,33 @@ const SPORT_CONFIGS: Record<string, SportConfig> = {
   boxe: { slug: "boxe", api: "boxing" },
   futsal: { slug: "futsal", api: "futsal" },
 };
+
+// O provider divergiu os paths por esporte: tênis usa `events/*` (live e por data),
+// basquete/vôlei/futebol-americano usam `matches/*`. Tenta `matches/` primeiro e cai
+// pra `events/` (ou vice-versa) — assim cada esporte funciona sem config por esporte.
+async function fetchSportEvents(
+  api: string,
+  path: string,
+  revalidate: number
+): Promise<any> {
+  const primary = await fetchSport<any>(api, `matches/${path}`, revalidate);
+  if (primary?.events) return primary;
+  const fallback = await fetchSport<any>(api, `events/${path}`, revalidate);
+  return fallback ?? primary;
+}
+
+// Tênis: o feed por data traz ~1.500 jogos/dia (ITF, UTR, Challenger, exibições).
+// Mantemos só os circuitos relevantes (ATP, WTA, Grand Slam, Davis/BJK Cup, finais).
+// Filtra pela categoria do torneio; o resto (ITF/UTR/Challenger) é descartado.
+const TENNIS_KEEP = /^(ATP|WTA|Grand Slam|Davis Cup|Billie Jean King Cup|United Cup|Laver Cup)\b/i;
+function isImportantTennis(event: any): boolean {
+  const cat = event?.tournament?.category?.name || "";
+  return TENNIS_KEEP.test(cat);
+}
+function filterEvents(api: string, events: any[]): any[] {
+  if (api === "tennis") return events.filter(isImportantTennis);
+  return events;
+}
 
 function normalizeEvent(event: any): SportEvent {
   const ts = event.startTimestamp ? new Date(event.startTimestamp * 1000) : new Date();
@@ -40,43 +67,47 @@ export async function getSportData(slug: string): Promise<SportData | null> {
   const { api } = config;
 
   // Live events
-  const liveData = await fetchSport<any>(api, "matches/live", 300);
-  const live = (liveData?.events || []).map(normalizeEvent);
+  const liveData = await fetchSportEvents(api, "live", 300);
+  const live = filterEvents(api, liveData?.events || []).map(normalizeEvent);
 
-  // Today's events
-  const now = new Date();
-  const d = now.getDate();
-  const m = now.getMonth() + 1;
-  const y = now.getFullYear();
-  const todayData = await fetchSport<any>(api, `matches/${d}/${m}/${y}`, 3600);
-  const today = (todayData?.events || []).map(normalizeEvent);
-
-  // Calendar (next 5 days)
+  // Today's events + Calendar (próximos 5 dias). No tênis o feed por data é gigante
+  // (todo o tênis mundial, 9MB+) e não cabe no cache de 2MB do Next → pulamos esses
+  // esportes; o conteúdo relevante vive nas páginas de torneio (ex: /tenis/halle-2026).
+  let today: SportEvent[] = [];
   const calendar = [];
-  for (let i = 1; i <= 5; i++) {
-    const date = new Date();
-    date.setDate(date.getDate() + i);
-    const dd = date.getDate();
-    const mm = date.getMonth() + 1;
-    const yy = date.getFullYear();
+  if (!config.skipDateFeeds) {
+    const now = new Date();
+    const d = now.getDate();
+    const m = now.getMonth() + 1;
+    const y = now.getFullYear();
+    const todayData = await fetchSportEvents(api, `${d}/${m}/${y}`, 3600);
+    today = filterEvents(api, todayData?.events || []).map(normalizeEvent);
 
-    const dayData = await fetchSport<any>(api, `matches/${dd}/${mm}/${yy}`, 86400);
-    const events = (dayData?.events || []).map(normalizeEvent);
+    for (let i = 1; i <= 5; i++) {
+      const date = new Date();
+      date.setDate(date.getDate() + i);
+      const dd = date.getDate();
+      const mm = date.getMonth() + 1;
+      const yy = date.getFullYear();
 
-    const label = date.toLocaleDateString("pt-BR", {
-      weekday: "short",
-      day: "2-digit",
-      month: "2-digit",
-      timeZone: "America/Sao_Paulo",
-    });
+      const dayData = await fetchSportEvents(api, `${dd}/${mm}/${yy}`, 86400);
+      const events = filterEvents(api, dayData?.events || []).map(normalizeEvent);
 
-    calendar.push({
-      date: `${yy}-${String(mm).padStart(2, "0")}-${String(dd).padStart(2, "0")}`,
-      label,
-      events,
-    });
+      const label = date.toLocaleDateString("pt-BR", {
+        weekday: "short",
+        day: "2-digit",
+        month: "2-digit",
+        timeZone: "America/Sao_Paulo",
+      });
 
-    await new Promise((r) => setTimeout(r, 300));
+      calendar.push({
+        date: `${yy}-${String(mm).padStart(2, "0")}-${String(dd).padStart(2, "0")}`,
+        label,
+        events,
+      });
+
+      await new Promise((r) => setTimeout(r, 300));
+    }
   }
 
   // Standings (NBA)

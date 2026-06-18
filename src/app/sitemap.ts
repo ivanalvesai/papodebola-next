@@ -27,6 +27,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     { url: `${BASE}/sobre`, changeFrequency: "monthly", priority: 0.3 },
     { url: `${BASE}/contato`, changeFrequency: "monthly", priority: 0.3 },
     { url: `${BASE}/privacidade`, changeFrequency: "monthly", priority: 0.2 },
+    { url: `${BASE}/termos`, changeFrequency: "monthly", priority: 0.2 },
   ];
 
   // Team cluster pages
@@ -60,6 +61,14 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   // Basquete tem subrota NBA (conteúdo do torneio)
   sportPages.push({
     url: `${BASE}/basquete/nba`,
+    lastModified: now,
+    changeFrequency: "daily" as const,
+    priority: 0.6,
+  });
+
+  // Tênis: torneio com chaveamento próprio (ATP de Halle)
+  sportPages.push({
+    url: `${BASE}/tenis/halle-2026`,
     lastModified: now,
     changeFrequency: "daily" as const,
     priority: 0.6,
