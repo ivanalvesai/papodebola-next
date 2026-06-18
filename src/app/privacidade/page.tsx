@@ -72,7 +72,21 @@ export default function PrivacidadePage() {
           </li>
           <li>
             <strong className="text-text-primary">Cookies de publicidade:</strong> utilizados para
-            exibição de anúncios relevantes, em conformidade com as políticas do Google Ads.
+            exibição de anúncios relevantes, em conformidade com as políticas do Google Ads. Para
+            veicular publicidade, utilizamos o <strong className="text-text-primary">Google AdSense</strong>{" "}
+            e fornecedores terceiros, que empregam cookies (como o cookie DoubleClick) para exibir
+            anúncios mais relevantes em toda a Web, com base em visitas anteriores a este e a outros
+            sites, e para limitar o número de vezes que um anúncio é exibido a você. Você pode
+            desativar a publicidade personalizada nas{" "}
+            <a
+              href="https://www.google.com/settings/ads"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-green hover:underline"
+            >
+              Configurações de anúncios do Google
+            </a>
+            .
           </li>
         </ul>
         <p>A desativação de cookies pode impactar o funcionamento de algumas funcionalidades do portal.</p>
@@ -83,8 +97,8 @@ export default function PrivacidadePage() {
           <li>Melhorar a experiência de navegação e o conteúdo do portal.</li>
           <li>Analisar o desempenho e o tráfego do site por meio do Google Analytics.</li>
           <li>
-            Exibir anúncios relevantes ao perfil de navegação, em conformidade com as políticas do
-            Google Ads.
+            Exibir anúncios relevantes ao perfil de navegação por meio do Google AdSense e de
+            fornecedores terceiros, em conformidade com as políticas do Google.
           </li>
           <li>
             Enviar comunicações, como newsletters ou atualizações de conteúdo, caso você tenha se
