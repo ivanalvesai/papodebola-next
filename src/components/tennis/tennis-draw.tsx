@@ -1,8 +1,8 @@
 "use client";
 
-import { useEffect, useState, useCallback, useRef } from "react";
-import { Trophy } from "lucide-react";
-import type { TennisDraw, TennisMatch, TennisPlayer } from "@/lib/data/tennis";
+import { useEffect, useState, useCallback, useRef, useMemo } from "react";
+import { Trophy, ChevronLeft, ChevronRight } from "lucide-react";
+import type { TennisDraw, TennisMatch, TennisPlayer, TennisRound } from "@/lib/data/tennis";
 
 // ---- foto do atleta (com fallback pra bandeira do país e, por fim, iniciais) ----
 function PlayerPhoto({ player, size = 36 }: { player: TennisPlayer; size?: number }) {
@@ -95,7 +95,7 @@ function PlayerRow({
           )}
         </div>
         {player.ranking != null && (
-          <span className="text-[10px] text-text-muted">ATP {player.ranking}</span>
+          <span className="text-[10px] text-text-muted">Ranking nº {player.ranking} ATP</span>
         )}
       </div>
 
@@ -211,8 +211,101 @@ function MatchCard({ match }: { match: TennisMatch }) {
   );
 }
 
+// ---- paginador de fases (estilo Copa do Mundo) ----
+function PhaseNav({
+  round,
+  hasPrev,
+  hasNext,
+  onPrev,
+  onNext,
+  liveCount,
+}: {
+  round: TennisRound;
+  hasPrev: boolean;
+  hasNext: boolean;
+  onPrev: () => void;
+  onNext: () => void;
+  liveCount: number;
+}) {
+  const arrowBase =
+    "flex h-7 w-7 items-center justify-center rounded-full bg-white/20 transition-colors";
+  return (
+    <nav aria-label="Fases do torneio" className="mb-4">
+      <div className="flex h-12 items-center justify-between gap-1 rounded-lg bg-green px-3 text-white">
+        {hasPrev ? (
+          <button type="button" onClick={onPrev} aria-label="Fase anterior" className={`${arrowBase} hover:bg-white/30`}>
+            <ChevronLeft className="h-4 w-4" />
+          </button>
+        ) : (
+          <span aria-hidden className={`${arrowBase} cursor-default opacity-30`}>
+            <ChevronLeft className="h-4 w-4" />
+          </span>
+        )}
+
+        <h2 className="flex items-center gap-2 whitespace-nowrap text-sm font-bold uppercase tracking-wide">
+          {round.label}
+          {liveCount > 0 && (
+            <span className="inline-flex items-center gap-1 rounded-full bg-red px-2 py-0.5 text-[10px] font-bold">
+              <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-white" />
+              {liveCount} ao vivo
+            </span>
+          )}
+        </h2>
+
+        {hasNext ? (
+          <button type="button" onClick={onNext} aria-label="Próxima fase" className={`${arrowBase} hover:bg-white/30`}>
+            <ChevronRight className="h-4 w-4" />
+          </button>
+        ) : (
+          <span aria-hidden className={`${arrowBase} cursor-default opacity-30`}>
+            <ChevronRight className="h-4 w-4" />
+          </span>
+        )}
+      </div>
+    </nav>
+  );
+}
+
+// Fase "atual": a 1ª rodada (em ordem cronológica) que ainda não terminou; se houver
+// jogo ao vivo, prioriza essa rodada; se tudo encerrou, abre na última (Final).
+function currentRoundIndex(rounds: TennisRound[]): number {
+  const liveIdx = rounds.findIndex((r) => r.matches.some((m) => m.live));
+  if (liveIdx !== -1) return liveIdx;
+  const openIdx = rounds.findIndex((r) =>
+    r.matches.some((m) => m.status !== "finished")
+  );
+  if (openIdx !== -1) return openIdx;
+  return rounds.length - 1;
+}
+
 export function TennisDrawView({ initial, slug }: { initial: TennisDraw; slug: string }) {
   const [draw, setDraw] = useState(initial);
+
+  // Rodadas em ordem cronológica (1ª rodada -> Final) pras setas avançarem no tempo.
+  const rounds = useMemo(
+    () => [...draw.rounds].sort((a, b) => a.order - b.order),
+    [draw.rounds]
+  );
+
+  const [idx, setIdx] = useState(() => currentRoundIndex(rounds));
+  // Se o usuário não navegou ainda, segue a fase atual conforme o torneio avança.
+  const touched = useRef(false);
+  useEffect(() => {
+    if (!touched.current) setIdx(currentRoundIndex(rounds));
+  }, [rounds]);
+
+  const clamp = (n: number) => Math.max(0, Math.min(rounds.length - 1, n));
+  const goPrev = () => {
+    touched.current = true;
+    setIdx((i) => clamp(i - 1));
+  };
+  const goNext = () => {
+    touched.current = true;
+    setIdx((i) => clamp(i + 1));
+  };
+
+  const safeIdx = clamp(idx);
+  const round = rounds[safeIdx];
 
   const hasLive = draw.rounds.some((r) => r.matches.some((m) => m.live));
   const hasUpcoming = draw.rounds.some((r) =>
@@ -232,12 +325,9 @@ export function TennisDrawView({ initial, slug }: { initial: TennisDraw; slug: s
 
   const liveRef = useRef(hasLive);
   liveRef.current = hasLive;
-  const upcomingRef = useRef(hasUpcoming);
-  upcomingRef.current = hasUpcoming;
 
   useEffect(() => {
     // Só faz polling enquanto houver jogo ao vivo (20s) ou por vir (60s).
-    // Tudo encerrado => para (página fica estática até o próximo acesso/ISR).
     if (!hasLive && !hasUpcoming) return;
     let cancelled = false;
     let timer: ReturnType<typeof setTimeout>;
@@ -254,21 +344,24 @@ export function TennisDrawView({ initial, slug }: { initial: TennisDraw; slug: s
     };
   }, [hasLive, hasUpcoming, poll]);
 
+  if (!round) return null;
+  const liveCount = round.matches.filter((m) => m.live).length;
+
   return (
-    <div className="space-y-6">
-      {draw.rounds.map((round) => (
-        <section key={round.key}>
-          <h2 className="mb-2 flex items-center gap-2 text-base font-bold text-text-primary">
-            <span className="inline-block h-4 w-1 rounded-full bg-green" />
-            {round.label}
-          </h2>
-          <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
-            {round.matches.map((m, i) => (
-              <MatchCard key={m.eventId || `${round.key}-${i}`} match={m} />
-            ))}
-          </div>
-        </section>
-      ))}
+    <div>
+      <PhaseNav
+        round={round}
+        hasPrev={safeIdx > 0}
+        hasNext={safeIdx < rounds.length - 1}
+        onPrev={goPrev}
+        onNext={goNext}
+        liveCount={liveCount}
+      />
+      <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
+        {round.matches.map((m, i) => (
+          <MatchCard key={m.eventId || `${round.key}-${i}`} match={m} />
+        ))}
+      </div>
     </div>
   );
 }

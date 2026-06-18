@@ -42,7 +42,7 @@ export default async function HallePage() {
         <span className="inline-flex items-center gap-1">
           <Layers className="h-3.5 w-3.5" /> {T.category} · Piso: {T.surface}
         </span>
-        <span>Horários de Brasília · placar set a set, ao vivo</span>
+        <span>Horários de Brasília · placar set a set, ao vivo · use a seta para avançar as fases</span>
       </div>
 
       {!draw || draw.rounds.every((r) => r.matches.length === 0) ? (

@@ -33,10 +33,15 @@ Descobertos investigando a API direto. Importam pra qualquer evolução de têni
   `cuptrees`, enriquece cada jogo via `match/{id}` (TTL por status: encerrado 24h, agendado
   30min) e **sobrepõe placar ao vivo** com o feed `tennis/events/live` (pequeno, TTL 15s).
   `TENNIS_TOURNAMENTS` é o registro de torneios (precisa `uniqueTournamentId` + `seasonId`).
-- `src/components/tennis/tennis-draw.tsx` — client component: cards de jogo por rodada
-  (Final no topo), foto do atleta com fallback bandeira→iniciais, placar set a set, vencedor
-  destacado (verde + troféu), badge **AO VIVO · 2º set** / **Encerrado** / horário. Polling
-  em `/api/tenis/{slug}` (20s ao vivo, 60s pré-jogo; para quando tudo encerra).
+- `src/components/tennis/tennis-draw.tsx` — client component com **paginador de fases**
+  (estilo `PhaseNav` da Copa): mostra uma fase por vez e as setas ◄ ► navegam entre rodadas
+  (client-side, sem reload — o polling segue vivo). Abre na **fase atual** (`currentRoundIndex`:
+  rodada com jogo ao vivo → senão a 1ª não encerrada → senão a Final), e segue o torneio
+  enquanto o usuário não mexer nas setas. Cada card: foto do atleta (fallback bandeira→iniciais),
+  ranking ("Ranking nº N ATP"), seed `[N]`, placar set a set, vencedor destacado (verde +
+  troféu), badge **AO VIVO · 2º set** / **Encerrado** / horário. O paginador mostra "N ao vivo"
+  quando a fase tem jogo em andamento. Polling em `/api/tenis/{slug}` (20s ao vivo, 60s pré-jogo;
+  para quando tudo encerra).
 - `src/app/tenis/halle-2026/page.tsx` — server component, `revalidate = 60`, SEO próprio.
 - `src/app/api/tenis/[slug]/route.ts` — rota pública de polling do chaveamento ao vivo.
 
