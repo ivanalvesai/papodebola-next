@@ -1,8 +1,9 @@
 "use client";
 
 import { useEffect, useState, useCallback, useRef, useMemo } from "react";
+import Link from "next/link";
 import { Trophy, ChevronLeft, ChevronRight } from "lucide-react";
-import type { TennisDraw, TennisMatch, TennisPlayer, TennisRound } from "@/lib/data/tennis";
+import { tennisMatchSlug, type TennisDraw, type TennisMatch, type TennisPlayer, type TennisRound } from "@/lib/data/tennis";
 
 // ---- foto do atleta (com fallback pra bandeira do país e, por fim, iniciais) ----
 function PlayerPhoto({ player, size = 36 }: { player: TennisPlayer; size?: number }) {
@@ -166,7 +167,7 @@ function StatusBadge({ match }: { match: TennisMatch }) {
   );
 }
 
-function MatchCard({ match }: { match: TennisMatch }) {
+function MatchCard({ match, tournamentSlug }: { match: TennisMatch; tournamentSlug: string }) {
   const decided = match.status === "finished";
   // alinha colunas: usa o maior nº de sets entre os dois jogadores (ou 1 placeholder)
   const nSets = Math.max(match.sets.length, decided ? 1 : 0);
@@ -181,12 +182,14 @@ function MatchCard({ match }: { match: TennisMatch }) {
       };
     });
 
-  return (
-    <div
-      className={`rounded-lg border bg-card-bg p-3 ${
-        match.live ? "border-red/40 ring-1 ring-red/20" : "border-border-custom"
-      }`}
-    >
+  // Só confrontos com os dois atletas definidos são clicáveis (têm página própria).
+  const clickable = !match.home.placeholder && !match.away.placeholder && !!match.eventId;
+  const href = clickable
+    ? `/tenis/${tournamentSlug}/${tennisMatchSlug(match.home.name, match.away.name)}`
+    : null;
+
+  const inner = (
+    <>
       <div className="mb-1.5 flex items-center justify-between">
         <StatusBadge match={match} />
       </div>
@@ -207,8 +210,21 @@ function MatchCard({ match }: { match: TennisMatch }) {
         isWinner={match.winner === 2}
         decided={decided}
       />
-    </div>
+    </>
   );
+
+  const base = `block rounded-lg border bg-card-bg p-3 ${
+    match.live ? "border-red/40 ring-1 ring-red/20" : "border-border-custom"
+  }`;
+
+  if (href) {
+    return (
+      <Link href={href} className={`${base} transition-colors hover:border-green/50 hover:bg-green/5`}>
+        {inner}
+      </Link>
+    );
+  }
+  return <div className={base}>{inner}</div>;
 }
 
 // ---- paginador de fases (estilo Copa do Mundo) ----
@@ -359,7 +375,7 @@ export function TennisDrawView({ initial, slug }: { initial: TennisDraw; slug: s
       />
       <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
         {round.matches.map((m, i) => (
-          <MatchCard key={m.eventId || `${round.key}-${i}`} match={m} />
+          <MatchCard key={m.eventId || `${round.key}-${i}`} match={m} tournamentSlug={slug} />
         ))}
       </div>
     </div>

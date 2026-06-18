@@ -44,6 +44,23 @@ Descobertos investigando a API direto. Importam pra qualquer evolução de têni
   para quando tudo encerra).
 - `src/app/tenis/halle-2026/page.tsx` — server component, `revalidate = 60`, SEO próprio.
 - `src/app/api/tenis/[slug]/route.ts` — rota pública de polling do chaveamento ao vivo.
+- `src/app/tenis/halle-2026/[match]/page.tsx` — **página de detalhe do jogo**, URL pelos
+  nomes dos atletas (ex: `/tenis/halle-2026/ben-shelton-ethan-quinn`). Resolve slug → jogo
+  via `getTennisMatchBySlug` (chaveamento cacheado); `notFound()` se não existir (soft-404 do
+  projeto: HTTP 200 + noindex, igual a `/artigos/*`).
+- `src/components/tennis/tennis-match.tsx` — client component do detalhe: placar grande
+  (foto + bandeira + ranking), tabela de games set a set, **enquete "quem a torcida acha que
+  vence"** (endpoint `votes`), e **estatísticas com abas por set** (Geral / 1º set / 2º set...),
+  barras home×away com destaque do líder (`compareCode`). Polling em
+  `/api/tenis/{slug}/jogo/{id}` (20s ao vivo, 60s pré-jogo).
+- `src/app/api/tenis/[slug]/jogo/[id]/route.ts` — polling do detalhe por eventId.
+
+### O que a API tem (e não tem) por jogo
+Tênis **não tem narração/lance a lance** (`commentary` vem 204 vazio) nem **point-by-point**
+(404). Mas tem, ao vivo: **estatísticas ricas por set** (`statistics`, períodos ALL/1ST/2ND…:
+aces, duplas faltas, % de saque, break points, etc.) e **enquete de torcida** (`votes`,
+probabilidade). Vencedor vem do `winnerCode` + placar de sets. Os cards do chaveamento só são
+clicáveis quando os dois atletas estão definidos (sem placeholder).
 
 **Editados**
 - `src/lib/data/sports.ts`:

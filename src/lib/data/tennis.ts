@@ -69,6 +69,26 @@ export interface TennisDraw {
   updated: string;
 }
 
+// Slug a partir do nome do atleta (acentos fora, espaços->-). PURO (client+server).
+export function slugifyName(name: string): string {
+  return name
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[̀-ͯ]/g, "")
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-|-$/g, "");
+}
+
+// slug do confronto pela API: "{casa}-{fora}" (ex: "ben-shelton-ethan-quinn").
+export function tennisMatchSlug(homeName: string, awayName: string): string {
+  return `${slugifyName(homeName)}-${slugifyName(awayName)}`;
+}
+
+// href da página do jogo: /tenis/{torneio}/{confronto}
+export function tennisMatchHref(tournamentSlug: string, homeName: string, awayName: string): string {
+  return `/tenis/${tournamentSlug}/${tennisMatchSlug(homeName, awayName)}`;
+}
+
 // Descrição da rodada (EN do provider) -> PT-BR. Default cai no original.
 const ROUND_PT: Record<string, string> = {
   Final: "Final",
@@ -322,5 +342,213 @@ export async function getTennisDraw(slug: TennisTournamentSlug): Promise<TennisD
     name: t.name,
     rounds,
     updated: new Date().toISOString(),
+  };
+}
+
+// ---------- Detalhe do jogo (estatísticas por set + enquete) ----------
+
+export interface TennisStatItem {
+  name: string;
+  home: string;
+  away: string;
+  homeNum: number; // pra largura da barra
+  awayNum: number;
+  highlight: 0 | 1 | 2; // quem leva vantagem (compareCode da API)
+}
+export interface TennisStatGroup {
+  name: string;
+  items: TennisStatItem[];
+}
+export interface TennisStatPeriod {
+  key: string; // ALL | 1ST | 2ND ...
+  label: string; // Geral | 1º set ...
+  groups: TennisStatGroup[];
+}
+
+export interface TennisMatchDetail {
+  match: TennisMatch;
+  periods: TennisStatPeriod[];
+  vote: { home: number; away: number } | null;
+  updated: string;
+}
+
+const STAT_GROUP_PT: Record<string, string> = {
+  Service: "Saque",
+  Points: "Pontos",
+  Games: "Games",
+  Return: "Devolução",
+  Miscellaneous: "Outros",
+};
+const STAT_PT: Record<string, string> = {
+  Aces: "Aces",
+  "Double faults": "Duplas faltas",
+  "First serve": "1º saque",
+  "Second serve": "2º saque",
+  "First serve points": "Pontos no 1º saque",
+  "Second serve points": "Pontos no 2º saque",
+  "Service games played": "Games de saque disputados",
+  "Break points saved": "Break points salvos",
+  Total: "Total",
+  "Service points won": "Pontos ganhos no saque",
+  "Receiver points won": "Pontos ganhos na devolução",
+  "Max points in a row": "Máx. pontos seguidos",
+  "Total won": "Games vencidos",
+  "Service games won": "Games de saque vencidos",
+  "Max games in a row": "Máx. games seguidos",
+  "First serve return points": "Devolução de 1º saque",
+  "Second serve return points": "Devolução de 2º saque",
+  "Return games played": "Games de devolução",
+  "Break points converted": "Break points convertidos",
+  Tiebreaks: "Tiebreaks",
+};
+const PERIOD_PT: Record<string, string> = {
+  ALL: "Geral",
+  "1ST": "1º set",
+  "2ND": "2º set",
+  "3RD": "3º set",
+  "4TH": "4º set",
+  "5TH": "5º set",
+};
+
+// Valor comparável pra barra: prefere o "(74%)" quando existe, senão o 1º número.
+function statNum(v: string): number {
+  const pct = v.match(/\((\d+)%\)/);
+  if (pct) return parseInt(pct[1], 10);
+  const n = v.match(/-?\d+(\.\d+)?/);
+  return n ? parseFloat(n[0]) : 0;
+}
+
+function normalizeStatPeriods(raw: any): TennisStatPeriod[] {
+  const periods: any[] = raw?.statistics || [];
+  return periods.map((p) => ({
+    key: p.period || "",
+    label: PERIOD_PT[p.period] || p.period || "",
+    groups: (p.groups || []).map((g: any) => ({
+      name: STAT_GROUP_PT[g.groupName] || g.groupName || "",
+      items: (g.statisticsItems || []).map((it: any) => {
+        const home = String(it.home ?? "");
+        const away = String(it.away ?? "");
+        const cc = it.compareCode;
+        return {
+          name: STAT_PT[it.name] || it.name || "",
+          home,
+          away,
+          homeNum: statNum(home),
+          awayNum: statNum(away),
+          highlight: cc === 1 ? 1 : cc === 2 ? 2 : 0,
+        };
+      }),
+    })),
+  }));
+}
+
+// Constrói um TennisMatch a partir de um event cru (match/{id}) — usado no polling
+// do detalhe, sem depender do cuptree (não tem seed; o cliente preserva o inicial).
+function playerFromTeam(tm: any, country: string | null): TennisPlayer {
+  return {
+    id: tm?.id || 0,
+    name: tm?.name || "A definir",
+    shortName: tm?.shortName || tm?.name || "A definir",
+    seed: null,
+    ranking: typeof tm?.ranking === "number" ? tm.ranking : null,
+    country,
+    placeholder: !tm?.id,
+  };
+}
+function eventToTennisMatch(e: any): TennisMatch {
+  const enr = eventToEnrichment(e);
+  const home = playerFromTeam(e.homeTeam, enr.countryById[e.homeTeam?.id] || null);
+  const away = playerFromTeam(e.awayTeam, enr.countryById[e.awayTeam?.id] || null);
+  let winner: 0 | 1 | 2 = e?.winnerCode === 1 ? 1 : e?.winnerCode === 2 ? 2 : 0;
+  if (!winner && enr.status === "finished" && enr.setsHome != null && enr.setsAway != null) {
+    winner = enr.setsHome > enr.setsAway ? 1 : enr.setsAway > enr.setsHome ? 2 : 0;
+  }
+  return {
+    eventId: e?.id ?? null,
+    order: 0,
+    status: enr.status,
+    statusDesc: enr.statusDesc,
+    timestamp: enr.timestamp,
+    home,
+    away,
+    setsHome: enr.setsHome,
+    setsAway: enr.setsAway,
+    sets: enr.sets,
+    pointHome: enr.pointHome,
+    pointAway: enr.pointAway,
+    serving: enr.serving,
+    winner,
+    live: enr.status === "inprogress",
+  };
+}
+
+async function getStatsAndVote(
+  eventId: number,
+  ttl: number
+): Promise<{ periods: TennisStatPeriod[]; vote: { home: number; away: number } | null }> {
+  const [statRaw, voteRaw] = await Promise.all([
+    fetchAllSports<any>(`match/${eventId}/statistics`, ttl),
+    fetchAllSports<any>(`match/${eventId}/votes`, ttl),
+  ]);
+  const v = voteRaw?.vote;
+  const vote =
+    v && (v.vote1 != null || v.vote2 != null)
+      ? { home: v.vote1 || 0, away: v.vote2 || 0 }
+      : null;
+  return { periods: normalizeStatPeriods(statRaw), vote };
+}
+
+// Detalhe por eventId (polling). Monta tudo a partir do match/{id}.
+export async function getTennisMatchById(eventId: number): Promise<TennisMatchDetail | null> {
+  const raw = await fetchAllSports<any>(`match/${eventId}`, 20);
+  if (!raw?.event) return null;
+  const match = eventToTennisMatch(raw.event);
+  const ttl = match.status === "finished" ? 86400 : match.live ? 20 : 1800;
+  const { periods, vote } = await getStatsAndVote(eventId, ttl);
+  return { match, periods, vote, updated: new Date().toISOString() };
+}
+
+// Resolução slug do confronto -> jogo (via chaveamento, cacheado). Só confrontos
+// reais (sem placeholder) são clicáveis, então o slug é único no torneio.
+export async function getTennisMatchBySlug(
+  tournamentSlug: TennisTournamentSlug,
+  matchSlug: string
+): Promise<{ tournamentName: string; tournamentSlug: string; match: TennisMatch; roundLabel: string } | null> {
+  const draw = await getTennisDraw(tournamentSlug);
+  if (!draw) return null;
+  for (const round of draw.rounds) {
+    for (const m of round.matches) {
+      if (m.home.placeholder || m.away.placeholder) continue;
+      if (tennisMatchSlug(m.home.name, m.away.name) === matchSlug) {
+        return {
+          tournamentName: draw.name,
+          tournamentSlug,
+          match: m,
+          roundLabel: round.label,
+        };
+      }
+    }
+  }
+  return null;
+}
+
+// Detalhe completo pra render inicial da página (usa o match já enriquecido do
+// chaveamento — tem seed — e adiciona estatísticas + enquete).
+export async function getTennisMatchDetail(
+  tournamentSlug: TennisTournamentSlug,
+  matchSlug: string
+): Promise<(TennisMatchDetail & { tournamentName: string; roundLabel: string }) | null> {
+  const found = await getTennisMatchBySlug(tournamentSlug, matchSlug);
+  if (!found || !found.match.eventId) return null;
+  const ttl =
+    found.match.status === "finished" ? 86400 : found.match.live ? 20 : 1800;
+  const { periods, vote } = await getStatsAndVote(found.match.eventId, ttl);
+  return {
+    match: found.match,
+    periods,
+    vote,
+    updated: new Date().toISOString(),
+    tournamentName: found.tournamentName,
+    roundLabel: found.roundLabel,
   };
 }
