@@ -56,7 +56,7 @@ export async function generateImagePrompt(
     method: "POST",
     headers: { "x-api-key": apiKey, "anthropic-version": "2023-06-01", "content-type": "application/json" },
     body: JSON.stringify({
-      model: "claude-sonnet-4-20250514", max_tokens: 300, system: systemParts,
+      model: "claude-sonnet-4-6", max_tokens: 300, system: systemParts,
       messages: [{ role: "user", content: `Generate a detailed image prompt for this football article.
 
 TITLE: ${title}
@@ -132,7 +132,7 @@ export async function reviewImage(imageBase64: string, title: string, text: stri
       method: "POST",
       headers: { "x-api-key": apiKey, "anthropic-version": "2023-06-01", "content-type": "application/json" },
       body: JSON.stringify({
-        model: "claude-sonnet-4-20250514", max_tokens: 500,
+        model: "claude-sonnet-4-6", max_tokens: 500,
         system: ["Strict sports image reviewer for a Brazilian football website.", reviewerContext].filter(Boolean).join("\n\n"),
         messages: [{ role: "user", content: [
           { type: "image", source: { type: "base64", media_type: "image/jpeg", data: imageBase64 } },
