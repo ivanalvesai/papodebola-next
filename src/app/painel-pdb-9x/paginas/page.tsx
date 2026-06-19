@@ -2,44 +2,21 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { LayoutTemplate, Save, ExternalLink, Check, Loader2 } from "lucide-react";
+import { editableByPage } from "@/lib/data/editable-content";
 
-type Fields = { h1?: string; metaTitle?: string; metaDescription?: string };
-
-interface PageDef {
-  route: string;
-  label: string;
-  // defaults do código (mostrados como placeholder; vazio = usa o default)
-  defaults: { h1: string; metaTitle: string; metaDescription: string };
-  h1Note?: string;
-}
-
-// Piloto: só a Página inicial. Pra adicionar outra página, é só incluir aqui +
-// religar a página pra ler o override (helper getPageOverride).
-const PAGES: PageDef[] = [
-  {
-    route: "/",
-    label: "Página inicial",
-    defaults: {
-      h1: "Papo de Bola — Futebol brasileiro e mundial: notícias, jogos ao vivo e classificações",
-      metaTitle: "Papo de Bola | Futebol e Esportes do Brasil e do Mundo",
-      metaDescription:
-        "Acompanhe notícias de futebol e esportes, jogos de hoje, resultados ao vivo, tabelas, classificações e as principais competições do mundo.",
-    },
-    h1Note: "H1 da home é invisível na tela (só pra SEO/leitores). Vale como título principal pro Google.",
-  },
-];
+const PAGES = editableByPage();
 
 export default function PaginasPage() {
-  const [draft, setDraft] = useState<Record<string, Fields>>({});
+  const [values, setValues] = useState<Record<string, string>>({});
   const [loading, setLoading] = useState(true);
-  const [savingRoute, setSavingRoute] = useState<string | null>(null);
-  const [savedRoute, setSavedRoute] = useState<string | null>(null);
+  const [savingPage, setSavingPage] = useState<string | null>(null);
+  const [savedPage, setSavedPage] = useState<string | null>(null);
 
   const load = useCallback(async () => {
     setLoading(true);
     try {
       const r = await fetch("/api/page-overrides", { cache: "no-store" });
-      if (r.ok) setDraft(await r.json());
+      if (r.ok) setValues(await r.json());
     } catch {
       /* ignora */
     }
@@ -50,25 +27,27 @@ export default function PaginasPage() {
     load();
   }, [load]);
 
-  function setField(route: string, field: keyof Fields, value: string) {
-    setDraft((prev) => ({ ...prev, [route]: { ...prev[route], [field]: value } }));
-    setSavedRoute(null);
+  function setField(id: string, v: string) {
+    setValues((prev) => ({ ...prev, [id]: v }));
+    setSavedPage(null);
   }
 
-  async function save(route: string) {
-    setSavingRoute(route);
+  async function savePage(page: string, ids: string[]) {
+    setSavingPage(page);
+    const updates: Record<string, string> = {};
+    for (const id of ids) updates[id] = values[id] ?? "";
     try {
       const r = await fetch("/api/page-overrides", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ route, override: draft[route] || {} }),
+        body: JSON.stringify({ updates }),
       });
-      if (r.ok) setSavedRoute(route);
+      if (r.ok) setSavedPage(page);
       else alert("Erro ao salvar");
     } catch {
       alert("Erro de conexão");
     }
-    setSavingRoute(null);
+    setSavingPage(null);
   }
 
   return (
@@ -79,9 +58,9 @@ export default function PaginasPage() {
           Páginas — textos e SEO
         </h2>
         <p className="mt-1 text-sm text-text-muted">
-          Edite o H1, o título e a descrição (meta) de cada página, sem mexer no código. Deixe um
-          campo <strong>vazio</strong> pra usar o texto padrão. Ao salvar, a mudança vai pro ar em
-          segundos (a página é revalidada automaticamente).
+          Edite qualquer texto das páginas abaixo, sem mexer no código. Deixe um campo{" "}
+          <strong>vazio</strong> pra usar o texto padrão (mostrado em cinza). Ao salvar, a mudança
+          vai pro ar em segundos.
         </p>
       </div>
 
@@ -90,19 +69,25 @@ export default function PaginasPage() {
           <Loader2 className="h-4 w-4 animate-spin" /> Carregando…
         </div>
       ) : (
-        <div className="space-y-5">
-          {PAGES.map((p) => {
-            const f = draft[p.route] || {};
-            const desc = f.metaDescription ?? "";
+        <div className="space-y-6">
+          {PAGES.map((pg) => {
+            const ids = pg.items.map((i) => i.id);
+            // agrupa por seção preservando ordem
+            const sections: { name: string; items: typeof pg.items }[] = [];
+            for (const it of pg.items) {
+              let s = sections.find((x) => x.name === it.def.section);
+              if (!s) sections.push((s = { name: it.def.section, items: [] }));
+              s.items.push(it);
+            }
             return (
-              <div key={p.route} className="rounded-lg border border-border-custom bg-card-bg p-5">
-                <div className="mb-3 flex items-center justify-between">
+              <div key={pg.page} className="rounded-lg border border-border-custom bg-card-bg p-5">
+                <div className="mb-4 flex items-center justify-between">
                   <div>
-                    <h3 className="text-sm font-bold text-text-primary">{p.label}</h3>
-                    <code className="text-[11px] text-text-muted">{p.route}</code>
+                    <h3 className="text-base font-bold text-text-primary">{pg.pageLabel}</h3>
+                    <code className="text-[11px] text-text-muted">{pg.page}</code>
                   </div>
                   <a
-                    href={p.route}
+                    href={pg.page}
                     target="_blank"
                     rel="noopener noreferrer"
                     className="inline-flex items-center gap-1 text-xs font-semibold text-green hover:underline"
@@ -111,66 +96,58 @@ export default function PaginasPage() {
                   </a>
                 </div>
 
-                <div className="space-y-4">
-                  <div>
-                    <label className="mb-1 block text-xs font-semibold text-text-secondary">
-                      H1 (título principal)
-                    </label>
-                    <input
-                      value={f.h1 ?? ""}
-                      onChange={(e) => setField(p.route, "h1", e.target.value)}
-                      placeholder={p.defaults.h1}
-                      className="w-full rounded-lg border border-border-custom bg-surface px-3 py-2 text-sm focus:border-green focus:outline-none focus:ring-2 focus:ring-green/30"
-                    />
-                    {p.h1Note && <p className="mt-1 text-[11px] text-text-muted">{p.h1Note}</p>}
-                  </div>
-
-                  <div>
-                    <label className="mb-1 block text-xs font-semibold text-text-secondary">
-                      Meta title (título no Google / aba)
-                    </label>
-                    <input
-                      value={f.metaTitle ?? ""}
-                      onChange={(e) => setField(p.route, "metaTitle", e.target.value)}
-                      placeholder={p.defaults.metaTitle}
-                      className="w-full rounded-lg border border-border-custom bg-surface px-3 py-2 text-sm focus:border-green focus:outline-none focus:ring-2 focus:ring-green/30"
-                    />
-                    <p className="mt-1 text-[11px] text-text-muted">
-                      {(f.metaTitle || "").length || 0} caracteres (ideal até 60)
-                    </p>
-                  </div>
-
-                  <div>
-                    <label className="mb-1 block text-xs font-semibold text-text-secondary">
-                      Meta description (descrição no Google)
-                    </label>
-                    <textarea
-                      value={desc}
-                      onChange={(e) => setField(p.route, "metaDescription", e.target.value)}
-                      placeholder={p.defaults.metaDescription}
-                      rows={3}
-                      className="w-full resize-none rounded-lg border border-border-custom bg-surface px-3 py-2 text-sm focus:border-green focus:outline-none focus:ring-2 focus:ring-green/30"
-                    />
-                    <p className="mt-1 text-[11px] text-text-muted">
-                      {desc.length} caracteres (ideal 120–155)
-                    </p>
-                  </div>
+                <div className="space-y-5">
+                  {sections.map((sec) => (
+                    <div key={sec.name}>
+                      <div className="mb-2 text-[11px] font-bold uppercase tracking-wide text-text-muted">
+                        {sec.name}
+                      </div>
+                      <div className="space-y-3">
+                        {sec.items.map(({ id, def }) => {
+                          const val = values[id] ?? "";
+                          return (
+                            <div key={id}>
+                              <label className="mb-1 block text-xs font-semibold text-text-secondary">
+                                {def.label}
+                              </label>
+                              {def.type === "multiline" ? (
+                                <textarea
+                                  value={val}
+                                  onChange={(e) => setField(id, e.target.value)}
+                                  placeholder={def.default}
+                                  rows={3}
+                                  className="w-full resize-none rounded-lg border border-border-custom bg-surface px-3 py-2 text-sm focus:border-green focus:outline-none focus:ring-2 focus:ring-green/30"
+                                />
+                              ) : (
+                                <input
+                                  value={val}
+                                  onChange={(e) => setField(id, e.target.value)}
+                                  placeholder={def.default}
+                                  className="w-full rounded-lg border border-border-custom bg-surface px-3 py-2 text-sm focus:border-green focus:outline-none focus:ring-2 focus:ring-green/30"
+                                />
+                              )}
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  ))}
                 </div>
 
                 <div className="mt-4 flex items-center gap-3">
                   <button
-                    onClick={() => save(p.route)}
-                    disabled={savingRoute === p.route}
+                    onClick={() => savePage(pg.page, ids)}
+                    disabled={savingPage === pg.page}
                     className="inline-flex items-center gap-2 rounded-lg bg-green px-4 py-2 text-sm font-semibold text-white hover:bg-green-hover disabled:opacity-50"
                   >
-                    {savingRoute === p.route ? (
+                    {savingPage === pg.page ? (
                       <Loader2 className="h-4 w-4 animate-spin" />
                     ) : (
                       <Save className="h-4 w-4" />
                     )}
-                    Salvar
+                    Salvar {pg.pageLabel}
                   </button>
-                  {savedRoute === p.route && (
+                  {savedPage === pg.page && (
                     <span className="inline-flex items-center gap-1 text-xs font-semibold text-green">
                       <Check className="h-4 w-4" /> Salvo! Já está no ar.
                     </span>

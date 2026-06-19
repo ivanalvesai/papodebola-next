@@ -1,44 +1,32 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { Goal } from "lucide-react";
+import { Editable, getEditableText } from "@/components/editable";
 
-export const metadata: Metadata = {
-  alternates: { canonical: "/sobre" },
-  title: "Sobre o Papo de Bola",
-  description:
-    "Conheça o Papo de Bola: portal de futebol brasileiro e mundial com notícias, placares ao vivo, classificações e cobertura de outros esportes. Nossa história, linha editorial e compromisso com a informação.",
-};
+export async function generateMetadata(): Promise<Metadata> {
+  const [title, description] = await Promise.all([
+    getEditableText("sobre.meta.title"),
+    getEditableText("sobre.meta.description"),
+  ]);
+  return { alternates: { canonical: "/sobre" }, title, description };
+}
 
 export default function SobrePage() {
   return (
     <div className="mx-auto max-w-[720px] px-4 py-12">
       <div className="mb-8 text-center">
         <Goal className="mx-auto mb-3 h-12 w-12 text-green" />
-        <h1 className="text-2xl font-bold text-text-primary">Sobre o Papo de Bola</h1>
-        <p className="mt-2 text-sm text-text-muted">
-          Futebol e esporte, com a paixão de quem vive a bola desde 2004.
-        </p>
+        <Editable id="sobre.h1" as="h1" className="text-2xl font-bold text-text-primary" />
+        <Editable id="sobre.subtitle" as="p" className="mt-2 text-sm text-text-muted" />
       </div>
 
       <div className="space-y-5 rounded-lg border border-border-custom bg-card-bg p-8 text-text-secondary leading-relaxed">
-        <p>
-          O <strong className="text-text-primary">Papo de Bola</strong> é um portal independente
-          dedicado ao futebol brasileiro e mundial. Reunimos em um só lugar notícias, placares ao
-          vivo, classificações, calendários, escalações, estatísticas e os bastidores das principais
-          competições — tudo de forma rápida, gratuita e fácil de acompanhar, no computador ou no
-          celular.
-        </p>
+        <Editable id="sobre.intro" as="p" />
 
-        <h2 className="pt-2 text-lg font-bold text-text-primary">Nossa história</h2>
-        <p>
-          O Papo de Bola nasceu em 2004 como um espaço para torcedores que queriam ir além do
-          placar — entender o jogo, debater escalações e acompanhar de perto os times do coração.
-          De lá para cá, o portal evoluiu junto com a internet: passou por diferentes formatos até
-          a versão atual, totalmente reconstruída com tecnologia moderna para entregar páginas
-          rápidas, dados em tempo real e uma experiência de leitura limpa, sem poluição.
-        </p>
+        <Editable id="sobre.historia.h2" as="h2" className="pt-2 text-lg font-bold text-text-primary" />
+        <Editable id="sobre.historia.p" as="p" />
 
-        <h2 className="pt-2 text-lg font-bold text-text-primary">O que você encontra aqui</h2>
+        <Editable id="sobre.encontra.h2" as="h2" className="pt-2 text-lg font-bold text-text-primary" />
         <p>
           Cobrimos os principais campeonatos do Brasil e do mundo — Brasileirão Série A e B, Copa do
           Brasil, Libertadores, Champions League, Premier League, Copa do Mundo e muito mais — com{" "}
@@ -61,21 +49,11 @@ export default function SobrePage() {
           jogos, mercado da bola e os assuntos que movimentam o torcedor.
         </p>
 
-        <h2 className="pt-2 text-lg font-bold text-text-primary">Como produzimos o conteúdo</h2>
-        <p>
-          Acreditamos em informação correta e bem apurada. Nossas matérias são escritas e revisadas
-          pela equipe de redação, com foco em clareza, contexto e linguagem acessível ao torcedor.
-          Os dados esportivos — placares, escalações, classificações e estatísticas — vêm de
-          provedores especializados e fontes oficiais das competições, e são atualizados
-          automaticamente para refletir o que acontece em campo.
-        </p>
-        <p>
-          Quando um conteúdo é corrigido ou atualizado, buscamos fazê-lo de forma transparente. Se
-          você encontrar alguma informação imprecisa, fale com a gente — levamos as correções a
-          sério.
-        </p>
+        <Editable id="sobre.producao.h2" as="h2" className="pt-2 text-lg font-bold text-text-primary" />
+        <Editable id="sobre.producao.p1" as="p" />
+        <Editable id="sobre.producao.p2" as="p" />
 
-        <h2 className="pt-2 text-lg font-bold text-text-primary">Independência e publicidade</h2>
+        <Editable id="sobre.independencia.h2" as="h2" className="pt-2 text-lg font-bold text-text-primary" />
         <p>
           O Papo de Bola é mantido de forma independente. Para custear a operação e seguir
           oferecendo conteúdo gratuito, exibimos anúncios e podemos firmar parcerias comerciais. A
@@ -91,7 +69,7 @@ export default function SobrePage() {
           .
         </p>
 
-        <h2 className="pt-2 text-lg font-bold text-text-primary">Fale com a gente</h2>
+        <Editable id="sobre.contato.h2" as="h2" className="pt-2 text-lg font-bold text-text-primary" />
         <p>
           Sugestões de pauta, correções, dúvidas ou propostas de parceria são sempre bem-vindas.
           Entre em contato pela nossa página de{" "}
