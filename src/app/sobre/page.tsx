@@ -8,7 +8,18 @@ export async function generateMetadata(): Promise<Metadata> {
     getEditableText("sobre.meta.title"),
     getEditableText("sobre.meta.description"),
   ]);
-  return { alternates: { canonical: "/sobre" }, title, description };
+  return {
+    alternates: { canonical: "/sobre" },
+    title,
+    description,
+    openGraph: {
+      title: "Conheça quem está por trás do Papo de Bola",
+      description:
+        "Saiba quem está por trás do Papo de Bola, portal independente de futebol e esportes com notícias, placares ao vivo, classificações e cobertura desde 2004.",
+      url: "/sobre",
+      type: "website",
+    },
+  };
 }
 
 export default function SobrePage() {
@@ -28,8 +39,8 @@ export default function SobrePage() {
 
         <Editable id="sobre.encontra.h2" as="h2" className="pt-2 text-lg font-bold text-text-primary" />
         <p>
-          Cobrimos os principais campeonatos do Brasil e do mundo — Brasileirão Série A e B, Copa do
-          Brasil, Libertadores, Champions League, Premier League, Copa do Mundo e muito mais — com{" "}
+          Cobrimos os principais campeonatos do Brasil e do mundo, Brasileirão Série A e B, Copa do
+          Brasil, Libertadores, Champions League, Premier League, Copa do Mundo e muito mais, com{" "}
           <Link href="/jogos-de-hoje" className="text-green hover:underline">
             jogos de hoje
           </Link>
@@ -37,8 +48,8 @@ export default function SobrePage() {
           <Link href="/ao-vivo" className="text-green hover:underline">
             resultados ao vivo
           </Link>{" "}
-          e tabelas atualizadas a cada rodada. Também acompanhamos outros esportes, como NBA, tênis,
-          Fórmula 1, vôlei, MMA e futebol americano, com calendários, classificações e chaveamentos.
+          e tabelas atualizadas a cada rodada. Também acompanhamos NBA, tênis, Fórmula 1, vôlei, MMA
+          e futebol americano, com calendários, classificações e chaveamentos.
         </p>
         <p>
           Na seção de{" "}
@@ -55,9 +66,9 @@ export default function SobrePage() {
 
         <Editable id="sobre.independencia.h2" as="h2" className="pt-2 text-lg font-bold text-text-primary" />
         <p>
-          O Papo de Bola é mantido de forma independente. Para custear a operação e seguir
-          oferecendo conteúdo gratuito, exibimos anúncios e podemos firmar parcerias comerciais. A
-          publicidade nunca interfere na nossa cobertura editorial. O tratamento dos seus dados e o
+          O site é mantido de forma independente. Para custear a operação e seguir oferecendo
+          conteúdo gratuito, exibimos anúncios e podemos firmar parcerias comerciais. A publicidade
+          nunca interfere na cobertura editorial. O tratamento dos seus dados e o
           uso de cookies estão descritos na nossa{" "}
           <Link href="/politica-de-privacidade" className="text-green hover:underline">
             Política de Privacidade
@@ -80,7 +91,11 @@ export default function SobrePage() {
           <a href="mailto:contato@papodebola.com.br" className="text-green hover:underline">
             contato@papodebola.com.br
           </a>
-          . Bom papo e bom jogo! ⚽
+          .
+        </p>
+        <p>
+          Nosso compromisso é simples: entregar informação de qualidade para quem vive o esporte.
+          Bom papo e bom jogo! ⚽
         </p>
       </div>
     </div>
