@@ -11,7 +11,11 @@ function Block({ block }: { block: any }) {
       return <Tag className="pt-2 text-lg font-bold text-text-primary">{block.text}</Tag>;
     }
     case "richText":
-      return block.content ? <RichText data={block.content} /> : null;
+      return block.content ? (
+        <div className="[&_a]:text-green [&_a:hover]:underline [&>p]:m-0">
+          <RichText data={block.content} />
+        </div>
+      ) : null;
     case "image": {
       const url = block.image?.url;
       if (!url) return null;
@@ -108,9 +112,17 @@ function Block({ block }: { block: any }) {
 export function PageBlocks({ page }: { page: PayloadPage }) {
   return (
     <div className="mx-auto max-w-[720px] px-4 py-12">
-      {page.hero?.h1 && <h1 className="text-2xl font-bold text-text-primary">{page.hero.h1}</h1>}
-      {page.hero?.subtitle && <p className="mt-2 text-text-muted">{page.hero.subtitle}</p>}
-      <div className="mt-6 space-y-5 leading-relaxed text-text-secondary">
+      {(page.hero?.h1 || page.hero?.subtitle) && (
+        <div className="mb-8 text-center">
+          {page.hero?.h1 && (
+            <h1 className="text-2xl font-bold text-text-primary">{page.hero.h1}</h1>
+          )}
+          {page.hero?.subtitle && (
+            <p className="mt-2 text-sm text-text-muted">{page.hero.subtitle}</p>
+          )}
+        </div>
+      )}
+      <div className="space-y-5 rounded-lg border border-border-custom bg-card-bg p-8 leading-relaxed text-text-secondary">
         {(page.layout || []).map((block: any, i: number) => (
           <Block key={i} block={block} />
         ))}
