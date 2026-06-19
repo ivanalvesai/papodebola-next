@@ -21,23 +21,26 @@ import { getBrasileiraoStandings, getWorldCupStandings } from "@/lib/data/standi
 import { getTopScorers } from "@/lib/data/scorers";
 import { getChampionshipData } from "@/lib/data/championship";
 import { enrichStandingsWithForm } from "@/lib/standings-utils";
+import { Editable, getEditableText } from "@/components/editable";
 import type { ChampionshipMatch } from "@/types/match";
 import type { ChampionshipData } from "@/types/tournament";
 
 export const revalidate = 1800;
 
-export const metadata: Metadata = {
-  // `absolute` evita o template "%s | Papo de Bola" do layout (senao duplicaria a marca).
-  title: { absolute: "Papo de Bola | Futebol e Esportes do Brasil e do Mundo" },
-  description:
-    "Acompanhe notícias de futebol e esportes, jogos de hoje, resultados ao vivo, tabelas, classificações e as principais competições do mundo.",
-  alternates: { canonical: "/" },
-  openGraph: {
-    title: "Papo de Bola | Futebol e Esportes do Brasil e do Mundo",
-    description:
-      "Acompanhe notícias de futebol e esportes, jogos de hoje, resultados ao vivo, tabelas, classificações e as principais competições do mundo.",
-  },
-};
+// Title/description editáveis no painel "Páginas" (com fallback no default do registro).
+export async function generateMetadata(): Promise<Metadata> {
+  const [title, description] = await Promise.all([
+    getEditableText("home.meta.title"),
+    getEditableText("home.meta.description"),
+  ]);
+  return {
+    // `absolute` evita o template "%s | Papo de Bola" do layout (senao duplicaria a marca).
+    title: { absolute: title },
+    description,
+    alternates: { canonical: "/" },
+    openGraph: { title, description },
+  };
+}
 
 export default async function HomePage() {
   const [
@@ -94,9 +97,7 @@ export default async function HomePage() {
   return (
     <>
       {/* H1 da home (acessível, sem alterar o layout) — sinal de tópico principal. */}
-      <h1 className="sr-only">
-        Papo de Bola — Futebol brasileiro e mundial: notícias, jogos ao vivo e classificações
-      </h1>
+      <Editable id="home.h1" as="h1" className="sr-only" />
       <WorldCupBanner />
       {/* Com jogo da Copa hoje, embrulha a barra no provider de placar ao vivo
           (mesmo polling de 15s da tabela da Copa, endpoint cacheado: N clientes
