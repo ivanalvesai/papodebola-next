@@ -24,7 +24,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     { url: `${BASE}/sp`, lastModified: now, changeFrequency: "weekly", priority: 0.5 },
     { url: `${BASE}/sp/santana-de-parnaiba`, lastModified: now, changeFrequency: "weekly", priority: 0.5 },
     { url: `${BASE}/sp/santana-de-parnaiba/municipal`, lastModified: now, changeFrequency: "daily", priority: 0.5 },
-    { url: `${BASE}/sobre`, changeFrequency: "monthly", priority: 0.3 },
+    { url: `${BASE}/sobre-nos`, changeFrequency: "monthly", priority: 0.3 },
     { url: `${BASE}/contato`, changeFrequency: "monthly", priority: 0.3 },
     { url: `${BASE}/politica-de-privacidade`, changeFrequency: "monthly", priority: 0.2 },
     { url: `${BASE}/termos-de-uso`, changeFrequency: "monthly", priority: 0.2 },

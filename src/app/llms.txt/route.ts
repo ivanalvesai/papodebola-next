@@ -56,7 +56,7 @@ ${sports}
 
 ## Institucional
 
-- [Sobre](${SITE_URL}/sobre)
+- [Sobre Nós](${SITE_URL}/sobre-nos)
 - [Contato](${SITE_URL}/contato)
 - [Política de Privacidade](${SITE_URL}/politica-de-privacidade)
 - [Termos de Uso](${SITE_URL}/termos-de-uso)
