@@ -9,14 +9,14 @@ export async function generateMetadata(): Promise<Metadata> {
     getEditableText("sobre.meta.description"),
   ]);
   return {
-    alternates: { canonical: "/sobre-nos" },
+    alternates: { canonical: "/sobre" },
     title,
     description,
     openGraph: {
       title: "Conheça quem está por trás do Papo de Bola",
       description:
         "Saiba quem está por trás do Papo de Bola, portal independente de futebol e esportes com notícias, placares ao vivo, classificações e cobertura desde 2004.",
-      url: "/sobre-nos",
+      url: "/sobre",
       type: "website",
     },
   };
