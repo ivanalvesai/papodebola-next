@@ -1,6 +1,5 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { Goal } from "lucide-react";
 import { Editable, getEditableText } from "@/components/editable";
 
 export async function generateMetadata(): Promise<Metadata> {
@@ -26,7 +25,6 @@ export default function SobrePage() {
   return (
     <div className="mx-auto max-w-[720px] px-4 py-12">
       <div className="mb-8 text-center">
-        <Goal className="mx-auto mb-3 h-12 w-12 text-green" />
         <Editable id="sobre.h1" as="h1" className="text-2xl font-bold text-text-primary" />
         <Editable id="sobre.subtitle" as="p" className="mt-2 text-sm text-text-muted" />
       </div>
