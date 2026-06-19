@@ -26,6 +26,10 @@ export default buildConfig({
   },
   db: postgresAdapter({
     pool: { connectionString: process.env.DATABASE_URI || "" },
+    // Só o dev sincroniza o schema (PAYLOAD_DB_PUSH=true no .env.local do dev).
+    // Prod usa o schema já criado pelo dev (banco é compartilhado). Antes da Fase 3
+    // (notícias com dados) migramos pra migrations formais (prodMigrations).
+    push: process.env.PAYLOAD_DB_PUSH === "true",
   }),
   collections: [
     {
