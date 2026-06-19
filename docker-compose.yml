@@ -16,7 +16,14 @@ services:
       - "host.docker.internal:host-gateway"
     networks:
       - default
+      - pdb-net
 
 volumes:
   pdb-data:
   pdb-next-cache:
+
+networks:
+  # Rede compartilhada com o container do Postgres (Payload). Externa: precisa
+  # existir no host (`docker network create pdb-net`) antes do `compose up`.
+  pdb-net:
+    external: true
