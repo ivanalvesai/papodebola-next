@@ -1,0 +1,34 @@
+import type { Metadata } from "next";
+import { notFound } from "next/navigation";
+import { getPayloadPage } from "@/lib/data/payload-pages";
+import { PageBlocks } from "@/components/payload/page-blocks";
+
+// Rota genérica: renderiza QUALQUER "Página" criada no Payload em /paginas/{slug}.
+// Página nova no CMS = no ar na hora, sem ligar rota a rota. 404 se não existir.
+export const dynamic = "force-dynamic";
+
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ slug: string }>;
+}): Promise<Metadata> {
+  const { slug } = await params;
+  const page = await getPayloadPage(slug);
+  if (!page) return {};
+  return {
+    title: page.seo?.metaTitle || page.title,
+    description: page.seo?.metaDescription,
+    alternates: { canonical: `/paginas/${slug}` },
+  };
+}
+
+export default async function PaginaPayload({
+  params,
+}: {
+  params: Promise<{ slug: string }>;
+}) {
+  const { slug } = await params;
+  const page = await getPayloadPage(slug);
+  if (!page) notFound();
+  return <PageBlocks page={page} />;
+}
