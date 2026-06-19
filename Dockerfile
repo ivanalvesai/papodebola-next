@@ -14,6 +14,10 @@ FROM node:20-alpine AS runner
 WORKDIR /app
 ENV NODE_ENV=production
 ENV PORT=3000
+# Next standalone faz bind em HOSTNAME; em Docker o default vira o ID do container,
+# que com múltiplas redes (pdb-net) deixa de bater com o mapeamento de porta e
+# trava TODOS os requests. Forçar 0.0.0.0 (escuta em todas as interfaces).
+ENV HOSTNAME=0.0.0.0
 
 RUN apk add --no-cache openssh-client
 

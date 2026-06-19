@@ -1,16 +1,23 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { Editable, getEditableText } from "@/components/editable";
+import { getPayloadPage } from "@/lib/data/payload-pages";
+import { PageBlocks } from "@/components/payload/page-blocks";
+
+// Lê do Payload em runtime (Postgres não é alcançável no build) e reflete edições
+// do CMS na hora. Página institucional = baixo tráfego, dinâmico é ok.
+export const dynamic = "force-dynamic";
 
 export async function generateMetadata(): Promise<Metadata> {
-  const [title, description] = await Promise.all([
+  const page = await getPayloadPage("sobre");
+  const [fbTitle, fbDesc] = await Promise.all([
     getEditableText("sobre.meta.title"),
     getEditableText("sobre.meta.description"),
   ]);
   return {
     alternates: { canonical: "/sobre" },
-    title,
-    description,
+    title: page?.seo?.metaTitle || fbTitle,
+    description: page?.seo?.metaDescription || fbDesc,
     openGraph: {
       title: "Conheça quem está por trás do Papo de Bola",
       description:
@@ -21,7 +28,9 @@ export async function generateMetadata(): Promise<Metadata> {
   };
 }
 
-export default function SobrePage() {
+// Fallback: conteúdo atual em código (Editable). Usado enquanto não houver uma
+// página "sobre" no Payload.
+function SobreFallback() {
   return (
     <div className="mx-auto max-w-[720px] px-4 py-12">
       <div className="mb-8 text-center">
@@ -98,4 +107,12 @@ export default function SobrePage() {
       </div>
     </div>
   );
+}
+
+// Lê a página "sobre" do Payload; se existir, renderiza os blocos. Senão, usa o
+// fallback em código (risco zero na migração).
+export default async function SobrePage() {
+  const page = await getPayloadPage("sobre");
+  if (page) return <PageBlocks page={page} />;
+  return <SobreFallback />;
 }
