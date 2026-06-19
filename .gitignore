@@ -62,3 +62,8 @@ papo-de-bola-ipa.txt
 /docs/knowledge
 .graphify_*
 .claude/settings.local.json
+
+# Payload
+public/cms-media/
+install-payload.log
+build-payload.log
