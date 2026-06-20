@@ -26,11 +26,16 @@ export async function generateMetadata({
   let description: string;
   if (status === "finished") {
     const venc = winner === 1 ? home.name : winner === 2 ? away.name : null;
-    const placar = setsHome != null && setsAway != null ? ` (${setsHome}-${setsAway} sets)` : "";
+    const perd = winner === 1 ? away.name : winner === 2 ? home.name : null;
+    // placar na perspectiva do vencedor (ex: "2 sets a 0")
+    const wSets = winner === 1 ? setsHome : setsAway;
+    const lSets = winner === 1 ? setsAway : setsHome;
+    const placar = wSets != null && lSets != null ? ` por ${wSets} sets a ${lSets}` : "";
     title = `${home.name} x ${away.name}: resultado e estatísticas — ${T.name} 2026`;
-    description = venc
-      ? `${venc} venceu ${home.name} x ${away.name}${placar} pelo ${T.fullName} (${detail.roundLabel}). Veja o placar set a set, estatísticas e resultado do jogo.`
-      : `Resultado de ${home.name} x ${away.name} pelo ${T.fullName} (${detail.roundLabel}): placar set a set e estatísticas.`;
+    description =
+      venc && perd
+        ? `${venc} venceu ${perd}${placar} pelo ${T.fullName} (${detail.roundLabel}). Veja o placar set a set, as estatísticas e o resultado do jogo.`
+        : `Resultado de ${home.name} x ${away.name} pelo ${T.fullName} (${detail.roundLabel}): placar set a set e estatísticas.`;
   } else if (status === "inprogress") {
     title = `${home.name} x ${away.name} AO VIVO — ${T.name} 2026`;
     description = `${home.name} x ${away.name} AO VIVO pelo ${T.fullName} (${detail.roundLabel}): placar em tempo real set a set, games e estatísticas.`;
