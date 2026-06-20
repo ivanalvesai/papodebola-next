@@ -441,11 +441,13 @@ async function handle(req: Request) {
     }
     // se ?as= veio, grava sob esse slug (preview); senão usa o slug real
     const slug = asSlug || base.slug;
-    const data = { ...base, slug };
+    // _status: published -> com drafts ligado, o seed nasce publicado (visível no site)
+    const data = { ...base, slug, _status: "published" };
     const existing = await payload.find({
       collection: "pages",
       where: { slug: { equals: slug } },
       limit: 1,
+      draft: true, // acha mesmo que esteja em rascunho (evita duplicata no upsert)
     });
     if (existing.docs[0]) {
       const doc = await payload.update({ collection: "pages", id: existing.docs[0].id, data });
