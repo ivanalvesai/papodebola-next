@@ -46,6 +46,13 @@ export default buildConfig({
     {
       slug: "pages",
       admin: { useAsTitle: "title" },
+      // Rascunho/publicar: edições ficam em draft até publicar. O site (find sem
+      // draft) só mostra a versão publicada. Anônimo só lê publicado.
+      versions: { drafts: true, maxPerDoc: 50 },
+      access: {
+        read: ({ req: { user } }) =>
+          user ? true : { _status: { equals: "published" } },
+      },
       fields: [
         { name: "title", type: "text", required: true },
         { name: "slug", type: "text", required: true, unique: true, index: true },
