@@ -93,7 +93,9 @@ export function tennisMatchHref(tournamentSlug: string, homeName: string, awayNa
 const ROUND_PT: Record<string, string> = {
   Final: "Final",
   Semifinal: "Semifinais",
+  Semifinals: "Semifinais",
   Quarterfinal: "Quartas de final",
+  Quarterfinals: "Quartas de final",
   "Round of 16": "Oitavas de final",
   "Round of 32": "Primeira rodada",
   "Round of 64": "Fase preliminar",
@@ -201,148 +203,117 @@ async function enrichMatch(eventId: number, ttl: number): Promise<MatchEnrichmen
   return eventToEnrichment(raw.event);
 }
 
-// Slots ainda indefinidos no chaveamento vêm como tokens "Qf1", "WQF2", "WSF1",
-// "Q1"... (combinações das letras W/Q/S/F seguidas de número). Nenhum nome real
-// de tenista é só essas letras + dígito.
-const PLACEHOLDER_RE = /^[wqsf]+\d+$/i;
-function isPlaceholderName(name: string): boolean {
-  return PLACEHOLDER_RE.test((name || "").replace(/\s+/g, ""));
-}
-
-function buildPlayer(p: any, country: string | null): TennisPlayer {
-  const tm = p?.team || {};
-  const rawName = tm.name || p?.name || "";
-  const placeholder = !tm.id || isPlaceholderName(rawName);
-  return {
-    id: placeholder ? 0 : tm.id || 0,
-    name: placeholder ? "A definir" : rawName,
-    shortName: placeholder ? "A definir" : tm.shortName || rawName,
-    seed: !placeholder && p?.teamSeed ? String(p.teamSeed) : null,
-    ranking: !placeholder && typeof tm.ranking === "number" ? tm.ranking : null,
-    country: placeholder ? null : country,
-    placeholder,
-  };
-}
-
+// Monta o MAIN DRAW a partir dos FEEDS POR DATA. O endpoint `cuptrees` deste torneio
+// só traz o qualifying (não o main draw), e não há endpoint de eventos por rodada que
+// funcione (events/round dá 404, matches/round dá 502). Então coletamos os eventos do
+// torneio na janela da semana, agrupamos por rodada (roundInfo.round) e enriquecemos
+// cada jogo (games por set / país) via match/{id}.
 export async function getTennisDraw(slug: TennisTournamentSlug): Promise<TennisDraw | null> {
   const t = TENNIS_TOURNAMENTS[slug];
   if (!t) return null;
+  const ut = t.uniqueTournamentId;
 
-  // Chaveamento + feed ao vivo do tênis (pequeno) em paralelo. O cuptree tem TTL
-  // curto pra refletir resultados; o feed live é a fonte fresca dos jogos em curso.
-  const [data, liveFeed] = await Promise.all([
-    fetchAllSports<any>(
-      `tournament/${t.uniqueTournamentId}/season/${t.seasonId}/cuptrees`,
-      120
-    ),
+  // Janela de datas (ATP dura ~1 semana). Dias passados cacheiam 24h (não mudam),
+  // hoje/amanhã 5min. Cada feed por data é pequeno (<1MB) — cacheável.
+  const today = new Date();
+  const days: { d: number; m: number; y: number; past: boolean }[] = [];
+  for (let off = -7; off <= 1; off++) {
+    const dt = new Date(today.getTime() + off * 86400000);
+    days.push({ d: dt.getDate(), m: dt.getMonth() + 1, y: dt.getFullYear(), past: off < -1 });
+  }
+
+  const [roundsMeta, liveFeed, ...dayFeeds] = await Promise.all([
+    fetchAllSports<any>(`tournament/${ut}/season/${t.seasonId}/rounds`, 1800),
     fetchAllSports<any>(`tennis/events/live`, 15),
+    ...days.map((day) =>
+      fetchAllSports<any>(`tennis/events/${day.d}/${day.m}/${day.y}`, day.past ? 86400 : 300)
+    ),
   ]);
 
-  // Mapa eventId -> enrichment dos jogos AO VIVO deste torneio (sobrepõe o baseline).
-  const liveById: Record<number, MatchEnrichment> = {};
+  // round -> { label PT, ordem cronológica (índice na lista) }. Pula o qualifying.
+  const roundMeta: Record<number, { label: string; order: number }> = {};
+  (roundsMeta?.rounds || []).forEach((r: any, i: number) => {
+    if (/qualif/i.test(r?.name || "")) return;
+    roundMeta[r.round] = { label: roundLabel(r.name || ""), order: i };
+  });
+
+  // Overlay dos jogos AO VIVO deste torneio (placar fresco).
+  const liveById: Record<number, any> = {};
   for (const e of liveFeed?.events || []) {
-    if (e?.tournament?.uniqueTournament?.id === t.uniqueTournamentId && e?.id) {
-      liveById[e.id] = eventToEnrichment(e);
+    if (e?.tournament?.uniqueTournament?.id === ut && e?.id) liveById[e.id] = e;
+  }
+
+  // Eventos do torneio (dedupe por id; só rodadas do main draw, ignora doubles que
+  // ficam em outro uniqueTournament).
+  const byId: Record<number, any> = {};
+  for (const feed of dayFeeds) {
+    for (const e of feed?.events || []) {
+      if (e?.tournament?.uniqueTournament?.id !== ut || !e?.id) continue;
+      if (e?.status?.type === "canceled") continue; // jogo cancelado/W.O. (slot foi pra outro)
+      if (!roundMeta[e?.roundInfo?.round]) continue; // pula qualifying/desconhecido
+      byId[e.id] = e;
     }
   }
+  const events = Object.values(byId);
+  if (!events.length) return null;
 
-  // O cupTree principal (single) vem primeiro; o de qualifying vem depois — pegamos
-  // o de maior número de rounds que NÃO seja o qualifying.
-  const trees: any[] = data?.cupTrees || [];
-  const main =
-    trees.find((tr) => !/qualif/i.test(tr?.name || "")) || trees[0];
-  if (!main) return null;
-
-  // Coleta os blocos e enriquece em paralelo (semáforo do fetchAllSports = 2).
-  // TTL por status: encerrado cacheia 24h, agendado 30min. Jogos ao vivo NÃO
-  // refazem match/{id} aqui — o overlay do feed live (acima) cobre o placar fresco.
-  const blocks: { round: any; block: any }[] = [];
-  for (const round of main.rounds || []) {
-    for (const block of round.blocks || []) blocks.push({ round, block });
-  }
+  // Enriquece cada jogo (games por set, país) via match/{id}; ao vivo usa o feed live.
   const enrichments = await Promise.all(
-    blocks.map(async ({ block }) => {
-      const eventId = block?.events?.[0];
-      const hasRealPlayers = (block?.participants || []).some(
-        (p: any) => p?.team?.id && !isPlaceholderName(p?.team?.name || "")
-      );
-      if (!eventId || !hasRealPlayers) return null;
-      if (liveById[eventId]) return liveById[eventId]; // ao vivo: usa o feed fresco
-      const ttl = block?.finished ? 86400 : 1800;
-      return enrichMatch(eventId, ttl);
+    events.map(async (e: any) => {
+      if (liveById[e.id]) return eventToEnrichment(liveById[e.id]);
+      const finished = e?.status?.type === "finished";
+      return enrichMatch(e.id, finished ? 86400 : 600);
     })
   );
 
-  const rounds: TennisRound[] = (main.rounds || []).map((round: any) => {
-    const matches: TennisMatch[] = (round.blocks || []).map((block: any) => {
-      const idx = blocks.findIndex((b) => b.block === block);
-      const enr = enrichments[idx] || null;
-      const parts: any[] = block?.participants || [];
-      const sorted = [...parts].sort((a, b) => (a?.order || 0) - (b?.order || 0));
-      const p1 = sorted[0] || {};
-      const p2 = sorted[1] || {};
-      const cById = enr?.countryById || {};
-
-      const home = buildPlayer(p1, cById[p1?.team?.id] || null);
-      const away = buildPlayer(p2, cById[p2?.team?.id] || null);
-
-      const status: TennisStatus = enr
-        ? enr.status
-        : home.placeholder || away.placeholder
-          ? "pending"
-          : "notstarted";
-
-      // sets vencidos: prefere o ao vivo (enrich), cai pro result do cuptree
-      const setsHome =
-        enr?.setsHome ?? (block?.homeTeamScore != null ? Number(block.homeTeamScore) : null);
-      const setsAway =
-        enr?.setsAway ?? (block?.awayTeamScore != null ? Number(block.awayTeamScore) : null);
-
-      // vencedor: do cuptree (winner) ou derivado dos sets
-      let winner: 0 | 1 | 2 = 0;
-      if (p1?.winner) winner = 1;
-      else if (p2?.winner) winner = 2;
-      else if (status === "finished" && setsHome != null && setsAway != null) {
-        winner = setsHome > setsAway ? 1 : setsAway > setsHome ? 2 : 0;
-      }
-
-      return {
-        eventId: block?.events?.[0] ?? null,
-        order: block?.order || 0,
-        status,
-        statusDesc: enr?.statusDesc || (status === "pending" ? "Aguardando" : "A seguir"),
-        timestamp: enr?.timestamp || 0,
-        home,
-        away,
-        setsHome,
-        setsAway,
-        sets: enr?.sets || [],
-        pointHome: enr?.pointHome || null,
-        pointAway: enr?.pointAway || null,
-        serving: enr?.serving || 0,
-        winner,
-        live: status === "inprogress",
-      };
-    });
-
-    return {
-      key: `r${round.order}`,
-      label: roundLabel(round?.description || ""),
-      order: round?.order || 0,
-      matches,
-    };
+  // Agrupa por rodada.
+  const byRound: Record<number, { e: any; enr: MatchEnrichment | null }[]> = {};
+  events.forEach((e: any, i) => {
+    const rn = e?.roundInfo?.round ?? 0;
+    (byRound[rn] ||= []).push({ e, enr: enrichments[i] });
   });
 
-  // A ordem do provider vai da 1ª rodada -> final; invertemos pra mostrar as fases
-  // decisivas no topo (Final primeiro) — padrão de cobertura esportiva.
+  const rounds: TennisRound[] = Object.entries(byRound).map(([rnStr, list]) => {
+    const rn = Number(rnStr);
+    const meta = roundMeta[rn] || { label: `Rodada ${rn}`, order: rn };
+    const matches: TennisMatch[] = list
+      .sort((a, b) => (a.e.startTimestamp || 0) - (b.e.startTimestamp || 0))
+      .map(({ e, enr }) => {
+        const home = playerFromTeam(e.homeTeam, enr?.countryById[e.homeTeam?.id] || null);
+        const away = playerFromTeam(e.awayTeam, enr?.countryById[e.awayTeam?.id] || null);
+        const setsHome = enr?.setsHome ?? e.homeScore?.current ?? null;
+        const setsAway = enr?.setsAway ?? e.awayScore?.current ?? null;
+        const status: TennisStatus =
+          enr?.status ?? mapStatus(e?.status?.type || "", e.startTimestamp || 0);
+        let winner: 0 | 1 | 2 = 0;
+        if (status === "finished" && setsHome != null && setsAway != null) {
+          winner = setsHome > setsAway ? 1 : setsAway > setsHome ? 2 : 0;
+        }
+        return {
+          eventId: e.id,
+          order: e.startTimestamp || 0,
+          status,
+          statusDesc: enr?.statusDesc || statusDescPt(e?.status?.description || "", status),
+          timestamp: e.startTimestamp || 0,
+          home,
+          away,
+          setsHome,
+          setsAway,
+          sets: enr?.sets || [],
+          pointHome: enr?.pointHome || null,
+          pointAway: enr?.pointAway || null,
+          serving: enr?.serving || 0,
+          winner,
+          live: status === "inprogress",
+        };
+      });
+    return { key: `r${rn}`, label: meta.label, order: meta.order, matches };
+  });
+
+  // Fases decisivas no topo (Final primeiro) — padrão de cobertura esportiva.
   rounds.sort((a, b) => b.order - a.order);
 
-  return {
-    slug,
-    name: t.name,
-    rounds,
-    updated: new Date().toISOString(),
-  };
+  return { slug, name: t.name, rounds, updated: new Date().toISOString() };
 }
 
 // ---------- Detalhe do jogo (estatísticas por set + enquete) ----------
