@@ -530,18 +530,23 @@ function subMinute(min: number | null): string {
   return min != null ? `${min}'` : "";
 }
 
-function Marks({ m }: { m?: PlayerMark }) {
+// Bolinha de gol (reutilizada no nome e na linha "↑ entrou").
+function GoalMark({ goals }: { goals: number }) {
+  if (goals <= 0) return null;
+  return (
+    <span className="inline-flex items-center text-[13px] leading-none" title={`${goals} gol(s)`}>
+      ⚽
+      {goals > 1 && <span className="ml-0.5 text-[10px] font-bold text-text-primary">{goals}</span>}
+    </span>
+  );
+}
+
+// hideGoals: nos reservas não mostramos o gol (ele aparece na linha de quem entrou).
+function Marks({ m, hideGoals }: { m?: PlayerMark; hideGoals?: boolean }) {
   if (!m) return null;
   return (
     <span className="ml-1 inline-flex items-center gap-1 align-middle">
-      {m.goals > 0 && (
-        <span className="inline-flex items-center text-[13px] leading-none" title={`${m.goals} gol(s)`}>
-          ⚽
-          {m.goals > 1 && (
-            <span className="ml-0.5 text-[10px] font-bold text-text-primary">{m.goals}</span>
-          )}
-        </span>
-      )}
+      {!hideGoals && <GoalMark goals={m.goals} />}
       {m.yellow && !m.red && (
         <span className="inline-block h-3 w-2 rounded-[1px] bg-yellow-400" title="Cartão amarelo" />
       )}
@@ -556,14 +561,18 @@ function PlayerRow({
   p,
   marks,
   dim,
+  hideGoals,
 }: {
   p: LineupPlayer;
   marks: Record<string, PlayerMark>;
   dim: boolean;
+  hideGoals?: boolean;
 }) {
   const m = marks[p.name];
   const subOut = m?.subOut;
   const subIn = m?.subIn;
+  // gols de quem ENTROU no lugar deste titular (mostrado na linha verde "↑ ...").
+  const inGoals = subOut?.inName ? marks[subOut.inName]?.goals ?? 0 : 0;
 
   // Cor do nome: saiu = vermelho, entrou = verde, senão o padrão (ou dim).
   const nameColor = subOut
@@ -602,15 +611,21 @@ function PlayerRow({
           )}
           {/* ícone fora do nome (shrink-0) → nunca é cortado pelo truncate */}
           <span className="shrink-0">
-            <Marks m={m} />
+            <Marks m={m} hideGoals={hideGoals} />
           </span>
         </div>
         <p className="text-[10px] text-text-muted">{POS_PT[p.position] || p.position}</p>
-        {/* pareamento na escalação: quem ENTROU no lugar deste titular (verde) */}
+        {/* pareamento na escalação: quem ENTROU no lugar deste titular (verde) +
+            o gol dele aparece AQUI, não na lista de reservas */}
         {subOut?.inName && (
           <p className="mt-0.5 flex items-center gap-0.5 text-[10px] font-semibold text-green">
             <ArrowUp className="h-2.5 w-2.5 shrink-0" />
             {shortPlayerName(subOut.inName)}
+            {inGoals > 0 && (
+              <span className="ml-0.5 shrink-0">
+                <GoalMark goals={inGoals} />
+              </span>
+            )}
           </p>
         )}
       </div>
@@ -647,7 +662,7 @@ function TeamColumn({
             Reservas
           </p>
           {team.bench.map((p) => (
-            <PlayerRow key={p.id} p={p} marks={marks} dim />
+            <PlayerRow key={p.id} p={p} marks={marks} dim hideGoals />
           ))}
         </>
       )}
