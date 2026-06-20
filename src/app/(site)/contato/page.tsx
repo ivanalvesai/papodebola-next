@@ -1,13 +1,22 @@
 import type { Metadata } from "next";
 import { Mail, MessageCircle } from "lucide-react";
+import { getPayloadPage } from "@/lib/data/payload-pages";
+import { PageBlocks } from "@/components/payload/page-blocks";
 
-export const metadata: Metadata = {
-  alternates: { canonical: "/contato" },
-  title: "Contato",
-  description: "Entre em contato com o Papo de Bola. Envie sugestoes, duvidas ou parcerias.",
-};
+export const dynamic = "force-dynamic";
 
-export default function ContatoPage() {
+export async function generateMetadata(): Promise<Metadata> {
+  const page = await getPayloadPage("contato");
+  return {
+    alternates: { canonical: "/contato" },
+    title: page?.seo?.metaTitle || "Contato",
+    description:
+      page?.seo?.metaDescription ||
+      "Entre em contato com o Papo de Bola. Envie sugestoes, duvidas ou parcerias.",
+  };
+}
+
+function ContatoFallback() {
   return (
     <div className="mx-auto max-w-[680px] px-4 py-12">
       <h1 className="text-2xl font-bold text-text-primary mb-6 flex items-center gap-2">
@@ -37,4 +46,10 @@ export default function ContatoPage() {
       </div>
     </div>
   );
+}
+
+export default async function ContatoPage() {
+  const page = await getPayloadPage("contato");
+  if (page) return <PageBlocks page={page} />;
+  return <ContatoFallback />;
 }
