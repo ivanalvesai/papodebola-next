@@ -43,7 +43,7 @@ async function MatchBody({
   url: string;
 }) {
   const [detail, group] = await Promise.all([
-    getMatchDetail(fixture.id),
+    getMatchDetail(fixture.id, fixture.timestamp),
     getMatchGroup(fixture.homeId, fixture.awayId),
   ]);
 

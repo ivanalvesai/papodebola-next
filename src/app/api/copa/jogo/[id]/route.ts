@@ -5,7 +5,7 @@ import { getMatchLive } from "@/lib/data/match-detail";
 // O fetch interno (fetchAllSports) já cacheia ~25s, então N clientes
 // compartilham 1 chamada à AllSportsApi — não pesa no rate limit/bandwidth.
 export async function GET(
-  _req: NextRequest,
+  req: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
   const { id } = await params;
@@ -14,7 +14,9 @@ export async function GET(
     return NextResponse.json({ error: "id inválido" }, { status: 400 });
   }
 
-  const live = await getMatchLive(matchId);
+  // ?ts = timestamp do apito (enviado pelo cliente) -> TTL do match/{id} ciente do horário
+  const ts = Number(req.nextUrl.searchParams.get("ts")) || undefined;
+  const live = await getMatchLive(matchId, ts);
   if (!live) {
     return NextResponse.json({ error: "jogo não encontrado" }, { status: 404 });
   }

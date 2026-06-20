@@ -561,10 +561,24 @@ function liveTtl(statusType: string, liveSecs = 10, doneSecs = 86400, soonSecs =
   return soonSecs; // notstarted
 }
 
+// TTL do match/{id} (status/placar) ciente do horário do jogo. O match/{id} é
+// buscado ANTES de saber o status, então usamos o timestamp do fixture como dica:
+// fora da janela do jogo o status não muda, então cacheia bem mais (não martela).
+//  - começou há >4h  -> encerrado -> 1h
+//  - começa em >2h   -> pré-jogo distante -> 10min
+//  - janela do jogo (-2h a +4h do apito) -> 10s (ao vivo)
+function eventTtl(startTimestamp?: number): number {
+  if (!startTimestamp) return 10;
+  const since = Date.now() / 1000 - startTimestamp;
+  if (since > 4 * 3600) return 3600;
+  if (since < -2 * 3600) return 600;
+  return 10;
+}
+
 // Detalhe completo (server render inicial). Busca o event primeiro pra saber o
 // status e adaptar o TTL do resto (não martela a API em jogo encerrado).
-export async function getMatchDetail(id: number): Promise<MatchDetail | null> {
-  const eventRaw = await fetchAllSports<any>(`match/${id}`, 10);
+export async function getMatchDetail(id: number, startHint?: number): Promise<MatchDetail | null> {
+  const eventRaw = await fetchAllSports<any>(`match/${id}`, eventTtl(startHint));
   if (!eventRaw?.event) return null;
   const event = normalizeEvent(eventRaw.event);
   const ttl = liveTtl(event.statusType);
@@ -595,8 +609,8 @@ export interface MatchLive {
   stats: MatchStatItem[];
 }
 
-export async function getMatchLive(id: number): Promise<MatchLive | null> {
-  const eventRaw = await fetchAllSports<any>(`match/${id}`, 10);
+export async function getMatchLive(id: number, startHint?: number): Promise<MatchLive | null> {
+  const eventRaw = await fetchAllSports<any>(`match/${id}`, eventTtl(startHint));
   if (!eventRaw?.event) return null;
   const event = normalizeEvent(eventRaw.event);
   const ttl = liveTtl(event.statusType);
