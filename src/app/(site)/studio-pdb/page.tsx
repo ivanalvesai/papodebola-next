@@ -259,6 +259,10 @@ export default function StudioPage() {
           <Plus className="h-4 w-4" /> Novo Post
         </button>
         <button onClick={() => loadPosts()} className="p-2 text-text-muted hover:text-green" title="Atualizar"><RefreshCw className="h-4 w-4" /></button>
+        <a href="/studio-pdb/ideias"
+          className="flex items-center gap-2 px-3 py-2 border border-border-custom text-text-secondary rounded-lg text-sm font-semibold hover:border-yellow-500 hover:text-yellow-600 transition-colors" title="Mural de Ideias">
+          <Lightbulb className="h-4 w-4" /> <span className="hidden lg:inline">Ideias</span>
+        </a>
         <a href="/painel-pdb-9x/artigos" className="p-2 text-text-muted hover:text-green" title="Painel Admin"><ExternalLink className="h-4 w-4" /></a>
         <button onClick={handleLogout} className="p-2 text-text-muted hover:text-red" title="Sair"><LogOut className="h-4 w-4" /></button>
       </header>
