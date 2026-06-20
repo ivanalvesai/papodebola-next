@@ -878,6 +878,19 @@ export function LiveMatch({
         }}
       />
 
+      {event.venue?.stadium && (
+        <p className="text-xs text-text-muted">
+          <span className="font-semibold text-text-secondary">Estádio:</span> {event.venue.stadium}
+          {(event.venue.city || event.venue.country) && (
+            <>
+              {" · "}
+              <span className="font-semibold text-text-secondary">Local:</span>{" "}
+              {[event.venue.city, event.venue.country].filter(Boolean).join(" - ")}
+            </>
+          )}
+        </p>
+      )}
+
       {event.statusType === "finished" && <MatchRecap event={event} incidents={incidents} />}
 
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-[300px_minmax(0,1fr)_280px]">
