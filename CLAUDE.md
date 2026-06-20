@@ -728,6 +728,24 @@ Arquivos com permissão alterada (ex: aaPanel rodou chmod) aparecem como modifie
 sudo rm -rf /home/ivan/papodebola-next-dev/src/app/home
 ```
 
+### Site cai com 504 Gateway Timeout (Cloudflare) — páginas de jogo penduram
+
+Incidente 20/06: páginas de jogo da Copa davam **504** (pior no mobile/tráfego), chegando a
+afetar o servidor todo. **Causa**: a página `/futebol/copa-do-mundo/jogo/[data]/[slug]` estava
+`export const dynamic = "force-dynamic"` → **sem cache**, refazia **4+ chamadas** à AllSportsApi
+**por acesso**. Sob tráfego real → API devolvia **429 (rate-limit)** → os **retries com backoff
+(até ~16s)** do `fetchAllSports` penduravam cada render até timeout → 504.
+
+**Diagnóstico**: `curl` na página de jogo na origem (`:3000`) dava `000`/timeout enquanto home e
+Copa hub (ISR) respondiam em 0.02s; `docker logs papodebola-next | grep 429` mostrava enxurrada de
+`SportsProxy[...] 429 rate-limited, retry N/5`.
+
+**Fix**: trocar `force-dynamic` por **`export const revalidate = 30`** (ISR). A página cacheia e
+serve na hora; o **ao vivo vem do polling do cliente** (`/api/copa/jogo/[id]`, TTL ~10s, compartilhado
+→ N viewers = 1 call). **Regra: páginas que batem na API esportiva NUNCA devem ser `force-dynamic` —
+sempre ISR.** Recuperação: o 429 se auto-cura ao parar o burst; caches re-aquecem (jogo encerrado
+cacheia 24h). Doc: `docs/knowledge/2026-06-20-gsc-seo-copa-tenis.md`.
+
 ### Rollback manual de emergência (prod)
 ```bash
 cd /home/ivan/papodebola-next
