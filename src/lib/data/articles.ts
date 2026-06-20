@@ -1,6 +1,7 @@
 import { fetchWP } from "@/lib/api/wordpress";
 import { articleHref } from "@/lib/config";
 import type { Article } from "@/types/article";
+import { getArticlesPayload, getArticleBySlugPayload } from "@/lib/data/articles-payload";
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
@@ -146,6 +147,12 @@ export async function getArticles(options?: {
   noCache?: boolean;
 }): Promise<{ articles: Article[]; total: number }> {
   const { page = 1, perPage = 20, category, search, tag, noCache } = options || {};
+
+  // Fase 3: o Payload é a fonte dos artigos. Fallback pro WordPress só se o Payload
+  // cair (retorno null). Resultado vazio do Payload é resultado válido (não cai pro WP).
+  const fromPayload = await getArticlesPayload({ page, perPage, category, search, tag });
+  if (fromPayload) return fromPayload;
+
   const categories = await getCategories();
   const tags = await getTags();
 
@@ -184,6 +191,10 @@ export async function getArticles(options?: {
 }
 
 export async function getArticleBySlug(slug: string, noCache?: boolean): Promise<Article | null> {
+  // Payload primeiro; se não tiver o slug (ou cair), tenta o WordPress (fallback).
+  const fromPayload = await getArticleBySlugPayload(slug);
+  if (fromPayload) return fromPayload;
+
   const categories = await getCategories();
   const tags = await getTags();
 
