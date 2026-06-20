@@ -1,9 +1,10 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
+import Image from "next/image";
 import {
   Lightbulb, Target, Hammer, CheckCircle2, Plus, Trash2, GripVertical,
-  Loader2, ChevronDown, X, ArrowLeft, RefreshCw, LogOut, Pencil, Send,
+  Loader2, ChevronDown, X, ArrowLeft, RefreshCw, LogOut, Send, ImageIcon,
 } from "lucide-react";
 import { PanelMenu } from "@/components/studio/panel-menu";
 
@@ -11,7 +12,7 @@ type Column = "ideias" | "priorizado" | "fazendo" | "concluido";
 type Priority = "alta" | "media" | "baixa";
 
 interface Idea {
-  id: string; title: string; notes: string; area: string;
+  id: string; title: string; notes: string; image: string; area: string;
   priority: Priority; column: Column; author: string;
   createdAt: string; updatedAt: string;
 }
@@ -48,9 +49,16 @@ function timeAgo(iso: string): string {
   if (m < 60) return `ha ${m}min`;
   const h = Math.floor(m / 60);
   if (h < 24) return `ha ${h}h`;
-  const d = Math.floor(h / 24);
-  return `ha ${d}d`;
+  return `ha ${Math.floor(h / 24)}d`;
 }
+
+const fileToBase64 = (file: File): Promise<string> =>
+  new Promise((resolve, reject) => {
+    const r = new FileReader();
+    r.onload = () => resolve(String(r.result).split(",")[1] || "");
+    r.onerror = reject;
+    r.readAsDataURL(file);
+  });
 
 export default function IdeiasPage() {
   const [ideas, setIdeas] = useState<Idea[]>([]);
@@ -58,14 +66,15 @@ export default function IdeiasPage() {
   const [quick, setQuick] = useState("");
   const [saving, setSaving] = useState(false);
   const [dragId, setDragId] = useState<string | null>(null);
-  const [expanded, setExpanded] = useState<string | null>(null);
 
-  // modal nova ideia (detalhada)
+  // modal nova ideia
   const [showNew, setShowNew] = useState(false);
   const [nTitle, setNTitle] = useState("");
-  const [nNotes, setNNotes] = useState("");
-  const [nArea, setNArea] = useState("Geral");
-  const [nPriority, setNPriority] = useState<Priority>("media");
+
+  // modal detalhe/edicao (expandir card)
+  const [edit, setEdit] = useState<Idea | null>(null);
+  const [uploading, setUploading] = useState(false);
+  const [imgUrlInput, setImgUrlInput] = useState("");
 
   const load = useCallback(async () => {
     try {
@@ -93,21 +102,63 @@ export default function IdeiasPage() {
     await api({ action: "create", title, column: "ideias" });
   }
 
-  async function createDetailed() {
+  async function createNew() {
     if (!nTitle.trim()) return;
-    await api({ action: "create", title: nTitle, notes: nNotes, area: nArea, priority: nPriority, column: "ideias" });
-    setNTitle(""); setNNotes(""); setNArea("Geral"); setNPriority("media"); setShowNew(false);
+    const res = await api({ action: "create", title: nTitle, column: "ideias" });
+    setNTitle(""); setShowNew(false);
+    // abre o detalhe da recem-criada pra ja colar foto/notas
+    if (res.ok) { const d = await res.json().catch(() => null); if (d?.idea) setEdit(d.idea); }
   }
 
   const move = (id: string, column: Column) => api({ action: "move", id, column });
-  const patch = (id: string, updates: Partial<Idea>) => api({ action: "update", id, updates });
-  async function remove(id: string) { if (confirm("Excluir esta ideia?")) await api({ action: "delete", id }); }
-
+  async function remove(id: string) {
+    if (!confirm("Excluir esta ideia?")) return;
+    await api({ action: "delete", id });
+    setEdit(null);
+  }
   function onDrop(column: Column) { if (dragId) { move(dragId, column); setDragId(null); } }
 
+  async function clearDone() {
+    const n = ideas.filter((i) => i.column === "concluido").length;
+    if (n === 0) return;
+    if (!confirm(`Apagar as ${n} ideia(s) concluidas? (libera espaco, nao da pra desfazer)`)) return;
+    await api({ action: "clear-done" });
+  }
+
+  // ---- detalhe / edicao ----
+  function openEdit(idea: Idea) { setEdit({ ...idea }); setImgUrlInput(""); }
+  async function saveEdit() {
+    if (!edit) return;
+    await api({ action: "update", id: edit.id, updates: {
+      title: edit.title, notes: edit.notes, image: edit.image, area: edit.area, priority: edit.priority,
+    }});
+    setEdit(null);
+  }
+
+  async function uploadImage(file: File) {
+    if (!edit || !file.type.startsWith("image/")) return;
+    setUploading(true);
+    try {
+      const data = await fileToBase64(file);
+      const res = await fetch("/api/ideas/image", {
+        method: "POST", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ id: edit.id, filename: file.name || "paste.png", data }),
+      });
+      if (res.ok) { const d = await res.json(); setEdit((e) => e ? { ...e, image: d.url } : e); }
+    } catch { /* */ }
+    setUploading(false);
+  }
+
+  function onPaste(e: React.ClipboardEvent) {
+    const item = Array.from(e.clipboardData.items).find((i) => i.type.startsWith("image/"));
+    if (item) {
+      const file = item.getAsFile();
+      if (file) { e.preventDefault(); uploadImage(file); }
+    }
+  }
+
   const byColumn = (c: Column) =>
-    ideas
-      .filter((i) => i.column === c)
+    ideas.filter((i) => i.column === c)
       .sort((a, b) => PRIORITY[a.priority].rank - PRIORITY[b.priority].rank ||
         +new Date(b.updatedAt) - +new Date(a.updatedAt));
 
@@ -117,14 +168,12 @@ export default function IdeiasPage() {
 
   return (
     <div className="h-screen flex flex-col bg-body font-sans">
-      {/* Top bar */}
       <header className="bg-surface border-b border-border-custom px-4 sm:px-6 py-3 flex items-center gap-3 shrink-0">
         <a href="/studio-pdb" className="p-2 -ml-2 text-text-muted hover:text-green" title="Voltar ao Studio"><ArrowLeft className="h-4 w-4" /></a>
         <Lightbulb className="h-5 w-5 text-yellow-500" />
         <h1 className="hidden md:block text-lg font-bold text-text-primary">Mural de Ideias</h1>
         <PanelMenu current="/studio-pdb/ideias" />
 
-        {/* Captura rapida */}
         <div className="flex-1 max-w-md mx-auto flex items-center gap-2">
           <input
             value={quick}
@@ -158,16 +207,23 @@ export default function IdeiasPage() {
                 <div className={`flex items-center gap-2 px-4 py-2.5 rounded-t-lg border ${col.bg}`}>
                   <col.icon className={`h-4 w-4 ${col.color}`} />
                   <span className={`text-sm font-bold ${col.color}`}>{col.label}</span>
-                  <span className="ml-auto bg-white/60 text-text-muted text-xs font-bold px-2 py-0.5 rounded-full">{items.length}</span>
+                  {done && items.length > 0 && (
+                    <button onClick={clearDone} title="Apagar todos os concluidos (libera espaco)"
+                      className="ml-auto flex items-center gap-1 text-[10px] font-semibold text-text-muted hover:text-red">
+                      <Trash2 className="h-3 w-3" /> Limpar
+                    </button>
+                  )}
+                  <span className={`${done && items.length > 0 ? "" : "ml-auto"} bg-white/60 text-text-muted text-xs font-bold px-2 py-0.5 rounded-full`}>{items.length}</span>
                 </div>
 
                 <div className="flex-1 overflow-y-auto space-y-2 pt-2 pb-4">
                   {items.map((idea) => (
                     <div key={idea.id} draggable onDragStart={() => setDragId(idea.id)}
-                      className={`bg-surface border border-border-custom rounded-lg shadow-sm hover:shadow-md transition cursor-grab active:cursor-grabbing ${dragId === idea.id ? "opacity-40" : ""} ${done ? "opacity-70" : ""}`}>
+                      onClick={() => openEdit(idea)}
+                      className={`bg-surface border border-border-custom rounded-lg shadow-sm hover:shadow-md transition cursor-pointer ${dragId === idea.id ? "opacity-40" : ""} ${done ? "opacity-70" : ""}`}>
                       <div className="p-3">
                         <div className="flex items-start gap-2">
-                          <GripVertical className="h-4 w-4 text-border-custom shrink-0 mt-0.5" />
+                          <GripVertical className="h-4 w-4 text-border-custom shrink-0 mt-0.5 cursor-grab" onClick={(e) => e.stopPropagation()} />
                           <div className="flex-1 min-w-0">
                             <div className="flex items-center gap-1.5 mb-1">
                               <span className={`text-[9px] font-bold uppercase px-1.5 py-0.5 rounded ${AREAS[idea.area] || AREAS.Geral}`}>{idea.area}</span>
@@ -175,36 +231,25 @@ export default function IdeiasPage() {
                                 <span className={`h-1.5 w-1.5 rounded-full ${PRIORITY[idea.priority].dot}`} />
                                 {PRIORITY[idea.priority].label}
                               </span>
+                              {idea.image && <ImageIcon className="h-3 w-3 text-text-muted ml-auto" />}
                             </div>
                             <h3 className={`text-sm font-semibold leading-tight ${done ? "line-through text-text-muted" : "text-text-primary"}`}>{idea.title}</h3>
+                            {idea.notes && <p className="text-[11px] text-text-muted mt-0.5 line-clamp-2">{idea.notes}</p>}
                             <div className="text-[10px] text-text-muted mt-1">
                               {idea.author ? `${idea.author} · ` : ""}{timeAgo(idea.createdAt)}
                             </div>
                           </div>
                         </div>
 
-                        {expanded === idea.id && (
-                          <div className="mt-2 space-y-2">
-                            {idea.notes && (
-                              <div className="p-2 bg-body rounded text-xs text-text-secondary leading-relaxed whitespace-pre-wrap max-h-48 overflow-y-auto">{idea.notes}</div>
-                            )}
-                            <div className="flex gap-2">
-                              <select value={idea.area} onChange={(e) => patch(idea.id, { area: e.target.value })}
-                                className="flex-1 h-8 rounded border border-border-custom bg-surface px-2 text-xs">
-                                {AREA_KEYS.map((a) => <option key={a} value={a}>{a}</option>)}
-                              </select>
-                              <select value={idea.priority} onChange={(e) => patch(idea.id, { priority: e.target.value as Priority })}
-                                className="h-8 rounded border border-border-custom bg-surface px-2 text-xs">
-                                <option value="alta">Alta</option><option value="media">Media</option><option value="baixa">Baixa</option>
-                              </select>
-                            </div>
+                        {idea.image && (
+                          <div className="mt-2 rounded overflow-hidden border border-border-light">
+                            <Image src={idea.image} alt="" width={300} height={150} className="w-full h-28 object-cover" unoptimized />
                           </div>
                         )}
                       </div>
 
-                      <div className="border-t border-border-light px-3 py-2 flex items-center gap-1">
-                        <button onClick={() => setExpanded(expanded === idea.id ? null : idea.id)}
-                          className="p-1.5 text-text-muted hover:text-text-primary rounded" title="Notas / editar"><Pencil className="h-3.5 w-3.5" /></button>
+                      <div className="border-t border-border-light px-3 py-1.5 flex items-center gap-1" onClick={(e) => e.stopPropagation()}>
+                        <span className="text-[10px] text-text-muted">Abrir p/ editar</span>
                         <div className="flex-1" />
                         <div className="relative group">
                           <button className="p-1.5 text-text-muted hover:text-green rounded" title="Mover"><ChevronDown className="h-3.5 w-3.5" /></button>
@@ -235,48 +280,123 @@ export default function IdeiasPage() {
         </div>
       </div>
 
-      {/* Modal nova ideia detalhada */}
+      {/* Modal nova ideia (rapida) */}
       {showNew && (
         <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4" onClick={() => setShowNew(false)}>
-          <div className="bg-surface rounded-xl border border-border-custom shadow-xl w-full max-w-lg" onClick={(e) => e.stopPropagation()}>
+          <div className="bg-surface rounded-xl border border-border-custom shadow-xl w-full max-w-md" onClick={(e) => e.stopPropagation()}>
             <div className="flex items-center justify-between px-6 py-4 border-b border-border-custom">
               <h2 className="text-base font-bold text-text-primary">Nova ideia</h2>
               <button onClick={() => setShowNew(false)} className="p-1 text-text-muted hover:text-text-primary"><X className="h-5 w-5" /></button>
             </div>
-            <div className="p-6 space-y-4">
-              <div>
-                <label className="block text-xs font-semibold text-text-secondary mb-1">Titulo *</label>
-                <input value={nTitle} onChange={(e) => setNTitle(e.target.value)} placeholder="Resumo da ideia" autoFocus
-                  className="w-full h-10 rounded-lg border border-border-custom bg-surface px-4 text-sm focus:outline-none focus:ring-2 focus:ring-green/30 focus:border-green" />
+            <div className="p-6">
+              <label className="block text-xs font-semibold text-text-secondary mb-1">Titulo *</label>
+              <input value={nTitle} onChange={(e) => setNTitle(e.target.value)} placeholder="Resumo da ideia" autoFocus
+                onKeyDown={(e) => { if (e.key === "Enter") createNew(); }}
+                className="w-full h-10 rounded-lg border border-border-custom bg-surface px-4 text-sm focus:outline-none focus:ring-2 focus:ring-green/30 focus:border-green" />
+              <p className="mt-2 text-[11px] text-text-muted">Apos criar, o card abre pra voce adicionar notas e colar uma foto.</p>
+            </div>
+            <div className="flex gap-3 px-6 py-4 border-t border-border-custom">
+              <button onClick={createNew} disabled={!nTitle.trim() || saving}
+                className="flex-1 flex items-center justify-center gap-2 py-2.5 bg-green text-white rounded-lg text-sm font-semibold hover:bg-green-hover disabled:opacity-40">
+                <Plus className="h-4 w-4" /> Criar e abrir
+              </button>
+              <button onClick={() => setShowNew(false)} className="px-6 py-2.5 border border-border-custom text-text-secondary rounded-lg text-sm font-semibold hover:bg-body">Cancelar</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Modal detalhe / edicao (expandir card) */}
+      {edit && (
+        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4" onClick={() => setEdit(null)}>
+          <div className="bg-surface rounded-xl border border-border-custom shadow-xl w-full max-w-2xl max-h-[90vh] flex flex-col" onClick={(e) => e.stopPropagation()} onPaste={onPaste}>
+            <div className="flex items-center justify-between px-6 py-4 border-b border-border-custom shrink-0">
+              <div className="flex items-center gap-2">
+                <span className={`text-[9px] font-bold uppercase px-1.5 py-0.5 rounded ${AREAS[edit.area] || AREAS.Geral}`}>{edit.area}</span>
+                <span className="text-[11px] text-text-muted">{edit.author ? `${edit.author} · ` : ""}{timeAgo(edit.createdAt)}</span>
               </div>
+              <button onClick={() => setEdit(null)} className="p-1 text-text-muted hover:text-text-primary"><X className="h-5 w-5" /></button>
+            </div>
+
+            <div className="p-6 space-y-4 overflow-y-auto">
+              <div>
+                <label className="block text-xs font-semibold text-text-secondary mb-1">Titulo</label>
+                <input value={edit.title} onChange={(e) => setEdit({ ...edit, title: e.target.value })}
+                  className="w-full h-10 rounded-lg border border-border-custom bg-surface px-4 text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-green/30 focus:border-green" />
+              </div>
+
               <div>
                 <label className="block text-xs font-semibold text-text-secondary mb-1">Notas</label>
-                <textarea value={nNotes} onChange={(e) => setNNotes(e.target.value)} rows={5} placeholder="Detalhes, contexto, links..."
+                <textarea value={edit.notes} onChange={(e) => setEdit({ ...edit, notes: e.target.value })} rows={6}
+                  placeholder="Detalhes, contexto, links... (cole uma imagem com Ctrl+V)"
                   className="w-full rounded-lg border border-border-custom bg-surface px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-green/30 focus:border-green resize-none" />
               </div>
+
+              {/* Imagem */}
+              <div>
+                <label className="block text-xs font-semibold text-text-secondary mb-1">Foto</label>
+                {edit.image ? (
+                  <div className="relative rounded-lg overflow-hidden border border-border-custom">
+                    <Image src={edit.image} alt="" width={640} height={360} className="w-full max-h-72 object-contain bg-body" unoptimized />
+                    <button onClick={() => setEdit({ ...edit, image: "" })}
+                      className="absolute top-2 right-2 p-1.5 bg-black/60 text-white rounded-full hover:bg-red" title="Remover foto"><X className="h-4 w-4" /></button>
+                  </div>
+                ) : (
+                  <label className={`flex flex-col items-center justify-center gap-2 rounded-lg border-2 border-dashed border-border-custom py-8 text-center cursor-pointer hover:border-green hover:bg-green-light/30 transition ${uploading ? "opacity-60" : ""}`}>
+                    {uploading ? <Loader2 className="h-6 w-6 animate-spin text-green" /> : <ImageIcon className="h-6 w-6 text-text-muted" />}
+                    <span className="text-xs text-text-muted">
+                      {uploading ? "Enviando..." : "Cole uma imagem (Ctrl+V) ou clique para escolher um arquivo"}
+                    </span>
+                    <input type="file" accept="image/*" className="hidden"
+                      onChange={(e) => { const f = e.target.files?.[0]; if (f) uploadImage(f); }} />
+                  </label>
+                )}
+                {!edit.image && (
+                  <div className="mt-2 flex gap-2">
+                    <input value={imgUrlInput} onChange={(e) => setImgUrlInput(e.target.value)}
+                      placeholder="...ou cole a URL de uma imagem"
+                      className="flex-1 h-9 rounded-lg border border-border-custom bg-surface px-3 text-sm focus:outline-none focus:ring-2 focus:ring-green/30 focus:border-green" />
+                    <button onClick={() => { if (imgUrlInput.trim()) { setEdit({ ...edit, image: imgUrlInput.trim() }); setImgUrlInput(""); } }}
+                      disabled={!imgUrlInput.trim()}
+                      className="px-4 h-9 bg-green text-white rounded-lg text-sm font-semibold hover:bg-green-hover disabled:opacity-30">Usar</button>
+                  </div>
+                )}
+              </div>
+
               <div className="flex gap-3">
                 <div className="flex-1">
                   <label className="block text-xs font-semibold text-text-secondary mb-1">Area</label>
-                  <select value={nArea} onChange={(e) => setNArea(e.target.value)}
+                  <select value={edit.area} onChange={(e) => setEdit({ ...edit, area: e.target.value })}
                     className="w-full h-10 rounded-lg border border-border-custom bg-surface px-3 text-sm">
                     {AREA_KEYS.map((a) => <option key={a} value={a}>{a}</option>)}
                   </select>
                 </div>
                 <div className="w-32">
                   <label className="block text-xs font-semibold text-text-secondary mb-1">Prioridade</label>
-                  <select value={nPriority} onChange={(e) => setNPriority(e.target.value as Priority)}
+                  <select value={edit.priority} onChange={(e) => setEdit({ ...edit, priority: e.target.value as Priority })}
                     className="w-full h-10 rounded-lg border border-border-custom bg-surface px-3 text-sm">
                     <option value="alta">Alta</option><option value="media">Media</option><option value="baixa">Baixa</option>
                   </select>
                 </div>
+                <div className="w-40">
+                  <label className="block text-xs font-semibold text-text-secondary mb-1">Coluna</label>
+                  <select value={edit.column} onChange={(e) => setEdit({ ...edit, column: e.target.value as Column })}
+                    className="w-full h-10 rounded-lg border border-border-custom bg-surface px-3 text-sm">
+                    {COLUMNS.map((c) => <option key={c.key} value={c.key}>{c.label}</option>)}
+                  </select>
+                </div>
               </div>
             </div>
-            <div className="flex gap-3 px-6 py-4 border-t border-border-custom">
-              <button onClick={createDetailed} disabled={!nTitle.trim() || saving}
+
+            <div className="flex gap-3 px-6 py-4 border-t border-border-custom shrink-0">
+              <button onClick={saveEdit} disabled={saving}
                 className="flex-1 flex items-center justify-center gap-2 py-2.5 bg-green text-white rounded-lg text-sm font-semibold hover:bg-green-hover disabled:opacity-40">
-                <Plus className="h-4 w-4" /> Adicionar
+                {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : <CheckCircle2 className="h-4 w-4" />} Salvar
               </button>
-              <button onClick={() => setShowNew(false)} className="px-6 py-2.5 border border-border-custom text-text-secondary rounded-lg text-sm font-semibold hover:bg-body">Cancelar</button>
+              <button onClick={() => remove(edit.id)} className="px-4 py-2.5 border border-border-custom text-text-muted rounded-lg text-sm font-semibold hover:border-red hover:text-red flex items-center gap-1.5">
+                <Trash2 className="h-4 w-4" /> Excluir
+              </button>
+              <button onClick={() => setEdit(null)} className="px-6 py-2.5 border border-border-custom text-text-secondary rounded-lg text-sm font-semibold hover:bg-body">Fechar</button>
             </div>
           </div>
         </div>
