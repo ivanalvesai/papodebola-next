@@ -13,6 +13,7 @@ export interface Idea {
   id: string;
   title: string;
   notes: string;
+  image: string; // URL da foto colada (/api/ideas/image?f=...) — opcional
   area: string; // SEO | Conteúdo | Performance | UX | Bug | Copa | Tênis | Geral
   priority: IdeaPriority;
   column: IdeaColumn;
@@ -47,6 +48,7 @@ export async function addIdea(
     id: `idea_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 6)}`,
     title: data.title,
     notes: data.notes || "",
+    image: data.image || "",
     area: data.area || "Geral",
     priority: data.priority || "media",
     column: data.column || "ideias",
