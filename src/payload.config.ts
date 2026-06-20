@@ -4,6 +4,8 @@ import { buildConfig } from "payload";
 import { postgresAdapter } from "@payloadcms/db-postgres";
 import { lexicalEditor } from "@payloadcms/richtext-lexical";
 import sharp from "sharp";
+import { revalidatePath } from "next/cache";
+import { articleHref } from "@/lib/config";
 
 const filename = fileURLToPath(import.meta.url);
 const dirname = path.dirname(filename);
@@ -196,6 +198,34 @@ export default buildConfig({
       access: {
         read: ({ req: { user } }) =>
           user ? true : { _status: { equals: "published" } },
+      },
+      // 3e: edição/publicação no /cms revalida o site na hora (substitui o mu-plugin).
+      hooks: {
+        afterChange: [
+          /* eslint-disable-next-line @typescript-eslint/no-explicit-any */
+          ({ doc }: any) => {
+            try {
+              revalidatePath("/");
+              revalidatePath("/noticias");
+              if (doc?.category && doc?.slug) revalidatePath(articleHref(doc.category, doc.slug));
+            } catch {
+              /* fora de contexto de request (build/cli) */
+            }
+            return doc;
+          },
+        ],
+        afterDelete: [
+          /* eslint-disable-next-line @typescript-eslint/no-explicit-any */
+          ({ doc }: any) => {
+            try {
+              revalidatePath("/");
+              revalidatePath("/noticias");
+              if (doc?.category && doc?.slug) revalidatePath(articleHref(doc.category, doc.slug));
+            } catch {
+              /* */
+            }
+          },
+        ],
       },
       fields: [
         { name: "title", type: "text", required: true },

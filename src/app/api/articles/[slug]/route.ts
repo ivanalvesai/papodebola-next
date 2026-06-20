@@ -2,7 +2,21 @@ import { NextRequest, NextResponse } from "next/server";
 import { revalidatePath } from "next/cache";
 import { getSession } from "@/lib/auth/jwt";
 import { getArticleBySlug } from "@/lib/data/articles";
-import { updateWP, deleteWP } from "@/lib/api/wordpress";
+import { getPayload } from "payload";
+import config from "@payload-config";
+import { articleHref } from "@/lib/config";
+
+/* eslint-disable @typescript-eslint/no-explicit-any */
+async function findPostId(payload: any, slug: string): Promise<number | null> {
+  const res = await payload.find({
+    collection: "posts",
+    where: { slug: { equals: slug } },
+    limit: 1,
+    depth: 0,
+    draft: true,
+  });
+  return (res.docs[0]?.id as number) ?? null;
+}
 
 export async function GET(
   _request: NextRequest,
@@ -10,11 +24,9 @@ export async function GET(
 ) {
   const { slug } = await params;
   const article = await getArticleBySlug(slug, true);
-
   if (!article) {
     return NextResponse.json({ error: "Artigo não encontrado" }, { status: 404 });
   }
-
   return NextResponse.json({ article });
 }
 
@@ -23,36 +35,29 @@ export async function PUT(
   { params }: { params: Promise<{ slug: string }> }
 ) {
   const session = await getSession();
-  if (!session) {
-    return NextResponse.json({ error: "Não autorizado" }, { status: 401 });
-  }
+  if (!session) return NextResponse.json({ error: "Não autorizado" }, { status: 401 });
 
   const { slug } = await params;
-  const article = await getArticleBySlug(slug, true);
-
-  if (!article || !article.wpId) {
-    return NextResponse.json({ error: "Artigo não encontrado" }, { status: 404 });
-  }
-
   try {
+    const payload = await getPayload({ config });
+    const id = await findPostId(payload, slug);
+    if (!id) return NextResponse.json({ error: "Artigo não encontrado" }, { status: 404 });
+
     const updates = await request.json();
-    const wpUpdates: Record<string, unknown> = {};
+    const data: Record<string, unknown> = {};
+    if (updates.title) data.title = updates.title;
+    if (updates.text) data.body = updates.text;
+    if (updates.excerpt) data.excerpt = updates.excerpt;
+    if (updates.category) data.category = updates.category;
 
-    if (updates.title) wpUpdates.title = updates.title;
-    if (updates.text) wpUpdates.content = updates.text;
+    const doc: any = await payload.update({ collection: "posts", id, data });
+    revalidatePath("/");
+    revalidatePath("/noticias");
+    revalidatePath(articleHref(doc.category || "", doc.slug || slug));
 
-    const result = await updateWP(`posts/${article.wpId}`, wpUpdates);
-
-    if (!result) {
-      return NextResponse.json(
-        { error: "Erro ao atualizar no WordPress" },
-        { status: 500 }
-      );
-    }
-
-    return NextResponse.json({ article: { ...article, ...updates } });
+    return NextResponse.json({ article: { slug: doc.slug, title: doc.title } });
   } catch {
-    return NextResponse.json({ error: "Erro interno" }, { status: 500 });
+    return NextResponse.json({ error: "Erro ao atualizar no Payload" }, { status: 500 });
   }
 }
 
@@ -61,29 +66,28 @@ export async function DELETE(
   { params }: { params: Promise<{ slug: string }> }
 ) {
   const session = await getSession();
-  if (!session) {
-    return NextResponse.json({ error: "Não autorizado" }, { status: 401 });
-  }
+  if (!session) return NextResponse.json({ error: "Não autorizado" }, { status: 401 });
 
   const { slug } = await params;
-  const article = await getArticleBySlug(slug, true);
+  try {
+    const payload = await getPayload({ config });
+    const res = await payload.find({
+      collection: "posts",
+      where: { slug: { equals: slug } },
+      limit: 1,
+      depth: 0,
+      draft: true,
+    });
+    const doc: any = res.docs[0];
+    if (!doc) return NextResponse.json({ error: "Artigo não encontrado" }, { status: 404 });
 
-  if (!article || !article.wpId) {
-    return NextResponse.json({ error: "Artigo não encontrado" }, { status: 404 });
+    await payload.delete({ collection: "posts", id: doc.id });
+    revalidatePath("/");
+    revalidatePath("/noticias");
+    revalidatePath(articleHref(doc.category || "", slug));
+
+    return NextResponse.json({ deleted: slug });
+  } catch {
+    return NextResponse.json({ error: "Erro ao excluir do Payload" }, { status: 500 });
   }
-
-  const deleted = await deleteWP(`posts/${article.wpId}?force=true`);
-
-  if (!deleted) {
-    return NextResponse.json(
-      { error: "Erro ao excluir do WordPress" },
-      { status: 500 }
-    );
-  }
-
-  revalidatePath("/");
-  revalidatePath("/noticias");
-  revalidatePath(`/artigos/${slug}`);
-
-  return NextResponse.json({ deleted: slug });
 }
