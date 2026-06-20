@@ -3,7 +3,7 @@
 import { useState, useRef, useEffect } from "react";
 import {
   LayoutGrid, FileText, Flame, LayoutTemplate, Users, Gamepad2,
-  Bell, Settings, Rocket, Sparkles, Lightbulb, ChevronDown,
+  Bell, Settings, Rocket, Sparkles, Lightbulb, ChevronDown, KanbanSquare,
 } from "lucide-react";
 
 // Navegação compartilhada entre as telas "cheias" (Studio, Mural de Ideias) e o
@@ -11,6 +11,7 @@ import {
 const ITEMS: { href: string; label: string; icon: React.ElementType }[] = [
   { href: "/studio-pdb", label: "Studio", icon: Sparkles },
   { href: "/studio-pdb/ideias", label: "Mural de Ideias", icon: Lightbulb },
+  { href: "/studio-pdb/meu-kanban", label: "Meu Kanban", icon: KanbanSquare },
   { href: "/painel-pdb-9x/artigos", label: "Artigos", icon: FileText },
   { href: "/painel-pdb-9x/pautas", label: "Pautas", icon: Flame },
   { href: "/painel-pdb-9x/paginas", label: "Páginas", icon: LayoutTemplate },
