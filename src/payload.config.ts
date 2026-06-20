@@ -43,6 +43,8 @@ export default buildConfig({
       // staticDir no volume COMPARTILHADO (/app/data) — persiste entre deploys e é
       // o mesmo em dev e prod. URL servida via /cms-api/media/file/<filename>.
       upload: { staticDir: path.resolve(dirname, "../data/cms-media") },
+      // Leitura pública: as imagens/arquivos precisam abrir pra qualquer visitante.
+      access: { read: () => true },
       fields: [{ name: "alt", type: "text" }],
     },
     {
