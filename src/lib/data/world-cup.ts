@@ -78,15 +78,19 @@ export async function getWorldCupKnockout(round: number): Promise<ChampionshipMa
 export async function getWorldCupData(): Promise<WorldCupData> {
   const standingsGroups = await getWorldCupStandings();
 
-  // Busca os jogos de cada rodada (todos os grupos juntos)
+  // Busca os jogos de cada rodada (todos os grupos juntos) — em paralelo. O semáforo
+  // do fetchAllSports já limita a 2 simultâneas + retry em 429; sem pausas fixas.
   const roundMatches: Record<number, ChampionshipMatch[]> = {};
-  for (const r of GROUP_ROUNDS) {
-    const data = await fetchAllSports<any>(
-      `tournament/${WC.id}/season/${WC.seasonId}/matches/round/${r}`,
-      1800
-    );
+  const fetched = await Promise.all(
+    GROUP_ROUNDS.map((r) =>
+      fetchAllSports<any>(
+        `tournament/${WC.id}/season/${WC.seasonId}/matches/round/${r}`,
+        1800
+      ).then((data) => ({ r, data }))
+    )
+  );
+  for (const { r, data } of fetched) {
     roundMatches[r] = (data?.events || []).map((e: any) => normalizeMatch(e, r));
-    await new Promise((resolve) => setTimeout(resolve, 150));
   }
 
   // Associa cada jogo ao seu grupo pelos times (ambos pertencem ao mesmo grupo)

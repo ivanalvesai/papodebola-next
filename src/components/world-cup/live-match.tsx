@@ -105,7 +105,12 @@ function liveMinute(event: MatchEvent): string | null {
   else if (desc.toLowerCase().includes("prorrog")) base = 90;
   if (base === null || !event.periodStart) return null;
   const elapsed = Math.floor(Date.now() / 1000 - event.periodStart);
-  return `${base + Math.floor(elapsed / 60) + 1}'`;
+  const minute = base + Math.floor(elapsed / 60) + 1;
+  // periodStart às vezes vem travado do provedor → cronômetro dispara (ex: 1500').
+  // Nenhum período passa de ~60' reais (45' + acréscimos longos). Acima disso,
+  // não mostra o número (cai pro statusDesc, ex: "2º tempo").
+  if (minute > base + 60) return null;
+  return `${minute}'`;
 }
 
 function countdown(target: number): string | null {

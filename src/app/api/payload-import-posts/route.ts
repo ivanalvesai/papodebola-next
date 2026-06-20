@@ -70,6 +70,8 @@ async function handle(req: Request) {
   }
   const page = parseInt(url.searchParams.get("page") || "1", 10);
   const perPage = parseInt(url.searchParams.get("perPage") || "10", 10);
+  // recover=1: re-sobe a capa (apaga a antiga) pra converter pra WebP
+  const recover = url.searchParams.get("recover") === "1";
   const { catMap, tagMap } = await maps();
 
   // order=asc: importa do mais antigo pro mais novo (cronológico)
@@ -111,6 +113,15 @@ async function handle(req: Request) {
         draft: true,
       });
       let cover: number | null = (existing.docs[0]?.cover as number) ?? null;
+      if (recover && cover) {
+        // apaga a media antiga (jpg) pra substituir pela WebP nova
+        try {
+          await payload.delete({ collection: "media", id: cover });
+        } catch {
+          /* ignora */
+        }
+        cover = null;
+      }
       if (!cover && media?.source_url) cover = await uploadCover(payload, media.source_url, title);
 
       const data: any = {
