@@ -181,5 +181,56 @@ export default buildConfig({
         },
       ],
     },
+    {
+      slug: "posts",
+      labels: { singular: "Post", plural: "Posts" },
+      admin: {
+        useAsTitle: "title",
+        defaultColumns: ["title", "category", "publishedDate", "_status"],
+      },
+      versions: { drafts: true, maxPerDoc: 20 },
+      access: {
+        read: ({ req: { user } }) =>
+          user ? true : { _status: { equals: "published" } },
+      },
+      fields: [
+        { name: "title", type: "text", required: true },
+        { name: "slug", type: "text", required: true, unique: true, index: true },
+        {
+          name: "category",
+          type: "text",
+          admin: { description: "Nome da categoria (define a URL /{categoria}/{slug})" },
+        },
+        { name: "tags", type: "array", fields: [{ name: "tag", type: "text" }] },
+        { name: "cover", type: "upload", relationTo: "media" },
+        { name: "excerpt", type: "textarea", admin: { description: "Resumo (meta description)" } },
+        {
+          name: "body",
+          type: "code",
+          admin: { language: "html", description: "Corpo do post (HTML)" },
+        },
+        { name: "author", type: "text", defaultValue: "Redação" },
+        {
+          name: "publishedDate",
+          type: "date",
+          admin: { date: { pickerAppearance: "dayAndTime" } },
+        },
+        { name: "pdbLink", type: "text", admin: { description: "URL custom do card (opcional)" } },
+        {
+          name: "seo",
+          type: "group",
+          fields: [
+            { name: "metaTitle", type: "text" },
+            { name: "metaDescription", type: "textarea" },
+          ],
+        },
+        {
+          name: "wpId",
+          type: "number",
+          index: true,
+          admin: { readOnly: true, description: "ID de origem no WordPress (import)" },
+        },
+      ],
+    },
   ],
 });
