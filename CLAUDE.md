@@ -221,13 +221,18 @@ Resiliência contra caprichos da API (implementada nessa ordem):
 1. **Semaphore in-memory** limita 2 requests simultâneas (`ALLSPORTS_MAX_CONCURRENT`)
 2. Se `SPORTS_PROXY_URL` + `SPORTS_PROXY_TOKEN` setados → tenta proxy primeiro
 3. **Fast-fail em ENOTFOUND/ECONNREFUSED** (sem retry — erro de DNS/rede é permanente)
-4. Retry exponencial **apenas em HTTP 429** (rate limit): 500ms, 1s, 2s, 4s, 8s+jitter (max 5)
+4. Retry **apenas em HTTP 429**, com **tempo total limitado**: backoff 300/600/1200ms (cap 1500, max 3) ≈ ~2s no pior caso. **NÃO** ~15s — render não pode pendurar (ver incidente 504 de 20/06). `AbortSignal.timeout(8s)` por fetch aborta socket pendurado.
 5. Se proxy falhar **durante build** (`NEXT_PHASE==='phase-production-build'`): skip direct, retorna null — ISR popula em runtime
-6. Fallback direct em runtime (se proxy falhar por outro motivo)
+6. **Fallback direct SÓ se o proxy estiver INACESSÍVEL** (`reason: "unreachable"` = ENOTFOUND/ECONNREFUSED/timeout). Se o proxy **respondeu erro http (429/5xx)**, devolve `null` e **NÃO** re-consulta direto — senão dobraria o hang e o prod bateria no rapidapi tomando 429 também (viola "só o dev consulta a API"). O cliente faz polling.
 7. **HTTP 404 com body válido** é aceito (provider tem esse bug)
 8. **HTTP 204 No Content** é sucesso com `data=null` (não é erro)
 9. Body `{message: "... does not exist"}` é rejeitado
 10. Qualquer outro 4xx é erro
+
+> **Regra de ouro (pós-incidente 20/06):** nada que dependa da AllSportsApi pode **pendurar** num render
+> (ISR/SSR). As chamadas são limitadas no tempo; quando a API está lenta/429, a página serve o que tem
+> (ou semeia do fixture) e o **cliente preenche/atualiza via polling** (compartilhado, cacheado ~10s →
+> N viewers = 1 chamada). Páginas de jogo: ISR + polling, nunca `force-dynamic`.
 
 ### Sports-proxy (`/api/sports-proxy/[...path]/route.ts`)
 
@@ -740,11 +745,19 @@ afetar o servidor todo. **Causa**: a página `/futebol/copa-do-mundo/jogo/[data]
 Copa hub (ISR) respondiam em 0.02s; `docker logs papodebola-next | grep 429` mostrava enxurrada de
 `SportsProxy[...] 429 rate-limited, retry N/5`.
 
-**Fix**: trocar `force-dynamic` por **`export const revalidate = 30`** (ISR). A página cacheia e
-serve na hora; o **ao vivo vem do polling do cliente** (`/api/copa/jogo/[id]`, TTL ~10s, compartilhado
-→ N viewers = 1 call). **Regra: páginas que batem na API esportiva NUNCA devem ser `force-dynamic` —
-sempre ISR.** Recuperação: o 429 se auto-cura ao parar o burst; caches re-aquecem (jogo encerrado
-cacheia 24h). Doc: `docs/knowledge/2026-06-20-gsc-seo-copa-tenis.md`.
+**Fix (3 camadas, todas em prod 20/06):**
+1. **`force-dynamic` → `revalidate = 30`** (ISR): a página cacheia e serve na hora.
+2. **`fetchAllSports` não cai mais pro fetch direto quando o proxy responde 429** (só se o dev estiver
+   inacessível). Antes, no 429 o prod re-batia direto no rapidapi e tomava 429 também → **dobrava o
+   hang** (15s proxy + 15s direto = 30s+ → 504). Agora devolve null rápido. Retries 429 limitados a ~2s
+   (era ~15s) + `AbortSignal.timeout(8s)`.
+3. **Cliente**: a página **semeia o `LiveMatch` do fixture** se o SSR não trouxe detalhe (nunca mostra
+   "indisponível"); o **polling re-tenta em 5s** quando falha e **nunca sobrescreve a tela boa com vazio**.
+
+O **ao vivo vem do polling do cliente** (`/api/copa/jogo/[id]`, TTL ~10s, compartilhado → N viewers =
+1 call). **Regra: páginas que batem na API esportiva NUNCA `force-dynamic` — sempre ISR + polling.**
+O 429 se auto-cura ao parar o burst; jogo encerrado cacheia 24h. Doc:
+`docs/knowledge/2026-06-20-gsc-seo-copa-tenis.md`.
 
 ### Rollback manual de emergência (prod)
 ```bash
