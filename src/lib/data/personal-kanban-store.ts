@@ -30,10 +30,16 @@ export interface Card {
   columnId: string;
   title: string;
   notes: string;
-  image: string;
+  images: string[];
   priority: CardPriority;
   createdAt: string;
   updatedAt: string;
+}
+
+function normalizeCard(c: Card & { image?: string }): Card {
+  const images = Array.isArray(c.images) ? c.images : c.image ? [c.image] : [];
+  const { image: _drop, ...rest } = c;
+  return { ...rest, images };
 }
 
 interface DB { boards: Board[]; cards: Card[]; }
@@ -45,7 +51,7 @@ async function ensureDir() { try { await mkdir(DATA_DIR, { recursive: true }); }
 async function read(): Promise<DB> {
   try {
     const d = JSON.parse(await readFile(FILE, "utf-8"));
-    return { boards: d.boards || [], cards: d.cards || [] };
+    return { boards: d.boards || [], cards: (d.cards || []).map(normalizeCard) };
   } catch {
     return { boards: [], cards: [] };
   }
@@ -116,7 +122,7 @@ export async function addCard(owner: string, boardId: string, columnId: string, 
   const now = new Date().toISOString();
   const card: Card = {
     id: uid("card"), boardId, owner, columnId: col,
-    title: title.trim() || "Sem titulo", notes: "", image: "", priority: "media",
+    title: title.trim() || "Sem titulo", notes: "", images: [], priority: "media",
     createdAt: now, updatedAt: now,
   };
   db.cards.unshift(card);
@@ -130,7 +136,7 @@ export async function patchCard(owner: string, id: string, updates: Partial<Card
   if (!c) return null;
   if (typeof updates.title === "string") c.title = updates.title;
   if (typeof updates.notes === "string") c.notes = updates.notes;
-  if (typeof updates.image === "string") c.image = updates.image;
+  if (Array.isArray(updates.images)) c.images = updates.images;
   if (updates.priority) c.priority = updates.priority;
   if (typeof updates.columnId === "string") c.columnId = updates.columnId;
   c.updatedAt = new Date().toISOString();

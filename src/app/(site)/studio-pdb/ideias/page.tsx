@@ -7,12 +7,13 @@ import {
   Loader2, ChevronDown, X, ArrowLeft, RefreshCw, LogOut, Send, ImageIcon, KanbanSquare,
 } from "lucide-react";
 import { PanelMenu } from "@/components/studio/panel-menu";
+import { ImageLightbox } from "@/components/studio/image-lightbox";
 
 type Column = "ideias" | "priorizado" | "fazendo" | "concluido";
 type Priority = "alta" | "media" | "baixa";
 
 interface Idea {
-  id: string; title: string; notes: string; image: string; area: string;
+  id: string; title: string; notes: string; images: string[]; area: string;
   priority: Priority; column: Column; author: string;
   createdAt: string; updatedAt: string;
 }
@@ -75,6 +76,7 @@ export default function IdeiasPage() {
   const [edit, setEdit] = useState<Idea | null>(null);
   const [uploading, setUploading] = useState(false);
   const [imgUrlInput, setImgUrlInput] = useState("");
+  const [lightbox, setLightbox] = useState<string | null>(null);
 
   const load = useCallback(async () => {
     try {
@@ -130,7 +132,7 @@ export default function IdeiasPage() {
   async function saveEdit() {
     if (!edit) return;
     await api({ action: "update", id: edit.id, updates: {
-      title: edit.title, notes: edit.notes, image: edit.image, area: edit.area, priority: edit.priority,
+      title: edit.title, notes: edit.notes, images: edit.images, area: edit.area, priority: edit.priority, column: edit.column,
     }});
     setEdit(null);
   }
@@ -144,7 +146,7 @@ export default function IdeiasPage() {
         method: "POST", headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ id: edit.id, filename: file.name || "paste.png", data }),
       });
-      if (res.ok) { const d = await res.json(); setEdit((e) => e ? { ...e, image: d.url } : e); }
+      if (res.ok) { const d = await res.json(); setEdit((e) => e ? { ...e, images: [...e.images, d.url] } : e); }
     } catch { /* */ }
     setUploading(false);
   }
@@ -235,7 +237,11 @@ export default function IdeiasPage() {
                                 <span className={`h-1.5 w-1.5 rounded-full ${PRIORITY[idea.priority].dot}`} />
                                 {PRIORITY[idea.priority].label}
                               </span>
-                              {idea.image && <ImageIcon className="h-3 w-3 text-text-muted ml-auto" />}
+                              {idea.images.length > 0 && (
+                                <span className="ml-auto flex items-center gap-0.5 text-[9px] text-text-muted">
+                                  <ImageIcon className="h-3 w-3" />{idea.images.length}
+                                </span>
+                              )}
                             </div>
                             <h3 className={`text-sm font-semibold leading-tight ${done ? "line-through text-text-muted" : "text-text-primary"}`}>{idea.title}</h3>
                             {idea.notes && <p className="text-[11px] text-text-muted mt-0.5 line-clamp-2">{idea.notes}</p>}
@@ -245,9 +251,14 @@ export default function IdeiasPage() {
                           </div>
                         </div>
 
-                        {idea.image && (
-                          <div className="mt-2 rounded overflow-hidden border border-border-light">
-                            <Image src={idea.image} alt="" width={300} height={150} className="w-full h-28 object-cover" unoptimized />
+                        {idea.images.length > 0 && (
+                          <div className="mt-2 space-y-1.5">
+                            {idea.images.map((img, i) => (
+                              <div key={i} className="rounded overflow-hidden border border-border-light cursor-zoom-in"
+                                onClick={(e) => { e.stopPropagation(); setLightbox(img); }}>
+                                <Image src={img} alt="" width={300} height={150} className="w-full h-28 object-cover" unoptimized />
+                              </div>
+                            ))}
                           </div>
                         )}
                       </div>
@@ -336,35 +347,37 @@ export default function IdeiasPage() {
                   className="w-full rounded-lg border border-border-custom bg-surface px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-green/30 focus:border-green resize-none" />
               </div>
 
-              {/* Imagem */}
+              {/* Fotos (varias, empilhadas) */}
               <div>
-                <label className="block text-xs font-semibold text-text-secondary mb-1">Foto</label>
-                {edit.image ? (
-                  <div className="relative rounded-lg overflow-hidden border border-border-custom">
-                    <Image src={edit.image} alt="" width={640} height={360} className="w-full max-h-72 object-contain bg-body" unoptimized />
-                    <button onClick={() => setEdit({ ...edit, image: "" })}
-                      className="absolute top-2 right-2 p-1.5 bg-black/60 text-white rounded-full hover:bg-red" title="Remover foto"><X className="h-4 w-4" /></button>
-                  </div>
-                ) : (
-                  <label className={`flex flex-col items-center justify-center gap-2 rounded-lg border-2 border-dashed border-border-custom py-8 text-center cursor-pointer hover:border-green hover:bg-green-light/30 transition ${uploading ? "opacity-60" : ""}`}>
-                    {uploading ? <Loader2 className="h-6 w-6 animate-spin text-green" /> : <ImageIcon className="h-6 w-6 text-text-muted" />}
-                    <span className="text-xs text-text-muted">
-                      {uploading ? "Enviando..." : "Cole uma imagem (Ctrl+V) ou clique para escolher um arquivo"}
-                    </span>
-                    <input type="file" accept="image/*" className="hidden"
-                      onChange={(e) => { const f = e.target.files?.[0]; if (f) uploadImage(f); }} />
-                  </label>
-                )}
-                {!edit.image && (
-                  <div className="mt-2 flex gap-2">
-                    <input value={imgUrlInput} onChange={(e) => setImgUrlInput(e.target.value)}
-                      placeholder="...ou cole a URL de uma imagem"
-                      className="flex-1 h-9 rounded-lg border border-border-custom bg-surface px-3 text-sm focus:outline-none focus:ring-2 focus:ring-green/30 focus:border-green" />
-                    <button onClick={() => { if (imgUrlInput.trim()) { setEdit({ ...edit, image: imgUrlInput.trim() }); setImgUrlInput(""); } }}
-                      disabled={!imgUrlInput.trim()}
-                      className="px-4 h-9 bg-green text-white rounded-lg text-sm font-semibold hover:bg-green-hover disabled:opacity-30">Usar</button>
+                <label className="block text-xs font-semibold text-text-secondary mb-1">Fotos {edit.images.length > 0 && `(${edit.images.length})`}</label>
+                {edit.images.length > 0 && (
+                  <div className="space-y-2 mb-2">
+                    {edit.images.map((img, i) => (
+                      <div key={i} className="relative rounded-lg overflow-hidden border border-border-custom">
+                        <Image src={img} alt="" width={640} height={360} onClick={() => setLightbox(img)}
+                          className="w-full max-h-72 object-contain bg-body cursor-zoom-in" unoptimized />
+                        <button onClick={() => setEdit({ ...edit, images: edit.images.filter((_, k) => k !== i) })}
+                          className="absolute top-2 right-2 p-1.5 bg-black/60 text-white rounded-full hover:bg-red" title="Remover esta foto"><X className="h-4 w-4" /></button>
+                      </div>
+                    ))}
                   </div>
                 )}
+                <label className={`flex flex-col items-center justify-center gap-2 rounded-lg border-2 border-dashed border-border-custom py-6 text-center cursor-pointer hover:border-green hover:bg-green-light/30 transition ${uploading ? "opacity-60" : ""}`}>
+                  {uploading ? <Loader2 className="h-6 w-6 animate-spin text-green" /> : <ImageIcon className="h-6 w-6 text-text-muted" />}
+                  <span className="text-xs text-text-muted">
+                    {uploading ? "Enviando..." : "Cole (Ctrl+V) ou clique para adicionar mais uma foto"}
+                  </span>
+                  <input type="file" accept="image/*" className="hidden"
+                    onChange={(e) => { const f = e.target.files?.[0]; if (f) uploadImage(f); }} />
+                </label>
+                <div className="mt-2 flex gap-2">
+                  <input value={imgUrlInput} onChange={(e) => setImgUrlInput(e.target.value)}
+                    placeholder="...ou cole a URL de uma imagem"
+                    className="flex-1 h-9 rounded-lg border border-border-custom bg-surface px-3 text-sm focus:outline-none focus:ring-2 focus:ring-green/30 focus:border-green" />
+                  <button onClick={() => { if (imgUrlInput.trim()) { setEdit({ ...edit, images: [...edit.images, imgUrlInput.trim()] }); setImgUrlInput(""); } }}
+                    disabled={!imgUrlInput.trim()}
+                    className="px-4 h-9 bg-green text-white rounded-lg text-sm font-semibold hover:bg-green-hover disabled:opacity-30">Adicionar</button>
+                </div>
               </div>
 
               <div className="flex gap-3">
@@ -405,6 +418,8 @@ export default function IdeiasPage() {
           </div>
         </div>
       )}
+
+      {lightbox && <ImageLightbox src={lightbox} onClose={() => setLightbox(null)} />}
     </div>
   );
 }

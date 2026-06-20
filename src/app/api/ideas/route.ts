@@ -5,12 +5,12 @@ import type { Idea, IdeaColumn, IdeaPriority } from "@/lib/data/ideas-store";
 import { unlink } from "fs/promises";
 import { join } from "path";
 
-// Apaga o arquivo de imagem do disco (libera espaço) — só imagens nossas.
+// Apaga os arquivos de imagem do disco (libera espaço) — só imagens nossas.
 async function cleanupImage(idea: Idea | undefined) {
-  if (!idea?.image) return;
-  const m = idea.image.match(/[?&]f=([\w.-]+)/);
-  if (!m) return;
-  await unlink(join(process.cwd(), "data", "ideas-images", m[1])).catch(() => {});
+  for (const img of idea?.images || []) {
+    const m = img.match(/[?&]f=([\w.-]+)/);
+    if (m) await unlink(join(process.cwd(), "data", "ideas-images", m[1])).catch(() => {});
+  }
 }
 
 export async function GET() {

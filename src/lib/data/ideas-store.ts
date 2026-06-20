@@ -13,7 +13,7 @@ export interface Idea {
   id: string;
   title: string;
   notes: string;
-  image: string; // URL da foto colada (/api/ideas/image?f=...) — opcional
+  images: string[]; // URLs das fotos coladas (/api/ideas/image?f=...) — pode ter várias
   area: string; // SEO | Conteúdo | Performance | UX | Bug | Copa | Tênis | Geral
   priority: IdeaPriority;
   column: IdeaColumn;
@@ -22,13 +22,21 @@ export interface Idea {
   updatedAt: string;
 }
 
+// Normaliza registros antigos (campo image: string) -> images: string[].
+function normalize(i: Idea & { image?: string }): Idea {
+  const images = Array.isArray(i.images) ? i.images : i.image ? [i.image] : [];
+  const { image: _drop, ...rest } = i;
+  return { ...rest, images };
+}
+
 async function ensureDir() {
   try { await mkdir(DATA_DIR, { recursive: true }); } catch { /* exists */ }
 }
 
 export async function getIdeas(): Promise<Idea[]> {
   try {
-    return JSON.parse(await readFile(FILE, "utf-8"));
+    const arr = JSON.parse(await readFile(FILE, "utf-8")) as (Idea & { image?: string })[];
+    return arr.map(normalize);
   } catch {
     return [];
   }
@@ -48,7 +56,7 @@ export async function addIdea(
     id: `idea_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 6)}`,
     title: data.title,
     notes: data.notes || "",
-    image: data.image || "",
+    images: data.images || [],
     area: data.area || "Geral",
     priority: data.priority || "media",
     column: data.column || "ideias",
