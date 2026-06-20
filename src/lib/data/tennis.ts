@@ -53,6 +53,7 @@ export interface TennisMatch {
   serving: 0 | 1 | 2; // quem saca (1 home, 2 away, 0 desconhecido)
   winner: 0 | 1 | 2;
   live: boolean;
+  venue: TennisVenue | null;
 }
 
 export interface TennisRound {
@@ -144,6 +145,22 @@ interface MatchEnrichment {
   pointAway: string | null;
   serving: 0 | 1 | 2;
   countryById: Record<number, string>;
+  venue: TennisVenue | null;
+}
+
+export interface TennisVenue {
+  stadium: string;
+  city: string;
+  country: string;
+}
+
+// O nome do estádio às vezes vem como slug ("heristo-arena"). Title-case pra exibir.
+function prettyVenue(name: string): string {
+  if (!name) return "";
+  return name
+    .replace(/[-_]+/g, " ")
+    .replace(/\b\w/g, (c) => c.toUpperCase())
+    .trim();
 }
 
 function pointStr(v: any): string | null {
@@ -181,6 +198,15 @@ function eventToEnrichment(e: any): MatchEnrichment {
     if (tm?.id && a2) countryById[tm.id] = String(a2).toLowerCase();
   }
 
+  const v = e?.venue;
+  const venue: TennisVenue | null = v
+    ? {
+        stadium: prettyVenue(v.stadium?.name || v.name || ""),
+        city: v.city?.name || "",
+        country: v.city?.country?.name || v.country?.name || "",
+      }
+    : null;
+
   return {
     status,
     statusDesc: statusDescPt(e?.status?.description || "", status),
@@ -192,6 +218,7 @@ function eventToEnrichment(e: any): MatchEnrichment {
     pointAway: status === "inprogress" ? pointStr(as.point) : null,
     serving: e?.firstToServe === 1 ? 1 : e?.firstToServe === 2 ? 2 : 0,
     countryById,
+    venue,
   };
 }
 
@@ -305,6 +332,7 @@ export async function getTennisDraw(slug: TennisTournamentSlug): Promise<TennisD
           serving: enr?.serving || 0,
           winner,
           live: status === "inprogress",
+          venue: enr?.venue || null,
         };
       });
     return { key: `r${rn}`, label: meta.label, order: meta.order, matches };
@@ -450,6 +478,7 @@ function eventToTennisMatch(e: any): TennisMatch {
     serving: enr.serving,
     winner,
     live: enr.status === "inprogress",
+    venue: enr.venue,
   };
 }
 
