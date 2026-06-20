@@ -575,6 +575,13 @@ function eventTtl(startTimestamp?: number): number {
   return 10;
 }
 
+// Só o evento (status + placar) — 1 chamada leve. Usado no generateMetadata pra
+// título/description cientes do status, sem puxar o detalhe inteiro.
+export async function getMatchEvent(id: number, startHint?: number): Promise<MatchEvent | null> {
+  const raw = await fetchAllSports<any>(`match/${id}`, eventTtl(startHint));
+  return raw?.event ? normalizeEvent(raw.event) : null;
+}
+
 // Detalhe completo (server render inicial). Busca o event primeiro pra saber o
 // status e adaptar o TTL do resto (não martela a API em jogo encerrado).
 export async function getMatchDetail(id: number, startHint?: number): Promise<MatchDetail | null> {
