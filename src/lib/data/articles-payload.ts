@@ -56,6 +56,9 @@ export async function getArticlesPayload(options?: {
   search?: string;
   tag?: string;
 }): Promise<{ articles: Article[]; total: number } | null> {
+  // No build o Postgres não é alcançável (builder fora da pdb-net) → não tenta,
+  // retorna null → getArticles cai pro WP. ISR popula do Payload em runtime.
+  if (process.env.NEXT_PHASE === "phase-production-build") return null;
   try {
     const payload = await getClient();
     const { page = 1, perPage = 20, category, search, tag } = options || {};
@@ -81,6 +84,7 @@ export async function getArticlesPayload(options?: {
 }
 
 export async function getArticleBySlugPayload(slug: string): Promise<Article | null> {
+  if (process.env.NEXT_PHASE === "phase-production-build") return null;
   try {
     const payload = await getClient();
     const res = await payload.find({
