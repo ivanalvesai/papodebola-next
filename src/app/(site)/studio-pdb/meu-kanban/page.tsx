@@ -7,13 +7,14 @@ import {
   LogOut, ImageIcon, KanbanSquare, FolderKanban, Check, Pencil,
 } from "lucide-react";
 import { PanelMenu } from "@/components/studio/panel-menu";
+import { ImageLightbox } from "@/components/studio/image-lightbox";
 
 type Priority = "alta" | "media" | "baixa";
 interface Column { id: string; name: string; }
 interface Board { id: string; owner: string; name: string; org: string; color: string; columns: Column[]; createdAt: string; }
 interface Card {
   id: string; boardId: string; owner: string; columnId: string;
-  title: string; notes: string; image: string; priority: Priority;
+  title: string; notes: string; images: string[]; priority: Priority;
   createdAt: string; updatedAt: string;
 }
 
@@ -58,6 +59,7 @@ export default function MeuKanbanPage() {
   const [editCard, setEditCard] = useState<Card | null>(null);
   const [uploading, setUploading] = useState(false);
   const [imgUrl, setImgUrl] = useState("");
+  const [lightbox, setLightbox] = useState<string | null>(null);
   const [newColName, setNewColName] = useState("");
   const [addingCol, setAddingCol] = useState(false);
   const [quickCard, setQuickCard] = useState<Record<string, string>>({});
@@ -147,7 +149,7 @@ export default function MeuKanbanPage() {
   async function saveCard() {
     if (!editCard) return;
     await api({ action: "update-card", id: editCard.id, updates: {
-      title: editCard.title, notes: editCard.notes, image: editCard.image, priority: editCard.priority, columnId: editCard.columnId,
+      title: editCard.title, notes: editCard.notes, images: editCard.images, priority: editCard.priority, columnId: editCard.columnId,
     }});
     setEditCard(null);
   }
@@ -167,7 +169,7 @@ export default function MeuKanbanPage() {
         method: "POST", headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ id: editCard.id, filename: file.name || "paste.png", data }),
       });
-      if (res.ok) { const d = await res.json(); setEditCard((c) => c ? { ...c, image: d.url } : c); }
+      if (res.ok) { const d = await res.json(); setEditCard((c) => c ? { ...c, images: [...c.images, d.url] } : c); }
     } catch { /* */ }
     setUploading(false);
   }
@@ -277,15 +279,24 @@ export default function MeuKanbanPage() {
                                     <span className="flex items-center gap-1 text-[9px] text-text-muted">
                                       <span className={`h-1.5 w-1.5 rounded-full ${PRIORITY[card.priority].dot}`} /> {PRIORITY[card.priority].label}
                                     </span>
-                                    {card.image && <ImageIcon className="h-3 w-3 text-text-muted ml-auto" />}
+                                    {card.images.length > 0 && (
+                                      <span className="ml-auto flex items-center gap-0.5 text-[9px] text-text-muted">
+                                        <ImageIcon className="h-3 w-3" />{card.images.length}
+                                      </span>
+                                    )}
                                   </div>
                                   <h3 className="text-sm font-medium text-text-primary leading-tight">{card.title}</h3>
                                   {card.notes && <p className="text-[11px] text-text-muted mt-0.5 line-clamp-2">{card.notes}</p>}
                                 </div>
                               </div>
-                              {card.image && (
-                                <div className="mt-2 rounded overflow-hidden border border-border-light">
-                                  <Image src={card.image} alt="" width={280} height={120} className="w-full h-24 object-cover" unoptimized />
+                              {card.images.length > 0 && (
+                                <div className="mt-2 space-y-1.5">
+                                  {card.images.map((img, i) => (
+                                    <div key={i} className="rounded overflow-hidden border border-border-light cursor-zoom-in"
+                                      onClick={(e) => { e.stopPropagation(); setLightbox(img); }}>
+                                      <Image src={img} alt="" width={280} height={120} className="w-full h-24 object-cover" unoptimized />
+                                    </div>
+                                  ))}
                                 </div>
                               )}
                             </div>
@@ -423,27 +434,30 @@ export default function MeuKanbanPage() {
                 className="w-full rounded-lg border border-border-custom bg-surface px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-green/30 focus:border-green resize-none" />
 
               <div>
-                <label className="block text-xs font-semibold text-text-secondary mb-1">Foto</label>
-                {editCard.image ? (
-                  <div className="relative rounded-lg overflow-hidden border border-border-custom">
-                    <Image src={editCard.image} alt="" width={640} height={360} className="w-full max-h-72 object-contain bg-body" unoptimized />
-                    <button onClick={() => setEditCard({ ...editCard, image: "" })} className="absolute top-2 right-2 p-1.5 bg-black/60 text-white rounded-full hover:bg-red"><X className="h-4 w-4" /></button>
-                  </div>
-                ) : (
-                  <label className={`flex flex-col items-center justify-center gap-2 rounded-lg border-2 border-dashed border-border-custom py-7 cursor-pointer hover:border-green transition ${uploading ? "opacity-60" : ""}`}>
-                    {uploading ? <Loader2 className="h-6 w-6 animate-spin text-green" /> : <ImageIcon className="h-6 w-6 text-text-muted" />}
-                    <span className="text-xs text-text-muted">{uploading ? "Enviando..." : "Cole (Ctrl+V) ou clique para escolher"}</span>
-                    <input type="file" accept="image/*" className="hidden" onChange={(e) => { const f = e.target.files?.[0]; if (f) uploadImage(f); }} />
-                  </label>
-                )}
-                {!editCard.image && (
-                  <div className="mt-2 flex gap-2">
-                    <input value={imgUrl} onChange={(e) => setImgUrl(e.target.value)} placeholder="...ou cole a URL"
-                      className="flex-1 h-9 rounded-lg border border-border-custom bg-surface px-3 text-sm focus:outline-none focus:ring-2 focus:ring-green/30 focus:border-green" />
-                    <button onClick={() => { if (imgUrl.trim()) { setEditCard({ ...editCard, image: imgUrl.trim() }); setImgUrl(""); } }} disabled={!imgUrl.trim()}
-                      className="px-4 h-9 bg-green text-white rounded-lg text-sm font-semibold hover:bg-green-hover disabled:opacity-30">Usar</button>
+                <label className="block text-xs font-semibold text-text-secondary mb-1">Fotos {editCard.images.length > 0 && `(${editCard.images.length})`}</label>
+                {editCard.images.length > 0 && (
+                  <div className="space-y-2 mb-2">
+                    {editCard.images.map((img, i) => (
+                      <div key={i} className="relative rounded-lg overflow-hidden border border-border-custom">
+                        <Image src={img} alt="" width={640} height={360} onClick={() => setLightbox(img)}
+                          className="w-full max-h-72 object-contain bg-body cursor-zoom-in" unoptimized />
+                        <button onClick={() => setEditCard({ ...editCard, images: editCard.images.filter((_, k) => k !== i) })}
+                          className="absolute top-2 right-2 p-1.5 bg-black/60 text-white rounded-full hover:bg-red"><X className="h-4 w-4" /></button>
+                      </div>
+                    ))}
                   </div>
                 )}
+                <label className={`flex flex-col items-center justify-center gap-2 rounded-lg border-2 border-dashed border-border-custom py-6 cursor-pointer hover:border-green transition ${uploading ? "opacity-60" : ""}`}>
+                  {uploading ? <Loader2 className="h-6 w-6 animate-spin text-green" /> : <ImageIcon className="h-6 w-6 text-text-muted" />}
+                  <span className="text-xs text-text-muted">{uploading ? "Enviando..." : "Cole (Ctrl+V) ou clique para adicionar mais uma"}</span>
+                  <input type="file" accept="image/*" className="hidden" onChange={(e) => { const f = e.target.files?.[0]; if (f) uploadImage(f); }} />
+                </label>
+                <div className="mt-2 flex gap-2">
+                  <input value={imgUrl} onChange={(e) => setImgUrl(e.target.value)} placeholder="...ou cole a URL"
+                    className="flex-1 h-9 rounded-lg border border-border-custom bg-surface px-3 text-sm focus:outline-none focus:ring-2 focus:ring-green/30 focus:border-green" />
+                  <button onClick={() => { if (imgUrl.trim()) { setEditCard({ ...editCard, images: [...editCard.images, imgUrl.trim()] }); setImgUrl(""); } }} disabled={!imgUrl.trim()}
+                    className="px-4 h-9 bg-green text-white rounded-lg text-sm font-semibold hover:bg-green-hover disabled:opacity-30">Adicionar</button>
+                </div>
               </div>
 
               <div className="flex gap-3">
@@ -474,6 +488,8 @@ export default function MeuKanbanPage() {
           </div>
         </div>
       )}
+
+      {lightbox && <ImageLightbox src={lightbox} onClose={() => setLightbox(null)} />}
     </div>
   );
 }

@@ -10,8 +10,10 @@ import { join } from "path";
 
 async function cleanupImages(cards: Card[]) {
   for (const c of cards) {
-    const m = c.image?.match(/[?&]f=([\w.-]+)/);
-    if (m) await unlink(join(process.cwd(), "data", "personal-kanban-images", m[1])).catch(() => {});
+    for (const img of c.images || []) {
+      const m = img.match(/[?&]f=([\w.-]+)/);
+      if (m) await unlink(join(process.cwd(), "data", "personal-kanban-images", m[1])).catch(() => {});
+    }
   }
 }
 
@@ -73,7 +75,7 @@ export async function POST(request: NextRequest) {
     if (action === "delete-card") {
       const card = await removeCard(owner, body.id);
       if (!card) return NextResponse.json({ error: "Card nao encontrado" }, { status: 404 });
-      if (card.image) await cleanupImages([card]);
+      await cleanupImages([card]);
       return NextResponse.json({ deleted: body.id });
     }
 
