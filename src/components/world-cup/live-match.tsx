@@ -840,17 +840,21 @@ export function LiveMatch({
 
   // ts = horário do apito (estável) -> o servidor usa pra TTL ciente do horário do match/{id}
   const startTs = initial.event.startTimestamp || 0;
-  const poll = useCallback(async () => {
+  // Retorna true se atualizou. Em erro/resposta degradada NÃO mexe na tela (mantém
+  // o último estado bom) e sinaliza falha pra re-tentar logo.
+  const poll = useCallback(async (): Promise<boolean> => {
     try {
       const res = await fetch(`/api/copa/jogo/${matchId}?ts=${startTs}`, { cache: "no-store" });
-      if (!res.ok) return;
+      if (!res.ok) return false;
       const data = await res.json();
-      if (data?.event) setEvent(data.event);
-      if (Array.isArray(data?.incidents)) setIncidents(data.incidents);
-      if (Array.isArray(data?.commentary)) setCommentary(data.commentary);
-      if (Array.isArray(data?.stats)) setStats(data.stats);
+      if (!data?.event) return false;
+      setEvent(data.event);
+      if (Array.isArray(data.incidents)) setIncidents(data.incidents);
+      if (Array.isArray(data.commentary)) setCommentary(data.commentary);
+      if (Array.isArray(data.stats)) setStats(data.stats);
+      return true;
     } catch {
-      /* tenta de novo no próximo ciclo */
+      return false;
     }
   }, [matchId, startTs]);
 
@@ -858,7 +862,7 @@ export function LiveMatch({
     if (event.statusType === "finished") return;
     let cancelled = false;
     let timer: ReturnType<typeof setTimeout>;
-    const nextDelay = () => {
+    const okDelay = () => {
       if (event.statusType === "inprogress") return 12000; // ao vivo: 12s
       // pré-jogo: aperta pra 15s perto do apito (≤5min), senão 45s
       const toKickoff = event.startTimestamp - Date.now() / 1000;
@@ -866,13 +870,13 @@ export function LiveMatch({
     };
     const tick = async () => {
       if (cancelled) return;
-      await poll();
-      if (!cancelled) schedule();
+      const ok = await poll();
+      if (cancelled) return;
+      // Falhou (API lenta/429): re-tenta em 5s pra manter atualizado — seguro porque
+      // o endpoint cacheia ~10s no servidor (N viewers = 1 chamada). Sucesso: ritmo normal.
+      timer = setTimeout(tick, ok ? okDelay() : 5000);
     };
-    const schedule = () => {
-      timer = setTimeout(tick, nextDelay());
-    };
-    schedule();
+    timer = setTimeout(tick, okDelay());
     return () => {
       cancelled = true;
       clearTimeout(timer);
