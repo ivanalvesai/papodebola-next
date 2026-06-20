@@ -136,6 +136,32 @@ export default buildConfig({
                 { name: "style", type: "select", defaultValue: "primary", options: ["primary", "outline"] },
               ],
             },
+            {
+              slug: "list",
+              labels: { singular: "Lista", plural: "Listas" },
+              fields: [
+                {
+                  name: "items",
+                  type: "array",
+                  minRows: 1,
+                  fields: [{ name: "content", type: "richText" }],
+                },
+              ],
+            },
+            {
+              slug: "infoCard",
+              labels: { singular: "Card de info", plural: "Cards de info" },
+              fields: [
+                { name: "label", type: "text", required: true },
+                { name: "value", type: "text", required: true },
+                { name: "href", type: "text" },
+              ],
+            },
+            {
+              slug: "note",
+              labels: { singular: "Nota", plural: "Notas" },
+              fields: [{ name: "text", type: "text", required: true }],
+            },
           ],
         },
         {
