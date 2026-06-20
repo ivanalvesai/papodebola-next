@@ -8,6 +8,7 @@ import {
 } from "lucide-react";
 import { PanelMenu } from "@/components/studio/panel-menu";
 import { ImageLightbox } from "@/components/studio/image-lightbox";
+import { useConfirm } from "@/components/studio/use-confirm";
 
 type Priority = "alta" | "media" | "baixa";
 interface Column { id: string; name: string; }
@@ -60,6 +61,7 @@ export default function MeuKanbanPage() {
   const [uploading, setUploading] = useState(false);
   const [imgUrl, setImgUrl] = useState("");
   const [lightbox, setLightbox] = useState<string | null>(null);
+  const { confirm, dialog } = useConfirm();
   const [newColName, setNewColName] = useState("");
   const [addingCol, setAddingCol] = useState(false);
   const [quickCard, setQuickCard] = useState<Record<string, string>>({});
@@ -112,7 +114,7 @@ export default function MeuKanbanPage() {
     setEditBoard(null);
   }
   async function deleteBoard(id: string) {
-    if (!confirm("Excluir este quadro e TODOS os cards dele?")) return;
+    if (!(await confirm("Excluir este quadro e TODOS os cards dele? Esta acao nao pode ser desfeita."))) return;
     await api({ action: "delete-board", id });
     setEditBoard(null);
   }
@@ -133,7 +135,7 @@ export default function MeuKanbanPage() {
   async function deleteColumn(colId: string) {
     if (!active) return;
     const n = cards.filter((c) => c.boardId === active.id && c.columnId === colId).length;
-    if (!confirm(`Excluir esta coluna${n ? ` e seus ${n} card(s)` : ""}?`)) return;
+    if (!(await confirm(`Excluir esta coluna${n ? ` e seus ${n} card(s)` : ""}? Esta acao nao pode ser desfeita.`))) return;
     if (n) await api({ action: "delete-column", boardId: active.id, columnId: colId });
     const columns = active.columns.filter((c) => c.id !== colId);
     await api({ action: "update-board", id: active.id, updates: { columns } });
@@ -154,7 +156,7 @@ export default function MeuKanbanPage() {
     setEditCard(null);
   }
   async function deleteCard(id: string) {
-    if (!confirm("Excluir este card?")) return;
+    if (!(await confirm("Excluir este card? Esta acao nao pode ser desfeita."))) return;
     await api({ action: "delete-card", id });
     setEditCard(null);
   }
@@ -490,6 +492,7 @@ export default function MeuKanbanPage() {
       )}
 
       {lightbox && <ImageLightbox src={lightbox} onClose={() => setLightbox(null)} />}
+      {dialog}
     </div>
   );
 }
