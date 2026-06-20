@@ -791,9 +791,11 @@ export function LiveMatch({
     }
   }, [event.homeScore, event.awayScore, event.statusType]);
 
+  // ts = horário do apito (estável) -> o servidor usa pra TTL ciente do horário do match/{id}
+  const startTs = initial.event.startTimestamp || 0;
   const poll = useCallback(async () => {
     try {
-      const res = await fetch(`/api/copa/jogo/${matchId}`, { cache: "no-store" });
+      const res = await fetch(`/api/copa/jogo/${matchId}?ts=${startTs}`, { cache: "no-store" });
       if (!res.ok) return;
       const data = await res.json();
       if (data?.event) setEvent(data.event);
@@ -803,7 +805,7 @@ export function LiveMatch({
     } catch {
       /* tenta de novo no próximo ciclo */
     }
-  }, [matchId]);
+  }, [matchId, startTs]);
 
   useEffect(() => {
     if (event.statusType === "finished") return;
