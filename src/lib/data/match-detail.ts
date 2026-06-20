@@ -27,12 +27,19 @@ export interface WorldCupFixture {
 
 // Lista achatada de todos os jogos de grupo (fixtures estáveis -> TTL longo).
 export async function getWorldCupFixtures(): Promise<WorldCupFixture[]> {
+  // Paralelo: o semáforo do fetchAllSports já limita a 2 simultâneas + retry em 429.
+  // Tirei as pausas de 250ms (rodavam até com cache quente, somando latência fixa em
+  // toda página de jogo). Calendário não muda -> TTL 6h.
+  const rounds = await Promise.all(
+    GROUP_ROUNDS.map((r) =>
+      fetchAllSports<any>(
+        `tournament/${WC.id}/season/${WC.seasonId}/matches/round/${r}`,
+        21600
+      ).then((data) => ({ r, data }))
+    )
+  );
   const out: WorldCupFixture[] = [];
-  for (const r of GROUP_ROUNDS) {
-    const data = await fetchAllSports<any>(
-      `tournament/${WC.id}/season/${WC.seasonId}/matches/round/${r}`,
-      21600 // 6h: calendário não muda
-    );
+  for (const { r, data } of rounds) {
     for (const e of data?.events || []) {
       out.push({
         id: e.id,
@@ -44,7 +51,6 @@ export async function getWorldCupFixtures(): Promise<WorldCupFixture[]> {
         round: r,
       });
     }
-    await new Promise((resolve) => setTimeout(resolve, 250));
   }
   return out;
 }
@@ -279,8 +285,27 @@ export interface MatchDetail {
   stats: MatchStatItem[];
 }
 
+// Teto de segurança: nenhum jogo fica "ao vivo" mais que isso depois do apito
+// inicial. 90' + intervalo + acréscimos + prorrogação + pênaltis cabe folgado em
+// ~3h; usamos 4h. O provedor (Sofascore) às vezes esquece a partida travada em
+// "inprogress" por horas após o fim — sem esse guard a página mostra "AO VIVO"
+// com o cronômetro correndo (ex: 1500'). Passou do teto = trata como encerrado.
+const MAX_LIVE_SECS = 4 * 60 * 60;
+
 function normalizeEvent(e: any): MatchEvent {
-  const type = e?.status?.type || "";
+  let type = e?.status?.type || "";
+  const startTimestamp = e?.startTimestamp || 0;
+
+  // Guard anti "inprogress" travado: se o provedor diz que está ao vivo mas o
+  // início foi há mais de MAX_LIVE_SECS, o jogo já acabou (placar atual = final).
+  if (
+    type === "inprogress" &&
+    startTimestamp > 0 &&
+    Date.now() / 1000 - startTimestamp > MAX_LIVE_SECS
+  ) {
+    type = "finished";
+  }
+
   return {
     id: e?.id,
     homeId: e?.homeTeam?.id || 0,
@@ -291,7 +316,7 @@ function normalizeEvent(e: any): MatchEvent {
     awayScore: e?.awayScore?.current ?? null,
     statusType: type,
     statusDesc: translateStatus(e?.status?.description) || "",
-    startTimestamp: e?.startTimestamp || 0,
+    startTimestamp,
     periodStart: e?.time?.currentPeriodStartTimestamp || 0,
     live: type === "inprogress",
   };
