@@ -1,22 +1,30 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { FileText } from "lucide-react";
+import { getPayloadPage } from "@/lib/data/payload-pages";
+import { PageBlocks } from "@/components/payload/page-blocks";
 
-export const metadata: Metadata = {
-  alternates: { canonical: "/termos-de-uso" },
-  title: "Termos de Uso",
-  description:
-    "Conheça os Termos de Uso do Papo de Bola: regras de navegação, propriedade intelectual, condutas proibidas, privacidade e direitos dos usuários do portal.",
-  openGraph: {
-    title: "Termos de Uso do Papo de Bola",
+export const dynamic = "force-dynamic";
+
+export async function generateMetadata(): Promise<Metadata> {
+  const page = await getPayloadPage("termos-de-uso");
+  return {
+    alternates: { canonical: "/termos-de-uso" },
+    title: page?.seo?.metaTitle || "Termos de Uso",
     description:
-      "Saiba quais são as regras de uso do portal Papo de Bola, incluindo uso permitido, condutas proibidas, propriedade intelectual, publicidade e proteção de dados.",
-    url: "/termos-de-uso",
-    type: "article",
-  },
-};
+      page?.seo?.metaDescription ||
+      "Conheça os Termos de Uso do Papo de Bola: regras de navegação, propriedade intelectual, condutas proibidas, privacidade e direitos dos usuários do portal.",
+    openGraph: {
+      title: "Termos de Uso do Papo de Bola",
+      description:
+        "Saiba quais são as regras de uso do portal Papo de Bola, incluindo uso permitido, condutas proibidas, propriedade intelectual, publicidade e proteção de dados.",
+      url: "/termos-de-uso",
+      type: "article",
+    },
+  };
+}
 
-export default function TermosPage() {
+function TermosFallback() {
   return (
     <div className="mx-auto max-w-[720px] px-4 py-12">
       <h1 className="mb-6 flex items-center gap-2 text-2xl font-bold text-text-primary">
@@ -174,4 +182,10 @@ export default function TermosPage() {
       </div>
     </div>
   );
+}
+
+export default async function TermosPage() {
+  const page = await getPayloadPage("termos-de-uso");
+  if (page) return <PageBlocks page={page} />;
+  return <TermosFallback />;
 }
