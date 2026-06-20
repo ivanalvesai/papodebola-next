@@ -220,6 +220,7 @@ export interface MatchEvent {
   startTimestamp: number;
   periodStart: number; // currentPeriodStartTimestamp (pra cronômetro)
   live: boolean;
+  venue: { stadium: string; city: string; country: string } | null;
 }
 
 export interface MatchIncident {
@@ -319,6 +320,13 @@ function normalizeEvent(e: any): MatchEvent {
     startTimestamp,
     periodStart: e?.time?.currentPeriodStartTimestamp || 0,
     live: type === "inprogress",
+    venue: e?.venue
+      ? {
+          stadium: e.venue.name || e.venue.stadium?.name || "",
+          city: e.venue.city?.name || "",
+          country: e.venue.city?.country?.name || e.venue.country?.name || "",
+        }
+      : null,
   };
 }
 

@@ -117,6 +117,7 @@ async function MatchBody({ fixture, url }: { fixture: WorldCupFixture; url: stri
         awayId={fixture.awayId}
         startTimestamp={fixture.timestamp}
         statusType={detail?.event.statusType}
+        venue={detail?.event.venue}
         url={url}
       />
       {detail ? (
