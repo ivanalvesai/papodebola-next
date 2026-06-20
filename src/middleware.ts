@@ -10,7 +10,7 @@ const SECRET = new TextEncoder().encode(
 const PANEL_PATH = "/painel-pdb-9x";
 
 export async function middleware(request: NextRequest) {
-  const protectedPaths = [PANEL_PATH, "/studio-pdb", "/api/kanban", "/api/ideas", "/api/promote", "/api/push/send", "/api/page-overrides"];
+  const protectedPaths = [PANEL_PATH, "/studio-pdb", "/api/kanban", "/api/ideas", "/api/meu-kanban", "/api/promote", "/api/push/send", "/api/page-overrides"];
   const isProtected = protectedPaths.some((p) => request.nextUrl.pathname.startsWith(p));
   const isLogin = request.nextUrl.pathname.startsWith(`${PANEL_PATH}/login`);
 
@@ -63,6 +63,7 @@ export const config = {
     "/studio-pdb/:path*",
     "/api/kanban/:path*",
     "/api/ideas/:path*",
+    "/api/meu-kanban/:path*",
     "/api/promote/:path*",
     "/api/push/send/:path*",
     "/api/page-overrides/:path*",

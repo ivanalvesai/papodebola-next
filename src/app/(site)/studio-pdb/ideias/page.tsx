@@ -4,7 +4,7 @@ import { useState, useEffect, useCallback } from "react";
 import Image from "next/image";
 import {
   Lightbulb, Target, Hammer, CheckCircle2, Plus, Trash2, GripVertical,
-  Loader2, ChevronDown, X, ArrowLeft, RefreshCw, LogOut, Send, ImageIcon,
+  Loader2, ChevronDown, X, ArrowLeft, RefreshCw, LogOut, Send, ImageIcon, KanbanSquare,
 } from "lucide-react";
 import { PanelMenu } from "@/components/studio/panel-menu";
 
@@ -173,6 +173,10 @@ export default function IdeiasPage() {
         <Lightbulb className="h-5 w-5 text-yellow-500" />
         <h1 className="hidden md:block text-lg font-bold text-text-primary">Mural de Ideias</h1>
         <PanelMenu current="/studio-pdb/ideias" />
+        <a href="/studio-pdb/meu-kanban"
+          className="flex items-center gap-2 px-3 py-2 border border-border-custom text-text-secondary rounded-lg text-sm font-semibold hover:border-green hover:text-green transition-colors" title="Meu Kanban (pessoal)">
+          <KanbanSquare className="h-4 w-4" /> <span className="hidden lg:inline">Meu Kanban</span>
+        </a>
 
         <div className="flex-1 max-w-md mx-auto flex items-center gap-2">
           <input
