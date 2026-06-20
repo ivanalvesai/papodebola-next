@@ -501,7 +501,9 @@ async function getStatsAndVote(
 // Detalhe por eventId (polling). Monta tudo a partir do match/{id}.
 export async function getTennisMatchById(eventId: number): Promise<TennisMatchDetail | null> {
   const raw = await fetchAllSports<any>(`match/${eventId}`, 20);
-  if (!raw?.event) return null;
+  // Rejeita resposta degradada (o provider às vezes manda 404-com-body sem os times):
+  // sem isso o polling montaria "A definir × A definir" e apagaria a tela boa.
+  if (!raw?.event?.homeTeam?.id || !raw?.event?.awayTeam?.id) return null;
   const match = eventToTennisMatch(raw.event);
   const ttl = match.status === "finished" ? 86400 : match.live ? 20 : 1800;
   const { periods, vote } = await getStatsAndVote(eventId, ttl);

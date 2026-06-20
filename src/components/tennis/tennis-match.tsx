@@ -310,7 +310,9 @@ export function TennisMatchView({
       const res = await fetch(`/api/tenis/${tournamentSlug}/jogo/${eventId}`, { cache: "no-store" });
       if (!res.ok) return;
       const data = (await res.json()) as TennisMatchDetail;
-      if (!data?.match) return;
+      // Nunca sobrescreve a tela boa com uma resposta degradada (jogadores viraram
+      // placeholder por um 404-com-body do provider) — mantém o último estado válido.
+      if (!data?.match || data.match.home.placeholder || data.match.away.placeholder) return;
       // o polling não traz seed (vem só do chaveamento) — preserva o inicial.
       data.match.home.seed = seeds.current.home;
       data.match.away.seed = seeds.current.away;
