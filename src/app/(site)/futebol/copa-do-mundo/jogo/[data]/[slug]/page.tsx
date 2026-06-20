@@ -13,9 +13,11 @@ import {
   type WorldCupFixture,
 } from "@/lib/data/match-detail";
 
-// force-dynamic + Suspense: cabeçalho/placar renderiza na hora; o detalhe pesado
-// (escalação/stats/lance a lance) streama depois. Cliente segue com polling.
-export const dynamic = "force-dynamic";
+// ISR (não force-dynamic): a página cacheia e serve na hora; o cliente faz polling
+// pro ao vivo (não precisa renderizar dinâmico a cada hit). force-dynamic sem cache
+// martelava a AllSportsApi (4+ calls/render) → 429 em massa → páginas penduravam no
+// mobile/tráfego. Com ISR o jogo encerrado cacheia muito e o ao vivo revalida a cada 30s.
+export const revalidate = 30;
 
 type Params = { data: string; slug: string };
 
