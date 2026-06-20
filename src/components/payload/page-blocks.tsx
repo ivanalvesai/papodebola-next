@@ -104,6 +104,33 @@ function Block({ block }: { block: any }) {
           {block.label}
         </a>
       );
+    case "list": {
+      const items = block.items || [];
+      return (
+        <ul className="list-disc space-y-2 pl-5 [&_a]:text-green [&_a:hover]:underline [&_p]:m-0">
+          {items.map((it: any, i: number) => (
+            <li key={i}>{it.content ? <RichText data={it.content} /> : null}</li>
+          ))}
+        </ul>
+      );
+    }
+    case "infoCard":
+      return (
+        <div className="rounded-lg bg-body p-4">
+          <div className="text-sm font-semibold text-text-primary">{block.label}</div>
+          <div className="text-sm text-text-muted">
+            {block.href ? (
+              <a href={block.href} className="text-green hover:underline">
+                {block.value}
+              </a>
+            ) : (
+              block.value
+            )}
+          </div>
+        </div>
+      );
+    case "note":
+      return <p className="text-xs text-text-muted">{block.text}</p>;
     default:
       return null;
   }

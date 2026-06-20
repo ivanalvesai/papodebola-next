@@ -1,15 +1,23 @@
 import type { Metadata } from "next";
 import { Handshake, Mail } from "lucide-react";
 import { PageBreadcrumb } from "@/components/seo/page-breadcrumb";
+import { getPayloadPage } from "@/lib/data/payload-pages";
+import { PageBlocks } from "@/components/payload/page-blocks";
 
-export const metadata: Metadata = {
-  alternates: { canonical: "/parceiros" },
-  title: "Parceiros",
-  description:
-    "Seja um parceiro do Papo de Bola. Divulgação, publieditoriais e parcerias comerciais.",
-};
+export const dynamic = "force-dynamic";
 
-export default function ParceirosPage() {
+export async function generateMetadata(): Promise<Metadata> {
+  const page = await getPayloadPage("parceiros");
+  return {
+    alternates: { canonical: "/parceiros" },
+    title: page?.seo?.metaTitle || "Parceiros",
+    description:
+      page?.seo?.metaDescription ||
+      "Seja um parceiro do Papo de Bola. Divulgação, publieditoriais e parcerias comerciais.",
+  };
+}
+
+function ParceirosFallback() {
   return (
     <div className="mx-auto max-w-[800px] px-4 py-8">
       <PageBreadcrumb
@@ -62,4 +70,10 @@ export default function ParceirosPage() {
       </div>
     </div>
   );
+}
+
+export default async function ParceirosPage() {
+  const page = await getPayloadPage("parceiros");
+  if (page) return <PageBlocks page={page} />;
+  return <ParceirosFallback />;
 }

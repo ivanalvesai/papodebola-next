@@ -7,6 +7,10 @@ import { PageBlocks } from "@/components/payload/page-blocks";
 // Página nova no CMS = no ar na hora, sem ligar rota a rota. 404 se não existir.
 export const dynamic = "force-dynamic";
 
+// Slugs que têm rota DEDICADA (ex: /sobre) não respondem aqui — evita conteúdo
+// duplicado (/paginas/sobre e /sobre seriam a mesma página).
+const DEDICATED = new Set(["sobre", "contato", "parceiros", "politica-de-privacidade", "termos-de-uso"]);
+
 export async function generateMetadata({
   params,
 }: {
@@ -28,6 +32,7 @@ export default async function PaginaPayload({
   params: Promise<{ slug: string }>;
 }) {
   const { slug } = await params;
+  if (DEDICATED.has(slug)) notFound();
   const page = await getPayloadPage(slug);
   if (!page) notFound();
   return <PageBlocks page={page} />;

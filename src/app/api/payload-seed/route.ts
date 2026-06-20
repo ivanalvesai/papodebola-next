@@ -41,11 +41,90 @@ const rich = (...nodes: any[]): any => ({
     ],
   },
 });
+const b = (text: string): any => ({
+  type: "text",
+  version: 1,
+  detail: 0,
+  format: 1, // bold
+  mode: "normal",
+  style: "",
+  text,
+});
 const para = (content: any) => ({ blockType: "richText", content });
 const h2 = (text: string) => ({ blockType: "heading", text, level: "h2" });
+const note = (text: string) => ({ blockType: "note", text });
+const infoCard = (label: string, value: string, href?: string) => ({
+  blockType: "infoCard",
+  label,
+  value,
+  href,
+});
+// list(...items) onde cada item é um array de nós (texto/link/bold)
+const list = (...items: any[][]) => ({
+  blockType: "list",
+  items: items.map((nodes) => ({ content: rich(...nodes) })),
+});
 
 /* ---------- conteúdo das páginas (fiel ao atual) ---------- */
 const PAGES: Record<string, any> = {
+  contato: {
+    title: "Contato",
+    slug: "contato",
+    hero: { h1: "Contato" },
+    seo: {
+      metaTitle: "Contato",
+      metaDescription:
+        "Entre em contato com o Papo de Bola. Envie sugestões, dúvidas ou parcerias.",
+    },
+    layout: [
+      para(
+        rich(
+          t(
+            "Tem alguma sugestão, dúvida ou gostaria de propor uma parceria? Entre em contato conosco pelos canais abaixo."
+          )
+        )
+      ),
+      infoCard("E-mail", "contato@papodebola.com.br", "mailto:contato@papodebola.com.br"),
+      note("Respondemos todas as mensagens em até 48 horas úteis."),
+    ],
+  },
+  parceiros: {
+    title: "Parceiros",
+    slug: "parceiros",
+    hero: { h1: "Parceiros" },
+    seo: {
+      metaTitle: "Parceiros",
+      metaDescription:
+        "Seja um parceiro do Papo de Bola. Divulgação, publieditoriais e parcerias comerciais.",
+    },
+    layout: [
+      para(
+        rich(
+          t(
+            "O Papo de Bola está aberto a parcerias com marcas, clubes, ligas, casas de apostas, produtoras de conteúdo e anunciantes que queiram alcançar uma audiência qualificada de fãs de futebol e outros esportes."
+          )
+        )
+      ),
+      h2("Formatos de parceria"),
+      list(
+        [t("Conteúdo patrocinado (publieditoriais)")],
+        [t("Banners em páginas-chave (home, campeonatos, páginas de times)")],
+        [t("Cobertura editorial de eventos e campanhas")],
+        [t("Integração de API/dados esportivos")],
+        [t("Distribuição em canais (newsletter, Telegram, WhatsApp)")]
+      ),
+      h2("Fale com a gente"),
+      para(
+        rich(
+          t("Envie proposta para "),
+          a("parceiros@papodebola.com.br", "mailto:parceiros@papodebola.com.br"),
+          t(
+            " com uma breve apresentação da empresa, objetivos da campanha e formatos de interesse. Retornamos em até 2 dias úteis."
+          )
+        )
+      ),
+    ],
+  },
   sobre: {
     title: "Sobre Nós",
     slug: "sobre",
