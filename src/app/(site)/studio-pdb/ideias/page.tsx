@@ -5,6 +5,7 @@ import {
   Lightbulb, Target, Hammer, CheckCircle2, Plus, Trash2, GripVertical,
   Loader2, ChevronDown, X, ArrowLeft, RefreshCw, LogOut, Pencil, Send,
 } from "lucide-react";
+import { PanelMenu } from "@/components/studio/panel-menu";
 
 type Column = "ideias" | "priorizado" | "fazendo" | "concluido";
 type Priority = "alta" | "media" | "baixa";
@@ -120,8 +121,8 @@ export default function IdeiasPage() {
       <header className="bg-surface border-b border-border-custom px-4 sm:px-6 py-3 flex items-center gap-3 shrink-0">
         <a href="/studio-pdb" className="p-2 -ml-2 text-text-muted hover:text-green" title="Voltar ao Studio"><ArrowLeft className="h-4 w-4" /></a>
         <Lightbulb className="h-5 w-5 text-yellow-500" />
-        <h1 className="text-lg font-bold text-text-primary">Mural de Ideias</h1>
-        <span className="hidden sm:inline text-xs text-text-muted">{ideas.length} no total</span>
+        <h1 className="hidden md:block text-lg font-bold text-text-primary">Mural de Ideias</h1>
+        <PanelMenu current="/studio-pdb/ideias" />
 
         {/* Captura rapida */}
         <div className="flex-1 max-w-md mx-auto flex items-center gap-2">

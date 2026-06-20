@@ -8,6 +8,7 @@ import {
   Lightbulb, Pencil, CheckCircle, Globe, Eye, ImageIcon,
   ThumbsUp, ThumbsDown, Images, FileText,
 } from "lucide-react";
+import { PanelMenu } from "@/components/studio/panel-menu";
 
 type Column = "sugestoes" | "edicao" | "aprovado" | "publicado";
 
@@ -247,7 +248,7 @@ export default function StudioPage() {
       <header className="bg-surface border-b border-border-custom px-6 py-3 flex items-center gap-4 shrink-0">
         <Goal className="h-6 w-6 text-green" />
         <h1 className="text-lg font-bold text-text-primary">Studio</h1>
-        <span className="text-xs text-text-muted">Papo de Bola</span>
+        <PanelMenu current="/studio-pdb" />
         <div className="flex-1" />
         <button onClick={handleGenerate} disabled={generating}
           className="flex items-center gap-2 px-4 py-2 bg-green text-white rounded-lg text-sm font-semibold hover:bg-green-hover transition-colors disabled:opacity-50">
@@ -263,7 +264,6 @@ export default function StudioPage() {
           className="flex items-center gap-2 px-3 py-2 border border-border-custom text-text-secondary rounded-lg text-sm font-semibold hover:border-yellow-500 hover:text-yellow-600 transition-colors" title="Mural de Ideias">
           <Lightbulb className="h-4 w-4" /> <span className="hidden lg:inline">Ideias</span>
         </a>
-        <a href="/painel-pdb-9x/artigos" className="p-2 text-text-muted hover:text-green" title="Painel Admin"><ExternalLink className="h-4 w-4" /></a>
         <button onClick={handleLogout} className="p-2 text-text-muted hover:text-red" title="Sair"><LogOut className="h-4 w-4" /></button>
       </header>
 
