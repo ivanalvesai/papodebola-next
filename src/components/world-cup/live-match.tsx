@@ -679,12 +679,17 @@ function Lineups({
   return (
     <div>
       <div className="mb-3 flex flex-wrap items-center gap-x-3 gap-y-1">
-        {confirmed && (
+        {confirmed ? (
           <div className="flex items-center gap-1 text-[11px] font-semibold text-green">
             <span className="inline-block h-1.5 w-1.5 rounded-full bg-green" />
             Escalação confirmada
           </div>
-        )}
+        ) : event.statusType === "notstarted" ? (
+          <div className="flex items-center gap-1 text-[11px] font-semibold text-text-muted">
+            <span className="inline-block h-1.5 w-1.5 rounded-full bg-text-muted" />
+            Provável — sujeita a alteração até o apito
+          </div>
+        ) : null}
         {hasSubs && (
           <div className="flex items-center gap-2 text-[10px] font-semibold text-text-muted">
             <span className="flex items-center gap-0.5 text-red">
@@ -701,6 +706,33 @@ function Lineups({
         {away && <TeamColumn team={away} teamId={event.awayId} name={event.away} marks={marks} />}
       </div>
     </div>
+  );
+}
+
+// Recap em texto do jogo encerrado (SEO: resultado + gols no HTML, ajuda a subir o
+// termo genérico "X x Y" que hoje fica na página 2).
+function MatchRecap({ event, incidents }: { event: MatchEvent; incidents: MatchIncident[] }) {
+  const hs = event.homeScore ?? 0;
+  const as = event.awayScore ?? 0;
+  const { home: h, away: a } = event;
+  let result: string;
+  if (hs > as) result = `${h} venceu ${a} por ${hs} a ${as}`;
+  else if (as > hs) result = `${a} venceu ${h} por ${as} a ${hs}`;
+  else result = `${h} e ${a} ficaram no ${hs} a ${as}`;
+
+  const goals = [
+    ...new Set(
+      incidents
+        .filter((i) => ["goal", "scoreChange", "penaltyGoal"].includes(i.type) && i.player)
+        .map((i) => `${i.player}${i.minute != null ? ` (${i.minute}')` : ""}`)
+    ),
+  ];
+
+  return (
+    <p className="rounded-lg border border-border-custom bg-card-bg p-3 text-sm leading-relaxed text-text-secondary">
+      <strong className="text-text-primary">{result}</strong> pela Copa do Mundo 2026.
+      {goals.length > 0 && <> Gols: {goals.join(", ")}.</>}
+    </p>
   );
 }
 
@@ -846,10 +878,22 @@ export function LiveMatch({
         }}
       />
 
+      {event.statusType === "finished" && <MatchRecap event={event} incidents={incidents} />}
+
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-[300px_minmax(0,1fr)_280px]">
         {/* Esquerda: escalação (+ estatísticas quando a direita é o grupo, ex: Copa) */}
         <div className="order-2 space-y-4 lg:order-1">
-          <Section title="Escalação" icon={Users}>
+          <Section
+            title={
+              initial.lineupsConfirmed
+                ? "Escalação confirmada"
+                : (initial.home?.starters.length || initial.away?.starters.length) &&
+                    event.statusType === "notstarted"
+                  ? "Escalação provável"
+                  : "Escalação"
+            }
+            icon={Users}
+          >
             <Lineups
               event={event}
               home={initial.home}
