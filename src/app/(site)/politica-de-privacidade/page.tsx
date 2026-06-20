@@ -1,22 +1,30 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { Shield } from "lucide-react";
+import { getPayloadPage } from "@/lib/data/payload-pages";
+import { PageBlocks } from "@/components/payload/page-blocks";
 
-export const metadata: Metadata = {
-  alternates: { canonical: "/politica-de-privacidade" },
-  title: "Política de Privacidade",
-  description:
-    "Saiba como o Papo de Bola coleta, utiliza e protege os dados dos usuários, incluindo cookies, segurança, privacidade e seus direitos pela LGPD.",
-  openGraph: {
-    title: "Política de Privacidade do Papo de Bola",
+export const dynamic = "force-dynamic";
+
+export async function generateMetadata(): Promise<Metadata> {
+  const page = await getPayloadPage("politica-de-privacidade");
+  return {
+    alternates: { canonical: "/politica-de-privacidade" },
+    title: page?.seo?.metaTitle || "Política de Privacidade",
     description:
-      "Veja como tratamos informações pessoais, cookies, segurança de dados, links externos e suas práticas de privacidade no portal Papo de Bola.",
-    url: "/politica-de-privacidade",
-    type: "article",
-  },
-};
+      page?.seo?.metaDescription ||
+      "Saiba como o Papo de Bola coleta, utiliza e protege os dados dos usuários, incluindo cookies, segurança, privacidade e seus direitos pela LGPD.",
+    openGraph: {
+      title: "Política de Privacidade do Papo de Bola",
+      description:
+        "Veja como tratamos informações pessoais, cookies, segurança de dados, links externos e suas práticas de privacidade no portal Papo de Bola.",
+      url: "/politica-de-privacidade",
+      type: "article",
+    },
+  };
+}
 
-export default function PrivacidadePage() {
+function PrivacidadeFallback() {
   return (
     <div className="mx-auto max-w-[720px] px-4 py-12">
       <h1 className="mb-2 flex items-center gap-2 text-2xl font-bold text-text-primary">
@@ -224,4 +232,10 @@ export default function PrivacidadePage() {
       </div>
     </div>
   );
+}
+
+export default async function PrivacidadePage() {
+  const page = await getPayloadPage("politica-de-privacidade");
+  if (page) return <PageBlocks page={page} />;
+  return <PrivacidadeFallback />;
 }

@@ -8,7 +8,8 @@ function Block({ block }: { block: any }) {
   switch (block.blockType) {
     case "heading": {
       const Tag = block.level === "h3" ? "h3" : "h2";
-      return <Tag className="pt-2 text-lg font-bold text-text-primary">{block.text}</Tag>;
+      const size = block.level === "h3" ? "text-base" : "text-lg";
+      return <Tag className={`pt-2 ${size} font-bold text-text-primary`}>{block.text}</Tag>;
     }
     case "richText":
       return block.content ? (
