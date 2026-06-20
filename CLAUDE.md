@@ -526,6 +526,16 @@ Doc completo: `docs/deploys/2026-06-15/04-web-push.md`.
 - **`/llms.txt`**: rota `src/app/llms.txt/route.ts` (guia pros agentes).
 - **Schemas**: `src/components/seo/` — site (Organization+WebSite+SearchAction), article (NewsArticle),
   sports-team, sports-event, item-list, breadcrumb. Doc: `docs/deploys/2026-06-15/03-seo-marketing.md`.
+- **Google Search Console via API** (service account, desde 20/06): cred em `C:/Users/ivans/.gsc/papodebola.json`
+  (fora do repo). `node scripts/gsc-top-pages.mjs` (top páginas/queries) e `node scripts/gsc-inspect.mjs <url>`
+  (status de indexação). Propriedade é **URL-prefix** (`https://www.papodebola.com.br/`), SA "Restrito" = só
+  leitura (não reenvia sitemap/indexação via API). Doc: `docs/knowledge/2026-06-20-gsc-seo-copa-tenis.md`.
+- **Páginas de jogo (Copa e Tênis) — SEO por status** (20/06): título/description mudam por status
+  (encerrado mostra placar/resultado; futuro "horário/onde assistir/escalação"); bloco de pré-jogo
+  (onde assistir + horário); schema `SportsEvent` com `location`/venue + organizer + superEvent; o
+  `sitemap.ts` (revalidate runtime) lista as 72 páginas de jogo da Copa pra o Google descobrir antes do apito.
+- **Tênis (Halle)**: o chaveamento vem dos **feeds por data** (`tennis/events/d/m/y`), não do `cuptrees`
+  (que só traz o qualifying). Ver `getTennisDraw` em `src/lib/data/tennis.ts`.
 
 ---
 
@@ -620,8 +630,25 @@ curl -X POST -H 'Content-Type: application/json' \
 | Config | Trocar senha + limpar cache ISR |
 | **Promover** | Lista commits dev→prod + botão de promoção async |
 
-Middleware protege `/painel-pdb-9x`, `/studio-pdb`, `/api/kanban`, `/api/promote`, `/api/push/send`.
+Middleware protege `/painel-pdb-9x`, `/studio-pdb`, `/api/kanban`, `/api/ideas`, `/api/meu-kanban`, `/api/promote`, `/api/push/send`.
 - Sem token: **API retorna 401 JSON**, páginas redirecionam para login.
+
+### Studio + Kanbans (telas cheias, noindex, JWT)
+
+Doc completo: `docs/knowledge/2026-06-20-studio-kanbans.md`. Navegação compartilhada: dropdown
+**"Painel ▾"** (`src/components/studio/panel-menu.tsx`) em todas as telas do Studio.
+
+| Tela | Rota | O que é |
+|---|---|---|
+| Studio | `/studio-pdb` | Kanban de **posts** (publicação de artigos: IA + Humanizer). Store `kanban-store.ts`, `/api/kanban` |
+| **Mural de Ideias** | `/studio-pdb/ideias` | Kanban **compartilhado** de ideias/pendências do **site**. Store `ideas-store.ts` (`data/ideas.json`), `/api/ideas` |
+| **Meu Kanban** | `/studio-pdb/meu-kanban` | Kanban **pessoal, isolado por `owner=session.username`** (admin e luke não veem o do outro). Multi-quadro agrupado por organização, colunas customizáveis. Store `personal-kanban-store.ts`, `/api/meu-kanban` |
+
+- **Fotos nos cards**: `images: string[]` (várias, empilhadas) + lightbox com zoom
+  (`image-lightbox.tsx`). Upload base64 → volume `data/{ideas,personal-kanban}-images/`, servido por
+  route `?f=` (NÃO usar `/api/upload`, que grava em `public/` efêmero). Excluir card/quadro apaga as imagens.
+- **Exclusão segura**: `useConfirm()` (`src/components/studio/use-confirm.tsx`) — modal próprio com
+  "Cancelar" como padrão (Enter não apaga). Usado em todos os deletes dos kanbans.
 
 ---
 

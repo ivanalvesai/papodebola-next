@@ -8,6 +8,7 @@ import {
 } from "lucide-react";
 import { PanelMenu } from "@/components/studio/panel-menu";
 import { ImageLightbox } from "@/components/studio/image-lightbox";
+import { useConfirm } from "@/components/studio/use-confirm";
 
 type Column = "ideias" | "priorizado" | "fazendo" | "concluido";
 type Priority = "alta" | "media" | "baixa";
@@ -77,6 +78,7 @@ export default function IdeiasPage() {
   const [uploading, setUploading] = useState(false);
   const [imgUrlInput, setImgUrlInput] = useState("");
   const [lightbox, setLightbox] = useState<string | null>(null);
+  const { confirm, dialog } = useConfirm();
 
   const load = useCallback(async () => {
     try {
@@ -114,7 +116,7 @@ export default function IdeiasPage() {
 
   const move = (id: string, column: Column) => api({ action: "move", id, column });
   async function remove(id: string) {
-    if (!confirm("Excluir esta ideia?")) return;
+    if (!(await confirm("Excluir esta ideia? Esta acao nao pode ser desfeita."))) return;
     await api({ action: "delete", id });
     setEdit(null);
   }
@@ -123,7 +125,7 @@ export default function IdeiasPage() {
   async function clearDone() {
     const n = ideas.filter((i) => i.column === "concluido").length;
     if (n === 0) return;
-    if (!confirm(`Apagar as ${n} ideia(s) concluidas? (libera espaco, nao da pra desfazer)`)) return;
+    if (!(await confirm(`Apagar as ${n} ideia(s) concluidas? Libera espaco e nao da pra desfazer.`))) return;
     await api({ action: "clear-done" });
   }
 
@@ -420,6 +422,7 @@ export default function IdeiasPage() {
       )}
 
       {lightbox && <ImageLightbox src={lightbox} onClose={() => setLightbox(null)} />}
+      {dialog}
     </div>
   );
 }
