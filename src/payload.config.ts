@@ -44,7 +44,14 @@ export default buildConfig({
       slug: "media",
       // staticDir no volume COMPARTILHADO (/app/data) — persiste entre deploys e é
       // o mesmo em dev e prod. URL servida via /cms-api/media/file/<filename>.
-      upload: { staticDir: path.resolve(dirname, "../data/cms-media") },
+      // formatOptions: original vira WebP. imageSizes: versão "card" (800px WebP).
+      upload: {
+        staticDir: path.resolve(dirname, "../data/cms-media"),
+        formatOptions: { format: "webp", options: { quality: 80 } },
+        imageSizes: [
+          { name: "card", width: 800, formatOptions: { format: "webp", options: { quality: 78 } } },
+        ],
+      },
       // Leitura pública: as imagens/arquivos precisam abrir pra qualquer visitante.
       access: { read: () => true },
       fields: [{ name: "alt", type: "text" }],

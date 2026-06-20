@@ -22,8 +22,9 @@ function stripHtml(html: string): string {
 function mapPost(p: any): Article {
   const tags = (p.tags || []).map((x: any) => x.tag).filter(Boolean);
   const cover = typeof p.cover === "object" && p.cover ? p.cover : null;
-  // URL absoluta (serve display + OG/schema). Servida via /cms-api/media/file/<name>.
-  const image = cover?.url ? `${SITE_URL}${cover.url}` : "";
+  // Prefere a versão "card" (WebP 800px); cai pro original. URL absoluta (display + OG).
+  const coverUrl = cover?.sizes?.card?.url || cover?.url || "";
+  const image = coverUrl ? `${SITE_URL}${coverUrl}` : "";
   const category = p.category || "Futebol brasileiro";
   const pubDate = p.publishedDate || p.createdAt || new Date().toISOString();
   return {
