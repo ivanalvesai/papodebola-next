@@ -59,10 +59,8 @@ export default function RootLayout({
   return (
     <html lang="pt-BR" className={`${openSans.variable} antialiased`}>
       <head>
-        {/* Antecipa a conexão com os hosts de terceiros: imagens do WP (LCP de
-            home/artigos) e GTM/GA4. Reduz o tempo de handshake antes do download. */}
-        <link rel="preconnect" href="https://admin.papodebola.com.br" />
-        <link rel="dns-prefetch" href="https://admin.papodebola.com.br" />
+        {/* Antecipa a conexão com o GTM/GA4. (As imagens agora são same-origin via
+            Payload /cms-api/media — não precisa mais de preconnect pro WP.) */}
         <link rel="preconnect" href="https://www.googletagmanager.com" />
         {/* GTM em lazyOnload: carrega após o navegador ficar ocioso, sem disputar
             com a hidratação → corta o TBT. O analytics dispara um pouco depois. */}

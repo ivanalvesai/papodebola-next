@@ -10,7 +10,7 @@
  * - Humanizer rules from Wikipedia's "Signs of AI writing"
  */
 
-import { fetchWP } from "@/lib/api/wordpress";
+import { getArticlesPayload } from "@/lib/data/articles-payload";
 import { articleHref } from "@/lib/config";
 
 const ANTHROPIC_URL = "https://api.anthropic.com/v1/messages";
@@ -239,24 +239,11 @@ function buildHtmlContent(
 
 async function getRelatedSlugs(category: string): Promise<{ title: string; slug: string }[]> {
   try {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const cats = await fetchWP<any[]>("categories?per_page=50", 86400);
-    if (!cats) return [];
-    const cat = cats.find((c: { name: string }) =>
-      c.name.toLowerCase() === category.toLowerCase()
-    );
-    if (!cat) return [];
-
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const posts = await fetchWP<any[]>(
-      `posts?categories=${cat.id}&per_page=4&orderby=date&order=desc&_fields=id,title,slug`,
-      0,
-    );
-    if (!posts) return [];
-    return posts.map((p: { title: { rendered: string }; slug: string }) => ({
-      title: p.title.rendered.replace(/<[^>]+>/g, ""),
-      slug: p.slug,
-    }));
+    // Lê do Payload (não mais do WP) os posts recentes da categoria, pra sugerir
+    // links internos no artigo gerado.
+    const res = await getArticlesPayload({ category, perPage: 4 });
+    if (!res) return [];
+    return res.articles.map((a) => ({ title: a.rewrittenTitle, slug: a.slug }));
   } catch {
     return [];
   }
