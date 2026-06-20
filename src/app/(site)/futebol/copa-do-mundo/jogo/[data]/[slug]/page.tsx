@@ -11,6 +11,7 @@ import {
   getMatchEvent,
   getMatchGroup,
   type WorldCupFixture,
+  type MatchDetail,
 } from "@/lib/data/match-detail";
 
 // ISR (não force-dynamic): a página cacheia e serve na hora; o cliente faz polling
@@ -110,6 +111,33 @@ async function MatchBody({ fixture, url }: { fixture: WorldCupFixture; url: stri
     getMatchGroup(fixture.homeId, fixture.awayId),
   ]);
 
+  // Se o SSR não trouxe o detalhe (ex: API momentaneamente lenta/429), NÃO mostra
+  // tela morta: semeia o LiveMatch com os dados do confronto e o cliente preenche
+  // tudo via polling. Assim nunca aparece "indisponível".
+  const seed: MatchDetail = {
+    event: {
+      id: fixture.id,
+      homeId: fixture.homeId,
+      awayId: fixture.awayId,
+      home: fixture.home,
+      away: fixture.away,
+      homeScore: null,
+      awayScore: null,
+      statusType: fixture.timestamp > Date.now() / 1000 ? "notstarted" : "inprogress",
+      statusDesc: "",
+      startTimestamp: fixture.timestamp,
+      periodStart: 0,
+      live: fixture.timestamp <= Date.now() / 1000,
+      venue: null,
+    },
+    incidents: [],
+    commentary: [],
+    home: null,
+    away: null,
+    lineupsConfirmed: false,
+    stats: [],
+  };
+
   return (
     <>
       <SportsEventSchema
@@ -122,13 +150,7 @@ async function MatchBody({ fixture, url }: { fixture: WorldCupFixture; url: stri
         venue={detail?.event.venue}
         url={url}
       />
-      {detail ? (
-        <LiveMatch matchId={fixture.id} initial={detail} group={group} />
-      ) : (
-        <p className="py-10 text-center text-sm text-text-muted">
-          Dados do jogo indisponíveis no momento. Atualize em instantes.
-        </p>
-      )}
+      <LiveMatch matchId={fixture.id} initial={detail ?? seed} group={group} />
     </>
   );
 }
