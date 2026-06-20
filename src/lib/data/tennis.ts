@@ -93,7 +93,9 @@ export function tennisMatchHref(tournamentSlug: string, homeName: string, awayNa
 const ROUND_PT: Record<string, string> = {
   Final: "Final",
   Semifinal: "Semifinais",
+  Semifinals: "Semifinais",
   Quarterfinal: "Quartas de final",
+  Quarterfinals: "Quartas de final",
   "Round of 16": "Oitavas de final",
   "Round of 32": "Primeira rodada",
   "Round of 64": "Fase preliminar",
@@ -247,6 +249,7 @@ export async function getTennisDraw(slug: TennisTournamentSlug): Promise<TennisD
   for (const feed of dayFeeds) {
     for (const e of feed?.events || []) {
       if (e?.tournament?.uniqueTournament?.id !== ut || !e?.id) continue;
+      if (e?.status?.type === "canceled") continue; // jogo cancelado/W.O. (slot foi pra outro)
       if (!roundMeta[e?.roundInfo?.round]) continue; // pula qualifying/desconhecido
       byId[e.id] = e;
     }
