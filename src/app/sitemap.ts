@@ -5,8 +5,14 @@ import { SELECOES, BRAZIL_ID } from "@/lib/selecoes";
 import { KNOCKOUT_PHASES } from "@/lib/world-cup-phases";
 import { getArticles } from "@/lib/data/articles";
 import { getCraques } from "@/lib/data/craques";
+import { getWorldCupFixtures } from "@/lib/data/match-detail";
+import { matchDateSlug, matchPairSlug } from "@/lib/world-cup-match-url";
 
 const BASE = process.env.NEXT_PUBLIC_SITE_URL || "https://www.papodebola.com.br";
+
+// Regenera em runtime (30min): o sitemap precisa dos jogos da Copa, que vêm da API
+// e NÃO são alcançáveis no build. Assim o Google descobre os jogos antes do apito.
+export const revalidate = 1800;
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const now = new Date();
@@ -105,6 +111,25 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     })),
   ];
 
+  // Páginas de cada jogo da Copa (descoberta/indexação ANTES do apito). Vem da API
+  // (vazio no build; o revalidate em runtime popula). Jogo de hoje/futuro = freq alta.
+  const nowSec = Date.now() / 1000;
+  const copaFixtures = await getWorldCupFixtures().catch(() => []);
+  const copaMatchPages: MetadataRoute.Sitemap = copaFixtures.map((f) => {
+    const aindaNaoAcabou = f.timestamp >= nowSec - 4 * 3600;
+    return {
+      url: `${BASE}/futebol/copa-do-mundo/jogo/${matchDateSlug(f.timestamp)}/${matchPairSlug(
+        f.homeId,
+        f.awayId,
+        f.home,
+        f.away
+      )}`,
+      lastModified: now,
+      changeFrequency: aindaNaoAcabou ? ("hourly" as const) : ("weekly" as const),
+      priority: aindaNaoAcabou ? 0.8 : 0.5,
+    };
+  });
+
   // Páginas por seleção (Copa do Mundo) — Brasil já está em staticPages
   const selecaoPages: MetadataRoute.Sitemap = SELECOES.filter(
     (s) => s.id !== BRAZIL_ID
@@ -143,6 +168,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     ...parceirosPage,
     ...newsCategoryPages,
     ...copaPages,
+    ...copaMatchPages,
     ...selecaoPages,
     ...articlePages,
     ...craquePages,
