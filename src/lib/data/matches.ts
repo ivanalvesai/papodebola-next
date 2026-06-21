@@ -113,11 +113,22 @@ export async function getTomorrowMatches(): Promise<NormalizedMatch[]> {
 // do dia seguinte) com a data no card, pra ninguem perder por causa do horario.
 export async function getWorldCupBarMatches(): Promise<NormalizedMatch[]> {
   const days = await Promise.all([0, 1, 2].map((o) => getMatchesOnOffset(o).catch(() => [])));
+
+  // O feed matches/{d}/{m}/{y} é por data UTC. Como o servidor é UTC, "matches/hoje"
+  // inclui os jogos do FIM DE NOITE de ONTEM em Brasília (que já viraram UTC do dia
+  // seguinte) — por isso jogos encerrados de ontem vazavam pra barra "Hoje". Filtra
+  // pela data REAL de Brasília: de hoje 00:00 até o fim de depois de amanhã (3 dias).
+  const nowBr = new Date(Date.now() - 3 * 3600 * 1000);
+  const todayStartSec =
+    Date.UTC(nowBr.getUTCFullYear(), nowBr.getUTCMonth(), nowBr.getUTCDate()) / 1000 + 3 * 3600;
+  const windowEndSec = todayStartSec + 3 * 24 * 3600;
+
   const seen = new Set<string>();
   const wc: NormalizedMatch[] = [];
   for (const list of days) {
     for (const match of list) {
-      if (match.href && !seen.has(match.id)) {
+      const ts = match.timestamp || 0;
+      if (match.href && ts >= todayStartSec && ts < windowEndSec && !seen.has(match.id)) {
         seen.add(match.id);
         wc.push(match);
       }
