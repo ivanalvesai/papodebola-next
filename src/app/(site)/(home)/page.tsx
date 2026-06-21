@@ -38,7 +38,13 @@ export async function generateMetadata(): Promise<Metadata> {
     title: { absolute: title },
     description,
     alternates: { canonical: "/" },
-    openGraph: { title, description },
+    // images explícito: o openGraph aqui SUBSTITUI o do layout, então sem isto a
+    // home ficava sem og:image (preview vazio ao compartilhar). Reusa o og-image.jpg.
+    openGraph: {
+      title,
+      description,
+      images: [{ url: "/og-image.jpg", width: 1200, height: 630 }],
+    },
   };
 }
 

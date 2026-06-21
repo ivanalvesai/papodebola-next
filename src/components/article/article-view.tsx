@@ -55,6 +55,25 @@ function sanitizeHtml(html: string): string {
     .replace(/(href|src)\s*=\s*("|')\s*javascript:[^"']*\2/gi, '$1=$2#$2');
 }
 
+// SEO/performance das imagens DENTRO do corpo do post (vêm como HTML cru, sem
+// next/image): injeta loading=lazy + decoding=async, dá dimensões às miniaturas do
+// YouTube (hqdefault 480x360 → mata CLS) e preenche alt vazio com o título (palavra-
+// chave natural). Mantém atributos que já existem.
+function enhanceBodyImages(html: string, fallbackAlt: string): string {
+  const alt = fallbackAlt.replace(/"/g, "&quot;");
+  return html.replace(/<img\b[^>]*>/gi, (tag) => {
+    let t = tag;
+    if (!/\sloading=/i.test(t)) t = t.replace(/<img/i, '<img loading="lazy"');
+    if (!/\sdecoding=/i.test(t)) t = t.replace(/<img/i, '<img decoding="async"');
+    if (/img\.youtube\.com/i.test(t) && !/\swidth=/i.test(t)) {
+      t = t.replace(/<img/i, '<img width="480" height="360"');
+    }
+    if (/\salt\s*=\s*""/i.test(t)) t = t.replace(/\salt\s*=\s*""/i, ` alt="${alt}"`);
+    else if (!/\salt=/i.test(t)) t = t.replace(/<img/i, `<img alt="${alt}"`);
+    return t;
+  });
+}
+
 function formatParagraphs(text: string): string {
   return text
     .split(/\n\n|\n/)
@@ -98,9 +117,12 @@ export function ArticleView({
   const wordCount = article.rewrittenText.split(/\s+/).filter((w) => w.length > 0).length;
   const readingTime = Math.max(1, Math.ceil(wordCount / 200));
 
-  const bodyHtml = article.contentHtml?.trim()
-    ? sanitizeHtml(article.contentHtml)
-    : formatParagraphs(article.rewrittenText);
+  const bodyHtml = enhanceBodyImages(
+    article.contentHtml?.trim()
+      ? sanitizeHtml(article.contentHtml)
+      : formatParagraphs(article.rewrittenText),
+    article.rewrittenTitle
+  );
   const author = article.author || "Redacao Papo de Bola";
 
   const catSlug = slugifyCategory(article.category);
@@ -233,7 +255,7 @@ export function ArticleView({
                 {r.image && (
                   <Image
                     src={r.image}
-                    alt=""
+                    alt={r.rewrittenTitle}
                     width={340}
                     height={120}
                     className="w-full h-[120px] object-cover"

@@ -22,7 +22,7 @@ function FeaturedCard({ article, big }: { article: Article; big?: boolean }) {
       {article.image ? (
         <Image
           src={article.image}
-          alt=""
+          alt={article.rewrittenTitle}
           fill
           sizes={big ? "(max-width:1024px) 100vw, 40vw" : "(max-width:1024px) 100vw, 20vw"}
           className="object-cover transition-transform duration-300 group-hover:scale-105"
