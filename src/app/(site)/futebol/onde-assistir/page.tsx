@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { getTodayMatches } from "@/lib/data/matches";
+import { getTodayMatches, freshMatches } from "@/lib/data/matches";
 import { PageBreadcrumb } from "@/components/seo/page-breadcrumb";
 import { Tv } from "lucide-react";
 import { TeamLogo } from "@/components/ui/team-logo";
@@ -45,7 +45,8 @@ function groupByLeague(matches: NormalizedMatch[]) {
 }
 
 export default async function OndeAssistirPage() {
-  const matches = await getTodayMatches().catch(() => []);
+  // "Onde assistir hoje" foca no que vem — tira encerrados há +1h.
+  const matches = freshMatches(await getTodayMatches().catch(() => []));
   const grouped = groupByLeague(matches);
 
   return (
