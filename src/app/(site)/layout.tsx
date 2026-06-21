@@ -11,6 +11,7 @@ import { PushPromptModal } from "@/components/push/push-prompt-modal";
 import { SidePanelProvider } from "@/components/layout/side-panel-context";
 import { MyTeamProvider } from "@/components/layout/my-team-context";
 import { SiteSchema } from "@/components/seo/site-schema";
+import { getEditableText } from "@/components/editable";
 
 const openSans = Open_Sans({
   variable: "--font-sans",
@@ -19,37 +20,46 @@ const openSans = Open_Sans({
   display: "swap",
 });
 
-export const metadata: Metadata = {
-  title: {
-    default: "Papo de Bola - Futebol Brasileiro e Mundial",
-    template: "%s | Papo de Bola",
-  },
-  description:
-    "Portal de futebol brasileiro e mundial com notícias, placares ao vivo, classificações, transferências e muito mais.",
-  metadataBase: new URL(
-    process.env.NEXT_PUBLIC_SITE_URL || "https://www.papodebola.com.br"
-  ),
-  openGraph: {
-    siteName: "Papo de Bola",
-    locale: "pt_BR",
-    type: "website",
-    images: [{ url: "/og-image.jpg", width: 1200, height: 630 }],
-  },
-  twitter: {
-    card: "summary_large_image",
-  },
-  other: {
-    // Verificacao da conta do Google AdSense (renderiza <meta name="google-adsense-account">)
-    "google-adsense-account": "ca-pub-5802007717322888",
-  },
-  icons: {
-    icon: [
-      { url: "/favicon.ico", sizes: "32x32" },
-      { url: "/favicon-32x32.png", sizes: "32x32", type: "image/png" },
-    ],
-    apple: "/apple-touch-icon.png",
-  },
-};
+// Nome/título/descrição padrão do site são editáveis no painel "Páginas" →
+// "Configurações do site" (com fallback nos defaults do registro). O resto
+// (metadataBase, OG image, AdSense, ícones) segue fixo no código.
+export async function generateMetadata(): Promise<Metadata> {
+  const [name, titleDefault, description] = await Promise.all([
+    getEditableText("site.name"),
+    getEditableText("site.meta.titleDefault"),
+    getEditableText("site.meta.descriptionDefault"),
+  ]);
+  return {
+    title: {
+      default: titleDefault,
+      template: `%s | ${name}`,
+    },
+    description,
+    metadataBase: new URL(
+      process.env.NEXT_PUBLIC_SITE_URL || "https://www.papodebola.com.br"
+    ),
+    openGraph: {
+      siteName: name,
+      locale: "pt_BR",
+      type: "website",
+      images: [{ url: "/og-image.jpg", width: 1200, height: 630 }],
+    },
+    twitter: {
+      card: "summary_large_image",
+    },
+    other: {
+      // Verificacao da conta do Google AdSense (renderiza <meta name="google-adsense-account">)
+      "google-adsense-account": "ca-pub-5802007717322888",
+    },
+    icons: {
+      icon: [
+        { url: "/favicon.ico", sizes: "32x32" },
+        { url: "/favicon-32x32.png", sizes: "32x32", type: "image/png" },
+      ],
+      apple: "/apple-touch-icon.png",
+    },
+  };
+}
 
 export default function RootLayout({
   children,

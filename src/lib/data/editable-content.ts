@@ -10,9 +10,27 @@ export interface EditableDef {
   label: string;
   default: string; // texto usado quando não há override
   type: EditableType;
+  scope?: "global"; // global = afeta todas as páginas (revalida o layout inteiro)
 }
 
 export const EDITABLE: Record<string, EditableDef> = {
+  // ===== Configurações do site (globais: valem pra todas as páginas) =====
+  "site.name": { page: "site", pageLabel: "Configurações do site", section: "Identidade", label: "Nome do site (marca, usada no título e no schema)", type: "text", scope: "global", default: "Papo de Bola" },
+  "site.meta.titleDefault": { page: "site", pageLabel: "Configurações do site", section: "SEO padrão", label: "Título padrão (páginas sem título próprio)", type: "text", scope: "global", default: "Papo de Bola - Futebol Brasileiro e Mundial" },
+  "site.meta.descriptionDefault": { page: "site", pageLabel: "Configurações do site", section: "SEO padrão", label: "Descrição padrão (meta description fallback)", type: "multiline", scope: "global", default: "Portal de futebol brasileiro e mundial com notícias, placares ao vivo, classificações, transferências e muito mais." },
+  "site.social.instagram": { page: "site", pageLabel: "Configurações do site", section: "Redes sociais", label: "URL do Instagram", type: "text", scope: "global", default: "https://www.instagram.com/papodebola.com.br/" },
+  "site.social.x": { page: "site", pageLabel: "Configurações do site", section: "Redes sociais", label: "URL do X (Twitter)", type: "text", scope: "global", default: "https://x.com/sitepapodebola" },
+  "site.social.youtube": { page: "site", pageLabel: "Configurações do site", section: "Redes sociais", label: "URL do YouTube", type: "text", scope: "global", default: "https://www.youtube.com/@opapodebola" },
+
+  // ===== Copa do Mundo (hub) =====
+  "copa.meta.title": { page: "/futebol/copa-do-mundo", pageLabel: "Copa do Mundo (hub)", section: "SEO", label: "Meta title", type: "text", default: "Tabela e Jogos da Copa do Mundo 2026" },
+  "copa.meta.description": { page: "/futebol/copa-do-mundo", pageLabel: "Copa do Mundo (hub)", section: "SEO", label: "Meta description", type: "multiline", default: "Acompanhe a Copa do Mundo 2026 com tabela, classificação dos grupos, jogos, datas e horários atualizados." },
+  "copa.h1": { page: "/futebol/copa-do-mundo", pageLabel: "Copa do Mundo (hub)", section: "Topo", label: "Título principal (H1)", type: "text", default: "Copa do Mundo 2026" },
+  "copa.intro": { page: "/futebol/copa-do-mundo", pageLabel: "Copa do Mundo (hub)", section: "Topo", label: "Texto de introdução", type: "multiline", default: "Classificação de cada grupo e os jogos da rodada ao lado · use a seta para avançar as rodadas. Horários de Brasília. Os 2 primeiros de cada grupo avançam (destaque em verde)." },
+  "copa.standings.empty": { page: "/futebol/copa-do-mundo", pageLabel: "Copa do Mundo (hub)", section: "Mensagens", label: "Quando a classificação está indisponível", type: "text", default: "Classificação indisponível no momento." },
+  "copa.noticias.h2": { page: "/futebol/copa-do-mundo", pageLabel: "Copa do Mundo (hub)", section: "Notícias", label: "Título da seção de notícias (H2)", type: "text", default: "Notícias da Copa do Mundo" },
+  "copa.noticias.sub": { page: "/futebol/copa-do-mundo", pageLabel: "Copa do Mundo (hub)", section: "Notícias", label: "Subtítulo da seção de notícias", type: "text", default: "Últimas notícias, bastidores e análises da Copa do Mundo 2026" },
+
   // ===== Página inicial =====
   "home.meta.title": { page: "/", pageLabel: "Página inicial", section: "SEO", label: "Meta title (Google / aba)", type: "text", default: "Papo de Bola | Futebol e Esportes do Brasil e do Mundo" },
   "home.meta.description": { page: "/", pageLabel: "Página inicial", section: "SEO", label: "Meta description", type: "multiline", default: "Acompanhe notícias de futebol e esportes, jogos de hoje, resultados ao vivo, tabelas, classificações e as principais competições do mundo." },
