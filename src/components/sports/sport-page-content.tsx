@@ -58,7 +58,7 @@ export async function SportPageContent({
                       {a.image ? (
                         <Image
                           src={a.image}
-                          alt=""
+                          alt={a.rewrittenTitle}
                           width={128}
                           height={72}
                           className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"

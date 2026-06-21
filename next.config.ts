@@ -7,6 +7,9 @@ const nextConfig: NextConfig = {
     optimizePackageImports: ["lucide-react"],
   },
   images: {
+    // AVIF primeiro (≈20-30% menor que WebP), com WebP de fallback → ganho de CWV
+    // nas capas/imagens otimizadas pelo next/image.
+    formats: ["image/avif", "image/webp"],
     remotePatterns: [
       {
         protocol: "https",

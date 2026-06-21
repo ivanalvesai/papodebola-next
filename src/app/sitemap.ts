@@ -148,6 +148,11 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     lastModified: a.updatedAt || a.pubDate ? new Date(a.updatedAt || a.pubDate) : now,
     changeFrequency: "weekly" as const,
     priority: 0.6,
+    // Capa no sitemap (image extension) → ajuda o Google a descobrir/indexar a
+    // imagem da notícia no Google Imagens. URL absoluta.
+    ...(a.image
+      ? { images: [a.image.startsWith("http") ? a.image : `${BASE}${a.image}`] }
+      : {}),
   }));
 
   // Craques (cluster /futebol/craque/[slug]) — só os publicados. getArticles acima

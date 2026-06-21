@@ -108,7 +108,7 @@ export function NewsListView({
                   <div className="aspect-video md:aspect-auto">
                     <Image
                       src={articles[0].image}
-                      alt=""
+                      alt={articles[0].rewrittenTitle}
                       width={620}
                       height={350}
                       className="w-full h-full object-cover"
@@ -151,7 +151,7 @@ export function NewsListView({
                   {article.image ? (
                     <Image
                       src={article.image}
-                      alt=""
+                      alt={article.rewrittenTitle}
                       width={400}
                       height={225}
                       className="w-full h-full object-cover"

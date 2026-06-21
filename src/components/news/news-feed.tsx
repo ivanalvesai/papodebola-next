@@ -30,7 +30,7 @@ export function FeedItem({ article }: { article: Article }) {
           // eslint-disable-next-line @next/next/no-img-element
           <img
             src={article.image}
-            alt=""
+            alt={article.rewrittenTitle}
             loading="lazy"
             className="block h-auto w-full transition-transform duration-300 group-hover:scale-105"
           />
