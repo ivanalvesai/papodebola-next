@@ -1,32 +1,38 @@
+import { getEditableText } from "@/components/editable";
+
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || "https://www.papodebola.com.br";
 
 // Schema de entidade global (Organization + WebSite com SearchAction). Renderizado
 // no layout raiz → aparece em todas as páginas. Dá sinal de marca ao Google e
-// habilita o Sitelinks Searchbox (busca em /noticias?search=).
-export function SiteSchema() {
+// habilita o Sitelinks Searchbox (busca em /noticias?search=). Nome e redes sociais
+// editáveis no painel "Páginas" → "Configurações do site".
+export async function SiteSchema() {
+  const [name, instagram, x, youtube] = await Promise.all([
+    getEditableText("site.name"),
+    getEditableText("site.social.instagram"),
+    getEditableText("site.social.x"),
+    getEditableText("site.social.youtube"),
+  ]);
+  const sameAs = [instagram, x, youtube].filter(Boolean);
   const graph = {
     "@context": "https://schema.org",
     "@graph": [
       {
         "@type": "Organization",
         "@id": `${SITE_URL}/#org`,
-        name: "Papo de Bola",
+        name,
         url: `${SITE_URL}/`,
         logo: {
           "@type": "ImageObject",
           url: `${SITE_URL}/logotipo-papo-de-bola.png`,
         },
-        sameAs: [
-          "https://www.instagram.com/papodebola.com.br/",
-          "https://x.com/sitepapodebola",
-          "https://www.youtube.com/@opapodebola",
-        ],
+        sameAs,
       },
       {
         "@type": "WebSite",
         "@id": `${SITE_URL}/#website`,
         url: `${SITE_URL}/`,
-        name: "Papo de Bola",
+        name,
         inLanguage: "pt-BR",
         publisher: { "@id": `${SITE_URL}/#org` },
         potentialAction: {

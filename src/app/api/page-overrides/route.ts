@@ -19,9 +19,20 @@ export async function POST(request: NextRequest) {
   await setEditableValues(updates as Record<string, unknown>);
   // revalida as páginas afetadas (deriva do registro) → muda no ar na hora
   const pages = new Set<string>();
+  let global = false;
   for (const id of Object.keys(updates)) {
-    const p = EDITABLE[id]?.page;
-    if (p) pages.add(p);
+    const def = EDITABLE[id];
+    if (!def) continue;
+    if (def.scope === "global") global = true; // afeta título/schema de todas as páginas
+    else if (def.page) pages.add(def.page);
+  }
+  // Campo global (nome do site, redes, SEO padrão) vive no layout → revalida tudo.
+  if (global) {
+    try {
+      revalidatePath("/", "layout");
+    } catch {
+      /* ignora */
+    }
   }
   for (const p of pages) {
     try {

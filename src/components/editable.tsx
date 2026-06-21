@@ -12,6 +12,17 @@ export async function getEditableText(id: string): Promise<string> {
   return all[id] ?? EDITABLE[id]?.default ?? "";
 }
 
+// Igual ao getEditableText, mas substitui placeholders {variavel} por valores reais.
+// Pra textos com dado interpolado (ex: "Jogo do {time} hoje", "{home} x {away}").
+// Placeholder sem valor é mantido literal (não some), pra não quebrar silenciosamente.
+export async function getEditableTemplate(
+  id: string,
+  vars: Record<string, string | number>
+): Promise<string> {
+  const tpl = await getEditableText(id);
+  return tpl.replace(/\{(\w+)\}/g, (_, k) => (vars[k] != null ? String(vars[k]) : `{${k}}`));
+}
+
 type Tag = "span" | "p" | "h1" | "h2" | "h3" | "div";
 
 // Renderiza um texto editável (editável no painel "Páginas"), com fallback no
