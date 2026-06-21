@@ -83,58 +83,87 @@ function normalizeEvent(event: any): NormalizedMatch {
   };
 }
 
-// Jogos de uma data (offset em dias a partir de hoje). offset=0 hoje, 1 amanha, etc.
-async function getMatchesOnOffset(offset: number): Promise<NormalizedMatch[]> {
-  const dt = new Date();
-  dt.setDate(dt.getDate() + offset);
-  const d = dt.getDate();
-  const m = dt.getMonth() + 1;
-  const y = dt.getFullYear();
+// ===== "Hoje" em horário de Brasília =====
+// O feed matches/{d}/{m}/{y} é por data UTC e o servidor roda em UTC. Um dia de
+// Brasília (UTC-3) vai de 03:00 UTC até 03:00 UTC do dia seguinte → cai em DOIS
+// feeds UTC. Por isso "matches/hoje" sozinho vazava os jogos do fim de noite de
+// ontem (que já viraram UTC do dia seguinte) e ainda perdia os da madrugada de hoje.
 
+// Início (epoch s) do dia de Brasília, com 'offset' dias a partir de hoje.
+function brasiliaDayStartSec(offset = 0): number {
+  const nowBr = new Date(Date.now() - 3 * 3600 * 1000);
+  return (
+    Date.UTC(nowBr.getUTCFullYear(), nowBr.getUTCMonth(), nowBr.getUTCDate() + offset) / 1000 +
+    3 * 3600
+  );
+}
+
+// Jogo encerrado só fica visível por ~1h após o apito. Sem hora de fim na API,
+// estimamos fim = início + 2h (90' + intervalo + acréscimos) e damos +1h de
+// tolerância → some 3h após o início. Ao vivo/agendado NUNCA é filtrado. Use só
+// onde o foco é "o que vem" (barra, agenda) — não em telas de resultados/encerrados.
+const FINISHED_VISIBLE_AFTER_START_SEC = 3 * 3600;
+export function freshMatches(list: NormalizedMatch[]): NormalizedMatch[] {
+  const now = Date.now() / 1000;
+  return list.filter(
+    (m) => m.status !== "finished" || now < (m.timestamp || 0) + FINISHED_VISIBLE_AFTER_START_SEC
+  );
+}
+
+async function fetchMatchesByUtcDate(dt: Date): Promise<NormalizedMatch[]> {
   const data = await fetchAllSports<any>(
-    `matches/${d}/${m}/${y}`,
+    `matches/${dt.getUTCDate()}/${dt.getUTCMonth() + 1}/${dt.getUTCFullYear()}`,
     3600
   );
-
   if (!data?.events) return [];
   return data.events.map(normalizeEvent);
 }
 
+// Jogos de UM dia de Brasília (offset em dias). Busca os 2 feeds UTC que cobrem o dia
+// e filtra pelo intervalo real de Brasília [00:00, 24:00). Dedupe por id. Mantém
+// encerrados — quem quer só os recentes aplica freshMatches() em cima.
+async function getBrasiliaDayMatches(offset: number): Promise<NormalizedMatch[]> {
+  const dayStart = brasiliaDayStartSec(offset);
+  const dayEnd = dayStart + 24 * 3600;
+  const [a, b] = await Promise.all([
+    fetchMatchesByUtcDate(new Date(dayStart * 1000)).catch(() => []),
+    fetchMatchesByUtcDate(new Date((dayStart + 24 * 3600) * 1000)).catch(() => []),
+  ]);
+  const seen = new Set<string>();
+  const out: NormalizedMatch[] = [];
+  for (const match of [...a, ...b]) {
+    const ts = match.timestamp || 0;
+    if (ts < dayStart || ts >= dayEnd || seen.has(match.id)) continue;
+    seen.add(match.id);
+    out.push(match);
+  }
+  return out;
+}
+
 export async function getTodayMatches(): Promise<NormalizedMatch[]> {
-  return getMatchesOnOffset(0);
+  return getBrasiliaDayMatches(0);
 }
 
 export async function getTomorrowMatches(): Promise<NormalizedMatch[]> {
-  return getMatchesOnOffset(1);
+  return getBrasiliaDayMatches(1);
 }
 
-// Barra da home durante a Copa: jogos da Copa de hoje + proximos 2 dias, sem
-// duplicar e ordenados por horario real. Mostra os jogos de madrugada (ex: 01:00
-// do dia seguinte) com a data no card, pra ninguem perder por causa do horario.
+// Barra da home durante a Copa: jogos da Copa de hoje + proximos 2 dias (Brasília),
+// SEM os encerrados há +1h (freshMatches), ordenados por horario real. Os jogos de
+// madrugada do dia seguinte aparecem com a data no card.
 export async function getWorldCupBarMatches(): Promise<NormalizedMatch[]> {
-  const days = await Promise.all([0, 1, 2].map((o) => getMatchesOnOffset(o).catch(() => [])));
-
-  // O feed matches/{d}/{m}/{y} é por data UTC. Como o servidor é UTC, "matches/hoje"
-  // inclui os jogos do FIM DE NOITE de ONTEM em Brasília (que já viraram UTC do dia
-  // seguinte) — por isso jogos encerrados de ontem vazavam pra barra "Hoje". Filtra
-  // pela data REAL de Brasília: de hoje 00:00 até o fim de depois de amanhã (3 dias).
-  const nowBr = new Date(Date.now() - 3 * 3600 * 1000);
-  const todayStartSec =
-    Date.UTC(nowBr.getUTCFullYear(), nowBr.getUTCMonth(), nowBr.getUTCDate()) / 1000 + 3 * 3600;
-  const windowEndSec = todayStartSec + 3 * 24 * 3600;
-
+  const days = await Promise.all([0, 1, 2].map((o) => getBrasiliaDayMatches(o).catch(() => [])));
   const seen = new Set<string>();
   const wc: NormalizedMatch[] = [];
   for (const list of days) {
     for (const match of list) {
-      const ts = match.timestamp || 0;
-      if (match.href && ts >= todayStartSec && ts < windowEndSec && !seen.has(match.id)) {
+      if (match.href && !seen.has(match.id)) {
         seen.add(match.id);
         wc.push(match);
       }
     }
   }
-  return wc.sort((a, b) => (a.timestamp || 0) - (b.timestamp || 0));
+  return freshMatches(wc).sort((a, b) => (a.timestamp || 0) - (b.timestamp || 0));
 }
 
 // Campeonatos principais, na ordem que devem aparecer em /futebol. Os que não
@@ -169,7 +198,8 @@ function sortForBar(a: NormalizedMatch, b: NormalizedMatch): number {
 // limpa estilo ge.globo — o feed global traz centenas de ligas menores. Na ordem
 // definida (Copa do Mundo, Série A/B/C, Copa do Brasil, Libertadores, etc.).
 export async function getTodayFootballByLeague(): Promise<LeagueMatchGroup[]> {
-  const matches = await getTodayMatches().catch(() => []);
+  // freshMatches: tira os encerrados há +1h pra os carrosséis priorizarem o que vem.
+  const matches = freshMatches(await getTodayMatches().catch(() => []));
   const allow = new Set(FUTEBOL_TODAY_ORDER);
 
   const byId = new Map<number, NormalizedMatch[]>();

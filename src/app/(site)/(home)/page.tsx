@@ -13,7 +13,7 @@ import { NextMatchWidget } from "@/components/sidebar/next-match-widget";
 import { RecentResultsWidget } from "@/components/sidebar/recent-results-widget";
 import { MyTeamWidget } from "@/components/sidebar/my-team-widget";
 
-import { getTodayMatches, getWorldCupBarMatches } from "@/lib/data/matches";
+import { getTodayMatches, getWorldCupBarMatches, freshMatches } from "@/lib/data/matches";
 import { getCBFUpcomingMatches } from "@/lib/data/cbf-calendar";
 import { getTransfers } from "@/lib/data/home"; // getHighlights desativado (ver Destaques)
 import { getLatestArticles } from "@/lib/data/articles";
@@ -92,7 +92,9 @@ export default async function HomePage() {
   // dias (com link pra página do jogo ao vivo), ordenados por horario real e com
   // a data no card. Sem jogos da Copa, cai pros jogos gerais de hoje.
   const copaToday = copaBar;
-  const barMatches = copaToday.length ? copaToday : todayMatches;
+  // Sem Copa, a barra cai pros jogos gerais de hoje — tira encerrados há +1h pra
+  // sempre destacar ao vivo/próximos (Copa já vem filtrado de getWorldCupBarMatches).
+  const barMatches = copaToday.length ? copaToday : freshMatches(todayMatches);
 
   return (
     <>
