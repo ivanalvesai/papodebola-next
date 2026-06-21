@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Trophy, Newspaper } from "lucide-react";
 import { PageBreadcrumb } from "@/components/seo/page-breadcrumb";
+import { WorldCupTournamentSchema } from "@/components/seo/world-cup-tournament-schema";
 import { GroupRow } from "@/components/world-cup/group-row";
 import { PhaseNav } from "@/components/world-cup/phase-nav";
 import { CopaLiveProvider } from "@/components/world-cup/copa-live-provider";
@@ -35,6 +36,7 @@ export default async function CopaDoMundoPage() {
 
   return (
     <div className="mx-auto max-w-[1240px] px-4 py-8">
+      <WorldCupTournamentSchema />
       <PageBreadcrumb
         className="mb-4"
         items={[{ label: "Início", href: "/" }, { label: "Copa do Mundo 2026" }]}
