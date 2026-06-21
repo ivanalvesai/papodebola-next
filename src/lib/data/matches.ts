@@ -98,16 +98,19 @@ function brasiliaDayStartSec(offset = 0): number {
   );
 }
 
-// Jogo encerrado só fica visível por ~1h após o apito. Sem hora de fim na API,
-// estimamos fim = início + 2h (90' + intervalo + acréscimos) e damos +1h de
-// tolerância → some 3h após o início. Ao vivo/agendado NUNCA é filtrado. Use só
-// onde o foco é "o que vem" (barra, agenda) — não em telas de resultados/encerrados.
+// Jogo só fica visível até ~1h após o apito. Sem hora de fim na API, estimamos fim
+// = início + 2h (90' + intervalo + acréscimos) e damos +1h de tolerância → some 3h
+// após o INÍCIO. Baseado em TEMPO (não no status), porque o status pode vir velho do
+// proxy (jogo encerrado aparecendo como "notstarted") — pelo horário de início a
+// gente acerta sempre. Ao vivo/intervalo nunca some (jogo pode esticar). Use só onde
+// o foco é "o que vem" (barra, agenda) — não em telas de resultados/encerrados.
 const FINISHED_VISIBLE_AFTER_START_SEC = 3 * 3600;
 export function freshMatches(list: NormalizedMatch[]): NormalizedMatch[] {
   const now = Date.now() / 1000;
-  return list.filter(
-    (m) => m.status !== "finished" || now < (m.timestamp || 0) + FINISHED_VISIBLE_AFTER_START_SEC
-  );
+  return list.filter((m) => {
+    if (m.status === "live" || m.status === "halftime") return true;
+    return now < (m.timestamp || 0) + FINISHED_VISIBLE_AFTER_START_SEC;
+  });
 }
 
 async function fetchMatchesByUtcDate(dt: Date): Promise<NormalizedMatch[]> {
