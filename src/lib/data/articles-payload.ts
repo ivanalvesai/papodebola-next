@@ -64,6 +64,8 @@ export async function getArticlesPayload(options?: {
     const payload = await getClient();
     const { page = 1, perPage = 20, category, search, tag } = options || {};
     const and: any[] = [];
+    // Só posts PUBLICADOS no site — rascunhos (Studio→CMS) ficam só no /cms.
+    and.push({ _status: { equals: "published" } });
     if (category) and.push({ category: { equals: category } });
     // Craques têm página própria — excluídos das listagens (igual ao WP), salvo se pedido.
     if (category !== "Craques") and.push({ category: { not_equals: "Craques" } });
@@ -90,7 +92,9 @@ export async function getArticleBySlugPayload(slug: string): Promise<Article | n
     const payload = await getClient();
     const res = await payload.find({
       collection: "posts",
-      where: { slug: { equals: slug } },
+      where: {
+        and: [{ slug: { equals: slug } }, { _status: { equals: "published" } }],
+      },
       limit: 1,
       depth: 1,
     });
