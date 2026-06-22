@@ -159,12 +159,15 @@ export async function POST(request: NextRequest) {
         return NextResponse.json({ error: "Erro ao publicar no Payload" }, { status: 500 });
       }
 
-      // Cleanup das imagens locais de IA
+      // Cleanup das imagens locais de IA — SÓ se a capa realmente foi pro Payload.
+      // (Se a capa falhar, preserva a imagem no disco pra não perder o que a IA gerou.)
       try {
-        const dir = join(process.cwd(), "data", "kanban-images");
-        const files = await readdir(dir);
-        for (const f of files) {
-          if (f.startsWith(post.id)) await unlink(join(dir, f)).catch(() => {});
+        if (cover) {
+          const dir = join(process.cwd(), "data", "kanban-images");
+          const files = await readdir(dir);
+          for (const f of files) {
+            if (f.startsWith(post.id)) await unlink(join(dir, f)).catch(() => {});
+          }
         }
       } catch {
         /* */
