@@ -1,6 +1,7 @@
 import { cache } from "react";
 import { getPayload } from "payload";
 import config from "@payload-config";
+import { convertLexicalToHTML } from "@payloadcms/richtext-lexical/html";
 import { articleHref } from "@/lib/config";
 import type { Article } from "@/types/article";
 
@@ -19,8 +20,24 @@ function stripHtml(html: string): string {
     .trim();
 }
 
+// Corpo do post em HTML: prefere o editor visual (Lexical, campo `content`); cai pro
+// HTML legado (`body`) enquanto o post não foi migrado. Garante que nada some na
+// transição e que o HTML renderizado (logo, o SEO) continue equivalente.
+function postBodyHtml(p: any): string {
+  const c = p.content;
+  if (c && typeof c === "object" && c.root && Array.isArray(c.root.children) && c.root.children.length) {
+    try {
+      return convertLexicalToHTML({ data: c });
+    } catch {
+      return p.body || "";
+    }
+  }
+  return p.body || "";
+}
+
 function mapPost(p: any): Article {
   const tags = (p.tags || []).map((x: any) => x.tag).filter(Boolean);
+  const bodyHtml = postBodyHtml(p);
   const cover = typeof p.cover === "object" && p.cover ? p.cover : null;
   // Prefere a versão "card" (WebP 800px); cai pro original. URL absoluta (display + OG).
   const coverUrl = cover?.sizes?.card?.url || cover?.url || "";
@@ -31,9 +48,9 @@ function mapPost(p: any): Article {
     imageCaption: cover?.alt || "",
     originalTitle: p.title || "",
     rewrittenTitle: p.title || "",
-    rewrittenText: stripHtml(p.body || "").slice(0, 5000),
+    rewrittenText: stripHtml(bodyHtml).slice(0, 5000),
     excerpt: p.excerpt || "",
-    contentHtml: p.body || "",
+    contentHtml: bodyHtml,
     slug: p.slug,
     source: "WordPress",
     image,
