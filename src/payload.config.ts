@@ -200,8 +200,16 @@ export default buildConfig({
       admin: {
         useAsTitle: "title",
         defaultColumns: ["title", "category", "publishedDate", "_status"],
+        // Botão "Preview" no editor → abre o post (mesmo rascunho) renderizado no
+        // layout real do site, numa página dedicada (não toca nas páginas públicas/ISR).
+        preview: (doc: { slug?: string }) =>
+          doc?.slug
+            ? `/cms-preview/${doc.slug}?previewSecret=${process.env.CRON_SECRET || ""}`
+            : null,
       },
-      versions: { drafts: true, maxPerDoc: 20 },
+      // schedulePublish: habilita "Schedule Publish" (publicar/despublicar em data/hora).
+      // Usa a fila de jobs (ver `jobs` no fim do config) — disparada por cron 1/min.
+      versions: { drafts: { schedulePublish: true }, maxPerDoc: 20 },
       access: {
         read: ({ req: { user } }) =>
           user ? true : { _status: { equals: "published" } },
@@ -274,4 +282,18 @@ export default buildConfig({
       ],
     },
   ],
+  // Fila de jobs — necessária pro Scheduled Publish. NÃO usamos autoRun (rodaria em
+  // dev E prod, com corrida de qual revalida). Em vez disso, um cron 1/min no SERVIDOR
+  // bate em GET /cms-api/payload-jobs/run (no prod) com Bearer do CRON_SECRET → só o
+  // prod processa os agendamentos e revalida o próprio cache.
+  jobs: {
+    access: {
+      run: ({ req }: { req: { user?: unknown; headers: Headers } }): boolean => {
+        if (req.user) return true;
+        const secret = process.env.CRON_SECRET;
+        if (!secret) return false;
+        return req.headers.get("authorization") === `Bearer ${secret}`;
+      },
+    },
+  },
 });

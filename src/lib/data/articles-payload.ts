@@ -86,15 +86,21 @@ export async function getArticlesPayload(options?: {
   }
 }
 
-export async function getArticleBySlugPayload(slug: string): Promise<Article | null> {
+export async function getArticleBySlugPayload(
+  slug: string,
+  draft = false
+): Promise<Article | null> {
   if (process.env.NEXT_PHASE === "phase-production-build") return null;
   try {
     const payload = await getClient();
+    // draft=true (preview do /cms): pega a última versão (rascunho), sem filtrar status.
     const res = await payload.find({
       collection: "posts",
-      where: {
-        and: [{ slug: { equals: slug } }, { _status: { equals: "published" } }],
-      },
+      where: draft
+        ? { slug: { equals: slug } }
+        : { and: [{ slug: { equals: slug } }, { _status: { equals: "published" } }] },
+      draft,
+      overrideAccess: true,
       limit: 1,
       depth: 1,
     });

@@ -190,10 +190,15 @@ export async function getArticles(options?: {
   return { articles, total: articles.length < perPage ? (page - 1) * perPage + articles.length : page * perPage + 1 };
 }
 
-export async function getArticleBySlug(slug: string, noCache?: boolean): Promise<Article | null> {
+export async function getArticleBySlug(
+  slug: string,
+  noCache?: boolean,
+  draft?: boolean
+): Promise<Article | null> {
   // Payload primeiro; se não tiver o slug (ou cair), tenta o WordPress (fallback).
-  const fromPayload = await getArticleBySlugPayload(slug);
+  const fromPayload = await getArticleBySlugPayload(slug, draft);
   if (fromPayload) return fromPayload;
+  if (draft) return null; // preview do /cms: só rascunho do Payload, sem fallback WP
 
   const categories = await getCategories();
   const tags = await getTags();
