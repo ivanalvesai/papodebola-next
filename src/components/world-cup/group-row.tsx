@@ -106,7 +106,7 @@ function MatchMini({ m }: { m: ChampionshipMatch }) {
   // Override ao vivo (placar/status) vindo do polling; cai pro dado estático se ausente.
   const ls = useLiveScore(m.id);
   const statusType = ls?.statusType || m.status;
-  const isLive = statusType === "inprogress";
+  const isLive = statusType === "inprogress" || statusType === "interrupted";
   const isFinished = statusType === "finished";
   const homeScore = ls?.homeScore ?? m.homeScore;
   const awayScore = ls?.awayScore ?? m.awayScore;

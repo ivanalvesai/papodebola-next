@@ -29,7 +29,7 @@ function br(ts: number) {
 function KnockoutCard({ m }: { m: ChampionshipMatch }) {
   const ls = useLiveScore(m.id);
   const statusType = ls?.statusType || m.status;
-  const isLive = statusType === "inprogress";
+  const isLive = statusType === "inprogress" || statusType === "interrupted";
   const isFinished = statusType === "finished";
   const homeScore = ls?.homeScore ?? m.homeScore;
   const awayScore = ls?.awayScore ?? m.awayScore;
