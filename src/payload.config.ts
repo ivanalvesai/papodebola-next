@@ -206,6 +206,19 @@ export default buildConfig({
           doc?.slug
             ? `/cms-preview/${doc.slug}?previewSecret=${process.env.CRON_SECRET || ""}`
             : null,
+        // Live Preview: aba com o site renderizado lado a lado dentro do editor
+        // (atualiza ao salvar). Mesma página /cms-preview. Só config — sem schema.
+        livePreview: {
+          url: ({ data }: { data: { slug?: string } }) =>
+            data?.slug
+              ? `/cms-preview/${data.slug}?previewSecret=${process.env.CRON_SECRET || ""}`
+              : "",
+          breakpoints: [
+            { label: "Mobile", name: "mobile", width: 390, height: 844 },
+            { label: "Tablet", name: "tablet", width: 768, height: 1024 },
+            { label: "Desktop", name: "desktop", width: 1440, height: 900 },
+          ],
+        },
       },
       // Scheduled Publish (publicar em data/hora) fica pendente: precisa da tabela de
       // jobs no Postgres, que depende de migrations formais (push não roda em prod).
