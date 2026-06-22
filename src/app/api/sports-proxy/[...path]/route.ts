@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 
-const UPSTREAM_BASE = "https://allsportsapi2.p.rapidapi.com/api";
+// SportApi7 (Sofascore nativo /api/v1). O caminho que chega aqui já vem TRADUZIDO
+// pelo fetchAllSports (toSofascore), então só prefixa a base.
+const UPSTREAM_BASE = `https://${process.env.ALLSPORTS_API_HOST || "sportapi7.p.rapidapi.com"}/api/v1`;
 
 // Respostas de matches/{date} e {sport}/matches/{date} chegam a 14MB (excede limite de
 // 2MB do Next.js data cache, invalidando o cache e queimando quota). Extraímos só os
@@ -83,6 +85,8 @@ export async function GET(
   sp.delete("_pdbttl");
   const search = sp.toString() ? `?${sp.toString()}` : "";
   const upstream = `${UPSTREAM_BASE}/${endpoint}${search}`;
+  // Contador pra medir uso real (grep SPORTAPI_HIT nos logs).
+  console.log(`SPORTAPI_HIT ${endpoint}`);
 
   try {
     const res = await fetch(upstream, {
