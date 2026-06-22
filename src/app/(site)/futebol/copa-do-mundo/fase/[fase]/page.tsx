@@ -5,9 +5,10 @@ import { PageBreadcrumb } from "@/components/seo/page-breadcrumb";
 import { PhaseNav } from "@/components/world-cup/phase-nav";
 import { KnockoutMatches } from "@/components/world-cup/knockout-matches";
 import { NewsFeed } from "@/components/news/news-feed";
-import { getWorldCupKnockout } from "@/lib/data/world-cup";
+import { getKnockoutFixtures } from "@/lib/data/world-cup";
 import { getArticles } from "@/lib/data/articles";
 import { KNOCKOUT_PHASES, PHASE_BY_SLUG } from "@/lib/world-cup-phases";
+import { knockoutVenueLabel } from "@/lib/world-cup-knockout-schedule";
 
 const COPA_CATEGORY = "Copa do Mundo";
 
@@ -43,13 +44,44 @@ export default async function CopaFasePage({
   const phase = PHASE_BY_SLUG[fase];
   if (!phase || phase.slug === "grupos" || phase.round === null) notFound();
 
-  const [matches, cupNews] = await Promise.all([
-    getWorldCupKnockout(phase.round),
+  const [items, cupNews] = await Promise.all([
+    getKnockoutFixtures(phase.slug, phase.round),
     getArticles({ category: COPA_CATEGORY, perPage: 20 }),
   ]);
 
+  // Schema SportsEvent de cada confronto (com data + estádio) enquanto é placeholder
+  // — dá conteúdo estruturado pro Google ANTES dos times. Quando vira jogo real, cada
+  // confronto linka pra página do jogo (que tem o próprio schema), então não duplica.
+  const scheds = items.flatMap((i) => (i.kind === "placeholder" ? [i.sched] : []));
+  const eventSchema =
+    scheds.length > 0
+      ? {
+          "@context": "https://schema.org",
+          "@graph": scheds.map((s) => ({
+            "@type": "SportsEvent",
+            name: `${phase.longLabel}: ${s.homeSlot} x ${s.awaySlot} — Copa do Mundo 2026`,
+            sport: "Soccer",
+            startDate: s.date,
+            eventStatus: "https://schema.org/EventScheduled",
+            location: {
+              "@type": "Place",
+              name: knockoutVenueLabel(s),
+              address: { "@type": "PostalAddress", addressLocality: s.city, addressCountry: s.country },
+            },
+            organizer: { "@type": "Organization", name: "FIFA", url: "https://www.fifa.com" },
+            superEvent: { "@type": "SportsEvent", name: "Copa do Mundo FIFA 2026" },
+          })),
+        }
+      : null;
+
   return (
     <div className="mx-auto max-w-[1240px] px-4 py-8">
+      {eventSchema && (
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(eventSchema) }}
+        />
+      )}
       <PageBreadcrumb
         className="mb-4"
         items={[
@@ -64,12 +96,13 @@ export default async function CopaFasePage({
         Copa do Mundo 2026
       </h1>
       <p className="mb-6 text-sm text-text-muted">
-        Navegue pelas fases da Copa &middot; horários de Brasília.
+        Confrontos, datas e estádios das {phase.longLabel} da Copa do Mundo 2026. Os times
+        entram automaticamente quando a fase de grupos terminar.
       </p>
 
       <section>
         <PhaseNav active={phase.slug} />
-        <KnockoutMatches matches={matches} />
+        <KnockoutMatches items={items} />
       </section>
 
       {/* Notícias da Copa: dá profundidade e linka internamente enquanto o
