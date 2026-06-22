@@ -186,6 +186,55 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ post: updated, payloadId: doc.id, slug, wpEditUrl: cmsEditUrl });
     }
 
+    // Anexa a capa (imagem da IA, no disco) a um post JÁ enviado ao CMS — sem mexer
+    // no conteúdo. Pra consertar posts criados antes do fix de imagem.
+    if (action === "attachcover") {
+      const post = (await getPosts()).find((p) => p.id === body.id);
+      if (!post || !post.wpId) {
+        return NextResponse.json({ error: "Card sem post no CMS" }, { status: 404 });
+      }
+      if (!post.image) return NextResponse.json({ error: "Card sem imagem" }, { status: 400 });
+
+      let buf: Buffer | null = null;
+      let name = `cover-${post.wpId}.jpg`;
+      let mimetype = "image/jpeg";
+      const local = post.image.match(/\/api\/kanban\/image\/serve\?f=([^&]+)/);
+      if (local) {
+        const fn = decodeURIComponent(local[1]);
+        buf = await readFile(join(process.cwd(), "data", "kanban-images", fn)).catch(() => null);
+        if (buf) {
+          name = fn;
+          if (/\.png$/i.test(fn)) mimetype = "image/png";
+          else if (/\.webp$/i.test(fn)) mimetype = "image/webp";
+        }
+      } else {
+        const src = post.image.startsWith("/")
+          ? `${process.env.NEXT_PUBLIC_SITE_URL || "https://www.papodebola.com.br"}${post.image}`
+          : post.image;
+        const r = await fetch(src);
+        if (r.ok) {
+          buf = Buffer.from(await r.arrayBuffer());
+          name = (src.split("/").pop() || name).split("?")[0];
+          mimetype = r.headers.get("content-type") || mimetype;
+        }
+      }
+      if (!buf) return NextResponse.json({ error: "Imagem não encontrada" }, { status: 404 });
+
+      const payload = await getPayload({ config });
+      const m = await payload.create({
+        collection: "media",
+        data: { alt: post.title.slice(0, 120) },
+        file: { data: buf, mimetype, name, size: buf.length },
+      });
+      await payload.update({
+        collection: "posts",
+        id: post.wpId as number,
+        data: { cover: m.id },
+        draft: true,
+      });
+      return NextResponse.json({ ok: true, mediaId: m.id, postId: post.wpId });
+    }
+
     return NextResponse.json({ error: "Acao invalida" }, { status: 400 });
   } catch {
     return NextResponse.json({ error: "Erro interno" }, { status: 500 });
