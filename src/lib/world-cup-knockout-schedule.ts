@@ -8,7 +8,13 @@
 
 import type { ChampionshipMatch } from "@/types/match";
 
-export type KnockoutPhaseSlug = "16-avos" | "oitavas" | "quartas" | "semifinais" | "final";
+export type KnockoutPhaseSlug =
+  | "16-avos"
+  | "oitavas"
+  | "quartas"
+  | "semifinais"
+  | "terceiro-lugar"
+  | "final";
 
 // Item renderizado na página de fase: jogo REAL (quando a API já criou o confronto)
 // ou PLACEHOLDER (calendário fixo, enquanto os times não estão definidos).
@@ -66,8 +72,10 @@ export const KNOCKOUT_SCHEDULE: KnockoutScheduleMatch[] = [
   { game: 101, phase: "semifinais", date: "2026-07-14", city: "Dallas", country: "EUA", homeSlot: "Vencedor do Jogo 97", awaySlot: "Vencedor do Jogo 98" },
   { game: 102, phase: "semifinais", date: "2026-07-15", city: "Atlanta", country: "EUA", homeSlot: "Vencedor do Jogo 99", awaySlot: "Vencedor do Jogo 100" },
 
-  // ===== Disputa de 3º lugar + Final (página "final") =====
-  { game: 103, phase: "final", date: "2026-07-18", city: "Miami", country: "EUA", homeSlot: "Perdedor do Jogo 101", awaySlot: "Perdedor do Jogo 102", thirdPlace: true },
+  // ===== Disputa de 3º lugar (página própria) =====
+  { game: 103, phase: "terceiro-lugar", date: "2026-07-18", city: "Miami", country: "EUA", homeSlot: "Perdedor do Jogo 101", awaySlot: "Perdedor do Jogo 102", thirdPlace: true },
+
+  // ===== Final =====
   { game: 104, phase: "final", date: "2026-07-19", city: "Nova York/Nova Jersey", country: "EUA", homeSlot: "Vencedor do Jogo 101", awaySlot: "Vencedor do Jogo 102" },
 ];
 
