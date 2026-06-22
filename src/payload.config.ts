@@ -266,10 +266,18 @@ export default buildConfig({
         { name: "tags", type: "array", fields: [{ name: "tag", type: "text" }] },
         { name: "cover", type: "upload", relationTo: "media" },
         { name: "excerpt", type: "textarea", admin: { description: "Resumo (meta description)" } },
+        // Corpo VISUAL (editor Lexical) — o que o redator usa (negrito, títulos, listas,
+        // links, imagem). Tem prioridade no render; ver postBodyHtml em articles-payload.
+        {
+          name: "content",
+          type: "richText",
+          admin: { description: "Corpo do post (editor visual). Quando preenchido, substitui o HTML." },
+        },
+        // HTML legado (fallback durante a migração). Some do editor quando `content` existir.
         {
           name: "body",
           type: "code",
-          admin: { language: "html", description: "Corpo do post (HTML)" },
+          admin: { language: "html", description: "Corpo em HTML (legado / fallback)" },
         },
         { name: "author", type: "text", defaultValue: "Redação" },
         {
