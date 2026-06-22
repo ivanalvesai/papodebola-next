@@ -55,6 +55,13 @@ export const WC_PHASES: WorldCupPhase[] = [
     round: 7,
   },
   {
+    slug: "terceiro-lugar",
+    label: "3º Lugar",
+    longLabel: "Disputa do 3º Lugar",
+    href: `${FASE_PREFIX}/terceiro-lugar`,
+    round: 9, // verificar o nº real quando a API criar o jogo (semis=7, final=8)
+  },
+  {
     slug: "final",
     label: "Final",
     longLabel: "Final",
