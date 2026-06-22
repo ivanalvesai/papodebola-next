@@ -391,6 +391,10 @@ export default function StudioPage() {
                         <button onClick={() => setExpandedCard(expandedCard === post.id ? null : post.id)}
                           className="p-1.5 text-text-muted hover:text-text-primary rounded" title="Ver texto"><Eye className="h-3.5 w-3.5" /></button>
 
+                        {/* Pré-visualização full-page (como vai ficar no site) */}
+                        <a href={`/studio-pdb/preview/${post.id}`} target="_blank" rel="noopener noreferrer"
+                          className="p-1.5 text-text-muted hover:text-green rounded" title="Ver página (pré-visualização como no site)"><Globe className="h-3.5 w-3.5" /></a>
+
                         {/* Write article button */}
                         <button onClick={() => handleWriteArticle(post.id)} disabled={isWriting}
                           className="p-1.5 text-text-muted hover:text-blue rounded disabled:opacity-30" title="Escrever artigo com IA (humanizado)">
