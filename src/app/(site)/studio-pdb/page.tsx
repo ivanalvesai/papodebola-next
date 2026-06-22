@@ -34,7 +34,7 @@ const COLUMNS: { key: Column; label: string; icon: React.ElementType; color: str
   { key: "sugestoes", label: "Sugestoes IA", icon: Lightbulb, color: "text-yellow-600", bg: "bg-yellow-50 border-yellow-200" },
   { key: "edicao", label: "Em Edicao", icon: Pencil, color: "text-blue", bg: "bg-blue-light border-blue/20" },
   { key: "aprovado", label: "Aprovado", icon: CheckCircle, color: "text-green", bg: "bg-green-light border-green/20" },
-  { key: "publicado", label: "Publicado", icon: Globe, color: "text-text-muted", bg: "bg-body border-border-custom" },
+  { key: "publicado", label: "Enviado ao CMS", icon: Globe, color: "text-text-muted", bg: "bg-body border-border-custom" },
 ];
 
 const CATEGORIES = [
@@ -133,7 +133,7 @@ export default function StudioPage() {
   async function handleMove(id: string, column: Column) { await apiAction({ action: "move", id, column }); }
 
   async function handlePublish(id: string) {
-    if (!confirm("Publicar este post no WordPress?")) return;
+    if (!confirm("Enviar este post ao CMS (Payload) como RASCUNHO? Você finaliza e publica no /cms.")) return;
     const res = await apiAction({ action: "publish", id });
     if (res.ok) { const data = await res.json(); if (data.wpEditUrl) window.open(data.wpEditUrl, "_blank"); }
   }
@@ -420,7 +420,7 @@ export default function StudioPage() {
 
                         {post.wpEditUrl && (
                           <a href={post.wpEditUrl} target="_blank" rel="noopener noreferrer"
-                            className="p-1.5 text-text-muted hover:text-green rounded" title="Editar no WordPress"><Pencil className="h-3.5 w-3.5" /></a>
+                            className="p-1.5 text-text-muted hover:text-green rounded" title="Editar no CMS (Payload)"><Pencil className="h-3.5 w-3.5" /></a>
                         )}
 
                         <div className="flex-1" />
@@ -442,8 +442,9 @@ export default function StudioPage() {
 
                         {post.column === "aprovado" && (
                           <button onClick={() => handlePublish(post.id)}
-                            className="flex items-center gap-1 px-2.5 py-1 bg-green text-white text-[11px] font-semibold rounded hover:bg-green-hover">
-                            <Send className="h-3 w-3" /> Publicar
+                            className="flex items-center gap-1 px-2.5 py-1 bg-green text-white text-[11px] font-semibold rounded hover:bg-green-hover"
+                            title="Envia ao Payload como rascunho (você publica no /cms)">
+                            <Send className="h-3 w-3" /> Enviar ao CMS
                           </button>
                         )}
 

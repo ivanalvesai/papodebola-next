@@ -1,5 +1,4 @@
 import { NextRequest, NextResponse } from "next/server";
-import { revalidatePath } from "next/cache";
 import { getSession } from "@/lib/auth/jwt";
 import { getPosts, addPost, updatePost, deletePost, movePost } from "@/lib/data/kanban-store";
 import type { KanbanColumn } from "@/lib/data/kanban-store";
@@ -7,7 +6,6 @@ import { readdir, unlink } from "fs/promises";
 import { join } from "path";
 import { getPayload } from "payload";
 import config from "@payload-config";
-import { articleHref } from "@/lib/config";
 
 export async function GET() {
   const session = await getSession();
@@ -126,7 +124,9 @@ export async function POST(request: NextRequest) {
         author: session.username || "Reda\u00e7\u00e3o",
         publishedDate: new Date().toISOString(),
         seo: { metaTitle: post.title.slice(0, 60), metaDescription: excerpt },
-        _status: "published",
+        // Vai como RASCUNHO: as tratativas finais e a publicação são feitas no /cms
+        // (Payload), não direto pelo Studio.
+        _status: "draft",
       };
       if (cover) data.cover = cover;
 
@@ -149,15 +149,20 @@ export async function POST(request: NextRequest) {
         /* */
       }
 
-      // wpId guarda o id do post no Payload (compat com o tipo do kanban)
-      const updated = await updatePost(body.id, { column: "publicado", wpId: doc.id, wpEditUrl: "" });
+      // wpId guarda o id do post no Payload; wpEditUrl aponta pro editor do /cms,
+      // onde o rascunho recebe as tratativas finais e \u00e9 publicado manualmente.
+      const cmsEditUrl = `${
+        process.env.NEXT_PUBLIC_SITE_URL || "https://www.papodebola.com.br"
+      }/cms/collections/posts/${doc.id}`;
+      const updated = await updatePost(body.id, {
+        column: "publicado",
+        wpId: doc.id,
+        wpEditUrl: cmsEditUrl,
+      });
 
-      // Revalida home/not\u00edcias/artigo pra aparecer na hora
-      revalidatePath("/");
-      revalidatePath("/noticias");
-      revalidatePath(articleHref(post.category || "Futebol brasileiro", slug));
+      // Sem revalida\u00e7\u00e3o: \u00e9 RASCUNHO, n\u00e3o aparece no site at\u00e9 publicar no /cms.
 
-      return NextResponse.json({ post: updated, payloadId: doc.id, slug });
+      return NextResponse.json({ post: updated, payloadId: doc.id, slug, wpEditUrl: cmsEditUrl });
     }
 
     return NextResponse.json({ error: "Acao invalida" }, { status: 400 });
