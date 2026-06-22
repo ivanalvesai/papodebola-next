@@ -91,22 +91,22 @@ function KnockoutCard({ m }: { m: ChampionshipMatch }) {
 // quando a API criar o confronto — mesma página, SEO preservado.
 function PlaceholderCard({ s }: { s: KnockoutScheduleMatch }) {
   return (
-    <div className="rounded-lg border border-dashed border-border-custom bg-card-bg px-4 py-3">
-      <div className="mb-2 flex items-center justify-center gap-1.5 text-[11px] text-text-muted">
-        <Clock className="h-3 w-3" />
+    <div className="rounded-lg border border-dashed border-border-custom bg-card-bg px-4 py-3.5">
+      <div className="mb-2.5 flex items-center justify-center gap-1.5 text-xs text-text-muted">
+        <Clock className="h-3.5 w-3.5" />
         {knockoutDateLabel(s.date)} &middot; horário a definir
       </div>
       <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-2">
-        <span className="text-right text-xs font-medium leading-tight text-text-secondary">
+        <span className="text-right text-sm font-semibold leading-snug text-text-primary">
           {s.homeSlot}
         </span>
-        <span className="shrink-0 px-2 text-center text-sm font-bold text-text-muted">X</span>
-        <span className="text-left text-xs font-medium leading-tight text-text-secondary">
+        <span className="shrink-0 px-2 text-center text-base font-bold text-text-muted">X</span>
+        <span className="text-left text-sm font-semibold leading-snug text-text-primary">
           {s.awaySlot}
         </span>
       </div>
-      <div className="mt-2 flex items-center justify-center gap-1 text-[11px] text-text-muted">
-        <MapPin className="h-3 w-3" />
+      <div className="mt-2.5 flex items-center justify-center gap-1 text-xs text-text-muted">
+        <MapPin className="h-3.5 w-3.5" />
         {knockoutVenueLabel(s)} &middot; {s.thirdPlace ? "Disputa de 3º lugar" : `Jogo ${s.game}`}
       </div>
     </div>
