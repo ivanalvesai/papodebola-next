@@ -1,11 +1,17 @@
 "use client";
 
 import Link from "next/link";
-import { ChevronRight } from "lucide-react";
+import { ChevronRight, Clock, MapPin } from "lucide-react";
 import { TeamLogo } from "@/components/ui/team-logo";
 import { worldCupMatchHref } from "@/lib/world-cup-match-url";
 import { CopaLiveProvider, useLiveScore } from "./copa-live-provider";
 import type { ChampionshipMatch } from "@/types/match";
+import {
+  knockoutDateLabel,
+  knockoutVenueLabel,
+  type KnockoutItem,
+  type KnockoutScheduleMatch,
+} from "@/lib/world-cup-knockout-schedule";
 
 const WD = ["Dom", "Seg", "Ter", "Qua", "Qui", "Sex", "Sáb"];
 // Brasil = UTC-3 fixo (sem horário de verão desde 2019).
@@ -19,6 +25,7 @@ function br(ts: number) {
   };
 }
 
+// Card de jogo REAL (quando a API já criou o confronto): placar ao vivo + link.
 function KnockoutCard({ m }: { m: ChampionshipMatch }) {
   const ls = useLiveScore(m.id);
   const statusType = ls?.statusType || m.status;
@@ -79,8 +86,35 @@ function KnockoutCard({ m }: { m: ChampionshipMatch }) {
   );
 }
 
-export function KnockoutMatches({ matches }: { matches: ChampionshipMatch[] }) {
-  if (matches.length === 0) {
+// Card PLACEHOLDER (calendário fixo da FIFA, enquanto os times não foram definidos):
+// data, local e os slots ("Aguardando 2º do Grupo A" etc.). Vira card real sozinho
+// quando a API criar o confronto — mesma página, SEO preservado.
+function PlaceholderCard({ s }: { s: KnockoutScheduleMatch }) {
+  return (
+    <div className="rounded-lg border border-dashed border-border-custom bg-card-bg px-4 py-3">
+      <div className="mb-2 flex items-center justify-center gap-1.5 text-[11px] text-text-muted">
+        <Clock className="h-3 w-3" />
+        {knockoutDateLabel(s.date)} &middot; horário a definir
+      </div>
+      <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-2">
+        <span className="text-right text-xs font-medium leading-tight text-text-secondary">
+          {s.homeSlot}
+        </span>
+        <span className="shrink-0 px-2 text-center text-sm font-bold text-text-muted">X</span>
+        <span className="text-left text-xs font-medium leading-tight text-text-secondary">
+          {s.awaySlot}
+        </span>
+      </div>
+      <div className="mt-2 flex items-center justify-center gap-1 text-[11px] text-text-muted">
+        <MapPin className="h-3 w-3" />
+        {knockoutVenueLabel(s)} &middot; {s.thirdPlace ? "Disputa de 3º lugar" : `Jogo ${s.game}`}
+      </div>
+    </div>
+  );
+}
+
+export function KnockoutMatches({ items }: { items: KnockoutItem[] }) {
+  if (items.length === 0) {
     return (
       <div className="rounded-lg border border-border-custom bg-card-bg px-4 py-8 text-center text-sm text-text-muted">
         Confrontos definidos após a fase de grupos. Volte em breve.
@@ -88,13 +122,20 @@ export function KnockoutMatches({ matches }: { matches: ChampionshipMatch[] }) {
     );
   }
 
-  return (
-    <CopaLiveProvider>
-      <div className="grid gap-3 sm:grid-cols-2">
-        {matches.map((m) => (
-          <KnockoutCard key={m.id} m={m} />
-        ))}
-      </div>
-    </CopaLiveProvider>
+  const hasReal = items.some((i) => i.kind === "real");
+  const grid = (
+    <div className="grid gap-3 sm:grid-cols-2">
+      {items.map((i) =>
+        i.kind === "real" ? (
+          <KnockoutCard key={i.match.id} m={i.match} />
+        ) : (
+          <PlaceholderCard key={i.sched.game} s={i.sched} />
+        )
+      )}
+    </div>
   );
+
+  // Só embrulha no provider de placar ao vivo se houver jogo real (placeholder não
+  // faz polling). Antes do mata-mata, renderiza só o calendário estático.
+  return hasReal ? <CopaLiveProvider>{grid}</CopaLiveProvider> : grid;
 }

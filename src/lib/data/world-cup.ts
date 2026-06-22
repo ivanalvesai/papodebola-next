@@ -5,6 +5,7 @@ import { enrichStandingsWithForm } from "@/lib/standings-utils";
 import { getWorldCupStandings } from "./standings";
 import type { StandingRow } from "@/types/standings";
 import type { ChampionshipMatch } from "@/types/match";
+import { KNOCKOUT_SCHEDULE, type KnockoutItem } from "@/lib/world-cup-knockout-schedule";
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
@@ -73,6 +74,22 @@ export async function getWorldCupKnockout(round: number): Promise<ChampionshipMa
   return (data?.events || [])
     .map((e: any) => normalizeMatch(e, round))
     .sort((a: ChampionshipMatch, b: ChampionshipMatch) => a.timestamp - b.timestamp);
+}
+
+// Itens de uma fase eliminatória pra renderizar: usa os jogos REAIS da API quando
+// já existem; senão cai no calendário FIXO da FIFA (placeholder com data/local/slot).
+// Mesma URL/página nos dois casos → quando os times entram, o SEO da página é mantido
+// (o conteúdo só fica mais rico). Ver world-cup-knockout-schedule.ts.
+export async function getKnockoutFixtures(
+  phaseSlug: string,
+  round: number | null
+): Promise<KnockoutItem[]> {
+  const api = round != null ? await getWorldCupKnockout(round).catch(() => []) : [];
+  if (api.length) return api.map((match) => ({ kind: "real", match }));
+  return KNOCKOUT_SCHEDULE.filter((s) => s.phase === phaseSlug).map((sched) => ({
+    kind: "placeholder",
+    sched,
+  }));
 }
 
 export async function getWorldCupData(): Promise<WorldCupData> {
