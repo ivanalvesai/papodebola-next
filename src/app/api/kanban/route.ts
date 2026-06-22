@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { getSession } from "@/lib/auth/jwt";
 import { getPosts, addPost, updatePost, deletePost, movePost } from "@/lib/data/kanban-store";
 import type { KanbanColumn } from "@/lib/data/kanban-store";
-import { readdir, unlink } from "fs/promises";
+import { readdir, unlink, readFile } from "fs/promises";
 import { join } from "path";
 import { getPayload } from "payload";
 import config from "@payload-config";
@@ -93,15 +93,36 @@ export async function POST(request: NextRequest) {
       let cover: number | null = null;
       if (post.image) {
         try {
-          const src = post.image.startsWith("/")
-            ? `${process.env.NEXT_PUBLIC_SITE_URL || "https://www.papodebola.com.br"}${post.image}`
-            : post.image;
-          const r = await fetch(src);
-          if (r.ok) {
-            const buf = Buffer.from(await r.arrayBuffer());
-            let name = (src.split("/").pop() || `${slug}.jpg`).split("?")[0];
-            if (!/\.[a-z]{3,4}$/i.test(name)) name = `${slug}.jpg`;
-            const mimetype = r.headers.get("content-type") || "image/jpeg";
+          let buf: Buffer | null = null;
+          let name = `${slug}.jpg`;
+          let mimetype = "image/jpeg";
+
+          // A imagem gerada pela IA é servida pela rota PROTEGIDA /api/kanban/image/serve,
+          // então um fetch server-side cairia no login. Lê o arquivo DIRETO do disco
+          // (mesmo volume). Só URLs externas é que vão pelo fetch.
+          const local = post.image.match(/\/api\/kanban\/image\/serve\?f=([^&]+)/);
+          if (local) {
+            const fn = decodeURIComponent(local[1]);
+            buf = await readFile(join(process.cwd(), "data", "kanban-images", fn)).catch(() => null);
+            if (buf) {
+              name = fn;
+              if (/\.png$/i.test(fn)) mimetype = "image/png";
+              else if (/\.webp$/i.test(fn)) mimetype = "image/webp";
+            }
+          } else {
+            const src = post.image.startsWith("/")
+              ? `${process.env.NEXT_PUBLIC_SITE_URL || "https://www.papodebola.com.br"}${post.image}`
+              : post.image;
+            const r = await fetch(src);
+            if (r.ok) {
+              buf = Buffer.from(await r.arrayBuffer());
+              name = (src.split("/").pop() || name).split("?")[0];
+              if (!/\.[a-z]{3,4}$/i.test(name)) name = `${slug}.jpg`;
+              mimetype = r.headers.get("content-type") || mimetype;
+            }
+          }
+
+          if (buf) {
             const m = await payload.create({
               collection: "media",
               data: { alt: post.title.slice(0, 120) },
