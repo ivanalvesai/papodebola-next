@@ -113,7 +113,7 @@ export async function getWorldCupLiveScores(): Promise<WorldCupLiveScore[]> {
       seen.add(e.id);
       let type = e?.status?.type || "";
       const ts = e?.startTimestamp || 0;
-      if (type === "inprogress" && ts > 0 && now - ts > MAX_LIVE) type = "finished";
+      if (isLiveType(type) && ts > 0 && now - ts > MAX_LIVE) type = "finished";
       out.push({
         id: e.id,
         homeScore: e.homeScore?.current ?? null,
@@ -293,14 +293,22 @@ export interface MatchDetail {
 // com o cronômetro correndo (ex: 1500'). Passou do teto = trata como encerrado.
 const MAX_LIVE_SECS = 4 * 60 * 60;
 
+// Status que contam como "jogo rolando" (ao vivo). O Sofascore (SportApi7) usa
+// "interrupted" pra paralisações (raio, gramado, falta de luz) — o jogo NÃO acabou,
+// continua ao vivo. Sem isso, a página cai na visão de pré-jogo e trava no placar.
+const LIVE_TYPES = new Set(["inprogress", "interrupted"]);
+function isLiveType(type: string): boolean {
+  return LIVE_TYPES.has(type);
+}
+
 function normalizeEvent(e: any): MatchEvent {
   let type = e?.status?.type || "";
   const startTimestamp = e?.startTimestamp || 0;
 
-  // Guard anti "inprogress" travado: se o provedor diz que está ao vivo mas o
-  // início foi há mais de MAX_LIVE_SECS, o jogo já acabou (placar atual = final).
+  // Guard anti "ao vivo" travado: se o provedor diz que está rolando mas o início
+  // foi há mais de MAX_LIVE_SECS, o jogo já acabou (placar atual = final).
   if (
-    type === "inprogress" &&
+    isLiveType(type) &&
     startTimestamp > 0 &&
     Date.now() / 1000 - startTimestamp > MAX_LIVE_SECS
   ) {
@@ -319,7 +327,7 @@ function normalizeEvent(e: any): MatchEvent {
     statusDesc: translateStatus(e?.status?.description) || "",
     startTimestamp,
     periodStart: e?.time?.currentPeriodStartTimestamp || 0,
-    live: type === "inprogress",
+    live: isLiveType(type),
     venue: e?.venue
       ? {
           stadium: e.venue.name || e.venue.stadium?.name || "",
@@ -564,7 +572,7 @@ async function translateFeed(feed: MatchCommentary[]): Promise<MatchCommentary[]
 
 // TTL curto p/ ao vivo, longo p/ encerrado. Recebe o status já conhecido.
 function liveTtl(statusType: string, liveSecs = 10, doneSecs = 86400, soonSecs = 600): number {
-  if (statusType === "inprogress") return liveSecs;
+  if (isLiveType(statusType)) return liveSecs; // inprogress + interrupted = TTL curto
   if (statusType === "finished") return doneSecs;
   return soonSecs; // notstarted
 }

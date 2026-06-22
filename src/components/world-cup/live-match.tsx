@@ -153,7 +153,11 @@ function Header({
         {event.live ? (
           <span className="inline-flex items-center gap-1.5 rounded-full bg-red px-3 py-1 text-xs font-bold text-white">
             <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-white" />
-            AO VIVO {minute ? <span className="tabular-nums">{minute}</span> : event.statusDesc}
+            {event.statusType === "interrupted" ? (
+              event.statusDesc || "Interrompido"
+            ) : (
+              <>AO VIVO {minute ? <span className="tabular-nums">{minute}</span> : event.statusDesc}</>
+            )}
           </span>
         ) : event.statusType === "finished" ? (
           <span className="rounded-full bg-body px-3 py-1 text-xs font-semibold text-text-muted">
@@ -394,7 +398,7 @@ function CommentaryRow({ c, event }: { c: MatchCommentary; event: MatchEvent }) 
 }
 
 function CommentaryFeed({ items, event }: { items: MatchCommentary[]; event: MatchEvent }) {
-  const started = event.statusType === "inprogress" || event.statusType === "finished";
+  const started = event.live || event.statusType === "finished";
   const hasStart = items.some((c) => c.type === "matchStarted");
 
   // pré-jogo, sem lances ainda
@@ -410,9 +414,11 @@ function CommentaryFeed({ items, event }: { items: MatchCommentary[]; event: Mat
   const phase =
     event.statusType === "finished"
       ? "Fim de jogo"
-      : event.statusDesc === "Intervalo"
-        ? "Intervalo"
-        : null;
+      : event.statusType === "interrupted"
+        ? `⛔ Jogo interrompido${event.statusDesc && event.statusDesc !== "Interrompido" ? ` — ${event.statusDesc}` : ""}`
+        : event.statusDesc === "Intervalo"
+          ? "Intervalo"
+          : null;
 
   return (
     <div className="space-y-2">
@@ -863,7 +869,7 @@ export function LiveMatch({
     let cancelled = false;
     let timer: ReturnType<typeof setTimeout>;
     const okDelay = () => {
-      if (event.statusType === "inprogress") return 12000; // ao vivo: 12s
+      if (event.live) return 12000; // ao vivo (inclui interrompido): 12s
       // pré-jogo: aperta pra 15s perto do apito (≤5min), senão 45s
       const toKickoff = event.startTimestamp - Date.now() / 1000;
       return toKickoff <= 300 ? 15000 : 45000;
