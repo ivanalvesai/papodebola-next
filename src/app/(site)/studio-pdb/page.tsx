@@ -68,6 +68,12 @@ export default function StudioPage() {
   const [galleryLoading, setGalleryLoading] = useState(false);
   const [manualImageUrl, setManualImageUrl] = useState("");
 
+  // Modal "Gerar imagem" (prompt personalizado + preview)
+  const [imageModal, setImageModal] = useState<{ id: string; title: string } | null>(null);
+  const [imgPrompt, setImgPrompt] = useState("");
+  const [imgBusy, setImgBusy] = useState(false);
+  const [imgBust, setImgBust] = useState(0);
+
   // Pré-preenche o formulário quando aberto pela aba "Pautas" do painel
   // (/studio-pdb?titulo=...&cat=...). Roda 1x no mount (client-side).
   useEffect(() => {
@@ -171,6 +177,31 @@ export default function StudioPage() {
       }
     } catch { alert("Erro de conexao"); }
     setGeneratingImage(null);
+  }
+
+  function openImageModal(id: string, title: string) {
+    setImageModal({ id, title });
+    setImgPrompt("");
+  }
+
+  // Gera com o prompt personalizado do usuário (FLUX/Pollinations direto).
+  async function genCustomImage() {
+    if (!imageModal || !imgPrompt.trim()) return;
+    setImgBusy(true);
+    try {
+      const res = await fetch("/api/kanban/image", {
+        method: "POST", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ postId: imageModal.id, prompt: imgPrompt.trim() }),
+      });
+      if (res.ok) {
+        await loadPosts();
+        setImgBust((b) => b + 1);
+      } else {
+        const e = await res.json().catch(() => ({}));
+        alert(e.error || "Erro ao gerar imagem");
+      }
+    } catch { alert("Erro de conexao"); }
+    setImgBusy(false);
   }
 
   async function handleOpenGallery(postId: string, title: string) {
@@ -401,9 +432,9 @@ export default function StudioPage() {
                           <FileText className="h-3.5 w-3.5" />
                         </button>
 
-                        {/* Generate image button */}
-                        <button onClick={() => handleGenerateImage(post.id)} disabled={isGenerating}
-                          className="p-1.5 text-text-muted hover:text-green rounded disabled:opacity-30" title="Gerar imagem com IA">
+                        {/* Generate image button → abre modal (prompt personalizado ou IA) */}
+                        <button onClick={() => openImageModal(post.id, post.title)} disabled={isGenerating}
+                          className="p-1.5 text-text-muted hover:text-green rounded disabled:opacity-30" title="Gerar imagem (prompt ou IA)">
                           <ImageIcon className="h-3.5 w-3.5" />
                         </button>
 
@@ -504,6 +535,60 @@ export default function StudioPage() {
           </div>
         </div>
       )}
+
+      {/* Modal "Gerar imagem" — prompt personalizado + preview */}
+      {imageModal && (() => {
+        const currentImg = posts.find((p) => p.id === imageModal.id)?.image || "";
+        const autoBusy = generatingImage === imageModal.id;
+        return (
+          <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4"
+            onClick={() => { if (!imgBusy && !autoBusy) setImageModal(null); }}>
+            <div className="bg-surface rounded-xl border border-border-custom shadow-xl w-full max-w-lg" onClick={(e) => e.stopPropagation()}>
+              <div className="flex items-center justify-between px-6 py-4 border-b border-border-custom">
+                <h2 className="text-base font-bold text-text-primary flex items-center gap-2">
+                  <ImageIcon className="h-5 w-5 text-green" /> Gerar imagem
+                </h2>
+                <button onClick={() => setImageModal(null)} className="p-1 text-text-muted hover:text-text-primary"><X className="h-5 w-5" /></button>
+              </div>
+              <div className="p-6 space-y-4">
+                <div className="aspect-video w-full overflow-hidden rounded-lg bg-body flex items-center justify-center border border-border-custom">
+                  {currentImg ? (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img src={`${currentImg}&b=${imgBust}`} alt="" className="h-full w-full object-cover" />
+                  ) : (
+                    <span className="text-sm text-text-muted">Sem imagem ainda</span>
+                  )}
+                </div>
+                <textarea
+                  value={imgPrompt}
+                  onChange={(e) => setImgPrompt(e.target.value)}
+                  rows={3}
+                  placeholder="Escreva seu prompt, de preferência em inglês (ex: Lionel Messi celebrating a goal in Argentina jersey, packed stadium, realistic, dramatic lighting)"
+                  className="w-full rounded-lg border border-border-custom bg-body p-2.5 text-sm text-text-primary outline-none focus:border-green"
+                />
+                <div className="flex gap-2">
+                  <button onClick={genCustomImage} disabled={imgBusy || autoBusy || !imgPrompt.trim()}
+                    className="flex-1 flex items-center justify-center gap-2 bg-green text-white text-sm font-semibold rounded-lg py-2.5 hover:bg-green-hover disabled:opacity-40">
+                    {imgBusy ? <Loader2 className="h-4 w-4 animate-spin" /> : <Sparkles className="h-4 w-4" />}
+                    Gerar com meu prompt
+                  </button>
+                  <button onClick={async () => { await handleGenerateImage(imageModal.id); setImgBust((b) => b + 1); }}
+                    disabled={imgBusy || autoBusy}
+                    className="px-3 flex items-center gap-1.5 border border-border-custom text-text-secondary text-sm rounded-lg hover:text-green disabled:opacity-40"
+                    title="IA escolhe sozinha (Wikimedia / Claude + FLUX)">
+                    {autoBusy ? <Loader2 className="h-4 w-4 animate-spin" /> : <ImageIcon className="h-4 w-4" />}
+                    Automático
+                  </button>
+                </div>
+                <p className="text-[11px] text-text-muted leading-relaxed">
+                  Gera no FLUX (Hugging Face) / Pollinations com o seu texto. A imagem fica salva no
+                  card e, ao enviar pro CMS, vira a capa. Dica: prompts em inglês costumam sair melhores.
+                </p>
+              </div>
+            </div>
+          </div>
+        );
+      })()}
 
       {/* Gallery modal — Wikimedia + Pexels tabs */}
       {showGallery && (

@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getSession } from "@/lib/auth/jwt";
 import { updatePost, getPosts } from "@/lib/data/kanban-store";
-import { runImagePipeline } from "@/lib/services/image-agent";
+import { runImagePipeline, generateFluxImage } from "@/lib/services/image-agent";
 import { writeFile, mkdir, unlink, readdir } from "fs/promises";
 import { join } from "path";
 
@@ -42,11 +42,25 @@ export async function POST(request: NextRequest) {
   if (!session) return NextResponse.json({ error: "Nao autorizado" }, { status: 401 });
 
   try {
-    const { postId } = await request.json();
+    const { postId, prompt } = await request.json();
 
     const posts = await getPosts();
     const post = posts.find((p) => p.id === postId);
     if (!post) return NextResponse.json({ error: "Post nao encontrado" }, { status: 404 });
+
+    // Prompt PERSONALIZADO: gera direto no FLUX/Pollinations com o texto do usuário
+    // (pula a busca no Wikimedia e o prompt do Claude). Resto do fluxo (salvar/anexar
+    // capa ao enviar pro CMS) segue igual.
+    if (typeof prompt === "string" && prompt.trim()) {
+      console.log(`[Image API] Custom prompt for: ${post.title.substring(0, 40)}`);
+      const buffer = await generateFluxImage(prompt.trim());
+      if (!buffer) {
+        return NextResponse.json({ error: "Falha ao gerar (FLUX/Pollinations)" }, { status: 502 });
+      }
+      const imageUrl = await saveImage(post.id, buffer, Date.now());
+      await updatePost(post.id, { image: imageUrl });
+      return NextResponse.json({ imageUrl, prompt: prompt.trim(), custom: true });
+    }
 
     console.log(`[Image API] Starting pipeline for: ${post.title.substring(0, 50)}`);
 
