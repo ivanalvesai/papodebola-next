@@ -200,7 +200,15 @@ export default buildConfig({
       admin: {
         useAsTitle: "title",
         defaultColumns: ["title", "category", "publishedDate", "_status"],
+        // Botão "Preview" no editor → abre o post (mesmo rascunho) renderizado no
+        // layout real do site, numa página dedicada (não toca nas páginas públicas/ISR).
+        preview: (doc: { slug?: string }) =>
+          doc?.slug
+            ? `/cms-preview/${doc.slug}?previewSecret=${process.env.CRON_SECRET || ""}`
+            : null,
       },
+      // Scheduled Publish (publicar em data/hora) fica pendente: precisa da tabela de
+      // jobs no Postgres, que depende de migrations formais (push não roda em prod).
       versions: { drafts: true, maxPerDoc: 20 },
       access: {
         read: ({ req: { user } }) =>
