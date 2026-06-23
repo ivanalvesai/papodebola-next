@@ -598,6 +598,55 @@ export async function getMatchEvent(id: number, startHint?: number): Promise<Mat
   return raw?.event ? normalizeEvent(raw.event) : null;
 }
 
+// Comentários MANUAIS (editorial) por jogo — injetados no lance a lance além do que
+// a API traz. Ex: comunicado oficial da FIFA numa paralisação que a API só marca no
+// status (sem texto). Chave = id do jogo na API.
+const MANUAL_COMMENTARY: Record<number, MatchCommentary[]> = {
+  // França x Iraque (22/06) — paralisação por raios na Filadélfia.
+  15186769: [
+    {
+      id: 2_000_000_001,
+      type: "fifaNote",
+      text:
+        'Jogo interrompido entre França e Iraque devido ao mau tempo. A organizadora da ' +
+        'Copa do Mundo divulgou: "Devido às condições climáticas adversas na Filadélfia, ' +
+        'incluindo o risco de raios nas proximidades do estádio, a partida da Copa do Mundo ' +
+        'da FIFA entre França e Iraque foi suspensa. Foi anunciado um intervalo de 30 minutos. ' +
+        'No entanto, a situação ainda está sendo monitorada para determinar se novos atrasos ' +
+        'são previstos. A FIFA seguirá os protocolos de segurança estabelecidos pelas ' +
+        'autoridades locais e a partida será retomada assim que for seguro fazê-lo. A ' +
+        'segurança de todos é a prioridade da FIFA. Agradecemos a compreensão e a cooperação ' +
+        'de todos os torcedores."',
+      textPt: null,
+      isHome: null,
+      player: null,
+      playerId: null,
+      playerIn: null,
+      playerInId: null,
+      playerOut: null,
+      reason: null,
+      minute: 46, // limite do intervalo: aparece "após o 1º tempo"
+    },
+  ],
+};
+
+// Injeta os comentários manuais no feed (ordenado decrescente por minuto), na posição
+// do minuto. Aplicar DEPOIS da tradução (o texto manual já está em PT-BR).
+function injectManualCommentary(id: number, feed: MatchCommentary[]): MatchCommentary[] {
+  const manual = MANUAL_COMMENTARY[id];
+  if (!manual?.length) return feed;
+  const result = [...feed];
+  for (const item of manual) {
+    if (result.some((x) => x.id === item.id)) continue;
+    const idx = result.findIndex(
+      (x) => x.minute != null && item.minute != null && x.minute < item.minute
+    );
+    if (idx === -1) result.push(item);
+    else result.splice(idx, 0, item);
+  }
+  return result;
+}
+
 // Detalhe completo (server render inicial). Busca o event primeiro pra saber o
 // status e adaptar o TTL do resto (não martela a API em jogo encerrado).
 export async function getMatchDetail(id: number, startHint?: number): Promise<MatchDetail | null> {
@@ -616,7 +665,7 @@ export async function getMatchDetail(id: number, startHint?: number): Promise<Ma
   return {
     event,
     incidents: normalizeIncidents(incRaw),
-    commentary: await translateFeed(mergeFeed(normalizeCommentary(commRaw), incRaw)),
+    commentary: injectManualCommentary(id, await translateFeed(mergeFeed(normalizeCommentary(commRaw), incRaw))),
     home: normalizeLineup(lineRaw?.home),
     away: normalizeLineup(lineRaw?.away),
     lineupsConfirmed: !!lineRaw?.confirmed,
@@ -645,7 +694,7 @@ export async function getMatchLive(id: number, startHint?: number): Promise<Matc
   return {
     event,
     incidents: normalizeIncidents(incRaw),
-    commentary: await translateFeed(mergeFeed(normalizeCommentary(commRaw), incRaw)),
+    commentary: injectManualCommentary(id, await translateFeed(mergeFeed(normalizeCommentary(commRaw), incRaw))),
     stats: normalizeStats(statRaw),
   };
 }
