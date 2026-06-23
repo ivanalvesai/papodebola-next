@@ -327,6 +327,11 @@ const GOAL_ARTICLE: Record<string, string> = {
   "coreia do sul": "DA",
   "coreia do norte": "DA",
   gana: "DO",
+  // Seleções SEM artigo em português -> "GOL DE Portugal" (não "DO").
+  portugal: "DE",
+  "cabo verde": "DE",
+  "curaçao": "DE",
+  curacao: "DE",
 };
 function goalArticle(country: string): string {
   const c = (country || "").trim().toLowerCase();
