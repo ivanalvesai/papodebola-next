@@ -28,7 +28,7 @@ export function PlayerAvatar({ player, playerId }: PlayerAvatarProps) {
     <div className="w-10 h-10 rounded-full bg-body overflow-hidden shrink-0 flex items-center justify-center">
       {showImage ? (
         <Image
-          src={`/img/player/${playerId}/image`}
+          src={`/api/player-img/${playerId}`}
           alt={player}
           width={40}
           height={40}

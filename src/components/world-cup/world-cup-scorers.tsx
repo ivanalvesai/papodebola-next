@@ -49,7 +49,7 @@ export function WorldCupScorers({ scorers }: WorldCupScorersProps) {
                 <div className="flex items-center gap-2.5 min-w-0">
                   <div className="w-8 h-8 rounded-full bg-body overflow-hidden shrink-0">
                     <TeamLogo
-                      src={`/img/player/${s.player.id}/image`}
+                      src={`/api/player-img/${s.player.id}`}
                       alt={s.player.name}
                       size={32}
                       className="w-full h-full object-cover"
