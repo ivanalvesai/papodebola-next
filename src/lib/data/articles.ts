@@ -1,5 +1,5 @@
 import { fetchWP } from "@/lib/api/wordpress";
-import { articleHref } from "@/lib/config";
+import { articleHref, cleanTag } from "@/lib/config";
 import type { Article } from "@/types/article";
 import { getArticlesPayload, getArticleBySlugPayload } from "@/lib/data/articles-payload";
 
@@ -73,7 +73,7 @@ function normalizeArticle(post: any, categories: Record<number, string>, tags: R
     .trim();
 
   const postCategories = (post.categories || []).map((id: number) => categories[id]).filter(Boolean);
-  const postTags = (post.tags || []).map((id: number) => tags[id]).filter(Boolean);
+  const postTags = (post.tags || []).map((id: number) => cleanTag(tags[id] || "")).filter(Boolean);
 
   // Featured image (+ legenda/crédito da imagem, p/ atribuição de licença)
   let image = "";

@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { getPayload } from "payload";
 import config from "@payload-config";
 import { fetchWP } from "@/lib/api/wordpress";
+import { cleanTag } from "@/lib/config";
 
 // Importa posts do WordPress pro Payload (Fase 3b). Idempotente por wpId, paginado
 // (chame ?page=1..N), baixa a capa pro media do Payload. Protegido por secret.
@@ -97,7 +98,7 @@ async function handle(req: Request) {
         (p.categories || []).map((id: number) => catMap[id]).filter(Boolean)[0] ||
         "Futebol brasileiro";
       const tags = (p.tags || [])
-        .map((id: number) => tagMap[id])
+        .map((id: number) => cleanTag(tagMap[id] || ""))
         .filter(Boolean)
         .map((tag: string) => ({ tag }));
       const author = p._embedded?.author?.[0]?.name || "Redação";

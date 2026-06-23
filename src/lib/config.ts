@@ -237,6 +237,18 @@ export function articleHref(categoryName: string, slug: string): string {
   return `/${cat}/${slug}`;
 }
 
+// Limpa tag de lixo de HTML. O WordPress guardou nomes de tag com o resíduo "/i&gt; "
+// (sobra de um </i> mal escapado) — sem isto vira link malformado
+// (/noticias?cat=/i&gt;...) que o Google rastreia. Aplicar em toda extração de tag.
+export function cleanTag(t: string): string {
+  return String(t || "")
+    .replace(/^\s*\/?i&gt;\s*/i, "") // resíduo específico "/i&gt; "
+    .replace(/<[^>]*>/g, "")         // qualquer tag HTML
+    .replace(/&[a-z]+;/gi, "")       // entidades restantes (&gt; &amp; ...)
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
 // Brasileirão Série A: all 20 teams (for nav, side panel, etc.)
 const SERIE_A_SLUGS = [
   'palmeiras','flamengo','sao-paulo','fluminense','bahia','athletico-pr',
