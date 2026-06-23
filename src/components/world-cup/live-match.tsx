@@ -315,6 +315,24 @@ function PlayerAvatar({
   );
 }
 
+// Artigo do gol por seleção: "GOL DA França", "GOL DO Brasil", "GOL DOS Estados Unidos".
+// Heurística: termina em -a (sem acento) = feminino (DA); senão DO. Overrides p/ plurais
+// e exceções (África do Sul, Coreia do Sul são femininas mas não terminam em -a).
+const GOAL_ARTICLE: Record<string, string> = {
+  "estados unidos": "DOS",
+  "países baixos": "DOS",
+  "paises baixos": "DOS",
+  "emirados árabes unidos": "DOS",
+  "áfrica do sul": "DA",
+  "coreia do sul": "DA",
+  "coreia do norte": "DA",
+  gana: "DO",
+};
+function goalArticle(country: string): string {
+  const c = (country || "").trim().toLowerCase();
+  return GOAL_ARTICLE[c] || (/a$/.test(c) ? "DA" : "DO");
+}
+
 function CommentaryRow({ c, event }: { c: MatchCommentary; event: MatchEvent }) {
   // Comunicado oficial (ex: FIFA) injetado manualmente — destaque próprio.
   if (c.type === "fifaNote") {
@@ -337,7 +355,7 @@ function CommentaryRow({ c, event }: { c: MatchCommentary; event: MatchEvent }) 
     const isRed = c.type === "redCard" || c.type === "secondYellowCard";
     const isYellow = c.type === "yellowCard";
     const isSub = c.type === "substitution";
-    const headline = isGoal ? `⚽ GOL DO ${teamName.toUpperCase()}!` : info.label;
+    const headline = isGoal ? `⚽ GOL ${goalArticle(teamName)} ${teamName.toUpperCase()}!` : info.label;
     return (
       <div
         className={`flex items-center gap-3 rounded-lg border p-3 ${
