@@ -6,6 +6,7 @@ import {
   lexicalEditor,
   EXPERIMENTAL_TableFeature,
   BlocksFeature,
+  UploadFeature,
 } from "@payloadcms/richtext-lexical";
 import sharp from "sharp";
 import { revalidatePath } from "next/cache";
@@ -280,6 +281,26 @@ export default buildConfig({
               ...defaultFeatures,
               // Tabelas nativas no editor (botão + menu "/").
               EXPERIMENTAL_TableFeature(),
+              // Imagem com campo de Alinhamento (Centro/Esquerda/Direita) na inserção.
+              UploadFeature({
+                collections: {
+                  media: {
+                    fields: [
+                      {
+                        name: "alignment",
+                        type: "select",
+                        label: "Alinhamento",
+                        defaultValue: "center",
+                        options: [
+                          { label: "Centro", value: "center" },
+                          { label: "Esquerda", value: "left" },
+                          { label: "Direita", value: "right" },
+                        ],
+                      },
+                    ],
+                  },
+                },
+              }),
               // Blocos reutilizáveis inseríveis pelo menu "+" / "/": vídeo, colunas, destaque.
               BlocksFeature({
                 blocks: [

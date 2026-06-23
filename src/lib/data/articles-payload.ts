@@ -62,6 +62,16 @@ const lexicalConverters: any = ({ defaultConverters }: any) => ({
       return `<div class="pdb-callout pdb-callout-${style}">${inner}</div>`;
     },
   },
+  // Imagem inserida no editor (upload node) com alinhamento (campo do UploadFeature).
+  upload: ({ node }: any) => {
+    const doc = node?.value;
+    if (!doc || typeof doc !== "object" || !doc.url) return "";
+    const align = node?.fields?.alignment || "center";
+    const src = String(doc.url).startsWith("http") ? doc.url : `${SITE_URL}${doc.url}`;
+    const alt = String(doc.alt || "").replace(/"/g, "&quot;");
+    const dims = doc.width && doc.height ? ` width="${doc.width}" height="${doc.height}"` : "";
+    return `<figure class="pdb-img pdb-img-${align}"><img src="${src}" alt="${alt}"${dims} loading="lazy" /></figure>`;
+  },
 });
 
 function postBodyHtml(p: any): string {
