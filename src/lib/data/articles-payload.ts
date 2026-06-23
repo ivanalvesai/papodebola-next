@@ -2,7 +2,7 @@ import { cache } from "react";
 import { getPayload } from "payload";
 import config from "@payload-config";
 import { convertLexicalToHTML } from "@payloadcms/richtext-lexical/html";
-import { articleHref } from "@/lib/config";
+import { articleHref, cleanTag } from "@/lib/config";
 import type { Article } from "@/types/article";
 
 // Leitura de artigos do Payload (Fase 3c). getArticles/getArticleBySlug tentam
@@ -87,7 +87,7 @@ function postBodyHtml(p: any): string {
 }
 
 function mapPost(p: any): Article {
-  const tags = (p.tags || []).map((x: any) => x.tag).filter(Boolean);
+  const tags = (p.tags || []).map((x: any) => cleanTag(x.tag)).filter(Boolean);
   const bodyHtml = postBodyHtml(p);
   const cover = typeof p.cover === "object" && p.cover ? p.cover : null;
   // Prefere a versão "card" (WebP 800px); cai pro original. URL absoluta (display + OG).
