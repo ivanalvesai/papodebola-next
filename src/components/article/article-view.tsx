@@ -112,6 +112,7 @@ export function ArticleView({
     year: "numeric",
     hour: "2-digit",
     minute: "2-digit",
+    timeZone: "America/Sao_Paulo",
   });
 
   const wordCount = article.rewrittenText.split(/\s+/).filter((w) => w.length > 0).length;
@@ -417,6 +418,12 @@ export function ArticleView({
         .prose-article .pdb-callout-warning { background: #fffbeb; border-color: #f59e0b; }
         .prose-article .pdb-callout-success { background: #f0fdf4; border-color: #22c55e; }
         .prose-article .pdb-callout-highlight { background: #ecfdf5; border-color: #00965E; }
+        .prose-article .pdb-img { margin: 8px 0 32px; }
+        .prose-article .pdb-img img { max-width: 100%; height: auto; border-radius: 8px; display: block; }
+        .prose-article .pdb-img-center { text-align: center; }
+        .prose-article .pdb-img-center img { margin-left: auto; margin-right: auto; }
+        .prose-article .pdb-img-right img { margin-left: auto; margin-right: 0; }
+        .prose-article .pdb-img-left img { margin-left: 0; margin-right: auto; }
         @media (max-width: 768px) {
           .prose-article .pdb-columns { grid-template-columns: 1fr; }
         }
