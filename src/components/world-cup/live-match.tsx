@@ -316,6 +316,17 @@ function PlayerAvatar({
 }
 
 function CommentaryRow({ c, event }: { c: MatchCommentary; event: MatchEvent }) {
+  // Comunicado oficial (ex: FIFA) injetado manualmente — destaque próprio.
+  if (c.type === "fifaNote") {
+    return (
+      <div className="rounded-lg border border-amber-400/60 bg-amber-50 p-3.5">
+        <div className="mb-1.5 flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-wide text-amber-700">
+          <span>⛔</span> Comunicado oficial · FIFA
+        </div>
+        <p className="text-[13px] leading-relaxed text-text-primary">{c.text}</p>
+      </div>
+    );
+  }
   const info = COMM[c.type] || { label: "Lance do jogo" };
   const teamId = c.isHome == null ? 0 : c.isHome ? event.homeId : event.awayId;
   const teamName = c.isHome ? event.home : event.away;
