@@ -1,5 +1,10 @@
-// Migrado pro SportApi7 (Sofascore nativo, /api/v1). O host vem da env (sportapi7).
-const DIRECT_BASE = `https://${process.env.ALLSPORTS_API_HOST || "sportapi7.p.rapidapi.com"}/api/v1`;
+// Suporta as DUAS APIs, detectado pelo host (env ALLSPORTS_API_HOST):
+//  - SportApi7 (Sofascore nativo): base /api/v1 + tradutor toSofascore.
+//  - AllSportsApi antiga (allsportsapi2): base /api + caminhos originais (sem tradução).
+// Assim, trocar entre elas é só mudar host+chave na env (sem mexer no código).
+const ALLSPORTS_HOST = process.env.ALLSPORTS_API_HOST || "sportapi7.p.rapidapi.com";
+const USE_SOFASCORE = ALLSPORTS_HOST.includes("sportapi7");
+const DIRECT_BASE = `https://${ALLSPORTS_HOST}${USE_SOFASCORE ? "/api/v1" : "/api"}`;
 
 function pad(n: string): string {
   return n.length === 1 ? "0" + n : n;
@@ -172,8 +177,8 @@ export async function fetchAllSports<T>(
   const proxyUrl = process.env.SPORTS_PROXY_URL;
   const proxyToken = process.env.SPORTS_PROXY_TOKEN;
   const isBuildPhase = process.env.NEXT_PHASE === "phase-production-build";
-  // Traduz o caminho pro formato Sofascore (SportApi7) uma única vez.
-  const sofa = toSofascore(endpoint);
+  // SportApi7: traduz pro formato Sofascore. AllSportsApi antiga: usa o caminho original.
+  const sofa = USE_SOFASCORE ? toSofascore(endpoint) : endpoint;
 
   if (proxyUrl && proxyToken) {
     // Propaga o TTL pro proxy (senão ele cacheia 1800s fixos e o ao vivo trava).
