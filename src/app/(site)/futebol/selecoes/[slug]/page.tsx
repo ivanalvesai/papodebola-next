@@ -155,6 +155,7 @@ export default async function SelecaoPage({ params }: PageProps) {
                     {new Date(article.pubDate).toLocaleDateString("pt-BR", {
                       day: "2-digit",
                       month: "short",
+                      timeZone: "America/Sao_Paulo",
                     })}
                   </div>
                 </div>

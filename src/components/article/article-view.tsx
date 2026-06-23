@@ -112,6 +112,7 @@ export function ArticleView({
     year: "numeric",
     hour: "2-digit",
     minute: "2-digit",
+    timeZone: "America/Sao_Paulo",
   });
 
   const wordCount = article.rewrittenText.split(/\s+/).filter((w) => w.length > 0).length;

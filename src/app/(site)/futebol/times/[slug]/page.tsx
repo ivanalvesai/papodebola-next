@@ -120,7 +120,7 @@ export default async function TeamHubPage({
                       {article.rewrittenTitle}
                     </div>
                     <div className="text-[11px] text-text-muted mt-1">
-                      {new Date(article.pubDate).toLocaleDateString("pt-BR", { day: "2-digit", month: "short" })}
+                      {new Date(article.pubDate).toLocaleDateString("pt-BR", { day: "2-digit", month: "short", timeZone: "America/Sao_Paulo" })}
                     </div>
                   </Link>
                 ))}
