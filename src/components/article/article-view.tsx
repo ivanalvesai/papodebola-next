@@ -386,6 +386,40 @@ export function ArticleView({
           .prose-article th,
           .prose-article td { padding: 8px 9px; }
         }
+        /* Blocos do editor visual */
+        .prose-article .pdb-video { margin: 0 0 32px; }
+        .prose-article .pdb-video-frame {
+          position: relative;
+          padding-bottom: 56.25%;
+          height: 0;
+          border-radius: 8px;
+          overflow: hidden;
+        }
+        .prose-article .pdb-video-frame iframe {
+          position: absolute;
+          inset: 0;
+          width: 100%;
+          height: 100%;
+          border: 0;
+        }
+        .prose-article .pdb-columns { display: grid; gap: 24px; margin: 0 0 32px; }
+        .prose-article .pdb-cols-2 { grid-template-columns: 1fr 1fr; }
+        .prose-article .pdb-cols-3 { grid-template-columns: 1fr 1fr 1fr; }
+        .prose-article .pdb-col > :last-child { margin-bottom: 0; }
+        .prose-article .pdb-callout {
+          padding: 16px 20px;
+          border-radius: 8px;
+          margin: 0 0 32px;
+          border-left: 4px solid;
+        }
+        .prose-article .pdb-callout > :last-child { margin-bottom: 0; }
+        .prose-article .pdb-callout-info { background: #eff6ff; border-color: #3b82f6; }
+        .prose-article .pdb-callout-warning { background: #fffbeb; border-color: #f59e0b; }
+        .prose-article .pdb-callout-success { background: #f0fdf4; border-color: #22c55e; }
+        .prose-article .pdb-callout-highlight { background: #ecfdf5; border-color: #00965E; }
+        @media (max-width: 768px) {
+          .prose-article .pdb-columns { grid-template-columns: 1fr; }
+        }
       `}</style>
     </>
   );
