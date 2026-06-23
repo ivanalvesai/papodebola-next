@@ -2,7 +2,11 @@ import path from "path";
 import { fileURLToPath } from "url";
 import { buildConfig } from "payload";
 import { postgresAdapter } from "@payloadcms/db-postgres";
-import { lexicalEditor } from "@payloadcms/richtext-lexical";
+import {
+  lexicalEditor,
+  EXPERIMENTAL_TableFeature,
+  BlocksFeature,
+} from "@payloadcms/richtext-lexical";
 import sharp from "sharp";
 import { revalidatePath } from "next/cache";
 import { articleHref } from "@/lib/config";
@@ -271,6 +275,76 @@ export default buildConfig({
         {
           name: "content",
           type: "richText",
+          editor: lexicalEditor({
+            features: ({ defaultFeatures }) => [
+              ...defaultFeatures,
+              // Tabelas nativas no editor (botão + menu "/").
+              EXPERIMENTAL_TableFeature(),
+              // Blocos reutilizáveis inseríveis pelo menu "+" / "/": vídeo, colunas, destaque.
+              BlocksFeature({
+                blocks: [
+                  {
+                    slug: "video",
+                    labels: { singular: "Vídeo (YouTube/Vimeo)", plural: "Vídeos" },
+                    fields: [
+                      {
+                        name: "url",
+                        type: "text",
+                        required: true,
+                        label: "URL do vídeo",
+                        admin: { description: "Cole o link do YouTube ou Vimeo" },
+                      },
+                      { name: "caption", type: "text", label: "Legenda (opcional)" },
+                    ],
+                  },
+                  {
+                    slug: "columns",
+                    labels: { singular: "Colunas", plural: "Colunas" },
+                    fields: [
+                      {
+                        name: "count",
+                        type: "select",
+                        label: "Quantidade",
+                        defaultValue: "2",
+                        options: [
+                          { label: "2 colunas", value: "2" },
+                          { label: "3 colunas", value: "3" },
+                        ],
+                      },
+                      { name: "col1", type: "richText", label: "Coluna 1", editor: lexicalEditor() },
+                      { name: "col2", type: "richText", label: "Coluna 2", editor: lexicalEditor() },
+                      {
+                        name: "col3",
+                        type: "richText",
+                        label: "Coluna 3",
+                        editor: lexicalEditor(),
+                        admin: { condition: (_, s) => s?.count === "3" },
+                      },
+                    ],
+                  },
+                  {
+                    slug: "callout",
+                    labels: { singular: "Destaque / Aviso", plural: "Destaques" },
+                    fields: [
+                      {
+                        name: "style",
+                        type: "select",
+                        label: "Estilo",
+                        defaultValue: "info",
+                        options: [
+                          { label: "Informação (azul)", value: "info" },
+                          { label: "Atenção (amarelo)", value: "warning" },
+                          { label: "Sucesso (verde)", value: "success" },
+                          { label: "Destaque (verde PdB)", value: "highlight" },
+                        ],
+                      },
+                      { name: "content", type: "richText", label: "Conteúdo", editor: lexicalEditor() },
+                    ],
+                  },
+                ],
+              }),
+            ],
+          }),
           admin: { description: "Corpo do post (editor visual). Quando preenchido, substitui o HTML." },
         },
         // HTML legado (fallback durante a migração). Some do editor quando `content` existir.
