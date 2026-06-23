@@ -35,7 +35,7 @@ export function ScorersWidget({ scorers }: ScorersWidgetProps) {
 
               <div className="w-9 h-9 rounded-full bg-body overflow-hidden shrink-0">
                 <TeamLogo
-                  src={`/img/player/${item.player.id}/image`}
+                  src={`/api/player-img/${item.player.id}`}
                   alt={item.player.name}
                   size={36}
                   className="w-full h-full object-cover"

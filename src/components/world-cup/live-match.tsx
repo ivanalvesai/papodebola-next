@@ -293,7 +293,7 @@ function PlayerAvatar({
   const [failed, setFailed] = useState(false);
   const usePlayer = !!playerId && !failed;
   const src = usePlayer
-    ? `/img/player/${playerId}/image${attempt > 0 ? `?r=${attempt}` : ""}`
+    ? `/api/player-img/${playerId}${attempt > 0 ? `?r=${attempt}` : ""}`
     : `/img/team/${teamId}/image`;
   return (
     <Image

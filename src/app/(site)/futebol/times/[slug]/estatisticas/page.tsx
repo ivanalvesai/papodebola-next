@@ -139,7 +139,7 @@ export default async function EstatisticasPage({ params }: { params: Promise<{ s
                   {i + 1}
                 </span>
                 <Image
-                  src={`/img/player/${p.player.id}/image`}
+                  src={`/api/player-img/${p.player.id}`}
                   alt={p.player.name}
                   width={36}
                   height={36}

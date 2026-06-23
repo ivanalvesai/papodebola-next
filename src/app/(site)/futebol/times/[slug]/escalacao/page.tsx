@@ -63,7 +63,7 @@ export default async function EscalacaoPage({ params }: { params: Promise<{ slug
             {topPlayers.map((p) => (
               <div key={p.player.id} className="flex items-center gap-3 p-3 bg-body rounded-lg">
                 <Image
-                  src={`/img/player/${p.player.id}/image`}
+                  src={`/api/player-img/${p.player.id}`}
                   alt={p.player.name}
                   width={40}
                   height={40}
