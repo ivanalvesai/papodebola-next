@@ -49,6 +49,7 @@ export default async function JogoCampeonatoPage({
         startTimestamp={fixture.timestamp}
         statusType={detail?.event.statusType}
         url={`/futebol/${slug}/jogo/${data}/${match}`}
+        competition={fixture.tournamentName}
       />
       <PageBreadcrumb
         className="mb-3"
@@ -68,7 +69,7 @@ export default async function JogoCampeonatoPage({
       </h1>
 
       {detail ? (
-        <LiveMatch matchId={fixture.id} initial={detail} group={null} />
+        <LiveMatch matchId={fixture.id} initial={detail} group={null} competition={fixture.tournamentName} />
       ) : (
         <p className="py-10 text-center text-sm text-text-muted">
           Dados do jogo indisponíveis no momento. Atualize em instantes.
