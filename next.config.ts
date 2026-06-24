@@ -3,6 +3,9 @@ import { withPayload } from "@payloadcms/next/withPayload";
 
 const nextConfig: NextConfig = {
   output: "standalone",
+  // jsdom (usado no convertHTMLToLexical do envio do kanban) não é bundlado — fica
+  // externo e carrega do node_modules em runtime (recomendação do Payload).
+  serverExternalPackages: ["jsdom"],
   experimental: {
     optimizePackageImports: ["lucide-react"],
   },

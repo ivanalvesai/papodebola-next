@@ -6,6 +6,8 @@ import { readdir, unlink, readFile } from "fs/promises";
 import { join } from "path";
 import { getPayload } from "payload";
 import config from "@payload-config";
+import { convertHTMLToLexical, editorConfigFactory } from "@payloadcms/richtext-lexical";
+import { JSDOM } from "jsdom";
 
 export async function GET() {
   const session = await getSession();
@@ -135,6 +137,19 @@ export async function POST(request: NextRequest) {
         }
       }
 
+      // Converte o HTML pro editor visual (Lexical): o post chega no /cms editável no
+      // editor visual, não como código no campo HTML. Se falhar, mantém só o body HTML.
+      let lexicalContent: unknown = null;
+      try {
+        lexicalContent = convertHTMLToLexical({
+          editorConfig: await editorConfigFactory.default({ config: payload.config }),
+          html: content,
+          JSDOM,
+        });
+      } catch (e) {
+        console.error("[Publish] HTML->Lexical falhou, mantem so o body HTML:", e);
+      }
+
       const data: Record<string, unknown> = {
         title: post.title,
         slug,
@@ -150,6 +165,7 @@ export async function POST(request: NextRequest) {
         _status: "draft",
       };
       if (cover) data.cover = cover;
+      if (lexicalContent) data.content = lexicalContent;
 
       let doc: any;
       try {
