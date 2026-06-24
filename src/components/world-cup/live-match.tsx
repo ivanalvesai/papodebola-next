@@ -766,7 +766,7 @@ function Lineups({
 
 // Recap em texto do jogo encerrado (SEO: resultado + gols no HTML, ajuda a subir o
 // termo genérico "X x Y" que hoje fica na página 2).
-function MatchRecap({ event, incidents }: { event: MatchEvent; incidents: MatchIncident[] }) {
+function MatchRecap({ event, incidents, competition }: { event: MatchEvent; incidents: MatchIncident[]; competition: string }) {
   const hs = event.homeScore ?? 0;
   const as = event.awayScore ?? 0;
   const { home: h, away: a } = event;
@@ -785,7 +785,7 @@ function MatchRecap({ event, incidents }: { event: MatchEvent; incidents: MatchI
 
   return (
     <p className="rounded-lg border border-border-custom bg-card-bg p-3 text-sm leading-relaxed text-text-secondary">
-      <strong className="text-text-primary">{result}</strong> pela Copa do Mundo 2026.
+      <strong className="text-text-primary">{result}</strong> — {competition}.
       {goals.length > 0 && <> Gols: {goals.join(", ")}.</>}
     </p>
   );
@@ -839,10 +839,12 @@ export function LiveMatch({
   matchId,
   initial,
   group,
+  competition = "Copa do Mundo 2026",
 }: {
   matchId: number;
   initial: MatchDetail;
   group: StandingsGroup | null;
+  competition?: string;
 }) {
   const [event, setEvent] = useState(initial.event);
   const [incidents, setIncidents] = useState(initial.incidents);
@@ -950,7 +952,7 @@ export function LiveMatch({
         </p>
       )}
 
-      {event.statusType === "finished" && <MatchRecap event={event} incidents={incidents} />}
+      {event.statusType === "finished" && <MatchRecap event={event} incidents={incidents} competition={competition} />}
 
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-[300px_minmax(0,1fr)_280px]">
         {/* Esquerda: escalação (+ estatísticas quando a direita é o grupo, ex: Copa) */}

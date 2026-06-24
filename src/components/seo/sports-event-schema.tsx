@@ -11,6 +11,7 @@ export function SportsEventSchema({
   statusType,
   venue,
   url,
+  competition = "Copa do Mundo FIFA 2026",
 }: {
   home: string;
   away: string;
@@ -20,7 +21,10 @@ export function SportsEventSchema({
   statusType?: string; // notstarted | inprogress | finished
   venue?: { stadium: string; city: string; country: string } | null;
   url: string;
+  competition?: string;
 }) {
+  // FIFA/superEvent só fazem sentido na Copa; outros campeonatos usam o nome real.
+  const isCopa = competition.toLowerCase().includes("copa do mundo");
   // schema.org não tem status "ao vivo"/"encerrado" (nem "Completed"); cancelado/
   // adiado têm tipo próprio, o resto fica como EventScheduled.
   const eventStatus =
@@ -40,7 +44,7 @@ export function SportsEventSchema({
     // renderiza UMA imagem por evento (não as bandeiras dos 2 times); usamos o OG
     // genérico do site só pra satisfazer o "Missing field image".
     image: [`${SITE_URL}/og-image.jpg`],
-    description: `${home} x ${away} pela Copa do Mundo FIFA 2026: escalações, lance a lance, estatísticas e onde assistir ao vivo.`,
+    description: `${home} x ${away} — ${competition}: escalações, lance a lance, estatísticas e onde assistir ao vivo.`,
     ...(startTimestamp ? { startDate: new Date(startTimestamp * 1000).toISOString() } : {}),
     // endDate estimado (apito + ~2h: 90' + intervalo + acréscimos). Recomendado em
     // todo Event, não só no encerrado — senão o Google acusa "Missing field endDate".
@@ -65,16 +69,20 @@ export function SportsEventSchema({
           },
         }
       : {}),
-    organizer: { "@type": "Organization", name: "FIFA", url: "https://www.fifa.com" },
-    // superEvent é validado pelo Google como um Event próprio: precisa de startDate
-    // + location, senão o torneio aparece como "2º item inválido" e derruba o rich
-    // result da página inteira ("2 items detected: Some are invalid").
-    superEvent: {
-      "@type": "SportsEvent",
-      name: "Copa do Mundo FIFA 2026",
-      startDate: "2026-06-11",
-      location: { "@type": "Place", name: "Estados Unidos, Canadá e México" },
-    },
+    // FIFA/superEvent só na Copa (senão um jogo de Série B vira "parte da Copa" pro Google).
+    ...(isCopa
+      ? {
+          organizer: { "@type": "Organization", name: "FIFA", url: "https://www.fifa.com" },
+          // superEvent é validado pelo Google como Event próprio: precisa de startDate
+          // + location, senão vira "2º item inválido" e derruba o rich result da página.
+          superEvent: {
+            "@type": "SportsEvent",
+            name: "Copa do Mundo FIFA 2026",
+            startDate: "2026-06-11",
+            location: { "@type": "Place", name: "Estados Unidos, Canadá e México" },
+          },
+        }
+      : {}),
     homeTeam: {
       "@type": "SportsTeam",
       name: home,
