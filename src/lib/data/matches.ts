@@ -154,15 +154,32 @@ export async function getTomorrowMatches(): Promise<NormalizedMatch[]> {
 // Barra da home durante a Copa: jogos da Copa de hoje + proximos 2 dias (Brasília),
 // SEM os encerrados há +1h (freshMatches), ordenados por horario real. Os jogos de
 // madrugada do dia seguinte aparecem com a data no card.
+const WC_SEASON_ID = 58210; // Copa do Mundo 2026
+const WC_GROUP_ROUNDS = [1, 2, 3];
+
 export async function getWorldCupBarMatches(): Promise<NormalizedMatch[]> {
-  const days = await Promise.all([0, 1, 2].map((o) => getBrasiliaDayMatches(o).catch(() => [])));
+  // O feed por data (matches/{d}/{m}/{y}) ficou instável na allsportsapi2 (devolve 0
+  // eventos pra todas as datas). Buscamos os jogos da Copa pelas RODADAS do torneio —
+  // fonte confiável (mesma das páginas de jogo) — e filtramos pra hoje + 2 dias (BR).
+  const rounds = await Promise.all(
+    WC_GROUP_ROUNDS.map((r) =>
+      fetchAllSports<any>(
+        `tournament/${WORLD_CUP_LEAGUE_ID}/season/${WC_SEASON_ID}/matches/round/${r}`,
+        600
+      ).catch(() => null)
+    )
+  );
+  const start = brasiliaDayStartSec(0);
+  const end = brasiliaDayStartSec(3); // hoje + 2 dias
   const seen = new Set<string>();
   const wc: NormalizedMatch[] = [];
-  for (const list of days) {
-    for (const match of list) {
-      if (match.href && !seen.has(match.id)) {
-        seen.add(match.id);
-        wc.push(match);
+  for (const data of rounds) {
+    for (const e of (data as any)?.events || []) {
+      const m = normalizeEvent(e);
+      const ts = m.timestamp || 0;
+      if (ts >= start && ts < end && m.href && !seen.has(m.id)) {
+        seen.add(m.id);
+        wc.push(m);
       }
     }
   }
