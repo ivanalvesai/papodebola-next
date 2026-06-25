@@ -137,10 +137,19 @@ export async function getGeneralAgenda(date: Date): Promise<AgendaSportGroup[]> 
   const d = date.getDate();
   const m = date.getMonth() + 1;
   const y = date.getFullYear();
+  // Fallback ao vivo só vale pra HOJE (matches/live = jogos de agora).
+  const now = new Date();
+  const isToday = d === now.getDate() && m === now.getMonth() + 1 && y === now.getFullYear();
 
   const groups = await Promise.all(
     SOURCES.map(async (src) => {
-      const data = await fetchAllSports<any>(src.endpoint(d, m, y), 1800).catch(() => null);
+      let data = await fetchAllSports<any>(src.endpoint(d, m, y), 1800).catch(() => null);
+      // Fallback: o feed por data às vezes devolve 0 (instável na allsportsapi2). Em HOJE,
+      // usa o feed ao vivo do esporte (mesma raiz do endpoint) pra ao menos os ao vivo.
+      if (!data?.events?.length && isToday) {
+        const liveEp = src.endpoint(d, m, y).replace(/\/\d+\/\d+\/\d+$/, "/live");
+        data = await fetchAllSports<any>(liveEp, 60).catch(() => null);
+      }
       const allow = new Set(src.ids);
       const events: AgendaEvent[] = (data?.events || [])
         .filter((e: any) => allow.has(e.tournament?.uniqueTournament?.id))
