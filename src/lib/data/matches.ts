@@ -118,8 +118,15 @@ async function fetchMatchesByUtcDate(dt: Date): Promise<NormalizedMatch[]> {
     `matches/${dt.getUTCDate()}/${dt.getUTCMonth() + 1}/${dt.getUTCFullYear()}`,
     3600
   );
-  if (!data?.events) return [];
-  return data.events.map(normalizeEvent);
+  let events: any[] = data?.events || [];
+  // Fallback: o feed por data da allsportsapi2 às vezes devolve 0 eventos (instável).
+  // Nesse caso usa o feed AO VIVO (matches/live) — ao menos os jogos em andamento
+  // aparecem. O chamador (getBrasiliaDayMatches) filtra pelo intervalo do dia.
+  if (events.length === 0) {
+    const live = await fetchAllSports<any>("matches/live", 60).catch(() => null);
+    events = (live as any)?.events || [];
+  }
+  return events.map(normalizeEvent);
 }
 
 // Jogos de UM dia de Brasília (offset em dias). Busca os 2 feeds UTC que cobrem o dia
