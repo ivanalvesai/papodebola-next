@@ -20,6 +20,16 @@ import {
 // mobile/tráfego. Com ISR o jogo encerrado cacheia muito e o ao vivo revalida a cada 30s.
 export const revalidate = 30;
 
+// Rótulo da fase: grupos (round 1-3) = "Nª rodada"; mata-mata (6+) = nome da fase.
+function faseSimples(round: number): string {
+  const m: Record<number, string> = { 6: "16-avos de final", 7: "oitavas de final", 8: "quartas de final", 9: "semifinal", 10: "final" };
+  return round <= 3 ? `${round}ª rodada` : m[round] || `${round}ª rodada`;
+}
+function faseComPrep(round: number): string {
+  const m: Record<number, string> = { 6: "pelos 16-avos de final", 7: "pelas oitavas de final", 8: "pelas quartas de final", 9: "pela semifinal", 10: "pela final" };
+  return round <= 3 ? `pela ${round}ª rodada` : m[round] || `pela ${round}ª rodada`;
+}
+
 type Params = { data: string; slug: string };
 
 // Transmissão da Copa 2026 no Brasil (igual pra todos os jogos).
@@ -60,7 +70,7 @@ export async function generateMetadata({
     description = `${home} x ${away} AO VIVO pela Copa do Mundo 2026: placar em tempo real, lance a lance, escalações e estatísticas.`;
   } else {
     title = `${home} x ${away}: horário, onde assistir e escalação | Copa do Mundo 2026`;
-    description = `${home} x ${away} pela ${round}ª rodada da Copa do Mundo 2026: que horas é o jogo (horário de Brasília), onde assistir ao vivo na TV e online e as prováveis escalações.`;
+    description = `${home} x ${away} ${faseComPrep(round)} da Copa do Mundo 2026: que horas é o jogo (horário de Brasília), onde assistir ao vivo na TV e online e as prováveis escalações.`;
   }
 
   return { title, description, alternates: { canonical: url } };
@@ -84,7 +94,7 @@ function PreGameInfo({ fixture }: { fixture: WorldCupFixture }) {
         <strong className="text-text-primary">
           {fixture.home} x {fixture.away}
         </strong>{" "}
-        — {horario} (horário de Brasília), pela {fixture.round}ª rodada da Copa do Mundo 2026.
+        — {horario} (horário de Brasília), {faseComPrep(fixture.round)} da Copa do Mundo 2026.
       </p>
       <ul className="mt-2 space-y-1 text-sm text-text-secondary">
         {BROADCAST.map((b) => (
@@ -187,7 +197,7 @@ export default async function JogoCopaPage({ params }: { params: Promise<Params>
       <h1 className="mb-4 text-lg font-bold text-text-primary">
         {fixture.home} x {fixture.away}
         <span className="ml-2 text-sm font-normal text-text-muted">
-          · {fixture.round}ª rodada · Copa do Mundo 2026
+          · {faseSimples(fixture.round)} · Copa do Mundo 2026
         </span>
       </h1>
 
