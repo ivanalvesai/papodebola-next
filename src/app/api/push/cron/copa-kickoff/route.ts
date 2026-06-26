@@ -70,12 +70,16 @@ export async function GET(request: Request) {
       const recent = m.timestamp > 0 && now - m.timestamp <= SEND_RECENT_S;
       if (recent) {
         try {
-          await sendToAll({
-            title: "🟢 Começou o jogo!",
-            body: `${m.homeTeam} x ${m.awayTeam} — Copa do Mundo. Acompanhe ao vivo!`,
-            url: m.href || "/futebol/copa-do-mundo",
-            tag: `copa-kickoff-${m.apiId}`,
-          });
+          await sendToAll(
+            {
+              title: "🟢 Começou o jogo!",
+              body: `${m.homeTeam} x ${m.awayTeam} — Copa do Mundo. Acompanhe ao vivo!`,
+              url: m.href || "/futebol/copa-do-mundo",
+              tag: `copa-kickoff-${m.apiId}`,
+            },
+            // expira em 30min: quem ligar o device depois não recebe "começou" de jogo já no fim
+            { ttl: 1800, urgency: "high", topic: `k${m.apiId}` }
+          );
           kickoffs++;
           toMark.push(m.apiId);
         } catch {
@@ -100,12 +104,17 @@ export async function GET(request: Request) {
       scoresChanged = true;
     } else if (total > prevMax) {
       try {
-        await sendToAll({
-          title: "⚽ GOL!",
-          body: `${m.homeTeam} ${h} x ${a} ${m.awayTeam} — Copa do Mundo`,
-          url: m.href || "/futebol/copa-do-mundo",
-          tag: `copa-goal-${m.apiId}`, // mesma tag por jogo → mostra sempre o placar atual
-        });
+        await sendToAll(
+          {
+            title: "⚽ GOL!",
+            body: `${m.homeTeam} ${h} x ${a} ${m.awayTeam} — Copa do Mundo`,
+            url: m.href || "/futebol/copa-do-mundo",
+            tag: `copa-goal-${m.apiId}`, // mesma tag por jogo → mostra sempre o placar atual
+          },
+          // expira em 15min e colapsa por jogo: offline durante o jogo = recebe só o
+          // último placar (não um gol de 1h atrás), e nada se o jogo já acabou faz tempo
+          { ttl: 900, urgency: "high", topic: `g${m.apiId}` }
+        );
         goals++;
         maxTotals[key] = total;
         scoresChanged = true;
