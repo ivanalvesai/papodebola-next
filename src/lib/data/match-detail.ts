@@ -52,6 +52,52 @@ export async function getWorldCupFixtures(): Promise<WorldCupFixture[]> {
       });
     }
   }
+  // Mata-mata: confrontos já com os 2 times confirmados (cuptrees). Faz as páginas de
+  // jogo do mata-mata resolverem desde já — quando a API publicar lance a lance,
+  // escalação e estatísticas, a página mostra na hora (mesmo polling dos grupos).
+  out.push(...(await getWorldCupKnockoutFixtures().catch(() => [] as WorldCupFixture[])));
+  return out;
+}
+
+// Fase do cuptrees -> "round" distinto dos grupos (1-3): R32=6, R16=7, QF=8, SF=9, Final=10.
+const KNOCKOUT_ROUND_BY_ORDER: Record<number, number> = { 1: 6, 2: 7, 3: 8, 4: 9, 5: 10 };
+
+// Confrontos do mata-mata com os DOIS times confirmados (ambos top-2 de um grupo já
+// encerrado, todas as linhas com 3 jogos). Fonte: cuptrees (o bracket). Os slots
+// indefinidos vêm como placeholder ("3A/3B/.." ou "2I") sem team -> ficam de fora.
+export async function getWorldCupKnockoutFixtures(): Promise<WorldCupFixture[]> {
+  const [tree, groups] = await Promise.all([
+    fetchAllSports<any>(`tournament/${WC.id}/season/${WC.seasonId}/cuptrees`, 900).catch(() => null),
+    getWorldCupStandings().catch(() => [] as StandingsGroup[]),
+  ]);
+  const confirmed = new Set<number>();
+  for (const g of groups) {
+    const rows = g.rows || [];
+    if (rows.length >= 2 && rows.every((r) => (r.matches || 0) >= 3)) {
+      for (const r of rows) if ((r.pos || 0) <= 2 && r.teamId) confirmed.add(r.teamId);
+    }
+  }
+  const out: WorldCupFixture[] = [];
+  for (const rnd of tree?.cupTrees?.[0]?.rounds || []) {
+    for (const b of rnd.blocks || []) {
+      const p = b.participants || [];
+      const ht = p[0]?.team;
+      const at = p[1]?.team;
+      const evRaw = Array.isArray(b.events) ? b.events[0] : null;
+      const ev = typeof evRaw === "object" && evRaw ? evRaw.id : evRaw;
+      if (ht?.id && at?.id && typeof ev === "number" && confirmed.has(ht.id) && confirmed.has(at.id)) {
+        out.push({
+          id: ev,
+          homeId: ht.id,
+          awayId: at.id,
+          home: translateCountry(ht.name || ""),
+          away: translateCountry(at.name || ""),
+          timestamp: b.seriesStartDateTimestamp || 0,
+          round: KNOCKOUT_ROUND_BY_ORDER[rnd.order] || 6,
+        });
+      }
+    }
+  }
   return out;
 }
 
