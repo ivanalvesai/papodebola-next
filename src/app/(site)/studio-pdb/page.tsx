@@ -136,7 +136,16 @@ export default function StudioPage() {
     setNewTitle(""); setNewText(""); setShowNewPost(false);
   }
 
-  async function handleMove(id: string, column: Column) { await apiAction({ action: "move", id, column }); }
+  async function handleMove(id: string, column: Column) {
+    // Mover/arrastar um card pra "Enviado ao CMS" (publicado) deve DISPARAR o envio
+    // ao Payload, não só trocar a coluna. Sem isso, o card fica "parado" na coluna
+    // com wpId nulo (nenhum draft criado no /cms). Só dispara se ainda não foi enviado.
+    if (column === "publicado") {
+      const post = posts.find((p) => p.id === id);
+      if (post && !post.wpId) { await handlePublish(id); return; }
+    }
+    await apiAction({ action: "move", id, column });
+  }
 
   async function handlePublish(id: string) {
     if (!confirm("Enviar este post ao CMS (Payload) como RASCUNHO? Você finaliza e publica no /cms.")) return;
