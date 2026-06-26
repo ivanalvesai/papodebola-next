@@ -87,7 +87,7 @@ function resolveSlot(
   slot: string,
   standings: StandingsGroup[]
 ): { id: number; name: string } | null {
-  const m = slot.match(/(\d+)º\s+do\s+Grupo\s+([A-L])/i);
+  const m = slot.match(/(\d+)\D*?do\s+Grupo\s+([A-L])/i);
   if (!m) return null;
   const pos = parseInt(m[1], 10);
   const group = standings.find(
