@@ -27,5 +27,6 @@ export async function TeamCmsView({ doc, page }: { doc: PayloadTeam; page: Layou
   const data = await getTeamPageDataFor(teamInfoFromDoc(doc));
   const layout = doc[FIELD_BY_KEY[page]] as unknown as unknown[] | undefined;
   const blocks = layout && layout.length ? layout : DEFAULT_TEAM_LAYOUTS[page];
-  return <TeamBlockRenderer data={data} blocks={blocks} heading={doc.name} />;
+  // O H1 vem do layout do cluster (cabeçalho do time) — não duplicar aqui.
+  return <TeamBlockRenderer data={data} blocks={blocks} />;
 }

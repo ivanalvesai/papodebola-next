@@ -1,12 +1,14 @@
 import Image from "next/image";
 import Link from "next/link";
-import { TEAM_BY_SLUG, ALL_CLUSTER_TEAMS } from "@/lib/config";
+import { TEAM_BY_SLUG } from "@/lib/config";
+import { getTeam } from "@/lib/data/payload-teams";
+import { teamRouteStaticParams } from "@/components/payload/team-cms-page";
 import { notFound } from "next/navigation";
 import { TeamBreadcrumb } from "@/components/seo/team-breadcrumb";
 import { SportsTeamSchema } from "@/components/seo/sports-team-schema";
 
 export async function generateStaticParams() {
-  return ALL_CLUSTER_TEAMS.map((t) => ({ slug: t.slug }));
+  return teamRouteStaticParams();
 }
 
 function ClusterNav({ slug, teamName }: { slug: string; teamName: string }) {
@@ -44,7 +46,13 @@ export default async function TeamLayout({
   params: Promise<{ slug: string }>;
 }) {
   const { slug } = await params;
-  const team = TEAM_BY_SLUG[slug];
+  // Identidade do config (Série A/EU) OU do doc do Payload (Série B). 404 se nenhum.
+  const cfg = TEAM_BY_SLUG[slug];
+  let team: { name: string; id: number } | null = cfg ? { name: cfg.name, id: cfg.id } : null;
+  if (!team) {
+    const doc = await getTeam(slug);
+    if (doc) team = { name: doc.name, id: doc.sofascoreId };
+  }
   if (!team) notFound();
 
   return (
