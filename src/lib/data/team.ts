@@ -1,7 +1,7 @@
 import { fetchAllSports } from "@/lib/api/allsports";
-import { TEAM_BY_SLUG, TOURNAMENTS } from "@/lib/config";
+import { TEAM_BY_SLUG, teamTournament, type TeamInfo } from "@/lib/config";
 import { getArticles } from "./articles";
-import { getBrasileiraoStandings } from "./standings";
+import { getStandings } from "./standings";
 import type { NormalizedMatch } from "@/types/match";
 import type { StandingRow } from "@/types/standings";
 import type { Article } from "@/types/article";
@@ -14,6 +14,7 @@ export interface TeamPageData {
   name: string;
   id: number;
   slug: string;
+  tournament: { name: string; slug: string } | null;
   standingPosition: StandingRow | null;
   news: Article[];
   todayMatch: TeamMatch | null;
@@ -71,12 +72,12 @@ export async function getTeamPreviousEvents(teamId: number): Promise<TeamMatch[]
   return data.events.map(normalizeTeamMatch).reverse();
 }
 
-export async function getTeamTopPlayers(teamId: number): Promise<Scorer[]> {
-  const t = TOURNAMENTS.BRASILEIRAO_A;
-  if (!t.seasonId) return [];
+export async function getTeamTopPlayers(team: TeamInfo): Promise<Scorer[]> {
+  const t = teamTournament(team);
+  if (!t?.seasonId) return [];
 
   const data = await fetchAllSports<any>(
-    `team/${teamId}/tournament/${t.id}/season/${t.seasonId}/best-players`,
+    `team/${team.id}/tournament/${t.id}/season/${t.seasonId}/best-players`,
     86400
   );
 
@@ -87,27 +88,34 @@ export async function getTeamTopPlayers(teamId: number): Promise<Scorer[]> {
       name: p.player?.name || "",
       shortName: p.player?.shortName || "",
     },
-    team: { id: teamId, name: "" },
+    team: { id: team.id, name: "" },
     goals: p.statistics?.goals || 0,
     rating: p.statistics?.rating || null,
   }));
 }
 
-export async function getTeamStandingPosition(teamId: number): Promise<StandingRow | null> {
-  const standings = await getBrasileiraoStandings();
+export async function getTeamStandingPosition(team: TeamInfo): Promise<StandingRow | null> {
+  const t = teamTournament(team);
+  if (!t?.seasonId) return null;
+  const standings = await getStandings(t.id, t.seasonId);
   const rows = standings[0]?.rows || [];
-  return rows.find((r) => r.teamId === teamId) || null;
+  return rows.find((r) => r.teamId === team.id) || null;
 }
 
 export async function getTeamPageData(slug: string): Promise<TeamPageData | null> {
   const team = TEAM_BY_SLUG[slug];
   if (!team) return null;
+  return getTeamPageDataFor(team);
+}
 
+// Core: monta os dados da página a partir de uma identidade de time (do config OU de
+// um doc do Payload — collection `teams` da Série B). Preserva o ao vivo (mesmas funções).
+export async function getTeamPageDataFor(team: TeamInfo): Promise<TeamPageData> {
   const [nextEvents, prevEvents, topPlayers, position, newsResult] = await Promise.all([
     getTeamNextEvents(team.id).catch(() => []),
     getTeamPreviousEvents(team.id).catch(() => []),
-    getTeamTopPlayers(team.id).catch(() => []),
-    getTeamStandingPosition(team.id).catch(() => null),
+    getTeamTopPlayers(team).catch(() => []),
+    getTeamStandingPosition(team).catch(() => null),
     getArticles({ tag: team.name, perPage: 10 }).catch(() => ({ articles: [], total: 0 })),
   ]);
 
@@ -115,10 +123,12 @@ export async function getTeamPageData(slug: string): Promise<TeamPageData | null
   const today = new Date().toLocaleDateString("pt-BR", { day: "2-digit", month: "2-digit", year: "numeric" });
   const todayMatch = nextEvents.find((m) => m.date === today) || prevEvents.find((m) => m.date === today) || null;
 
+  const trn = teamTournament(team);
   return {
     name: team.name,
     id: team.id,
     slug: team.slug,
+    tournament: trn ? { name: trn.name, slug: trn.slug } : null,
     standingPosition: position,
     news: newsResult.articles,
     todayMatch,
