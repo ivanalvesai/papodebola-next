@@ -21,12 +21,21 @@ export async function POST(request: Request) {
     if (!title || !text) {
       return NextResponse.json({ error: "title e body são obrigatórios" }, { status: 400 });
     }
-    const result = await sendToAll({
-      title,
-      body: text,
-      url: body?.url || "/",
-      tag: body?.tag,
-    });
+    const result = await sendToAll(
+      {
+        title,
+        body: text,
+        url: body?.url || "/",
+        tag: body?.tag,
+      },
+      {
+        // Posts/avisos: validade 4h por padrão (sendToAll) — quem ficar offline mais
+        // que isso NÃO recebe a notícia velha. Painel pode mandar `ttl` custom.
+        ttl: typeof body?.ttl === "number" ? body.ttl : undefined,
+        urgency: "normal",
+        topic: typeof body?.topic === "string" ? body.topic : undefined,
+      }
+    );
     return NextResponse.json({ ok: true, ...result });
   } catch (e: unknown) {
     return NextResponse.json(

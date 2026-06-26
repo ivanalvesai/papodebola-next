@@ -21,9 +21,24 @@ export interface PushPayload {
   tag?: string;
 }
 
+export interface PushOptions {
+  // Validade em SEGUNDOS. O serviço de push DESCARTA a mensagem se não conseguir
+  // entregar dentro do TTL (device offline). Sem isto, o web-push usa o padrão de
+  // ~4 SEMANAS → notificações velhas chegam acumuladas quando o device volta online.
+  ttl?: number;
+  // "high" entrega na hora; pushes de placar/jogo querem isto.
+  urgency?: "very-low" | "low" | "normal" | "high";
+  // Colapsa: um push novo com o MESMO topic substitui o anterior ainda não
+  // entregue (ex: vários "GOL" do mesmo jogo viram só o último placar).
+  topic?: string;
+}
+
 // Envia pra todas as assinaturas. Remove as que o provedor diz estarem mortas
 // (404/410). Retorna contagem de enviadas e removidas.
-export async function sendToAll(payload: PushPayload): Promise<{
+export async function sendToAll(
+  payload: PushPayload,
+  options: PushOptions = {}
+): Promise<{
   sent: number;
   failed: number;
   removed: number;
@@ -36,12 +51,18 @@ export async function sendToAll(payload: PushPayload): Promise<{
   let failed = 0;
   let removed = 0;
 
+  // TTL padrão 4h (não as ~4 semanas do web-push). Caller pode encurtar (gol/jogo).
+  const sendOpts: webpush.RequestOptions = { TTL: options.ttl ?? 4 * 3600 };
+  if (options.urgency) sendOpts.urgency = options.urgency;
+  if (options.topic) sendOpts.topic = options.topic;
+
   await Promise.all(
     subs.map(async (s) => {
       try {
         await webpush.sendNotification(
           { endpoint: s.endpoint, keys: s.keys },
-          JSON.stringify(payload)
+          JSON.stringify(payload),
+          sendOpts
         );
         sent++;
       } catch (e: unknown) {
