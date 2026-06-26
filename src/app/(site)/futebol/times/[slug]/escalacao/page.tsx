@@ -1,30 +1,37 @@
 import type { Metadata } from "next";
 import Image from "next/image";
 import Link from "next/link";
-import { TEAM_BY_SLUG, ALL_CLUSTER_TEAMS } from "@/lib/config";
+import { TEAM_BY_SLUG } from "@/lib/config";
 import { getTeamPageData } from "@/lib/data/team";
+import { getTeam } from "@/lib/data/payload-teams";
+import { TeamCmsView, teamRouteStaticParams } from "@/components/payload/team-cms-page";
 import { notFound } from "next/navigation";
 import { Users } from "lucide-react";
 
 export const revalidate = 43200;
 
 export async function generateStaticParams() {
-  return ALL_CLUSTER_TEAMS.map((t) => ({ slug: t.slug }));
+  return teamRouteStaticParams();
 }
 
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
   const { slug } = await params;
-  const team = TEAM_BY_SLUG[slug];
-  if (!team) return {};
+  const doc = await getTeam(slug);
+  const name = doc?.name || TEAM_BY_SLUG[slug]?.name;
+  if (!name) return {};
   return {
-    title: `Escalacao do ${team.name} Hoje - Provavel Escalacao`,
-    description: `Confira a escalacao provavel do ${team.name} para o proximo jogo. Titulares, reservas e desfalques.`,
+    title: doc?.seo?.metaTitle || `Escalacao do ${name} Hoje - Provavel Escalacao`,
+    description: doc?.seo?.metaDescription || `Confira a escalacao provavel do ${name} para o proximo jogo. Titulares, reservas e desfalques.`,
     alternates: { canonical: `/futebol/times/${slug}/escalacao` },
   };
 }
 
 export default async function EscalacaoPage({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;
+
+  const doc = await getTeam(slug);
+  if (doc) return <TeamCmsView doc={doc} page="escalacao" />;
+
   const team = TEAM_BY_SLUG[slug];
   if (!team) notFound();
 

@@ -42,6 +42,9 @@ export interface TeamInfo {
   name: string;
   id: number;
   slug: string;
+  // Torneio nacional do time (resolve classificação/artilharia certas). Ausente = europeu
+  // (sem tabela do Brasileirão). Default de leitura: 'serie-a' (ver teamTournamentSlug).
+  tournament?: "serie-a" | "serie-b";
 }
 
 export const TEAMS: TeamInfo[] = [
@@ -66,6 +69,8 @@ export const TEAMS: TeamInfo[] = [
   { name: 'Remo',           id: 2012,  slug: 'remo' },
   { name: 'Chapecoense',    id: 21845, slug: 'chapecoense' },
   { name: 'Mirassol',       id: 21982, slug: 'mirassol' },
+  // Série B 2026: NÃO entra aqui — os 20 times vivem na collection `teams` do Payload
+  // (Payload primeiro). A identidade (id/slug/tournament) vem do doc do CMS, não do config.
 
   // Europa
   { name: 'Real Madrid',     id: 2829, slug: 'real-madrid' },
@@ -271,5 +276,14 @@ export const PANEL_TEAMS_EU: TeamInfo[] = TEAMS
   .filter(t => EU_SLUGS.includes(t.slug))
   .sort((a, b) => a.name.localeCompare(b.name, 'pt-BR'));
 
-// All teams with cluster pages (BR + EU)
+// All teams with cluster pages NO CÓDIGO (Série A + EU). Os times da Série B vêm do
+// Payload e são unidos a esta lista em runtime (generateStaticParams das rotas de time).
 export const ALL_CLUSTER_TEAMS: TeamInfo[] = [...PANEL_TEAMS_BR, ...PANEL_TEAMS_EU];
+
+// Torneio do time → config do Tournament (classificação/artilharia). EU → null (sem Brasileirão).
+// Serve tanto p/ times do config quanto p/ TeamInfo montado a partir de um doc do Payload.
+export function teamTournament(team: TeamInfo): Tournament | null {
+  if (team.tournament === 'serie-b') return TOURNAMENTS.BRASILEIRAO_B;
+  if (EU_SLUGS.includes(team.slug)) return null;
+  return TOURNAMENTS.BRASILEIRAO_A; // default p/ times BR (Série A)
+}

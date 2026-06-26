@@ -1,7 +1,9 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { TEAM_BY_SLUG, ALL_CLUSTER_TEAMS } from "@/lib/config";
+import { TEAM_BY_SLUG } from "@/lib/config";
 import { getTeamPageData } from "@/lib/data/team";
+import { getTeam } from "@/lib/data/payload-teams";
+import { TeamCmsView, teamRouteStaticParams } from "@/components/payload/team-cms-page";
 import { notFound } from "next/navigation";
 import { Tv } from "lucide-react";
 import { TeamLogo } from "@/components/ui/team-logo";
@@ -9,22 +11,27 @@ import { TeamLogo } from "@/components/ui/team-logo";
 export const revalidate = 86400;
 
 export async function generateStaticParams() {
-  return ALL_CLUSTER_TEAMS.map((t) => ({ slug: t.slug }));
+  return teamRouteStaticParams();
 }
 
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
   const { slug } = await params;
-  const team = TEAM_BY_SLUG[slug];
-  if (!team) return {};
+  const doc = await getTeam(slug);
+  const name = doc?.name || TEAM_BY_SLUG[slug]?.name;
+  if (!name) return {};
   return {
-    title: `Onde Assistir ${team.name} Hoje - Transmissao Ao Vivo`,
-    description: `Saiba onde assistir ao jogo do ${team.name} hoje ao vivo. TV, streaming e opcoes de transmissao.`,
+    title: doc?.seo?.metaTitle || `Onde Assistir ${name} Hoje - Transmissao Ao Vivo`,
+    description: doc?.seo?.metaDescription || `Saiba onde assistir ao jogo do ${name} hoje ao vivo. TV, streaming e opcoes de transmissao.`,
     alternates: { canonical: `/futebol/times/${slug}/onde-assistir` },
   };
 }
 
 export default async function OndeAssistirPage({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;
+
+  const doc = await getTeam(slug);
+  if (doc) return <TeamCmsView doc={doc} page="ondeAssistir" />;
+
   const team = TEAM_BY_SLUG[slug];
   if (!team) notFound();
 

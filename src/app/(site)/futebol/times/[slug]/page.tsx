@@ -1,7 +1,9 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { TEAM_BY_SLUG, ALL_CLUSTER_TEAMS } from "@/lib/config";
+import { TEAM_BY_SLUG } from "@/lib/config";
 import { getTeamPageData } from "@/lib/data/team";
+import { getTeam } from "@/lib/data/payload-teams";
+import { TeamCmsView, teamRouteStaticParams } from "@/components/payload/team-cms-page";
 import { notFound } from "next/navigation";
 import { ArrowRight, Calendar, Trophy, BarChart3, Tv, Users } from "lucide-react";
 import { TeamLogo } from "@/components/ui/team-logo";
@@ -9,7 +11,7 @@ import { TeamLogo } from "@/components/ui/team-logo";
 export const revalidate = 21600;
 
 export async function generateStaticParams() {
-  return ALL_CLUSTER_TEAMS.map((t) => ({ slug: t.slug }));
+  return teamRouteStaticParams();
 }
 
 export async function generateMetadata({
@@ -18,6 +20,16 @@ export async function generateMetadata({
   params: Promise<{ slug: string }>;
 }): Promise<Metadata> {
   const { slug } = await params;
+  const doc = await getTeam(slug);
+  if (doc) {
+    return {
+      title: doc.seo?.metaTitle || `${doc.name} - Notícias, Jogos e Classificação`,
+      description:
+        doc.seo?.metaDescription ||
+        `Tudo sobre o ${doc.name}: notícias, jogos de hoje, próximos jogos, escalação, estatísticas e onde assistir ao vivo.`,
+      alternates: { canonical: `/futebol/times/${slug}` },
+    };
+  }
   const team = TEAM_BY_SLUG[slug];
   if (!team) return {};
   return {
@@ -33,6 +45,11 @@ export default async function TeamHubPage({
   params: Promise<{ slug: string }>;
 }) {
   const { slug } = await params;
+
+  // Time gerido no CMS (Payload) → renderiza por blocos (Série B). Senão, fallback config.
+  const doc = await getTeam(slug);
+  if (doc) return <TeamCmsView doc={doc} page="hub" />;
+
   const team = TEAM_BY_SLUG[slug];
   if (!team) notFound();
 

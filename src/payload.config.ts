@@ -1,6 +1,7 @@
 import path from "path";
 import { fileURLToPath } from "url";
 import { buildConfig } from "payload";
+import type { Block, Field } from "payload";
 import { postgresAdapter } from "@payloadcms/db-postgres";
 import {
   lexicalEditor,
@@ -14,6 +15,58 @@ import { articleHref } from "@/lib/config";
 
 const filename = fileURLToPath(import.meta.url);
 const dirname = path.dirname(filename);
+
+// ── Biblioteca de blocos da collection `teams` (piloto do CMS de blocos de time) ──
+// DINÂMICOS: ao renderizar, buscam dado AO VIVO via getTeamPageDataFor(team) — os mesmos
+// cards de hoje, embrulhados (ver TeamBlockRenderer). O editor só escolhe/ordena e pode
+// dar um título. ESTÁTICOS: texto/título autoral. Os mesmos blocos ficam disponíveis em
+// todas as abas (hub + 5 sub-rotas) → composição livre por página.
+const blockTitle: Field = {
+  name: "title",
+  type: "text",
+  admin: { description: "Título exibido acima do bloco (opcional)" },
+};
+const blockLimit: Field = {
+  name: "limit",
+  type: "number",
+  admin: { description: "Quantos itens mostrar (opcional)" },
+};
+
+const teamLayoutBlocks: Block[] = [
+  // — Dinâmicos (dados ao vivo do time) —
+  { slug: "teamTodayMatch", labels: { singular: "Jogo de hoje", plural: "Jogo de hoje" }, fields: [blockTitle] },
+  { slug: "teamUpcoming", labels: { singular: "Próximos jogos", plural: "Próximos jogos" }, fields: [blockTitle, blockLimit] },
+  { slug: "teamResults", labels: { singular: "Resultados recentes", plural: "Resultados recentes" }, fields: [blockTitle, blockLimit] },
+  { slug: "teamStanding", labels: { singular: "Classificação (posição)", plural: "Classificação" }, fields: [blockTitle] },
+  { slug: "teamNews", labels: { singular: "Notícias do time", plural: "Notícias do time" }, fields: [blockTitle, blockLimit] },
+  { slug: "teamScorers", labels: { singular: "Artilheiros", plural: "Artilheiros" }, fields: [blockTitle, blockLimit] },
+  { slug: "teamWhereToWatch", labels: { singular: "Onde assistir", plural: "Onde assistir" }, fields: [blockTitle] },
+  { slug: "teamLineup", labels: { singular: "Escalação provável", plural: "Escalação" }, fields: [blockTitle] },
+  { slug: "teamClusterLinks", labels: { singular: "Links do cluster (hub)", plural: "Links do cluster" }, fields: [] },
+  // — Estáticos (texto autoral) —
+  {
+    slug: "richText",
+    labels: { singular: "Texto", plural: "Textos" },
+    fields: [{ name: "content", type: "richText" }],
+  },
+  {
+    slug: "heading",
+    labels: { singular: "Título", plural: "Títulos" },
+    fields: [
+      { name: "text", type: "text" },
+      { name: "level", type: "select", defaultValue: "h2", options: ["h2", "h3"] },
+    ],
+  },
+];
+
+// Uma aba por página do cluster (hub + 5 sub-rotas). Mesmos blocos em todas → composição livre.
+const teamLayoutTab = (name: string, label: string): Field => ({
+  name,
+  label: "Layout",
+  type: "blocks",
+  blocks: teamLayoutBlocks,
+  admin: { description: `Blocos da página "${label}". Vazio = usa o layout padrão (igual Série A).` },
+});
 
 // Payload (Fase 1 da migração). Admin em /cms e API em /cms-api pra NÃO colidir
 // com o /admin (404 no middleware) nem com as rotas em /api do app. Postgres.
@@ -187,6 +240,87 @@ export default buildConfig({
               labels: { singular: "Nota", plural: "Notas" },
               fields: [{ name: "text", type: "text", required: true }],
             },
+          ],
+        },
+        {
+          name: "seo",
+          type: "group",
+          fields: [
+            { name: "metaTitle", type: "text" },
+            { name: "metaDescription", type: "textarea" },
+          ],
+        },
+      ],
+    },
+    {
+      slug: "teams",
+      labels: { singular: "Time", plural: "Times" },
+      admin: {
+        useAsTitle: "name",
+        defaultColumns: ["name", "slug", "tournament", "_status"],
+        description:
+          "Páginas de time geridas no CMS (piloto: Série B). Identidade + SEO + layout (blocos) por página. Layout vazio = layout padrão do código (igual Série A).",
+      },
+      versions: { drafts: true, maxPerDoc: 30 },
+      access: {
+        read: ({ req: { user } }) =>
+          user ? true : { _status: { equals: "published" } },
+      },
+      // Editar/publicar um time revalida o hub + as 5 sub-rotas na hora.
+      hooks: {
+        afterChange: [
+          /* eslint-disable-next-line @typescript-eslint/no-explicit-any */
+          ({ doc }: any) => {
+            try {
+              const base = `/futebol/times/${doc.slug}`;
+              for (const p of [base, `${base}/jogo-hoje`, `${base}/onde-assistir`, `${base}/escalacao`, `${base}/proximos-jogos`, `${base}/estatisticas`]) {
+                revalidatePath(p);
+              }
+            } catch {
+              /* fora de contexto de request (build/cli) */
+            }
+            return doc;
+          },
+        ],
+      },
+      fields: [
+        { name: "name", type: "text", required: true, label: "Nome" },
+        {
+          name: "slug",
+          type: "text",
+          required: true,
+          unique: true,
+          index: true,
+          admin: { description: "URL final: /futebol/times/{slug} (ex.: criciuma)" },
+        },
+        {
+          name: "sofascoreId",
+          type: "number",
+          required: true,
+          label: "ID do time (Sofascore)",
+          admin: { description: "ID na API esportiva — alimenta os blocos de dados ao vivo" },
+        },
+        {
+          name: "tournament",
+          type: "select",
+          required: true,
+          defaultValue: "serie-b",
+          label: "Torneio",
+          options: [
+            { label: "Brasileirão Série A", value: "serie-a" },
+            { label: "Brasileirão Série B", value: "serie-b" },
+          ],
+          admin: { description: "Define a classificação/artilharia corretas" },
+        },
+        {
+          type: "tabs",
+          tabs: [
+            { label: "Hub", fields: [teamLayoutTab("layoutHub", "Hub")] },
+            { label: "Jogo de hoje", fields: [teamLayoutTab("layoutJogoHoje", "Jogo de hoje")] },
+            { label: "Onde assistir", fields: [teamLayoutTab("layoutOndeAssistir", "Onde assistir")] },
+            { label: "Escalação", fields: [teamLayoutTab("layoutEscalacao", "Escalação")] },
+            { label: "Próximos jogos", fields: [teamLayoutTab("layoutProximos", "Próximos jogos")] },
+            { label: "Estatísticas", fields: [teamLayoutTab("layoutEstatisticas", "Estatísticas")] },
           ],
         },
         {

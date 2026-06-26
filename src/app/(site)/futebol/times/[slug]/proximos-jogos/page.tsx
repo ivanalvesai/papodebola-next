@@ -1,7 +1,9 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { TEAM_BY_SLUG, ALL_CLUSTER_TEAMS } from "@/lib/config";
+import { TEAM_BY_SLUG } from "@/lib/config";
 import { getTeamNextEvents } from "@/lib/data/team";
+import { getTeam } from "@/lib/data/payload-teams";
+import { TeamCmsView, teamRouteStaticParams } from "@/components/payload/team-cms-page";
 import { notFound } from "next/navigation";
 import { Calendar } from "lucide-react";
 import { TeamLogo } from "@/components/ui/team-logo";
@@ -11,22 +13,27 @@ import { SportsEventSchema } from "@/components/seo/sports-event-schema";
 export const revalidate = 43200;
 
 export async function generateStaticParams() {
-  return ALL_CLUSTER_TEAMS.map((t) => ({ slug: t.slug }));
+  return teamRouteStaticParams();
 }
 
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
   const { slug } = await params;
-  const team = TEAM_BY_SLUG[slug];
-  if (!team) return {};
+  const doc = await getTeam(slug);
+  const name = doc?.name || TEAM_BY_SLUG[slug]?.name;
+  if (!name) return {};
   return {
-    title: `Proximos Jogos do ${team.name} - Calendario 2026`,
-    description: `Calendario completo dos proximos jogos do ${team.name} em 2026. Datas, horarios, adversarios e campeonatos.`,
+    title: doc?.seo?.metaTitle || `Proximos Jogos do ${name} - Calendario 2026`,
+    description: doc?.seo?.metaDescription || `Calendario completo dos proximos jogos do ${name} em 2026. Datas, horarios, adversarios e campeonatos.`,
     alternates: { canonical: `/futebol/times/${slug}/proximos-jogos` },
   };
 }
 
 export default async function ProximosJogosPage({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;
+
+  const doc = await getTeam(slug);
+  if (doc) return <TeamCmsView doc={doc} page="proximos" />;
+
   const team = TEAM_BY_SLUG[slug];
   if (!team) notFound();
 
