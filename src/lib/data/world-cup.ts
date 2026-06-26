@@ -3,7 +3,8 @@ import { translateCountry } from "@/lib/i18n/countries";
 import { translateStatus } from "@/lib/translations";
 import { enrichStandingsWithForm } from "@/lib/standings-utils";
 import { getWorldCupStandings } from "./standings";
-import type { StandingRow } from "@/types/standings";
+import { getWorldCupKnockoutFixtures } from "./match-detail";
+import type { StandingRow, StandingsGroup } from "@/types/standings";
 import type { ChampionshipMatch } from "@/types/match";
 import { KNOCKOUT_SCHEDULE, type KnockoutItem } from "@/lib/world-cup-knockout-schedule";
 
@@ -80,16 +81,72 @@ export async function getWorldCupKnockout(round: number): Promise<ChampionshipMa
 // já existem; senão cai no calendário FIXO da FIFA (placeholder com data/local/slot).
 // Mesma URL/página nos dois casos → quando os times entram, o SEO da página é mantido
 // (o conteúdo só fica mais rico). Ver world-cup-knockout-schedule.ts.
+// Resolve um slot do calendário ("1º do Grupo C") pro time REAL — só se o grupo já
+// encerrou (todas as linhas com 3 jogos). Slots de melhor-3º / vencedor de jogo -> null.
+function resolveSlot(
+  slot: string,
+  standings: StandingsGroup[]
+): { id: number; name: string } | null {
+  const m = slot.match(/(\d+)º\s+do\s+Grupo\s+([A-L])/i);
+  if (!m) return null;
+  const pos = parseInt(m[1], 10);
+  const group = standings.find(
+    (g) => g.name.replace(/grupo\s*/i, "").trim().toUpperCase() === m[2].toUpperCase()
+  );
+  if (!group || !group.rows.every((r) => (r.matches || 0) >= 3)) return null;
+  const row = group.rows.find((r) => r.pos === pos) || group.rows[pos - 1];
+  return row?.teamId ? { id: row.teamId, name: row.team } : null;
+}
+
+// Itens da fase: usa o cuptrees (confrontos confirmados) + o calendário fixo da FIFA.
+// - 2 lados resolvidos (grupos encerrados) + jogo no cuptrees -> card REAL (link + ao vivo).
+// - 1 lado resolvido -> placeholder com o time já definido no slot (ex: "Alemanha x 3º ...").
+// - nenhum -> placeholder do calendário. O round endpoint da API vem vazio no mata-mata.
 export async function getKnockoutFixtures(
   phaseSlug: string,
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   round: number | null
 ): Promise<KnockoutItem[]> {
-  const api = round != null ? await getWorldCupKnockout(round).catch(() => []) : [];
-  if (api.length) return api.map((match) => ({ kind: "real", match }));
-  return KNOCKOUT_SCHEDULE.filter((s) => s.phase === phaseSlug).map((sched) => ({
-    kind: "placeholder",
-    sched,
-  }));
+  const [standings, knockoutFx] = await Promise.all([
+    getWorldCupStandings().catch(() => [] as StandingsGroup[]),
+    getWorldCupKnockoutFixtures().catch(() => []),
+  ]);
+  const pairKey = (a: number, b: number) => [a, b].sort((x, y) => x - y).join("-");
+  const fxByPair = new Map<string, (typeof knockoutFx)[number]>();
+  for (const f of knockoutFx) fxByPair.set(pairKey(f.homeId, f.awayId), f);
+
+  return KNOCKOUT_SCHEDULE.filter((s) => s.phase === phaseSlug).map((sched): KnockoutItem => {
+    const h = resolveSlot(sched.homeSlot, standings);
+    const a = resolveSlot(sched.awaySlot, standings);
+    if (h && a) {
+      const fx = fxByPair.get(pairKey(h.id, a.id));
+      if (fx) {
+        return {
+          kind: "real",
+          match: {
+            id: fx.id,
+            home: fx.home,
+            away: fx.away,
+            homeId: fx.homeId,
+            awayId: fx.awayId,
+            homeScore: null,
+            awayScore: null,
+            status: "notstarted",
+            statusDesc: "",
+            timestamp: fx.timestamp,
+            round: fx.round,
+          },
+        };
+      }
+    }
+    if (h || a) {
+      return {
+        kind: "placeholder",
+        sched: { ...sched, homeSlot: h ? h.name : sched.homeSlot, awaySlot: a ? a.name : sched.awaySlot },
+      };
+    }
+    return { kind: "placeholder", sched };
+  });
 }
 
 export async function getWorldCupData(): Promise<WorldCupData> {
