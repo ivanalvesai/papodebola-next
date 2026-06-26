@@ -97,12 +97,14 @@ function PlaceholderCard({ s }: { s: KnockoutScheduleMatch }) {
         {knockoutDateLabel(s.date)} &middot; horário a definir
       </div>
       <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-2">
-        <span className="text-right text-sm font-semibold leading-snug text-text-primary">
-          {s.homeSlot}
+        <span className="flex items-center justify-end gap-2 text-right text-sm font-semibold leading-snug text-text-primary">
+          <span>{s.homeSlot}</span>
+          {s.homeTeamId ? <TeamLogo teamId={s.homeTeamId} size={24} /> : null}
         </span>
         <span className="shrink-0 px-2 text-center text-base font-bold text-text-muted">X</span>
-        <span className="text-left text-sm font-semibold leading-snug text-text-primary">
-          {s.awaySlot}
+        <span className="flex items-center gap-2 text-left text-sm font-semibold leading-snug text-text-primary">
+          {s.awayTeamId ? <TeamLogo teamId={s.awayTeamId} size={24} /> : null}
+          <span>{s.awaySlot}</span>
         </span>
       </div>
       <div className="mt-2.5 flex items-center justify-center gap-1 text-xs text-text-muted">
