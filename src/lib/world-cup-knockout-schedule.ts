@@ -31,6 +31,8 @@ export interface KnockoutScheduleMatch {
   homeSlot: string; // rótulo do mandante enquanto o time não está definido
   awaySlot: string;
   thirdPlace?: boolean; // disputa de 3º lugar (vai na página da "final")
+  homeTeamId?: number; // time já definido no slot (resolvido da classificação) → mostra bandeira
+  awayTeamId?: number;
 }
 
 export const KNOCKOUT_SCHEDULE: KnockoutScheduleMatch[] = [

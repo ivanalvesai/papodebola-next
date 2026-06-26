@@ -142,7 +142,13 @@ export async function getKnockoutFixtures(
     if (h || a) {
       return {
         kind: "placeholder",
-        sched: { ...sched, homeSlot: h ? h.name : sched.homeSlot, awaySlot: a ? a.name : sched.awaySlot },
+        sched: {
+          ...sched,
+          homeSlot: h ? h.name : sched.homeSlot,
+          awaySlot: a ? a.name : sched.awaySlot,
+          homeTeamId: h?.id,
+          awayTeamId: a?.id,
+        },
       };
     }
     return { kind: "placeholder", sched };
