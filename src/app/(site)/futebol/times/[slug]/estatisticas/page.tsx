@@ -1,30 +1,37 @@
 import type { Metadata } from "next";
 import Image from "next/image";
 import Link from "next/link";
-import { TEAM_BY_SLUG, ALL_CLUSTER_TEAMS } from "@/lib/config";
+import { TEAM_BY_SLUG } from "@/lib/config";
 import { getTeamPageData } from "@/lib/data/team";
+import { getTeam } from "@/lib/data/payload-teams";
+import { TeamCmsView, teamRouteStaticParams } from "@/components/payload/team-cms-page";
 import { notFound } from "next/navigation";
 import { BarChart3, Trophy, Goal } from "lucide-react";
 
 export const revalidate = 86400;
 
 export async function generateStaticParams() {
-  return ALL_CLUSTER_TEAMS.map((t) => ({ slug: t.slug }));
+  return teamRouteStaticParams();
 }
 
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
   const { slug } = await params;
-  const team = TEAM_BY_SLUG[slug];
-  if (!team) return {};
+  const doc = await getTeam(slug);
+  const name = doc?.name || TEAM_BY_SLUG[slug]?.name;
+  if (!name) return {};
   return {
-    title: `Estatisticas do ${team.name} 2026 - Numeros e Desempenho`,
-    description: `Estatisticas completas do ${team.name} na temporada 2026. Artilheiros, desempenho, classificacao e mais.`,
+    title: doc?.seo?.metaTitle || `Estatisticas do ${name} 2026 - Numeros e Desempenho`,
+    description: doc?.seo?.metaDescription || `Estatisticas completas do ${name} na temporada 2026. Artilheiros, desempenho, classificacao e mais.`,
     alternates: { canonical: `/futebol/times/${slug}/estatisticas` },
   };
 }
 
 export default async function EstatisticasPage({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;
+
+  const doc = await getTeam(slug);
+  if (doc) return <TeamCmsView doc={doc} page="estatisticas" />;
+
   const team = TEAM_BY_SLUG[slug];
   if (!team) notFound();
 

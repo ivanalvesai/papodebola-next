@@ -1,7 +1,9 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { TEAM_BY_SLUG, ALL_CLUSTER_TEAMS } from "@/lib/config";
+import { TEAM_BY_SLUG } from "@/lib/config";
 import { getTeamPageData } from "@/lib/data/team";
+import { getTeam } from "@/lib/data/payload-teams";
+import { TeamCmsView, teamRouteStaticParams } from "@/components/payload/team-cms-page";
 import { notFound } from "next/navigation";
 import { TeamLogo } from "@/components/ui/team-logo";
 import { QuickAnswer } from "@/components/seo/quick-answer";
@@ -10,22 +12,27 @@ import { SportsEventSchema } from "@/components/seo/sports-event-schema";
 export const revalidate = 1800;
 
 export async function generateStaticParams() {
-  return ALL_CLUSTER_TEAMS.map((t) => ({ slug: t.slug }));
+  return teamRouteStaticParams();
 }
 
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
   const { slug } = await params;
-  const team = TEAM_BY_SLUG[slug];
-  if (!team) return {};
+  const doc = await getTeam(slug);
+  const name = doc?.name || TEAM_BY_SLUG[slug]?.name;
+  if (!name) return {};
   return {
-    title: `Jogo do ${team.name} Hoje - Horario e Placar`,
-    description: `Veja se o ${team.name} joga hoje, horario do jogo, placar ao vivo e detalhes da partida.`,
+    title: doc?.seo?.metaTitle || `Jogo do ${name} Hoje - Horario e Placar`,
+    description: doc?.seo?.metaDescription || `Veja se o ${name} joga hoje, horario do jogo, placar ao vivo e detalhes da partida.`,
     alternates: { canonical: `/futebol/times/${slug}/jogo-hoje` },
   };
 }
 
 export default async function JogoHojePage({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;
+
+  const doc = await getTeam(slug);
+  if (doc) return <TeamCmsView doc={doc} page="jogoHoje" />;
+
   const team = TEAM_BY_SLUG[slug];
   if (!team) notFound();
 
