@@ -68,3 +68,6 @@ public/cms-media/
 install-payload.log
 build-payload.log
 /gsc
+
+# Artefato local de migration do Payload (ver payload_migrations_recipe)
+Dockerfile.migrate
