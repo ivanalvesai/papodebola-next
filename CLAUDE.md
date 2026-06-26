@@ -561,13 +561,25 @@ Doc completo: `docs/deploys/2026-06-15/04-web-push.md`.
 
 ## Cluster SEO de Times
 
-**37 times × 6 páginas = 222 URLs**
+**57 times × 6 páginas = 342 URLs** — 37 no código (Série A + Europa) + 20 da Série B no Payload.
 
-### Série A 2026 (20 times)
+> **Duas fontes de identidade:** Série A/Europa vêm do `config.ts` (`TEAMS`) e renderizam o layout
+> em código. A **Série B vem da collection `teams` do Payload** (editável no `/cms`) — ver
+> `docs/knowledge/2026-06-26-times-serie-b-payload.md`. As 6 rotas e o `layout.tsx` do `[slug]`
+> checam o Payload primeiro (`getTeam(slug)`); se não houver doc, caem no `config.ts` (fallback).
+> `generateStaticParams` une as duas fontes (`teamRouteStaticParams`).
+
+### Série A 2026 (20 times — `config.ts`)
 Palmeiras (1963), Flamengo (5981), São Paulo (1981), Fluminense (1961), Bahia (1955), Athletico-PR (1967), Coritiba (1982), Atlético-MG (1977), Bragantino (1999), Vitória (1962), Botafogo (1958), Grêmio (5926), Vasco (1974), Internacional (1966), Santos (1968), Corinthians (1957), Cruzeiro (1954), Remo (2012), Chapecoense (21845), Mirassol (21982)
 
-### Europa (17 times)
+### Europa (17 times — `config.ts`)
 Real Madrid (2829), Barcelona (2817), Liverpool (44), Man City (17), Man United (35), Chelsea (38), Tottenham (33), Arsenal (42), Juventus (2687), Milan (2692), Inter Milan (2697), Bayern (2672), PSG (1644), Porto (3002), Nott. Forest (174), Aston Villa (40), Dortmund (2673)
+
+### Série B 2026 (20 times — Payload, collection `teams`, desde 26/06)
+Vila Nova (2021), São Bernardo (47504), Sport (1959), Novorizontino (135514), Criciúma (1984), Juventude (1980), Operário-PR (39634), Fortaleza (2020), Náutico (2011), Cuiabá (49202), Athletic (342775), Goiás (1960), Atlético-GO (7314), Ceará (2001), Botafogo-SP (1979), CRB (22032), Londrina (2022), Avaí (7315), Ponte Preta (1969), América-MG (1973)
+- Editáveis no `/cms` → **Times**: identidade + SEO + **Layout em abas** (hub + 5 sub-rotas), composição livre de blocos (jogo de hoje, classificação, próximos, onde assistir, escalação, artilheiros, notícias, texto). Aba vazia = layout padrão (`DEFAULT_TEAM_LAYOUTS` em `team-blocks.tsx`), idêntico ao da Série A.
+- Camada de dados é **consciente do torneio** (`teamTournament()` em `config.ts`): a Série B puxa classificação/artilharia da Série B (id 390/season 89840), não da A.
+- Schema criado por migration aditiva no Postgres compartilhado (push não roda em prod — ver "Receita de migrations" / `payload_migrations_recipe`).
 
 ### Sub-rotas por time
 - `/futebol/times/{slug}` (HUB)
