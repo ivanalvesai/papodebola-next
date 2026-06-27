@@ -51,6 +51,8 @@ export interface CBFMatch {
   venue: string;
   isPast: boolean;
   championship?: string;
+  // Link pro lance-a-lance (resolvido via Sofascore por id do time). Ausente = sem link.
+  href?: string;
 }
 
 export interface TopMatch {

@@ -166,6 +166,9 @@ export async function getCBFTodayMatches(): Promise<CBFMatch[]> {
   return allToday.sort((a, b) => a.timestamp - b.timestamp);
 }
 
+// Ligas BR cobertas pela CBF que têm página de lance-a-lance (Sofascore).
+const CBF_HREF_LEAGUES = ["brasileirao-serie-a", "brasileirao-serie-b", "copa-do-brasil"];
+
 export async function getCBFUpcomingMatches(): Promise<CBFMatch[]> {
   const calendar = await getCBFCalendar();
   const allUpcoming: CBFMatch[] = [];
@@ -176,5 +179,45 @@ export async function getCBFUpcomingMatches(): Promise<CBFMatch[]> {
     }
   }
 
-  return allUpcoming.sort((a, b) => a.timestamp - b.timestamp).slice(0, 20);
+  const upcoming = allUpcoming.sort((a, b) => a.timestamp - b.timestamp).slice(0, 20);
+
+  // Enriquece cada jogo com o href do lance-a-lance (Sofascore). Casa pelo PAR DE IDS
+  // do time (os nomes da CBF divergem dos do Sofascore, que é a base da página de jogo),
+  // garantindo que o link resolve. Sem match → fica sem href (card não-clicável, sem regressão).
+  try {
+    const { getChampionshipData } = await import("./championship");
+    const { matchDateSlug, matchPairSlug } = await import("@/lib/world-cup-match-url");
+    const index = new Map<string, string>();
+    const datas = await Promise.all(
+      CBF_HREF_LEAGUES.map((s) => getChampionshipData(s).catch(() => null))
+    );
+    CBF_HREF_LEAGUES.forEach((slug, i) => {
+      const data = datas[i];
+      if (!data) return;
+      for (const ms of Object.values(data.matchesByRound)) {
+        for (const m of ms) {
+          if (!m.homeId || !m.awayId) continue;
+          index.set(
+            `${m.homeId}-${m.awayId}`,
+            `/futebol/${slug}/jogo/${matchDateSlug(m.timestamp)}/${matchPairSlug(
+              m.homeId,
+              m.awayId,
+              m.home,
+              m.away
+            )}`
+          );
+        }
+      }
+    });
+    for (const u of upcoming) {
+      if (u.homeId && u.awayId) {
+        const href = index.get(`${u.homeId}-${u.awayId}`);
+        if (href) u.href = href;
+      }
+    }
+  } catch {
+    /* sem enrich → cards seguem sem link, igual antes */
+  }
+
+  return upcoming;
 }
