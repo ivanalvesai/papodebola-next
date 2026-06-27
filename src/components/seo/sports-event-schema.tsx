@@ -69,19 +69,13 @@ export function SportsEventSchema({
           },
         }
       : {}),
-    // FIFA/superEvent só na Copa (senão um jogo de Série B vira "parte da Copa" pro Google).
+    // FIFA como organizer só na Copa (senão um jogo de Série B vira "parte da Copa" pro
+    // Google). NÃO usar superEvent: o Google o valida como um 2º Event (o torneio inteiro)
+    // e acusa "Missing field" (startDate/location/offers/performer...) em TODA página da
+    // Copa, sem nenhum ganho de rich result (o card usa o evento do JOGO). O vínculo com
+    // o torneio fica no organizer (FIFA) + no name/description do próprio jogo.
     ...(isCopa
-      ? {
-          organizer: { "@type": "Organization", name: "FIFA", url: "https://www.fifa.com" },
-          // superEvent é validado pelo Google como Event próprio: precisa de startDate
-          // + location, senão vira "2º item inválido" e derruba o rich result da página.
-          superEvent: {
-            "@type": "SportsEvent",
-            name: "Copa do Mundo FIFA 2026",
-            startDate: "2026-06-11",
-            location: { "@type": "Place", name: "Estados Unidos, Canadá e México" },
-          },
-        }
+      ? { organizer: { "@type": "Organization", name: "FIFA", url: "https://www.fifa.com" } }
       : {}),
     homeTeam: {
       "@type": "SportsTeam",

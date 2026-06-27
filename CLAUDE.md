@@ -75,6 +75,8 @@ Configs em `/www/server/panel/vhost/nginx/`:
 - Ambos os blocks têm hardening contra rate-limit/IP block do Sofascore: `proxy_cache_use_stale ... http_403 http_429 ...` (serve cópia cacheada se o upstream der 403), `proxy_cache_valid 403/429 30s`, `proxy_cache_lock on`, `proxy_cache_background_update on`, `max_size=3g`. Ver Troubleshooting "Logos de times/jogadores sumiram".
 - Por que: antes prod e dev batiam direto no Sofascore → dobrava requisições → Sofascore bloqueou o IP do servidor → todos os escudos quebraram (prod e dev). Backups dos confs: `*.bak.20260611-*`.
 
+**Escudos/fotos servidos do VOLUME LOCAL (desde 27/06):** os componentes não usam mais `/img/team/{id}/image` direto — usam **`/api/team-img/{id}`** e **`/api/player-img/{id}`**, que servem na ordem: (1) **arquivo local** (`data/team-images`, `data/player-images` no volume — baixado 1x por `scripts/download-{team,player}-images.mjs`), (2) **API autenticada** (`allsportsapi2`, path **`/api/team|player/{id}/image`** — atenção: SEM `/v1`), (3) **redirect 307 pro proxy `/img/*`** (cacheado+stale) como último recurso. Sobrevive a troca de API e ao bloqueio do Sofascore. `team-img` detecta webp/png por magic bytes. Doc: `docs/knowledge/2026-06-27-snapshots-imagens-bar-gates.md`.
+
 **Dev tem `proxy_read_timeout 600s`** pra suportar requests longos (ex: POST do botão Promover).
 
 ### Cache-Control: prod NÃO deixa CDN cachear HTML (2026-06-02)
@@ -592,6 +594,16 @@ Vila Nova (2021), São Bernardo (47504), Sport (1959), Novorizontino (135514), C
 URLs antigas (`/times/*` e `/campeonato/*`) têm 301 redirect em `next.config.ts` pra preservar SEO.
 
 ---
+
+## Arquivamento de dados (snapshots) — não perder dado quando a API parar
+
+Desde 27/06, os dados esportivos são **arquivados em disco** (volume `data/snapshots/{categoria}/{chave}.json`)
+e servidos como **fallback** quando a API para de servir o torneio (ex.: torneio acabou e a API derrubou
+o feed). `src/lib/data/snapshot-store.ts` (`withSnapshot`) embrulha `getChampionshipData`, `getWorldCupStandings/Fixtures/KnockoutFixtures`
+e **`getMatchDetail`** (o lance a lance completo): busca ao vivo → se vem dado real, salva o snapshot →
+senão serve o último salvo. Captura on-read (todo jogo visto é arquivado; encerrado congela). Assim
+tabelas, chaveamento e lance a lance **nunca mais** caem pra "indisponível" depois do torneio. Volume
+compartilhado dev/prod. Doc: `docs/knowledge/2026-06-27-snapshots-imagens-bar-gates.md`.
 
 ## ISR
 
