@@ -52,11 +52,13 @@ export function SportsEventSchema({
       ? { endDate: new Date((startTimestamp + 7200) * 1000).toISOString() }
       : {}),
     eventStatus,
-    ...(venue?.stadium
+    // location é OBRIGATÓRIO no SportsEvent. Emite com o que tiver (estádio, cidade ou
+    // país) — assim não acusa "Missing field location" quando o feed não traz o estádio.
+    ...(venue?.stadium || venue?.city || venue?.country
       ? {
           location: {
             "@type": "Place",
-            name: venue.stadium,
+            name: venue.stadium || venue.city || venue.country,
             ...(venue.city || venue.country
               ? {
                   address: {

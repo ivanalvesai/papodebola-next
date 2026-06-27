@@ -48,6 +48,7 @@ export default async function JogoCampeonatoPage({
         awayId={fixture.awayId}
         startTimestamp={fixture.timestamp}
         statusType={detail?.event.statusType}
+        venue={detail?.event.venue}
         url={`/futebol/${slug}/jogo/${data}/${match}`}
         competition={fixture.tournamentName}
       />
