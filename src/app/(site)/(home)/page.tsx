@@ -13,8 +13,7 @@ import { NextMatchWidget } from "@/components/sidebar/next-match-widget";
 import { RecentResultsWidget } from "@/components/sidebar/recent-results-widget";
 import { MyTeamWidget } from "@/components/sidebar/my-team-widget";
 
-import { getTodayMatches, getWorldCupBarMatches, freshMatches } from "@/lib/data/matches";
-import { getCBFUpcomingMatches } from "@/lib/data/cbf-calendar";
+import { getTodayMatches, getWorldCupBarMatches, getBrazilianBarMatches, freshMatches } from "@/lib/data/matches";
 import { getTransfers } from "@/lib/data/home"; // getHighlights desativado (ver Destaques)
 import { getLatestArticles } from "@/lib/data/articles";
 import { getBrasileiraoStandings, getWorldCupStandings } from "@/lib/data/standings";
@@ -52,7 +51,7 @@ export default async function HomePage() {
   const [
     todayMatches,
     copaBar,
-    cbfUpcoming,
+    brazilBar,
     // highlights,  // Destaques desativado temporariamente
     transfers,
     articles,
@@ -63,7 +62,7 @@ export default async function HomePage() {
   ] = await Promise.all([
     getTodayMatches().catch(() => []),
     getWorldCupBarMatches().catch(() => []),
-    getCBFUpcomingMatches().catch(() => []),
+    getBrazilianBarMatches().catch(() => []),
     // getHighlights().catch(() => []),  // Destaques desativado temporariamente
     getTransfers().catch(() => []),
     getLatestArticles(20).catch(() => []),
@@ -112,10 +111,10 @@ export default async function HomePage() {
           = 1 chamada à API). Sem jogo da Copa, barra normal sem polling. */}
       {copaToday.length ? (
         <CopaLiveProvider>
-          <MatchBar todayMatches={barMatches} cbfUpcoming={cbfUpcoming} />
+          <MatchBar todayMatches={barMatches} upcomingMatches={brazilBar} />
         </CopaLiveProvider>
       ) : (
-        <MatchBar todayMatches={barMatches} cbfUpcoming={cbfUpcoming} />
+        <MatchBar todayMatches={barMatches} upcomingMatches={brazilBar} />
       )}
 
       <div className="mx-auto max-w-[1240px] px-4 py-6">

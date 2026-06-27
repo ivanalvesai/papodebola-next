@@ -1,9 +1,10 @@
 import { fetchAllSports } from "@/lib/api/allsports";
-import { getLeagueCategory } from "@/lib/config";
+import { getLeagueCategory, TOURNAMENT_BY_ID } from "@/lib/config";
 import { translateStatus } from "@/lib/translations";
 import { translateCountry } from "@/lib/i18n/countries";
 import { SELECAO_BY_ID } from "@/lib/selecoes";
-import { worldCupMatchHref } from "@/lib/world-cup-match-url";
+import { worldCupMatchHref, matchDateSlug, matchPairSlug } from "@/lib/world-cup-match-url";
+import { getCBFUpcomingMatches } from "./cbf-calendar";
 import type { NormalizedMatch } from "@/types/match";
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
@@ -191,6 +192,73 @@ export async function getWorldCupBarMatches(): Promise<NormalizedMatch[]> {
     }
   }
   return freshMatches(wc).sort((a, b) => (a.timestamp || 0) - (b.timestamp || 0));
+}
+
+// Barra da home, aba "Próximos": jogos ATUAIS das ligas brasileiras (Série A/B/C +
+// Copa do Brasil) — ao vivo e recém-encerrados (de matches/live, real-time) + os
+// próximos agendados (calendário CBF). Mesmo padrão da Copa: freshMatches tira o jogo
+// ~1h após o fim, e ao vivo vem primeiro. Cada card é clicável pro lance a lance.
+const BR_BAR_LEAGUE_IDS = new Set([325, 390, 1281, 373]); // Série A, B, C, Copa do Brasil
+
+function leagueMatchHref(m: NormalizedMatch): string | undefined {
+  const t = m.leagueId != null ? TOURNAMENT_BY_ID[m.leagueId] : undefined;
+  if (!t || !m.homeId || !m.awayId || !m.timestamp) return undefined;
+  return `/futebol/${t.slug}/jogo/${matchDateSlug(m.timestamp)}/${matchPairSlug(
+    m.homeId,
+    m.awayId,
+    m.homeTeam,
+    m.awayTeam
+  )}`;
+}
+
+export async function getBrazilianBarMatches(): Promise<NormalizedMatch[]> {
+  const [todayRaw, cbf] = await Promise.all([
+    getTodayMatches().catch(() => []),
+    getCBFUpcomingMatches().catch(() => []),
+  ]);
+
+  // 1) Ao vivo / recém-encerrados das ligas BR (matches/live é real-time), com link.
+  const live = freshMatches(todayRaw)
+    .filter((m) => m.leagueId != null && BR_BAR_LEAGUE_IDS.has(m.leagueId))
+    .map((m) => ({ ...m, href: m.href ?? leagueMatchHref(m) }));
+
+  // 2) Próximos agendados (calendário CBF) → formato NormalizedMatch (status agendado).
+  const upcoming: NormalizedMatch[] = cbf
+    .filter((c) => c.homeId && c.awayId)
+    .map((c) => ({
+      id: `cbf_${c.id}`,
+      apiId: 0,
+      league: c.championship || "",
+      leagueId: undefined as unknown as number,
+      country: "Brasil",
+      homeTeam: c.home,
+      awayTeam: c.away,
+      homeScore: null,
+      awayScore: null,
+      homeLogo: c.homeId ? `/api/team-img/${c.homeId}` : null,
+      awayLogo: c.awayId ? `/api/team-img/${c.awayId}` : null,
+      time: c.time,
+      date: c.date,
+      timestamp: c.timestamp,
+      status: "scheduled" as const,
+      statusText: c.date,
+      minute: "",
+      category: "brasil",
+      homeId: c.homeId ?? undefined,
+      awayId: c.awayId ?? undefined,
+      href: c.href,
+    }));
+
+  // Dedupe (um jogo ao vivo não reaparece como "próximo") e ordena ao-vivo-primeiro.
+  const seen = new Set<number>();
+  const out: NormalizedMatch[] = [];
+  for (const m of [...live, ...upcoming]) {
+    const key = m.homeId && m.awayId ? m.homeId * 1e6 + m.awayId : 0;
+    if (key && seen.has(key)) continue;
+    if (key) seen.add(key);
+    out.push(m);
+  }
+  return out.sort(sortForBar);
 }
 
 // Campeonatos principais, na ordem que devem aparecer em /futebol. Os que não

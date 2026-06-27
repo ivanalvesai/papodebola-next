@@ -4,11 +4,13 @@ import { useState, useRef, useMemo } from "react";
 import { CalendarDays, CalendarClock, ChevronLeft, ChevronRight } from "lucide-react";
 import Link from "next/link";
 import { MatchBarCard } from "./match-bar-card";
-import type { NormalizedMatch, CBFMatch } from "@/types/match";
+import type { NormalizedMatch } from "@/types/match";
 
 interface MatchBarProps {
   todayMatches: NormalizedMatch[];
-  cbfUpcoming: CBFMatch[];
+  // Aba "Próximos": jogos ATUAIS das ligas BR (ao vivo + recém-encerrados + próximos),
+  // já ordenados (ao vivo primeiro) e com link pro lance a lance. Mesmo formato de "Hoje".
+  upcomingMatches: NormalizedMatch[];
 }
 
 // Ordem na barra: ao vivo/intervalo primeiro, depois os que ainda vao comecar,
@@ -23,7 +25,7 @@ const STATUS_PRIORITY: Record<NormalizedMatch["status"], number> = {
   cancelled: 3,
 };
 
-export function MatchBar({ todayMatches, cbfUpcoming }: MatchBarProps) {
+export function MatchBar({ todayMatches, upcomingMatches }: MatchBarProps) {
   const [tab, setTab] = useState<"today" | "upcoming">("today");
   const scrollRef = useRef<HTMLDivElement>(null);
 
@@ -82,7 +84,7 @@ export function MatchBar({ todayMatches, cbfUpcoming }: MatchBarProps) {
           <CalendarClock className="h-4 w-4" />
           Próximos
           <span className="ml-1 bg-body text-text-muted text-xs px-1.5 py-0.5 rounded-full">
-            {cbfUpcoming.length}
+            {upcomingMatches.length}
           </span>
         </button>
         <div className="flex-1" />
@@ -128,26 +130,27 @@ export function MatchBar({ todayMatches, cbfUpcoming }: MatchBarProps) {
             ))}
 
           {tab === "upcoming" &&
-            cbfUpcoming.map((m) => (
+            upcomingMatches.map((m) => (
               <MatchBarCard
-                key={`cbf-${m.id}`}
-                homeTeam={m.home}
-                awayTeam={m.away}
-                homeLogo={m.homeId ? `/api/team-img/${m.homeId}` : null}
-                awayLogo={m.awayId ? `/api/team-img/${m.awayId}` : null}
-                homeScore={null}
-                awayScore={null}
+                key={m.id}
+                id={m.id}
+                homeTeam={m.homeTeam}
+                awayTeam={m.awayTeam}
+                homeLogo={m.homeLogo}
+                awayLogo={m.awayLogo}
+                homeScore={m.homeScore}
+                awayScore={m.awayScore}
                 time={m.time}
                 timestamp={m.timestamp}
-                status="scheduled"
-                statusText={`${m.date}`}
-                league={m.championship || ""}
+                status={m.status}
+                statusText={m.statusText}
+                league={m.league}
                 href={m.href}
               />
             ))}
 
           {((tab === "today" && matches.length === 0) ||
-            (tab === "upcoming" && cbfUpcoming.length === 0)) && (
+            (tab === "upcoming" && upcomingMatches.length === 0)) && (
             <div className="flex items-center justify-center w-full py-4 text-text-muted text-sm">
               Nenhum jogo encontrado
             </div>
