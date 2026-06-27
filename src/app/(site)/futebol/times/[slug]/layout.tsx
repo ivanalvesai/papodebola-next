@@ -65,7 +65,7 @@ export default async function TeamLayout({
         </div>
         <div className="mx-auto max-w-[1240px] px-4 py-4 flex items-center gap-4">
           <Image
-            src={`/img/team/${team.id}/image`}
+            src={`/api/team-img/${team.id}`}
             alt={team.name}
             width={48}
             height={48}

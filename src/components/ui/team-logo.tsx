@@ -17,7 +17,9 @@ export function TeamLogo({
   className = "",
   priority = false,
 }: TeamLogoProps) {
-  const url = src ?? (teamId != null ? `/img/team/${teamId}/image` : null);
+  // /api/team-img: arquivo local (volume) → fallback API autenticada. Evita o proxy
+  // /img/team (Sofascore), que bloqueia o IP e quebra os escudos.
+  const url = src ?? (teamId != null ? `/api/team-img/${teamId}` : null);
 
   if (!url) {
     return (

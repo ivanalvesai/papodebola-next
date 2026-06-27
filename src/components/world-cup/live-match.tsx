@@ -294,7 +294,7 @@ function PlayerAvatar({
   const usePlayer = !!playerId && !failed;
   const src = usePlayer
     ? `/api/player-img/${playerId}${attempt > 0 ? `?r=${attempt}` : ""}`
-    : `/img/team/${teamId}/image`;
+    : `/api/team-img/${teamId}`;
   return (
     <Image
       key={src}

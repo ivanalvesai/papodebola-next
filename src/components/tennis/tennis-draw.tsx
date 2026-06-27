@@ -15,7 +15,7 @@ function PlayerPhoto({ player, size = 36 }: { player: TennisPlayer; size?: numbe
     return (
       // eslint-disable-next-line @next/next/no-img-element
       <img
-        src={`/img/team/${player.id}/image`}
+        src={`/api/team-img/${player.id}`}
         alt={player.name}
         style={dim}
         onError={() => setStage(player.country ? 1 : 2)}

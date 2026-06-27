@@ -66,12 +66,12 @@ export function TennisEventSchema({
       {
         "@type": "SportsTeam",
         name: home,
-        ...(homeId ? { logo: `${SITE_URL}/img/team/${homeId}/image` } : {}),
+        ...(homeId ? { logo: `${SITE_URL}/api/team-img/${homeId}` } : {}),
       },
       {
         "@type": "SportsTeam",
         name: away,
-        ...(awayId ? { logo: `${SITE_URL}/img/team/${awayId}/image` } : {}),
+        ...(awayId ? { logo: `${SITE_URL}/api/team-img/${awayId}` } : {}),
       },
     ],
   };
