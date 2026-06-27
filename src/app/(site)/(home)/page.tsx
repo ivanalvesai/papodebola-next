@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { WorldCupBanner } from "@/components/world-cup-banner";
 import { MatchBar } from "@/components/match-bar/match-bar";
-import { CopaLiveProvider } from "@/components/world-cup/copa-live-provider";
+import { LiveScoreProvider } from "@/components/world-cup/copa-live-provider";
 // Destaques e Melhores Momentos desativado temporariamente (reativar depois).
 // import { HighlightsSection } from "@/components/home/highlights-section";
 import { NewsSection } from "@/components/home/news-section";
@@ -101,6 +101,26 @@ export default async function HomePage() {
   // sempre destacar ao vivo/próximos (Copa já vem filtrado de getWorldCupBarMatches).
   const barMatches = copaToday.length ? copaToday : freshMatches(todayMatches);
 
+  // Placar ao vivo do bar SEM bater na API: faz polling dos endpoints de ao vivo que JÁ
+  // existem (cacheados+gateados, compartilhados com as páginas das ligas). Só liga o
+  // polling quando há jogo ao vivo ou prestes a começar (≤90min) — senão o bar fica estático.
+  const nowSec = Date.now() / 1000;
+  const leagueLiveSoon = brazilBar.some(
+    (m) =>
+      m.status === "live" ||
+      m.status === "halftime" ||
+      (m.status === "scheduled" && m.timestamp - nowSec < 90 * 60)
+  );
+  const liveEndpoints = [
+    ...(copaToday.length ? ["/api/copa/ao-vivo"] : []),
+    ...(leagueLiveSoon
+      ? [
+          "/api/championship/brasileirao-serie-a/ao-vivo",
+          "/api/championship/brasileirao-serie-b/ao-vivo",
+        ]
+      : []),
+  ];
+
   return (
     <>
       {/* H1 da home (acessível, sem alterar o layout) — sinal de tópico principal. */}
@@ -109,13 +129,9 @@ export default async function HomePage() {
       {/* Com jogo da Copa hoje, embrulha a barra no provider de placar ao vivo
           (mesmo polling de 15s da tabela da Copa, endpoint cacheado: N clientes
           = 1 chamada à API). Sem jogo da Copa, barra normal sem polling. */}
-      {copaToday.length ? (
-        <CopaLiveProvider>
-          <MatchBar todayMatches={barMatches} upcomingMatches={brazilBar} />
-        </CopaLiveProvider>
-      ) : (
+      <LiveScoreProvider endpoints={liveEndpoints}>
         <MatchBar todayMatches={barMatches} upcomingMatches={brazilBar} />
-      )}
+      </LiveScoreProvider>
 
       <div className="mx-auto max-w-[1240px] px-4 py-6">
         <div className="grid grid-cols-1 lg:grid-cols-[1fr_340px] gap-6">
