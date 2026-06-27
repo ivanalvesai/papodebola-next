@@ -8,11 +8,20 @@ import { getCraques } from "@/lib/data/craques";
 import { getWorldCupFixtures } from "@/lib/data/match-detail";
 import { matchDateSlug, matchPairSlug } from "@/lib/world-cup-match-url";
 import { getPayloadTeamSlugs } from "@/lib/data/payload-teams";
+import { getPayloadPageSlugs } from "@/lib/data/payload-pages";
 import { getChampionshipData } from "@/lib/data/championship";
+import { getTennisDraw, TENNIS_TOURNAMENTS, tennisMatchHref, type TennisTournamentSlug } from "@/lib/data/tennis";
 
 // Ligas cujas páginas de jogo (lance a lance) entram no sitemap. A Copa tem bloco
-// próprio (copaMatchPages). Adicionar slugs aqui inclui os jogos da liga na descoberta.
-const MATCH_CHAMPIONSHIPS = ["brasileirao-serie-a", "brasileirao-serie-b"];
+// próprio (copaMatchPages). Inclui as ligas BR + continentais ativas. Adicionar mais
+// slugs aqui inclui os jogos da liga na descoberta (cada slug = 1 fetch do championship).
+const MATCH_CHAMPIONSHIPS = [
+  "brasileirao-serie-a",
+  "brasileirao-serie-b",
+  "copa-do-brasil",
+  "libertadores",
+  "sudamericana",
+];
 
 const BASE = process.env.NEXT_PUBLIC_SITE_URL || "https://www.papodebola.com.br";
 
@@ -65,17 +74,18 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       priority: 0.8,
     }));
 
-  // Sport pages (top-level, sem prefixo /esporte/)
-  const sportPages: MetadataRoute.Sitemap = SPORTS.map((s) => ({
-    url: `${BASE}${s.href}`,
-    lastModified: now,
-    changeFrequency: "daily" as const,
-    priority: 0.6,
-  }));
-
-  // Basquete tem subrota NBA (conteúdo do torneio)
+  // Sport pages (top-level, sem prefixo /esporte/). /basquete e /basquete/nba viraram
+  // 301 -> /nba (next.config), então NÃO entram no sitemap (redirect); entra /nba real.
+  const sportPages: MetadataRoute.Sitemap = SPORTS.filter((s) => s.slug !== "basquete").map(
+    (s) => ({
+      url: `${BASE}${s.href}`,
+      lastModified: now,
+      changeFrequency: "daily" as const,
+      priority: 0.6,
+    })
+  );
   sportPages.push({
-    url: `${BASE}/basquete/nba`,
+    url: `${BASE}/nba`,
     lastModified: now,
     changeFrequency: "daily" as const,
     priority: 0.6,
@@ -207,11 +217,47 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     priority: 0.6,
   }));
 
+  // Tênis: páginas de jogo (lance a lance) do chaveamento. Vêm do draw (API); só
+  // confrontos reais (sem placeholder) são clicáveis/indexáveis. Antes ficavam fora.
+  const tennisMatchPages: MetadataRoute.Sitemap = (
+    await Promise.all(
+      (Object.keys(TENNIS_TOURNAMENTS) as TennisTournamentSlug[]).map(async (tslug) => {
+        const draw = await getTennisDraw(tslug).catch(() => null);
+        if (!draw) return [] as MetadataRoute.Sitemap;
+        const out: MetadataRoute.Sitemap = [];
+        for (const round of draw.rounds) {
+          for (const m of round.matches) {
+            // eventId null = slot ainda indefinido (placeholder). Só confronto real indexa.
+            if (!m.eventId || !m.home?.name || !m.away?.name) continue;
+            out.push({
+              url: `${BASE}${tennisMatchHref(draw.slug, m.home.name, m.away.name)}`,
+              lastModified: now,
+              changeFrequency: "daily" as const,
+              priority: 0.6,
+            });
+          }
+        }
+        return out;
+      })
+    )
+  ).flat();
+
+  // Páginas autorais do CMS (Payload) em /paginas/{slug} — só as publicadas.
+  const payloadPageSlugs = await getPayloadPageSlugs().catch(() => []);
+  const payloadPages: MetadataRoute.Sitemap = payloadPageSlugs.map((slug) => ({
+    url: `${BASE}/paginas/${slug}`,
+    lastModified: now,
+    changeFrequency: "weekly" as const,
+    priority: 0.4,
+  }));
+
   return [
     ...staticPages,
     ...teamPages,
     ...champPages,
     ...sportPages,
+    ...tennisMatchPages,
+    ...payloadPages,
     ...parceirosPage,
     ...newsCategoryPages,
     ...copaPages,

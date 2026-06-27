@@ -138,9 +138,11 @@ export function MatchBar({ todayMatches, cbfUpcoming }: MatchBarProps) {
                 homeScore={null}
                 awayScore={null}
                 time={m.time}
+                timestamp={m.timestamp}
                 status="scheduled"
                 statusText={`${m.date}`}
                 league={m.championship || ""}
+                href={m.href}
               />
             ))}
 
