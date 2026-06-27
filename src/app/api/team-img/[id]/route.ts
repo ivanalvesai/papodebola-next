@@ -11,7 +11,7 @@ import { join } from "path";
 const DIR = join(process.cwd(), "data", "team-images");
 
 export async function GET(
-  _req: NextRequest,
+  req: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
   const { id } = await params;
@@ -31,10 +31,11 @@ export async function GET(
     /* não temos no arquivo — cai pro fallback abaixo */
   }
 
-  // 2) Fallback: API autenticada (sportapi7 serve o escudo — sem o bloqueio do Sofascore).
+  // 2) Fallback: API autenticada (allsportsapi2 serve o escudo em /api/team/{id}/image,
+  //    SEM /v1 — sem o bloqueio do Sofascore). Cache 30 dias na CDN.
   try {
-    const host = process.env.ALLSPORTS_API_HOST || "sportapi7.p.rapidapi.com";
-    const r = await fetch(`https://${host}/api/v1/team/${tid}/image`, {
+    const host = process.env.ALLSPORTS_API_HOST || "allsportsapi2.p.rapidapi.com";
+    const r = await fetch(`https://${host}/api/team/${tid}/image`, {
       headers: {
         "x-rapidapi-key": process.env.ALLSPORTS_API_KEY || "",
         "x-rapidapi-host": host,
@@ -52,7 +53,10 @@ export async function GET(
       }
     }
   } catch {
-    /* sem escudo */
+    /* cai pro redirect abaixo */
   }
-  return new NextResponse(null, { status: 404 });
+
+  // 3) Último recurso: o proxy nginx /img/team (cacheado + stale-on-403). Garante que o
+  //    escudo NUNCA fica pior que hoje, mesmo sem arquivo local nem resposta da API.
+  return NextResponse.redirect(new URL(`/img/team/${tid}/image`, req.url), 307);
 }
