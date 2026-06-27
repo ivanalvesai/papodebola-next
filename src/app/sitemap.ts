@@ -7,6 +7,7 @@ import { getArticles } from "@/lib/data/articles";
 import { getCraques } from "@/lib/data/craques";
 import { getWorldCupFixtures } from "@/lib/data/match-detail";
 import { matchDateSlug, matchPairSlug } from "@/lib/world-cup-match-url";
+import { getPayloadTeamSlugs } from "@/lib/data/payload-teams";
 
 const BASE = process.env.NEXT_PUBLIC_SITE_URL || "https://www.papodebola.com.br";
 
@@ -36,14 +37,17 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     { url: `${BASE}/termos-de-uso`, changeFrequency: "monthly", priority: 0.2 },
   ];
 
-  // Team cluster pages
-  const teamPages: MetadataRoute.Sitemap = TEAMS.flatMap((t) => [
-    { url: `${BASE}/futebol/times/${t.slug}`, lastModified: now, changeFrequency: "daily" as const, priority: 0.8 },
-    { url: `${BASE}/futebol/times/${t.slug}/jogo-hoje`, lastModified: now, changeFrequency: "daily" as const, priority: 0.7 },
-    { url: `${BASE}/futebol/times/${t.slug}/onde-assistir`, lastModified: now, changeFrequency: "daily" as const, priority: 0.6 },
-    { url: `${BASE}/futebol/times/${t.slug}/escalacao`, lastModified: now, changeFrequency: "daily" as const, priority: 0.6 },
-    { url: `${BASE}/futebol/times/${t.slug}/proximos-jogos`, lastModified: now, changeFrequency: "daily" as const, priority: 0.7 },
-    { url: `${BASE}/futebol/times/${t.slug}/estatisticas`, lastModified: now, changeFrequency: "weekly" as const, priority: 0.6 },
+  // Team cluster pages: config (Série A/Europa) + Payload (Série B). Sem o segundo,
+  // os 20 times da Série B ficam fora do sitemap e o Google não os descobre.
+  const payloadTeamSlugs = await getPayloadTeamSlugs().catch(() => []);
+  const teamSlugs = Array.from(new Set([...TEAMS.map((t) => t.slug), ...payloadTeamSlugs]));
+  const teamPages: MetadataRoute.Sitemap = teamSlugs.flatMap((slug) => [
+    { url: `${BASE}/futebol/times/${slug}`, lastModified: now, changeFrequency: "daily" as const, priority: 0.8 },
+    { url: `${BASE}/futebol/times/${slug}/jogo-hoje`, lastModified: now, changeFrequency: "daily" as const, priority: 0.7 },
+    { url: `${BASE}/futebol/times/${slug}/onde-assistir`, lastModified: now, changeFrequency: "daily" as const, priority: 0.6 },
+    { url: `${BASE}/futebol/times/${slug}/escalacao`, lastModified: now, changeFrequency: "daily" as const, priority: 0.6 },
+    { url: `${BASE}/futebol/times/${slug}/proximos-jogos`, lastModified: now, changeFrequency: "daily" as const, priority: 0.7 },
+    { url: `${BASE}/futebol/times/${slug}/estatisticas`, lastModified: now, changeFrequency: "weekly" as const, priority: 0.6 },
   ]);
 
   // Championship pages

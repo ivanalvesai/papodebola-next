@@ -14,6 +14,8 @@ export interface ChampionshipData {
   matchesByRound: Record<number, ChampionshipMatch[]>;
   topScorers?: Scorer[];
   updatedAt: string;
+  // id→slug dos times do Payload (Série B) p/ linkar na tabela (anexado pela API).
+  payloadTeamSlugs?: Record<number, string>;
 }
 
 export interface CBFChampionship {

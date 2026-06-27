@@ -166,9 +166,9 @@ export default function ChampionshipClient() {
                           </div>
                         </td>
                         <td className="py-2 px-2">
-                          {TEAM_BY_ID[r.teamId] ? (
+                          {(TEAM_BY_ID[r.teamId]?.slug || data?.payloadTeamSlugs?.[r.teamId]) ? (
                             <Link
-                              href={`/futebol/times/${TEAM_BY_ID[r.teamId].slug}`}
+                              href={`/futebol/times/${TEAM_BY_ID[r.teamId]?.slug || data?.payloadTeamSlugs?.[r.teamId]}`}
                               className="flex items-center gap-2 hover:text-green"
                             >
                               <TeamLogo teamId={r.teamId} size={18} />
