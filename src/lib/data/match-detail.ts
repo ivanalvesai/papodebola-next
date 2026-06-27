@@ -5,6 +5,7 @@ import { matchDateSlug, matchPairSlug } from "@/lib/world-cup-match-url";
 import { translateEnPt } from "@/lib/services/translate";
 import { getWorldCupStandings } from "./standings";
 import { getChampionshipData } from "./championship";
+import { withSnapshot } from "./snapshot-store";
 import { TOURNAMENT_BY_SLUG } from "@/lib/config";
 import type { StandingsGroup } from "@/types/standings";
 
@@ -27,6 +28,17 @@ export interface WorldCupFixture {
 
 // Lista achatada de todos os jogos de grupo (fixtures estáveis -> TTL longo).
 export async function getWorldCupFixtures(): Promise<WorldCupFixture[]> {
+  return (
+    (await withSnapshot<WorldCupFixture[]>(
+      "worldcup",
+      "fixtures",
+      () => fetchWorldCupFixturesLive(),
+      (d) => Array.isArray(d) && d.length > 0
+    )) || []
+  );
+}
+
+async function fetchWorldCupFixturesLive(): Promise<WorldCupFixture[]> {
   // Paralelo: o semáforo do fetchAllSports já limita a 2 simultâneas + retry em 429.
   // Tirei as pausas de 250ms (rodavam até com cache quente, somando latência fixa em
   // toda página de jogo). Calendário não muda -> TTL 6h.
@@ -66,6 +78,17 @@ const KNOCKOUT_ROUND_BY_ORDER: Record<number, number> = { 1: 6, 2: 7, 3: 8, 4: 9
 // encerrado, todas as linhas com 3 jogos). Fonte: cuptrees (o bracket). Os slots
 // indefinidos vêm como placeholder ("3A/3B/.." ou "2I") sem team -> ficam de fora.
 export async function getWorldCupKnockoutFixtures(): Promise<WorldCupFixture[]> {
+  return (
+    (await withSnapshot<WorldCupFixture[]>(
+      "worldcup",
+      "knockout",
+      () => fetchWorldCupKnockoutFixturesLive(),
+      (d) => Array.isArray(d) && d.length > 0
+    )) || []
+  );
+}
+
+async function fetchWorldCupKnockoutFixturesLive(): Promise<WorldCupFixture[]> {
   const [tree, groups] = await Promise.all([
     fetchAllSports<any>(`tournament/${WC.id}/season/${WC.seasonId}/cuptrees`, 900).catch(() => null),
     getWorldCupStandings().catch(() => [] as StandingsGroup[]),
@@ -695,7 +718,20 @@ function injectManualCommentary(id: number, feed: MatchCommentary[]): MatchComme
 
 // Detalhe completo (server render inicial). Busca o event primeiro pra saber o
 // status e adaptar o TTL do resto (não martela a API em jogo encerrado).
+// Detalhe completo do jogo (placar, escalações, estatísticas e LANCE A LANCE). Salva
+// snapshot a cada render com dado real e serve o snapshot quando a API parar de servir
+// → o lance a lance do jogo fica preservado pra sempre. Captura "a partir de agora":
+// todo jogo renderizado/visto é arquivado, e o encerrado congela no estado final.
 export async function getMatchDetail(id: number, startHint?: number): Promise<MatchDetail | null> {
+  return withSnapshot<MatchDetail>(
+    "matches",
+    id,
+    () => fetchMatchDetailLive(id, startHint),
+    (d) => !!d.event
+  );
+}
+
+async function fetchMatchDetailLive(id: number, startHint?: number): Promise<MatchDetail | null> {
   const eventRaw = await fetchAllSports<any>(`match/${id}`, eventTtl(startHint));
   if (!eventRaw?.event) return null;
   const event = normalizeEvent(eventRaw.event);
