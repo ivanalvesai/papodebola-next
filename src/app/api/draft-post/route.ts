@@ -39,6 +39,16 @@ const BODY = `
 <h2>Próximo desafio: a Argentina de Messi</h2>
 <p>A recompensa pela classificação é um adversário de respeito. Como segundo colocado do Grupo H, Cabo Verde enfrentará o vencedor do Grupo J nos 16 avos de final — a Argentina, atual campeã do mundo e comandada por Lionel Messi. Será o maior jogo da história da seleção cabo-verdiana. <a href="/futebol/copa-do-mundo">Acompanhe o chaveamento e os jogos da Copa do Mundo</a>.</p>
 
+<h2>Data e horário de Cabo Verde x Argentina e onde assistir</h2>
+<div style="border:1px solid #d9dbe0;border-radius:8px;padding:16px 20px;background:#f7f8fa;margin:12px 0">
+<p style="margin:4px 0"><strong>Jogo:</strong> Cabo Verde x Argentina</p>
+<p style="margin:4px 0"><strong>Competição:</strong> segunda fase (16 avos de final) da Copa do Mundo de 2026</p>
+<p style="margin:4px 0"><strong>Data:</strong> sexta-feira, 3 de julho</p>
+<p style="margin:4px 0"><strong>Horário:</strong> 19h (de Brasília)</p>
+<p style="margin:4px 0"><strong>Local:</strong> Hard Rock Stadium, em Miami (Flórida, EUA)</p>
+<p style="margin:4px 0"><strong>Onde assistir:</strong> TV Globo, SporTV, SBT, CazéTV, N Sports e Globoplay</p>
+</div>
+
 <h2>A festa de um país inteiro</h2>
 <p>Em Cabo Verde, o clima é de euforia. A imprensa local vinha tratando a campanha como um momento histórico mesmo antes da confirmação, com o país acompanhando cada rodada na expectativa do apuramento inédito. Para um arquipélago de dez ilhas no Atlântico, chegar ao mata-mata de uma Copa de 48 seleções é a maior conquista esportiva de sua história.</p>
 
