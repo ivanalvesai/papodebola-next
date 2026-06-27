@@ -8,6 +8,11 @@ import { getCraques } from "@/lib/data/craques";
 import { getWorldCupFixtures } from "@/lib/data/match-detail";
 import { matchDateSlug, matchPairSlug } from "@/lib/world-cup-match-url";
 import { getPayloadTeamSlugs } from "@/lib/data/payload-teams";
+import { getChampionshipData } from "@/lib/data/championship";
+
+// Ligas cujas páginas de jogo (lance a lance) entram no sitemap. A Copa tem bloco
+// próprio (copaMatchPages). Adicionar slugs aqui inclui os jogos da liga na descoberta.
+const MATCH_CHAMPIONSHIPS = ["brasileirao-serie-a", "brasileirao-serie-b"];
 
 const BASE = process.env.NEXT_PUBLIC_SITE_URL || "https://www.papodebola.com.br";
 
@@ -134,6 +139,39 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     };
   });
 
+  // Páginas de jogo (lance a lance) das ligas brasileiras (Série A e B). Mesma rota
+  // /futebol/{liga}/jogo/{data}/{confronto}; usa os MESMOS slugs que a tabela linka.
+  // Antes, só os jogos da Copa entravam no sitemap → os da liga ficavam órfãos.
+  const champMatchPages: MetadataRoute.Sitemap = (
+    await Promise.all(
+      MATCH_CHAMPIONSHIPS.map(async (cslug) => {
+        const cdata = await getChampionshipData(cslug).catch(() => null);
+        if (!cdata) return [] as MetadataRoute.Sitemap;
+        const seen = new Set<string>();
+        const out: MetadataRoute.Sitemap = [];
+        for (const m of Object.values(cdata.matchesByRound).flat()) {
+          if (!m.timestamp || !m.homeId || !m.awayId) continue;
+          const url = `${BASE}/futebol/${cslug}/jogo/${matchDateSlug(m.timestamp)}/${matchPairSlug(
+            m.homeId,
+            m.awayId,
+            m.home,
+            m.away
+          )}`;
+          if (seen.has(url)) continue;
+          seen.add(url);
+          const naoAcabou = m.timestamp >= nowSec - 4 * 3600;
+          out.push({
+            url,
+            lastModified: now,
+            changeFrequency: naoAcabou ? ("hourly" as const) : ("weekly" as const),
+            priority: naoAcabou ? 0.7 : 0.5,
+          });
+        }
+        return out;
+      })
+    )
+  ).flat();
+
   // Páginas por seleção (Copa do Mundo) — Brasil já está em staticPages
   const selecaoPages: MetadataRoute.Sitemap = SELECOES.filter(
     (s) => s.id !== BRAZIL_ID
@@ -178,6 +216,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     ...newsCategoryPages,
     ...copaPages,
     ...copaMatchPages,
+    ...champMatchPages,
     ...selecaoPages,
     ...articlePages,
     ...craquePages,
