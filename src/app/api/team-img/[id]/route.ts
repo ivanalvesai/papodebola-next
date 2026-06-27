@@ -18,12 +18,14 @@ export async function GET(
   const tid = String(id).replace(/\D/g, "");
   if (!tid) return new NextResponse(null, { status: 400 });
 
-  // 1) Arquivo local (baixado 1x) — sem custo de API, immutable.
+  // 1) Arquivo local (baixado 1x) — sem custo de API, immutable. O tipo real (a API
+  //    devolve webp ou png) é detectado pelos magic bytes pra servir o content-type certo.
   try {
     const buf = await readFile(join(DIR, `${tid}.png`));
+    const isPng = buf[0] === 0x89 && buf[1] === 0x50;
     return new NextResponse(new Uint8Array(buf), {
       headers: {
-        "content-type": "image/png",
+        "content-type": isPng ? "image/png" : "image/webp",
         "cache-control": "public, max-age=31536000, immutable",
       },
     });
