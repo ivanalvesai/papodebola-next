@@ -35,18 +35,33 @@ export interface ChampionshipLiveScore {
   statusDesc: string;
 }
 
+// Porteira do ao vivo: janela em torno do horário marcado (abre 5min antes, fica ~3h20).
+const LIVE_GATE_BEFORE_S = 5 * 60;
+const LIVE_GATE_AFTER_S = 200 * 60;
+
 export async function getChampionshipLiveScores(
   slug: string
 ): Promise<ChampionshipLiveScore[]> {
   const tournament = TOURNAMENT_BY_SLUG[slug];
   if (!tournament || !tournament.seasonId) return [];
-  const { id, seasonId } = tournament;
 
-  const roundsData = await fetchAllSports<any>(
-    `tournament/${id}/season/${seasonId}/rounds`,
-    21600
-  );
-  const cr = roundsData?.currentRound?.round || 1;
+  // Porteira: só consulta o feed AO VIVO (TTL 20s) se há jogo da liga na janela. Usa a
+  // agenda já cacheada/snapshot (getChampionshipData) → custo ~zero. Antes, o polling da
+  // tabela batia no matches/round a cada 20s mesmo horas ANTES do jogo começar.
+  const cd = await getChampionshipData(slug);
+  if (!cd) return [];
+  const now = Date.now() / 1000;
+  const inWindow = Object.values(cd.matchesByRound)
+    .flat()
+    .some((m) => {
+      if (!m.timestamp) return false;
+      const delta = now - m.timestamp;
+      return delta >= -LIVE_GATE_BEFORE_S && delta <= LIVE_GATE_AFTER_S;
+    });
+  if (!inWindow) return [];
+
+  const { id, seasonId } = tournament;
+  const cr = cd.currentRound || 1;
 
   const data = await fetchAllSports<any>(
     `tournament/${id}/season/${seasonId}/matches/round/${cr}`,
