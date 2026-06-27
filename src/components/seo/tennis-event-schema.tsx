@@ -36,6 +36,7 @@ export function TennisEventSchema({
     "@type": "SportsEvent",
     name: `${home} x ${away}`,
     sport: "Tennis",
+    description: `${home} x ${away} — ${tournamentName}: placar ao vivo, sets, games e estatísticas em tempo real.`,
     url: `${SITE_URL}${url}`,
     ...(startTimestamp ? { startDate: new Date(startTimestamp * 1000).toISOString() } : {}),
     // tênis raramente passa de 4h; usamos 4h como fim aproximado no encerrado.
@@ -61,7 +62,8 @@ export function TennisEventSchema({
         }
       : {}),
     organizer: { "@type": "Organization", name: "ATP Tour", url: "https://www.atptour.com" },
-    superEvent: { "@type": "SportsEvent", name: tournamentName },
+    // Sem superEvent: o Google o valida como um 2º Event e acusa "Missing field"
+    // (startDate/location...) sem ganho de rich result. O torneio fica no organizer + name.
     competitor: [
       {
         "@type": "SportsTeam",
