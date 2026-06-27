@@ -1,10 +1,6 @@
 import { NextResponse } from "next/server";
-import {
-  getWorldCupLiveMatches,
-  getTodayMatches,
-  getTomorrowMatches,
-  WORLD_CUP_LEAGUE_ID,
-} from "@/lib/data/matches";
+import { getWorldCupLiveMatches } from "@/lib/data/matches";
+import { getWorldCupFixtures } from "@/lib/data/match-detail";
 import { getNotifiedSet, markNotified } from "@/lib/data/push-kickoff-store";
 import { getMaxTotals, saveMaxTotals } from "@/lib/data/push-goal-store";
 import { sendToAll } from "@/lib/services/push";
@@ -22,16 +18,15 @@ const GATE_AFTER_S = 200 * 60; // fica aberta ~3h20 depois (cobre jogo inteiro +
 // — evita avisar jogo já rolando no 1º run / após cron fora do ar.
 const SEND_RECENT_S = 20 * 60;
 
-// Há algum jogo da Copa na janela? Usa a agenda em cache (reusada da home, custo
-// ~zero), pra só consultar o feed AO VIVO quando há jogo em andamento.
+// Há algum jogo da Copa na janela? Usa o CALENDÁRIO AGENDADO (getWorldCupFixtures —
+// vem do endpoint de rodadas, cacheado 6h + snapshot), NÃO o feed por data (quebrado na
+// allsportsapi2, que caía pro matches/live a cada minuto). Assim, fora da janela o cron
+// nem toca no feed ao vivo — fica ocioso até 5min antes do apito.
 async function hasWorldCupMatchInWindow(now: number): Promise<boolean> {
-  const [today, tomorrow] = await Promise.all([
-    getTodayMatches().catch(() => []),
-    getTomorrowMatches().catch(() => []),
-  ]);
-  return [...today, ...tomorrow].some((m) => {
-    if (m.leagueId !== WORLD_CUP_LEAGUE_ID || !m.timestamp) return false;
-    const delta = now - m.timestamp; // <0 ainda vai começar, >0 já passou do horário
+  const fixtures = await getWorldCupFixtures().catch(() => []);
+  return fixtures.some((f) => {
+    if (!f.timestamp) return false;
+    const delta = now - f.timestamp; // <0 ainda vai começar, >0 já passou do horário
     return delta >= -GATE_BEFORE_S && delta <= GATE_AFTER_S;
   });
 }
