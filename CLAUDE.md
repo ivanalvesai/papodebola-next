@@ -79,6 +79,8 @@ Configs em `/www/server/panel/vhost/nginx/`:
 
 **Dev tem `proxy_read_timeout 600s`** pra suportar requests longos (ex: POST do botão Promover).
 
+**`ads.txt` servido DIRETO pelo nginx (desde 27/06) — independe do Next estar no ar.** No server block do `www.papodebola.com.br` há um `location = /ads.txt { default_type text/plain; return 200 "google.com, pub-5802007717322888, DIRECT, f08c47fec0942fa0\n"; }` ANTES do `location /`. Por quê: o `ads.txt` (e qualquer coisa em `public/`) é servido pelo Next; se o app cair (504, disco cheio), o AdSense via "não encontrado". Servindo pelo nginx, sobrevive a queda do app. O apex segue `return 301 → www` (o `return` server-level roda antes de qualquer location, então não dá pra servir o ads.txt direto no apex sem reestruturar — e não precisa, o Google segue o redirect). **Atenção:** se editar este vhost pela UI do aaPanel, ela pode regenerar o conf e apagar o bloco — re-adicionar (backup em `*.bak.20260627-*`). Confirmar que está pelo nginx: `curl -sI .../ads.txt` NÃO deve ter `x-powered-by: Next.js`.
+
 ### Cache-Control: prod NÃO deixa CDN cachear HTML (2026-06-02)
 
 O `papodebola.com.br.conf` tem um `map $upstream_http_content_type $pdb_cc` (topo do arquivo, contexto http) + override no `location /`:
