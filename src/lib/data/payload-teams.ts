@@ -53,6 +53,28 @@ export const getPayloadTeamSlugs = cache(async (): Promise<string[]> => {
   }
 });
 
+// Mapa sofascoreId → slug dos times publicados (Série B). Usado pra linkar os times
+// na tabela de classificação (que só conhece o teamId), já que eles não estão no config.
+export const getPayloadTeamSlugMap = cache(async (): Promise<Record<number, string>> => {
+  try {
+    const payload = await getPayload({ config });
+    const res = await payload.find({
+      collection: "teams",
+      where: { _status: { equals: "published" } },
+      limit: 500,
+      depth: 0,
+      pagination: false,
+    });
+    const map: Record<number, string> = {};
+    for (const d of res.docs as unknown as PayloadTeam[]) {
+      if (d.sofascoreId && d.slug) map[d.sofascoreId] = d.slug;
+    }
+    return map;
+  } catch {
+    return {};
+  }
+});
+
 // Identidade usada pela camada de dados (getTeamPageDataFor) a partir do doc do CMS.
 export function teamInfoFromDoc(doc: PayloadTeam): TeamInfo {
   return { id: doc.sofascoreId, name: doc.name, slug: doc.slug, tournament: doc.tournament };
