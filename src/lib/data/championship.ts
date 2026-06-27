@@ -2,6 +2,7 @@ import { fetchAllSports } from "@/lib/api/allsports";
 import { TOURNAMENT_BY_SLUG } from "@/lib/config";
 import { translateStatus } from "@/lib/translations";
 import { getStandings } from "./standings";
+import { withSnapshot } from "./snapshot-store";
 import type { ChampionshipData } from "@/types/tournament";
 import type { ChampionshipMatch } from "@/types/match";
 
@@ -60,7 +61,18 @@ export async function getChampionshipLiveScores(
   }));
 }
 
-export async function getChampionshipData(
+// Tabela + jogos do campeonato. Salva snapshot quando vem dado real e serve o snapshot
+// quando a API falha/esvazia (ver snapshot-store) → não perde a tabela depois do torneio.
+export async function getChampionshipData(slug: string): Promise<ChampionshipData | null> {
+  return withSnapshot<ChampionshipData>(
+    "championships",
+    slug,
+    () => fetchChampionshipDataLive(slug),
+    (d) => (d.standings?.[0]?.rows?.length ?? 0) > 0 || Object.keys(d.matchesByRound || {}).length > 0
+  );
+}
+
+async function fetchChampionshipDataLive(
   slug: string
 ): Promise<ChampionshipData | null> {
   const tournament = TOURNAMENT_BY_SLUG[slug];

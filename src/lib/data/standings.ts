@@ -1,6 +1,7 @@
 import { fetchAllSports } from "@/lib/api/allsports";
 import { TOURNAMENTS } from "@/lib/config";
 import { translateCountry } from "@/lib/i18n/countries";
+import { withSnapshot } from "./snapshot-store";
 import type { StandingsGroup, StandingRow } from "@/types/standings";
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
@@ -58,6 +59,17 @@ const WORLD_CUP = { id: 16, seasonId: 58210 } as const;
 // Retorna só os 12 grupos (A–L), traduzidos pra PT-BR. A API também devolve um
 // grupo "Third-placed teams" (ranking dos 3os colocados) que filtramos fora.
 export async function getWorldCupStandings(): Promise<StandingsGroup[]> {
+  return (
+    (await withSnapshot<StandingsGroup[]>(
+      "worldcup",
+      "standings",
+      () => fetchWorldCupStandingsLive(),
+      (d) => Array.isArray(d) && d.length > 0
+    )) || []
+  );
+}
+
+async function fetchWorldCupStandingsLive(): Promise<StandingsGroup[]> {
   // TTL curto (5 min) durante a Copa: os pontos precisam refletir o fim do jogo
   // rapido — senao a tabela mostra placar provisorio de jogo ao vivo por muito
   // tempo (ex: Portugal 3pts num jogo que terminou empatado). A bolinha de forma
