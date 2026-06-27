@@ -108,24 +108,25 @@ async function fetchChampionshipDataLive(
   // Fetch standings
   const standings = await getStandings(id, seasonId, 21600);
 
-  // Fetch rounds from 1 to currentRound+1.
-  // Past rounds (< currentRound) are finalized and never change → TTL 24h.
-  // Current and next (>= currentRound) → TTL 6h.
-  const matchesByRound: Record<number, ChampionshipMatch[]> = {};
+  // Rodadas 1..currentRound+1 em PARALELO (sem sleep). Antes era um loop sequencial com
+  // await sleep(250) por rodada → ~N×250ms de latência FIXA em toda página de jogo de
+  // liga (medido ~5s p/ Série A/B). O semáforo do fetchAllSports já limita a 2 simultâneas
+  // + retry em 429, então o paralelo é seguro. Mesma otimização já feita em getWorldCupFixtures.
+  // Past rounds (< currentRound) nunca mudam → TTL 24h; atual/próxima → 6h.
   const endRound = Math.min(totalRounds, currentRound + 1);
-
-  for (let r = 1; r <= endRound; r++) {
-    const ttl = r < currentRound ? 86400 : 21600;
-    const data = await fetchAllSports<any>(
-      `tournament/${id}/season/${seasonId}/matches/round/${r}`,
-      ttl
-    );
-
+  const roundData = await Promise.all(
+    Array.from({ length: endRound }, (_, i) => i + 1).map((r) =>
+      fetchAllSports<any>(
+        `tournament/${id}/season/${seasonId}/matches/round/${r}`,
+        r < currentRound ? 86400 : 21600
+      ).then((data) => ({ r, data }))
+    )
+  );
+  const matchesByRound: Record<number, ChampionshipMatch[]> = {};
+  for (const { r, data } of roundData) {
     if (data?.events) {
       matchesByRound[r] = data.events.map((e: any) => normalizeMatch(e, r));
     }
-
-    await new Promise((resolve) => setTimeout(resolve, 250));
   }
 
   return {
