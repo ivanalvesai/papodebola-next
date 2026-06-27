@@ -86,12 +86,12 @@ export function SportsEventSchema({
     homeTeam: {
       "@type": "SportsTeam",
       name: home,
-      ...(homeId ? { logo: `${SITE_URL}/img/team/${homeId}/image` } : {}),
+      ...(homeId ? { logo: `${SITE_URL}/api/team-img/${homeId}` } : {}),
     },
     awayTeam: {
       "@type": "SportsTeam",
       name: away,
-      ...(awayId ? { logo: `${SITE_URL}/img/team/${awayId}/image` } : {}),
+      ...(awayId ? { logo: `${SITE_URL}/api/team-img/${awayId}` } : {}),
     },
     // performer: campo que o rich result de Event realmente lê (homeTeam/awayTeam o
     // Google ignora no card). Resolve o "Missing field performer".
@@ -99,12 +99,12 @@ export function SportsEventSchema({
       {
         "@type": "SportsTeam",
         name: home,
-        ...(homeId ? { logo: `${SITE_URL}/img/team/${homeId}/image` } : {}),
+        ...(homeId ? { logo: `${SITE_URL}/api/team-img/${homeId}` } : {}),
       },
       {
         "@type": "SportsTeam",
         name: away,
-        ...(awayId ? { logo: `${SITE_URL}/img/team/${awayId}/image` } : {}),
+        ...(awayId ? { logo: `${SITE_URL}/api/team-img/${awayId}` } : {}),
       },
     ],
   };

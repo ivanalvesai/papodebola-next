@@ -11,7 +11,7 @@ function Avatar({ player, size = 22 }: { player: TennisPlayer; size?: number }) 
   const dim = { width: size, height: size };
   if (stage === 0 && player.id)
     // eslint-disable-next-line @next/next/no-img-element
-    return <img src={`/img/team/${player.id}/image`} alt="" style={dim} onError={() => setStage(player.country ? 1 : 2)} className="shrink-0 rounded-full bg-body object-cover" />;
+    return <img src={`/api/team-img/${player.id}`} alt="" style={dim} onError={() => setStage(player.country ? 1 : 2)} className="shrink-0 rounded-full bg-body object-cover" />;
   if (stage === 1 && player.country)
     // eslint-disable-next-line @next/next/no-img-element
     return <img src={`https://flagcdn.com/w20/${player.country}.png`} alt="" style={dim} onError={() => setStage(2)} className="shrink-0 rounded-full bg-body object-cover ring-1 ring-border-light" />;

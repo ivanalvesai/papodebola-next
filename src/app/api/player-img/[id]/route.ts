@@ -10,7 +10,7 @@ import { join } from "path";
 const DIR = join(process.cwd(), "data", "player-images");
 
 export async function GET(
-  _req: NextRequest,
+  req: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
   const { id } = await params;
@@ -30,11 +30,11 @@ export async function GET(
     /* não temos no arquivo — cai pro fallback abaixo */
   }
 
-  // 2) Fallback: busca da API (sportapi7 serve a foto autenticada — sem o bloqueio do
-  // Sofascore). Cache de 30 dias (a CDN segura, não bate na API por jogador toda hora).
+  // 2) Fallback: API autenticada (allsportsapi2 serve a foto em /api/player/{id}/image,
+  // SEM /v1 — sem o bloqueio do Sofascore). Cache de 30 dias.
   try {
-    const host = process.env.ALLSPORTS_API_HOST || "sportapi7.p.rapidapi.com";
-    const r = await fetch(`https://${host}/api/v1/player/${pid}/image`, {
+    const host = process.env.ALLSPORTS_API_HOST || "allsportsapi2.p.rapidapi.com";
+    const r = await fetch(`https://${host}/api/player/${pid}/image`, {
       headers: {
         "x-rapidapi-key": process.env.ALLSPORTS_API_KEY || "",
         "x-rapidapi-host": host,
@@ -52,7 +52,9 @@ export async function GET(
       }
     }
   } catch {
-    /* sem foto */
+    /* cai pro redirect abaixo */
   }
-  return new NextResponse(null, { status: 404 });
+
+  // 3) Último recurso: o proxy nginx /img/player (cacheado + stale-on-403).
+  return NextResponse.redirect(new URL(`/img/player/${pid}/image`, req.url), 307);
 }

@@ -17,7 +17,7 @@ export function SportsTeamSchema({
     name,
     sport: "Soccer",
     url: `${SITE_URL}/futebol/times/${slug}`,
-    logo: `${SITE_URL}/img/team/${teamId}/image`,
+    logo: `${SITE_URL}/api/team-img/${teamId}`,
   };
   return (
     <script

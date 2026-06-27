@@ -133,8 +133,8 @@ export function MatchBar({ todayMatches, cbfUpcoming }: MatchBarProps) {
                 key={`cbf-${m.id}`}
                 homeTeam={m.home}
                 awayTeam={m.away}
-                homeLogo={m.homeId ? `/img/team/${m.homeId}/image` : null}
-                awayLogo={m.awayId ? `/img/team/${m.awayId}/image` : null}
+                homeLogo={m.homeId ? `/api/team-img/${m.homeId}` : null}
+                awayLogo={m.awayId ? `/api/team-img/${m.awayId}` : null}
                 homeScore={null}
                 awayScore={null}
                 time={m.time}
