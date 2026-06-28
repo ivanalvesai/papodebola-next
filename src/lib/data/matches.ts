@@ -226,12 +226,16 @@ async function fetchWorldCupBarMatchesLive(): Promise<NormalizedMatch[]> {
   // PORÉM no mata-mata o matches/round/{r} volta VAZIO (a API não popula o knockout por
   // rodada) → a barra ficava vazia mesmo com a Copa em andamento. Por isso buscamos
   // TAMBÉM os confrontos do cuptrees (getWorldCupKnockoutFixtures) e mesclamos.
-  const [roundsInfo, knockoutFx] = await Promise.all([
+  const [roundsInfo, knockoutFx, liveFeed] = await Promise.all([
     fetchAllSports<any>(
       `tournament/${WORLD_CUP_LEAGUE_ID}/season/${WC_SEASON_ID}/rounds`,
       3600
     ).catch(() => null),
     getWorldCupKnockoutFixtures().catch(() => [] as WorldCupFixture[]),
+    // matches/live (feed global ao vivo, TTL curto) — pra o card já NASCER ao vivo no SSR.
+    // No mata-mata o card vem do cuptrees como "scheduled"; sem isso o selo AO VIVO/placar
+    // dependeria SÓ do polling do cliente (e sumia se o polling tivesse hiccup).
+    fetchAllSports<any>("matches/live", 15).catch(() => null),
   ]);
   const roundNums: number[] = (roundsInfo?.rounds || [])
     .map((r: any) => r?.round)
@@ -248,28 +252,44 @@ async function fetchWorldCupBarMatchesLive(): Promise<NormalizedMatch[]> {
   );
   const start = brasiliaDayStartSec(0);
   const end = brasiliaDayStartSec(3); // hoje + 2 dias
-  const seen = new Set<string>();
-  const wc: NormalizedMatch[] = [];
+  const inWindow = (ts: number) => ts >= start && ts < end;
+  const byId = new Map<string, NormalizedMatch>();
+
+  // 1) Rodadas (grupos): já trazem status real. Mata-mata vem vazio aqui.
   for (const data of rounds) {
     for (const e of (data as any)?.events || []) {
       const m = normalizeEvent(e);
-      const ts = m.timestamp || 0;
-      if (ts >= start && ts < end && m.href && !seen.has(m.id)) {
-        seen.add(m.id);
-        wc.push(m);
-      }
+      if (inWindow(m.timestamp || 0) && m.href) byId.set(m.id, m);
     }
   }
-  // Confrontos do mata-mata (cuptrees) na janela — preenchem o que o matches/round não traz.
+  // 2) Mata-mata (cuptrees): preenche o que o matches/round não traz (status "scheduled").
   for (const f of knockoutFx) {
     const m = knockoutFixtureToBarMatch(f);
-    const ts = m.timestamp || 0;
-    if (ts >= start && ts < end && m.href && !seen.has(m.id)) {
-      seen.add(m.id);
-      wc.push(m);
+    if (inWindow(m.timestamp || 0) && m.href && !byId.has(m.id)) byId.set(m.id, m);
+  }
+  // 3) AO VIVO (matches/live, Copa): sobrepõe status/placar nos cards (inclusive nos do
+  //    cuptrees, que nasceram "scheduled") → o selo AO VIVO aparece já no SSR, sem depender
+  //    só do polling. Preserva href/nomes do card existente; só atualiza o que muda ao vivo.
+  const liveWc = ((liveFeed as any)?.events || []).filter(
+    (e: any) => e?.tournament?.uniqueTournament?.id === WORLD_CUP_LEAGUE_ID
+  );
+  for (const e of liveWc) {
+    const live = normalizeEvent(e);
+    const existing = byId.get(live.id);
+    if (existing) {
+      byId.set(live.id, {
+        ...existing,
+        status: live.status,
+        statusText: live.statusText,
+        minute: live.minute,
+        homeScore: live.homeScore,
+        awayScore: live.awayScore,
+      });
+    } else if (inWindow(live.timestamp || 0) && live.href) {
+      byId.set(live.id, live);
     }
   }
-  return freshMatches(wc).sort((a, b) => (a.timestamp || 0) - (b.timestamp || 0));
+  return freshMatches([...byId.values()]).sort((a, b) => (a.timestamp || 0) - (b.timestamp || 0));
 }
 
 // Barra da home, aba "Próximos": jogos ATUAIS das ligas brasileiras (Série A/B/C +
