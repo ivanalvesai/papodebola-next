@@ -5,6 +5,7 @@ import { translateCountry } from "@/lib/i18n/countries";
 import { SELECAO_BY_ID } from "@/lib/selecoes";
 import { worldCupMatchHref, matchDateSlug, matchPairSlug } from "@/lib/world-cup-match-url";
 import { getCBFUpcomingMatches } from "./cbf-calendar";
+import { getWorldCupKnockoutFixtures, type WorldCupFixture } from "./match-detail";
 import { withSnapshot } from "./snapshot-store";
 import type { NormalizedMatch } from "@/types/match";
 
@@ -181,6 +182,37 @@ export async function getWorldCupBarMatches(): Promise<NormalizedMatch[]> {
   return freshMatches(r).sort((a, b) => (a.timestamp || 0) - (b.timestamp || 0));
 }
 
+// Converte um confronto do cuptrees (mata-mata) pro formato da barra. Vem como
+// "agendado" — o placar/ao vivo é preenchido depois pelo polling /api/copa/ao-vivo
+// (mesmo id `api_<eventId>` do feed matches/live). Nomes já em PT-BR (translateCountry
+// aplicado no getWorldCupKnockoutFixtures).
+function knockoutFixtureToBarMatch(f: WorldCupFixture): NormalizedMatch {
+  const ts = f.timestamp ? new Date(f.timestamp * 1000) : new Date();
+  return {
+    id: `api_${f.id}`,
+    apiId: f.id,
+    league: "Copa do Mundo",
+    leagueId: WORLD_CUP_LEAGUE_ID,
+    country: "World",
+    homeTeam: f.home,
+    awayTeam: f.away,
+    homeScore: null,
+    awayScore: null,
+    homeLogo: f.homeId ? `/api/team-img/${f.homeId}` : null,
+    awayLogo: f.awayId ? `/api/team-img/${f.awayId}` : null,
+    time: ts.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit", timeZone: "America/Sao_Paulo" }),
+    date: ts.toISOString().split("T")[0],
+    timestamp: f.timestamp || 0,
+    status: "scheduled",
+    statusText: "Não iniciado",
+    minute: "",
+    category: getLeagueCategory(WORLD_CUP_LEAGUE_ID),
+    homeId: f.homeId,
+    awayId: f.awayId,
+    href: worldCupMatchHref(f.timestamp || 0, f.homeId, f.awayId, f.home, f.away),
+  };
+}
+
 async function fetchWorldCupBarMatchesLive(): Promise<NormalizedMatch[]> {
   // O feed por data (matches/{d}/{m}/{y}) ficou instável na allsportsapi2 (devolve 0
   // eventos pra todas as datas). Buscamos os jogos da Copa pelas RODADAS do torneio —
@@ -190,10 +222,17 @@ async function fetchWorldCupBarMatchesLive(): Promise<NormalizedMatch[]> {
   // números não-sequenciais: 6 R32, 5 R16, 27 QF, 28 SF, 50 3º, 29 Final). Antes era
   // fixo [1,2,3] → no mata-mata a barra ficava VAZIA e a home caía pros jogos gerais do
   // mundo. Fallback pros grupos se o endpoint de rounds falhar.
-  const roundsInfo = await fetchAllSports<any>(
-    `tournament/${WORLD_CUP_LEAGUE_ID}/season/${WC_SEASON_ID}/rounds`,
-    3600
-  ).catch(() => null);
+  //
+  // PORÉM no mata-mata o matches/round/{r} volta VAZIO (a API não popula o knockout por
+  // rodada) → a barra ficava vazia mesmo com a Copa em andamento. Por isso buscamos
+  // TAMBÉM os confrontos do cuptrees (getWorldCupKnockoutFixtures) e mesclamos.
+  const [roundsInfo, knockoutFx] = await Promise.all([
+    fetchAllSports<any>(
+      `tournament/${WORLD_CUP_LEAGUE_ID}/season/${WC_SEASON_ID}/rounds`,
+      3600
+    ).catch(() => null),
+    getWorldCupKnockoutFixtures().catch(() => [] as WorldCupFixture[]),
+  ]);
   const roundNums: number[] = (roundsInfo?.rounds || [])
     .map((r: any) => r?.round)
     .filter((n: any) => typeof n === "number");
@@ -219,6 +258,15 @@ async function fetchWorldCupBarMatchesLive(): Promise<NormalizedMatch[]> {
         seen.add(m.id);
         wc.push(m);
       }
+    }
+  }
+  // Confrontos do mata-mata (cuptrees) na janela — preenchem o que o matches/round não traz.
+  for (const f of knockoutFx) {
+    const m = knockoutFixtureToBarMatch(f);
+    const ts = m.timestamp || 0;
+    if (ts >= start && ts < end && m.href && !seen.has(m.id)) {
+      seen.add(m.id);
+      wc.push(m);
     }
   }
   return freshMatches(wc).sort((a, b) => (a.timestamp || 0) - (b.timestamp || 0));
