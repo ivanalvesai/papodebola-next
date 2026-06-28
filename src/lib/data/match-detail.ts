@@ -93,11 +93,15 @@ async function fetchWorldCupKnockoutFixturesLive(): Promise<WorldCupFixture[]> {
     fetchAllSports<any>(`tournament/${WC.id}/season/${WC.seasonId}/cuptrees`, 900).catch(() => null),
     getWorldCupStandings().catch(() => [] as StandingsGroup[]),
   ]);
+  // "confirmado" = time de um grupo JÁ ENCERRADO (todas as linhas com 3 jogos). Inclui
+  // os melhores TERCEIROS, não só o top-2: no formato de 48 (12 grupos), 8 dos 3ºs avançam
+  // pro mata-mata. O cuptrees só coloca no bloco quem realmente classificou — o filtro
+  // abaixo é só a garantia de que o grupo de ambos terminou (evita mostrar antes da hora).
   const confirmed = new Set<number>();
   for (const g of groups) {
     const rows = g.rows || [];
     if (rows.length >= 2 && rows.every((r) => (r.matches || 0) >= 3)) {
-      for (const r of rows) if ((r.pos || 0) <= 2 && r.teamId) confirmed.add(r.teamId);
+      for (const r of rows) if (r.teamId) confirmed.add(r.teamId);
     }
   }
   const out: WorldCupFixture[] = [];
