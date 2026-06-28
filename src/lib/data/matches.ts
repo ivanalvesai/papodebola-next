@@ -5,6 +5,7 @@ import { translateCountry } from "@/lib/i18n/countries";
 import { SELECAO_BY_ID } from "@/lib/selecoes";
 import { worldCupMatchHref, matchDateSlug, matchPairSlug } from "@/lib/world-cup-match-url";
 import { getCBFUpcomingMatches } from "./cbf-calendar";
+import { withSnapshot } from "./snapshot-store";
 import type { NormalizedMatch } from "@/types/match";
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
@@ -166,6 +167,21 @@ const WC_SEASON_ID = 58210; // Copa do Mundo 2026
 const WC_GROUP_ROUNDS = [1, 2, 3];
 
 export async function getWorldCupBarMatches(): Promise<NormalizedMatch[]> {
+  // withSnapshot: a allsportsapi2 às vezes devolve 204/vazio nas rodadas do mata-mata
+  // (intermitente). Quando isso acontece, serve a ÚLTIMA lista boa de jogos da Copa
+  // (snapshot) em vez de esvaziar → a home não cai pro fallback de ligas durante a Copa.
+  // freshMatches re-aplicado no fim tira do snapshot stale os que já encerraram há +1h.
+  const r =
+    (await withSnapshot<NormalizedMatch[]>(
+      "worldcup",
+      "bar",
+      () => fetchWorldCupBarMatchesLive(),
+      (d) => Array.isArray(d) && d.length > 0
+    )) || [];
+  return freshMatches(r).sort((a, b) => (a.timestamp || 0) - (b.timestamp || 0));
+}
+
+async function fetchWorldCupBarMatchesLive(): Promise<NormalizedMatch[]> {
   // O feed por data (matches/{d}/{m}/{y}) ficou instável na allsportsapi2 (devolve 0
   // eventos pra todas as datas). Buscamos os jogos da Copa pelas RODADAS do torneio —
   // fonte confiável (mesma das páginas de jogo) — e filtramos pra hoje + 2 dias (BR).
