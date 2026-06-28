@@ -169,8 +169,22 @@ export async function getWorldCupBarMatches(): Promise<NormalizedMatch[]> {
   // O feed por data (matches/{d}/{m}/{y}) ficou instável na allsportsapi2 (devolve 0
   // eventos pra todas as datas). Buscamos os jogos da Copa pelas RODADAS do torneio —
   // fonte confiável (mesma das páginas de jogo) — e filtramos pra hoje + 2 dias (BR).
+  //
+  // Pega as rodadas DINAMICAMENTE do endpoint de rounds (grupos 1-3 + mata-mata, que usa
+  // números não-sequenciais: 6 R32, 5 R16, 27 QF, 28 SF, 50 3º, 29 Final). Antes era
+  // fixo [1,2,3] → no mata-mata a barra ficava VAZIA e a home caía pros jogos gerais do
+  // mundo. Fallback pros grupos se o endpoint de rounds falhar.
+  const roundsInfo = await fetchAllSports<any>(
+    `tournament/${WORLD_CUP_LEAGUE_ID}/season/${WC_SEASON_ID}/rounds`,
+    3600
+  ).catch(() => null);
+  const roundNums: number[] = (roundsInfo?.rounds || [])
+    .map((r: any) => r?.round)
+    .filter((n: any) => typeof n === "number");
+  const targetRounds = roundNums.length ? roundNums : WC_GROUP_ROUNDS;
+
   const rounds = await Promise.all(
-    WC_GROUP_ROUNDS.map((r) =>
+    targetRounds.map((r) =>
       fetchAllSports<any>(
         `tournament/${WORLD_CUP_LEAGUE_ID}/season/${WC_SEASON_ID}/matches/round/${r}`,
         600
