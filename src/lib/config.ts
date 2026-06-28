@@ -9,8 +9,8 @@ export const TOURNAMENTS: Record<string, Tournament> = {
   // Brasil - Nacionais
   BRASILEIRAO_A:  { id: 325,   name: 'Brasileirão Série A',  seasonId: 87678, slug: 'brasileirao-serie-a' },
   BRASILEIRAO_B:  { id: 390,   name: 'Brasileirão Série B',  seasonId: 89840, slug: 'brasileirao-serie-b' },
-  BRASILEIRAO_C:  { id: 1281,  name: 'Brasileirão Série C',  seasonId: null,  slug: 'brasileirao-serie-c' },
-  BRASILEIRAO_D:  { id: 10326, name: 'Brasileirão Série D',  seasonId: null,  slug: 'brasileirao-serie-d' },
+  BRASILEIRAO_C:  { id: 1281,  name: 'Brasileirão Série C',  seasonId: 90642, slug: 'brasileirao-serie-c' },
+  BRASILEIRAO_D:  { id: 10326, name: 'Brasileirão Série D',  seasonId: 92447, slug: 'brasileirao-serie-d' },
   COPA_DO_BRASIL: { id: 373,   name: 'Copa do Brasil',       seasonId: 89353, slug: 'copa-do-brasil' },
   COPA_NORDESTE:  { id: 1596,  name: 'Copa do Nordeste',     seasonId: 91324, slug: 'copa-do-nordeste' },
 
