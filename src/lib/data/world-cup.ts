@@ -102,6 +102,17 @@ function resolveSlot(
 // - 2 lados resolvidos (grupos encerrados) + jogo no cuptrees -> card REAL (link + ao vivo).
 // - 1 lado resolvido -> placeholder com o time já definido no slot (ex: "Alemanha x 3º ...").
 // - nenhum -> placeholder do calendário. O round endpoint da API vem vazio no mata-mata.
+// Rodada (do cuptrees) por fase: R32=6, R16=7, QF=8, SF=9, Final/3º=10. Usado pra achar
+// o confronto real pelo time de UM lado só (quando o outro slot é "melhor 3º" e não resolve).
+const PHASE_ROUND: Record<string, number> = {
+  "16-avos": 6,
+  oitavas: 7,
+  quartas: 8,
+  semifinais: 9,
+  "terceiro-lugar": 10,
+  final: 10,
+};
+
 export async function getKnockoutFixtures(
   phaseSlug: string,
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
@@ -113,31 +124,44 @@ export async function getKnockoutFixtures(
   ]);
   const pairKey = (a: number, b: number) => [a, b].sort((x, y) => x - y).join("-");
   const fxByPair = new Map<string, (typeof knockoutFx)[number]>();
-  for (const f of knockoutFx) fxByPair.set(pairKey(f.homeId, f.awayId), f);
+  // Índice por (rodada, time): cada seleção joga UM jogo por fase, então isso acha o
+  // confronto mesmo quando só um lado resolve pela classificação (o outro é melhor 3º).
+  const fxByTeam = new Map<string, (typeof knockoutFx)[number]>();
+  for (const f of knockoutFx) {
+    fxByPair.set(pairKey(f.homeId, f.awayId), f);
+    fxByTeam.set(`${f.round}-${f.homeId}`, f);
+    fxByTeam.set(`${f.round}-${f.awayId}`, f);
+  }
+  const phaseRnd = PHASE_ROUND[phaseSlug];
 
   return KNOCKOUT_SCHEDULE.filter((s) => s.phase === phaseSlug).map((sched): KnockoutItem => {
     const h = resolveSlot(sched.homeSlot, standings);
     const a = resolveSlot(sched.awaySlot, standings);
-    if (h && a) {
-      const fx = fxByPair.get(pairKey(h.id, a.id));
-      if (fx) {
-        return {
-          kind: "real",
-          match: {
-            id: fx.id,
-            home: fx.home,
-            away: fx.away,
-            homeId: fx.homeId,
-            awayId: fx.awayId,
-            homeScore: null,
-            awayScore: null,
-            status: "notstarted",
-            statusDesc: "",
-            timestamp: fx.timestamp,
-            round: fx.round,
-          },
-        };
-      }
+    // Confronto real do cuptrees: por par (2 slots resolvidos) OU pelo único slot resolvido
+    // (o outro é "3º (Grupos ...)" / "Vencedor do Jogo N", que não vem da classificação) —
+    // o jogo daquele time já traz o adversário real definido no chaveamento.
+    let fx = h && a ? fxByPair.get(pairKey(h.id, a.id)) : undefined;
+    if (!fx && phaseRnd && (h || a)) {
+      const known = (h || a)!;
+      fx = fxByTeam.get(`${phaseRnd}-${known.id}`);
+    }
+    if (fx) {
+      return {
+        kind: "real",
+        match: {
+          id: fx.id,
+          home: fx.home,
+          away: fx.away,
+          homeId: fx.homeId,
+          awayId: fx.awayId,
+          homeScore: null,
+          awayScore: null,
+          status: "notstarted",
+          statusDesc: "",
+          timestamp: fx.timestamp,
+          round: fx.round,
+        },
+      };
     }
     if (h || a) {
       return {
