@@ -176,11 +176,20 @@ export async function getWorldCupLiveScores(): Promise<WorldCupLiveScore[]> {
     )
   );
 
+  // No MATA-MATA o matches/round/{r} volta VAZIO (a API não popula o knockout por
+  // rodada). Sem isso, os jogos eliminatórios nunca recebiam placar/selo AO VIVO na
+  // barra da home. matches/live (feed global ao vivo) traz qualquer jogo da Copa em
+  // andamento — filtramos pelo torneio 16 e mesclamos.
+  const liveFeed = await fetchAllSports<any>("matches/live", 15).catch(() => null);
+  const liveWcEvents = ((liveFeed as any)?.events || []).filter(
+    (e: any) => e?.tournament?.uniqueTournament?.id === WC.id
+  );
+
   const MAX_LIVE = 4 * 60 * 60; // teto anti "inprogress" travado pelo provedor
   const now = Date.now() / 1000;
   const out: WorldCupLiveScore[] = [];
   const seen = new Set<number>();
-  for (const data of results) {
+  for (const data of [...results.map((d) => ({ events: d?.events })), { events: liveWcEvents }]) {
     for (const e of data?.events || []) {
       if (seen.has(e.id)) continue;
       seen.add(e.id);
