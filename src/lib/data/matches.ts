@@ -285,6 +285,18 @@ const FUTEBOL_TODAY_ORDER = [
   16, 325, 390, 1281, 10326, 373, 1596, 384, 480, 7, 679, 17, 8, 23, 35, 34, 11, 13,
 ];
 
+// Fallback da barra "Hoje" quando NÃO há jogo da Copa: filtra os jogos de hoje pras
+// ligas RELEVANTES (FUTEBOL_TODAY_ORDER) — NUNCA o feed global (matches/live traz
+// centenas de ligas menores do mundo). Com link pro lance a lance. Evita o "todos os
+// jogos do mundo" na barra (que aparecia quando a Copa entrou no mata-mata ou em hiccup).
+export function relevantBarMatches(matches: NormalizedMatch[]): NormalizedMatch[] {
+  const allow = new Set(FUTEBOL_TODAY_ORDER);
+  return matches
+    .filter((m) => m.leagueId != null && allow.has(m.leagueId))
+    .map((m) => ({ ...m, href: m.href ?? leagueMatchHref(m) }))
+    .sort(sortForBar);
+}
+
 export interface LeagueMatchGroup {
   leagueId: number;
   league: string;
