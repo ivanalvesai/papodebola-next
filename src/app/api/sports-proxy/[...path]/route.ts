@@ -102,7 +102,12 @@ export async function GET(
     const ct = res.headers.get("content-type") || "application/json";
     const body = ct.includes("application/json") && res.ok ? trimBody(rawBody) : rawBody;
 
-    return new NextResponse(body, {
+    // 204/304 NÃO podem ter body (o construtor de Response rejeita → TypeError → virava
+    // 502). Vários jogos (Série C e divisões menores) não têm commentary/statistics e a
+    // API responde 204 — sem isso, o "sem conteúdo" virava erro. fetchAllSports trata
+    // 204 como sucesso/null, então repassamos o 204 com body nulo.
+    const noBody = res.status === 204 || res.status === 304;
+    return new NextResponse(noBody ? null : body, {
       status: res.status,
       headers: {
         "content-type": ct,
