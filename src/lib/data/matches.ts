@@ -5,6 +5,7 @@ import { translateCountry } from "@/lib/i18n/countries";
 import { SELECAO_BY_ID } from "@/lib/selecoes";
 import { worldCupMatchHref, matchDateSlug, matchPairSlug } from "@/lib/world-cup-match-url";
 import { getCBFUpcomingMatches } from "./cbf-calendar";
+import { withSnapshot } from "./snapshot-store";
 import type { NormalizedMatch } from "@/types/match";
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
@@ -166,11 +167,40 @@ const WC_SEASON_ID = 58210; // Copa do Mundo 2026
 const WC_GROUP_ROUNDS = [1, 2, 3];
 
 export async function getWorldCupBarMatches(): Promise<NormalizedMatch[]> {
+  // withSnapshot: a allsportsapi2 às vezes devolve 204/vazio nas rodadas do mata-mata
+  // (intermitente). Quando isso acontece, serve a ÚLTIMA lista boa de jogos da Copa
+  // (snapshot) em vez de esvaziar → a home não cai pro fallback de ligas durante a Copa.
+  // freshMatches re-aplicado no fim tira do snapshot stale os que já encerraram há +1h.
+  const r =
+    (await withSnapshot<NormalizedMatch[]>(
+      "worldcup",
+      "bar",
+      () => fetchWorldCupBarMatchesLive(),
+      (d) => Array.isArray(d) && d.length > 0
+    )) || [];
+  return freshMatches(r).sort((a, b) => (a.timestamp || 0) - (b.timestamp || 0));
+}
+
+async function fetchWorldCupBarMatchesLive(): Promise<NormalizedMatch[]> {
   // O feed por data (matches/{d}/{m}/{y}) ficou instável na allsportsapi2 (devolve 0
   // eventos pra todas as datas). Buscamos os jogos da Copa pelas RODADAS do torneio —
   // fonte confiável (mesma das páginas de jogo) — e filtramos pra hoje + 2 dias (BR).
+  //
+  // Pega as rodadas DINAMICAMENTE do endpoint de rounds (grupos 1-3 + mata-mata, que usa
+  // números não-sequenciais: 6 R32, 5 R16, 27 QF, 28 SF, 50 3º, 29 Final). Antes era
+  // fixo [1,2,3] → no mata-mata a barra ficava VAZIA e a home caía pros jogos gerais do
+  // mundo. Fallback pros grupos se o endpoint de rounds falhar.
+  const roundsInfo = await fetchAllSports<any>(
+    `tournament/${WORLD_CUP_LEAGUE_ID}/season/${WC_SEASON_ID}/rounds`,
+    3600
+  ).catch(() => null);
+  const roundNums: number[] = (roundsInfo?.rounds || [])
+    .map((r: any) => r?.round)
+    .filter((n: any) => typeof n === "number");
+  const targetRounds = roundNums.length ? roundNums : WC_GROUP_ROUNDS;
+
   const rounds = await Promise.all(
-    WC_GROUP_ROUNDS.map((r) =>
+    targetRounds.map((r) =>
       fetchAllSports<any>(
         `tournament/${WORLD_CUP_LEAGUE_ID}/season/${WC_SEASON_ID}/matches/round/${r}`,
         600
@@ -270,6 +300,18 @@ export async function getBrazilianBarMatches(): Promise<NormalizedMatch[]> {
 const FUTEBOL_TODAY_ORDER = [
   16, 325, 390, 1281, 10326, 373, 1596, 384, 480, 7, 679, 17, 8, 23, 35, 34, 11, 13,
 ];
+
+// Fallback da barra "Hoje" quando NÃO há jogo da Copa: filtra os jogos de hoje pras
+// ligas RELEVANTES (FUTEBOL_TODAY_ORDER) — NUNCA o feed global (matches/live traz
+// centenas de ligas menores do mundo). Com link pro lance a lance. Evita o "todos os
+// jogos do mundo" na barra (que aparecia quando a Copa entrou no mata-mata ou em hiccup).
+export function relevantBarMatches(matches: NormalizedMatch[]): NormalizedMatch[] {
+  const allow = new Set(FUTEBOL_TODAY_ORDER);
+  return matches
+    .filter((m) => m.leagueId != null && allow.has(m.leagueId))
+    .map((m) => ({ ...m, href: m.href ?? leagueMatchHref(m) }))
+    .sort(sortForBar);
+}
 
 export interface LeagueMatchGroup {
   leagueId: number;
