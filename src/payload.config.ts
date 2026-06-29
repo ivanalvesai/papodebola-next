@@ -431,6 +431,12 @@ export default buildConfig({
                           { label: "Direita", value: "right" },
                         ],
                       },
+                      {
+                        name: "caption",
+                        type: "text",
+                        label: "Legenda / crédito (opcional)",
+                        admin: { description: 'Ex.: "Foto: Divulgação / FIFA". Aparece embaixo da imagem.' },
+                      },
                     ],
                   },
                 },

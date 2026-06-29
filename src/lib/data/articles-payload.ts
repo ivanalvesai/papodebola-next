@@ -70,7 +70,12 @@ const lexicalConverters: any = ({ defaultConverters }: any) => ({
     const src = String(doc.url).startsWith("http") ? doc.url : `${SITE_URL}${doc.url}`;
     const alt = String(doc.alt || "").replace(/"/g, "&quot;");
     const dims = doc.width && doc.height ? ` width="${doc.width}" height="${doc.height}"` : "";
-    return `<figure class="pdb-img pdb-img-${align}"><img src="${src}" alt="${alt}"${dims} loading="lazy" /></figure>`;
+    // Legenda/crédito do bloco (campo do UploadFeature) → figcaption (semântico, bom p/ SEO).
+    const escHtml = (s: string) =>
+      s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+    const capText = String(node?.fields?.caption || "").trim();
+    const figcap = capText ? `<figcaption>${escHtml(capText)}</figcaption>` : "";
+    return `<figure class="pdb-img pdb-img-${align}"><img src="${src}" alt="${alt}"${dims} loading="lazy" />${figcap}</figure>`;
   },
 });
 
