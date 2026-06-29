@@ -134,9 +134,33 @@ export async function getKnockoutFixtures(
   }
   const phaseRnd = PHASE_ROUND[phaseSlug];
 
+  // Vencedores dos confrontos já encerrados, por nº de jogo (FIFA) → resolve os slots
+  // "Vencedor do Jogo N" das fases seguintes. Hoje cobre os 16-avos (jogos 73-88), que
+  // alimentam as OITAVAS: assim que um 16-avos encerra, o vencedor (ex: Brasil) aparece
+  // já na oitava ("Brasil x Vencedor do Jogo 78"), dirigido pelo cuptrees. O nº do jogo
+  // sai do calendário FIFA; o vencedor, do flag `winnerId` do fixture.
+  const winnerByGame = new Map<number, { id: number; name: string }>();
+  for (const s of KNOCKOUT_SCHEDULE) {
+    if (s.phase !== "16-avos") continue;
+    const sh = resolveSlot(s.homeSlot, standings);
+    const sa = resolveSlot(s.awaySlot, standings);
+    let fx = sh && sa ? fxByPair.get(pairKey(sh.id, sa.id)) : undefined;
+    if (!fx && (sh || sa)) fx = fxByTeam.get(`6-${(sh || sa)!.id}`);
+    if (fx?.winnerId) {
+      winnerByGame.set(s.game, {
+        id: fx.winnerId,
+        name: fx.winnerId === fx.homeId ? fx.home : fx.away,
+      });
+    }
+  }
+  const resolveWinnerSlot = (slot: string): { id: number; name: string } | null => {
+    const m = slot.match(/Vencedor do Jogo\s+(\d+)/i);
+    return m ? winnerByGame.get(parseInt(m[1], 10)) || null : null;
+  };
+
   return KNOCKOUT_SCHEDULE.filter((s) => s.phase === phaseSlug).map((sched): KnockoutItem => {
-    const h = resolveSlot(sched.homeSlot, standings);
-    const a = resolveSlot(sched.awaySlot, standings);
+    const h = resolveSlot(sched.homeSlot, standings) || resolveWinnerSlot(sched.homeSlot);
+    const a = resolveSlot(sched.awaySlot, standings) || resolveWinnerSlot(sched.awaySlot);
     // Confronto real do cuptrees: por par (2 slots resolvidos) OU pelo único slot resolvido
     // (o outro é "3º (Grupos ...)" / "Vencedor do Jogo N", que não vem da classificação) —
     // o jogo daquele time já traz o adversário real definido no chaveamento.
