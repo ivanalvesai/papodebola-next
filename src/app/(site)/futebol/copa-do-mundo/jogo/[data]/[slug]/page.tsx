@@ -5,6 +5,9 @@ import { notFound } from "next/navigation";
 import { PageBreadcrumb } from "@/components/seo/page-breadcrumb";
 import { LiveMatch } from "@/components/world-cup/live-match";
 import { SportsEventSchema } from "@/components/seo/sports-event-schema";
+import { getMatchRecap } from "@/lib/match-recaps";
+import { getArticleBySlugPayload } from "@/lib/data/articles-payload";
+import { articleHref } from "@/lib/config";
 import {
   resolveWorldCupMatch,
   getMatchDetail,
@@ -181,6 +184,13 @@ export default async function JogoCopaPage({ params }: { params: Promise<Params>
   if (!fixture) notFound();
   const url = `/futebol/copa-do-mundo/jogo/${data}/${slug}`;
   const upcoming = fixture.timestamp > Date.now() / 1000;
+  // CTA "VEJA COMO FOI": só quando há recap mapeado pra este jogo E o post está PUBLICADO
+  // (getArticleBySlugPayload sem draft → null se rascunho), pra não criar link quebrado.
+  const recap = getMatchRecap(fixture.id);
+  const recapHref =
+    recap && (await getArticleBySlugPayload(recap.slug).catch(() => null))
+      ? articleHref(recap.category, recap.slug)
+      : null;
 
   return (
     <div className="mx-auto max-w-[1240px] px-4 py-6">
@@ -200,6 +210,16 @@ export default async function JogoCopaPage({ params }: { params: Promise<Params>
           · {faseSimples(fixture.round)} · Copa do Mundo 2026
         </span>
       </h1>
+
+      {recapHref && (
+        <Link
+          href={recapHref}
+          className="mb-4 flex items-center justify-between gap-3 rounded-lg border border-green/40 bg-green/5 px-4 py-3 transition-colors hover:bg-green/10"
+        >
+          <span className="text-sm font-bold uppercase tracking-wide text-green">Veja como foi</span>
+          <span className="text-sm text-text-secondary">Resumo completo do jogo &rarr;</span>
+        </Link>
+      )}
 
       {upcoming && <PreGameInfo fixture={fixture} />}
 

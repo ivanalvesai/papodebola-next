@@ -24,6 +24,7 @@ export interface WorldCupFixture {
   away: string;
   timestamp: number;
   round: number;
+  winnerId?: number; // time vencedor (quando o confronto já encerrou no cuptrees)
 }
 
 // Lista achatada de todos os jogos de grupo (fixtures estáveis -> TTL longo).
@@ -113,6 +114,10 @@ async function fetchWorldCupKnockoutFixturesLive(): Promise<WorldCupFixture[]> {
       const evRaw = Array.isArray(b.events) ? b.events[0] : null;
       const ev = typeof evRaw === "object" && evRaw ? evRaw.id : evRaw;
       if (ht?.id && at?.id && typeof ev === "number" && confirmed.has(ht.id) && confirmed.has(at.id)) {
+        // Vencedor (quando o confronto já encerrou) → propaga o time pra próxima fase.
+        const winnerId = b.finished
+          ? p.find((x: any) => x?.winner)?.team?.id ?? undefined
+          : undefined;
         out.push({
           id: ev,
           homeId: ht.id,
@@ -121,6 +126,7 @@ async function fetchWorldCupKnockoutFixturesLive(): Promise<WorldCupFixture[]> {
           away: translateCountry(at.name || ""),
           timestamp: b.seriesStartDateTimestamp || 0,
           round: KNOCKOUT_ROUND_BY_ORDER[rnd.order] || 6,
+          winnerId,
         });
       }
     }
