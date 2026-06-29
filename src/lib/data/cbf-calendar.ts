@@ -169,6 +169,14 @@ export async function getCBFTodayMatches(): Promise<CBFMatch[]> {
 // Ligas BR cobertas pela CBF que têm página de lance-a-lance (Sofascore).
 const CBF_HREF_LEAGUES = ["brasileirao-serie-a", "brasileirao-serie-b", "copa-do-brasil"];
 
+type ChampionshipMatchLite = {
+  homeId: number;
+  awayId: number;
+  home: string;
+  away: string;
+  timestamp: number;
+};
+
 export async function getCBFUpcomingMatches(): Promise<CBFMatch[]> {
   const calendar = await getCBFCalendar();
   const allUpcoming: CBFMatch[] = [];
@@ -181,38 +189,59 @@ export async function getCBFUpcomingMatches(): Promise<CBFMatch[]> {
 
   const upcoming = allUpcoming.sort((a, b) => a.timestamp - b.timestamp).slice(0, 20);
 
-  // Enriquece cada jogo com o href do lance-a-lance (Sofascore). Casa pelo PAR DE IDS
-  // do time (os nomes da CBF divergem dos do Sofascore, que é a base da página de jogo),
-  // garantindo que o link resolve. Sem match → fica sem href (card não-clicável, sem regressão).
+  // Enriquece cada jogo com o href do lance-a-lance (Sofascore, base da página de jogo).
+  // NÃO casa pelo par de ids exato: o feed da CBF manda nomes ambíguos (ex: "Botafogo"
+  // sem "-SP" → getTeamId resolve pro Botafogo-RJ/1958 em vez do Botafogo-SP/1979) e os
+  // nomes divergem do Sofascore. Em vez disso, dentro da MESMA liga e MESMA data, casa o
+  // jogo do campeonato que compartilha PELO MENOS UM id de time com o jogo da CBF. O
+  // escopo por liga evita pegar o "outro" Botafogo, e basta um lado resolver certo (o CRB
+  // resolve) pra achar o confronto. Sem match → fica sem href (card não-clicável).
   try {
     const { getChampionshipData } = await import("./championship");
     const { matchDateSlug, matchPairSlug } = await import("@/lib/world-cup-match-url");
-    const index = new Map<string, string>();
+    const nameToSlug = new Map(CBF_CHAMPIONSHIPS.map((c) => [c.name, c.slug]));
     const datas = await Promise.all(
       CBF_HREF_LEAGUES.map((s) => getChampionshipData(s).catch(() => null))
     );
+    // slug -> (dateSlug -> jogos do campeonato naquele dia)
+    const byLeagueDate = new Map<string, Map<string, ChampionshipMatchLite[]>>();
     CBF_HREF_LEAGUES.forEach((slug, i) => {
       const data = datas[i];
       if (!data) return;
+      const byDate = new Map<string, ChampionshipMatchLite[]>();
       for (const ms of Object.values(data.matchesByRound)) {
         for (const m of ms) {
           if (!m.homeId || !m.awayId) continue;
-          index.set(
-            `${m.homeId}-${m.awayId}`,
-            `/futebol/${slug}/jogo/${matchDateSlug(m.timestamp)}/${matchPairSlug(
-              m.homeId,
-              m.awayId,
-              m.home,
-              m.away
-            )}`
-          );
+          const ds = matchDateSlug(m.timestamp);
+          const list = byDate.get(ds) || [];
+          list.push({ homeId: m.homeId, awayId: m.awayId, home: m.home, away: m.away, timestamp: m.timestamp });
+          byDate.set(ds, list);
         }
       }
+      byLeagueDate.set(slug, byDate);
     });
+
     for (const u of upcoming) {
-      if (u.homeId && u.awayId) {
-        const href = index.get(`${u.homeId}-${u.awayId}`);
-        if (href) u.href = href;
+      const slug = nameToSlug.get(u.championship || "");
+      if (!slug) continue;
+      const ids = [u.homeId, u.awayId].filter((x): x is number => !!x);
+      if (!ids.length || !u.timestamp) continue;
+      const cands = byLeagueDate.get(slug)?.get(matchDateSlug(u.timestamp)) || [];
+      const hit = cands.find((m) => ids.includes(m.homeId) || ids.includes(m.awayId));
+      if (hit) {
+        u.href = `/futebol/${slug}/jogo/${matchDateSlug(hit.timestamp)}/${matchPairSlug(
+          hit.homeId,
+          hit.awayId,
+          hit.home,
+          hit.away
+        )}`;
+        // Corrige os ids pelo confronto real do campeonato → o escudo (/api/team-img/{id})
+        // passa a vir do time certo (ex: Botafogo-SP/1979, não Botafogo-RJ/1958). Alinha
+        // mando pelo id que casou (CBF e Sofascore podem inverter casa/fora).
+        const mid = ids.find((id) => id === hit.homeId || id === hit.awayId)!;
+        const sameOrder = (u.homeId === mid) === (hit.homeId === mid);
+        u.homeId = sameOrder ? hit.homeId : hit.awayId;
+        u.awayId = sameOrder ? hit.awayId : hit.homeId;
       }
     }
   } catch {
