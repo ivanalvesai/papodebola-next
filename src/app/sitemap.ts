@@ -9,6 +9,7 @@ import { getWorldCupFixtures } from "@/lib/data/match-detail";
 import { matchDateSlug, matchPairSlug } from "@/lib/world-cup-match-url";
 import { getPayloadTeamSlugs } from "@/lib/data/payload-teams";
 import { getPayloadPageSlugs } from "@/lib/data/payload-pages";
+import { getAuthorSlugs } from "@/lib/data/authors";
 import { getChampionshipData } from "@/lib/data/championship";
 import { getTennisDraw, TENNIS_TOURNAMENTS, tennisMatchHref, type TennisTournamentSlug } from "@/lib/data/tennis";
 
@@ -251,6 +252,15 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     priority: 0.4,
   }));
 
+  // Páginas de autor (/autor/{slug}) — só autores publicados (E-E-A-T).
+  const authorSlugs = await getAuthorSlugs().catch(() => []);
+  const authorPages: MetadataRoute.Sitemap = authorSlugs.map((slug) => ({
+    url: `${BASE}/autor/${slug}`,
+    lastModified: now,
+    changeFrequency: "weekly" as const,
+    priority: 0.4,
+  }));
+
   return [
     ...staticPages,
     ...teamPages,
@@ -258,6 +268,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     ...sportPages,
     ...tennisMatchPages,
     ...payloadPages,
+    ...authorPages,
     ...parceirosPage,
     ...newsCategoryPages,
     ...copaPages,

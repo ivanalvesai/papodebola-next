@@ -71,3 +71,16 @@ build-payload.log
 
 # Artefato local de migration do Payload (ver payload_migrations_recipe)
 Dockerfile.migrate
+
+# Arquivos de trabalho/pesquisa na raiz (versionados por engano via add -A, removidos do tracking)
+/.claude/
+/*.png
+/*.jpeg
+/*.jpg
+/*.csv
+/match.json
+/CALENDARIO-FIFA.md
+/CALENDARIO-FIFA.txt
+/audit-vps.txt
+/disavow-toxico.txt
+/sportsapi.txt

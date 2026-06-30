@@ -94,6 +94,9 @@ function postBodyHtml(p: any): string {
 function mapPost(p: any): Article {
   const tags = (p.tags || []).map((x: any) => cleanTag(x.tag)).filter(Boolean);
   const bodyHtml = postBodyHtml(p);
+  // Autor: prefere o PERFIL relacionado (authorProfile, populado com depth>=1) — dá nome
+  // + slug pro byline linkável e pra autoria no SEO. Cai pro texto livre (legado).
+  const ap = p.authorProfile && typeof p.authorProfile === "object" ? p.authorProfile : null;
   const cover = typeof p.cover === "object" && p.cover ? p.cover : null;
   // Prefere a versão "card" (WebP 800px); cai pro original. URL absoluta (display + OG).
   const coverUrl = cover?.sizes?.card?.url || cover?.url || "";
@@ -113,7 +116,8 @@ function mapPost(p: any): Article {
     category,
     tags,
     team: tags[0] || null,
-    author: p.author || "Redação",
+    author: ap?.name || p.author || "Redação",
+    authorSlug: ap?.slug || undefined,
     pubDate,
     createdAt: pubDate,
     url: (p.pdbLink || "").trim() || articleHref(category, p.slug),
@@ -180,5 +184,29 @@ export async function getArticleBySlugPayload(
     return res.docs[0] ? mapPost(res.docs[0]) : null;
   } catch {
     return null;
+  }
+}
+
+// Posts PUBLICADOS de um autor (pelo id do perfil em `authors`). Usado na página do
+// autor (/autor/[slug]) pra listar os artigos dele. Vazio em erro/no build.
+export async function getArticlesByAuthorId(
+  authorId: number,
+  perPage = 12
+): Promise<Article[]> {
+  if (process.env.NEXT_PHASE === "phase-production-build") return [];
+  try {
+    const payload = await getClient();
+    const res = await payload.find({
+      collection: "posts",
+      where: {
+        and: [{ _status: { equals: "published" } }, { authorProfile: { equals: authorId } }],
+      },
+      sort: "-publishedDate",
+      limit: perPage,
+      depth: 1,
+    });
+    return res.docs.map(mapPost);
+  } catch {
+    return [];
   }
 }

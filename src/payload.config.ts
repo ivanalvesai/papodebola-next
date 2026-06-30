@@ -516,6 +516,16 @@ export default buildConfig({
         },
         { name: "author", type: "text", defaultValue: "Redação" },
         {
+          name: "authorProfile",
+          type: "relationship",
+          relationTo: "authors",
+          label: "Autor (perfil)",
+          admin: {
+            description:
+              "Selecione o autor cadastrado. Definido → o byline do post vira link para /autor/{slug} e a autoria entra no SEO. Vazio → usa o texto acima.",
+          },
+        },
+        {
           name: "publishedDate",
           type: "date",
           admin: { date: { pickerAppearance: "dayAndTime" } },
@@ -534,6 +544,76 @@ export default buildConfig({
           type: "number",
           index: true,
           admin: { readOnly: true, description: "ID de origem no WordPress (import)" },
+        },
+      ],
+    },
+    {
+      slug: "authors",
+      labels: { singular: "Autor", plural: "Autores" },
+      admin: {
+        useAsTitle: "name",
+        defaultColumns: ["name", "slug", "role", "_status"],
+        description:
+          "Autores/colunistas. Cada autor publica a página /autor/{slug} (bio + artigos) e pode ser ligado aos posts (byline linkável + autoria no SEO). Criar autor novo = 1 entrada aqui. Salvou = no ar.",
+      },
+      // Sem drafts (publica direto ao salvar): mantém o schema enxuto (uma tabela só).
+      access: { read: () => true },
+      // Editar/publicar um autor revalida a página dele na hora.
+      hooks: {
+        afterChange: [
+          /* eslint-disable-next-line @typescript-eslint/no-explicit-any */
+          ({ doc }: any) => {
+            try {
+              if (doc?.slug) revalidatePath(`/autor/${doc.slug}`);
+            } catch {
+              /* fora de contexto de request (build/cli) */
+            }
+            return doc;
+          },
+        ],
+      },
+      fields: [
+        { name: "name", type: "text", required: true, label: "Nome" },
+        {
+          name: "slug",
+          type: "text",
+          required: true,
+          unique: true,
+          index: true,
+          admin: { description: "URL final: /autor/{slug} (ex.: ivan-alves)" },
+        },
+        {
+          name: "role",
+          type: "text",
+          label: "Cargo / função",
+          admin: { description: 'Ex.: "Repórter de futebol", "Editor-chefe"' },
+        },
+        { name: "photo", type: "upload", relationTo: "media", label: "Foto" },
+        {
+          name: "bio",
+          type: "richText",
+          label: "Biografia",
+          editor: lexicalEditor(),
+          admin: { description: "Quem é o autor, experiência, especialidade (ajuda no E-E-A-T)." },
+        },
+        {
+          name: "social",
+          type: "group",
+          label: "Redes e contato",
+          fields: [
+            { name: "twitter", type: "text", label: "Twitter/X (URL)" },
+            { name: "instagram", type: "text", label: "Instagram (URL)" },
+            { name: "linkedin", type: "text", label: "LinkedIn (URL)" },
+            { name: "email", type: "text", label: "E-mail" },
+          ],
+        },
+        {
+          name: "seo",
+          type: "group",
+          fields: [
+            { name: "metaTitle", type: "text" },
+            { name: "metaDescription", type: "textarea" },
+          ],
         },
       ],
     },
