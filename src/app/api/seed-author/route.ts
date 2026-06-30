@@ -52,7 +52,6 @@ const AUTHOR = {
     metaDescription:
       "Perfil e artigos de Ivan Alves, cofundador e editor do Papo de Bola. Cobertura de futebol brasileiro e mundial.",
   },
-  _status: "published",
 };
 
 async function handle(req: Request) {
@@ -67,7 +66,6 @@ async function handle(req: Request) {
     collection: "authors",
     where: { slug: { equals: AUTHOR.slug } },
     limit: 1,
-    draft: true,
   });
   let author;
   if (existing.docs[0]) {

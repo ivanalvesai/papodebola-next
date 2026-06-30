@@ -1,0 +1,5 @@
+curl --request GET \
+	--url https://allsportsapi2.p.rapidapi.com/api/american-football/player/853680/image \
+	--header 'Content-Type: application/json' \
+	--header 'x-rapidapi-host: allsportsapi2.p.rapidapi.com' \
+	--header 'x-rapidapi-key: b46d00e4d2mshf5f1ff9d60f4a0dp17c20ajsnaf486faf891a'

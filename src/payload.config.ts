@@ -554,12 +554,10 @@ export default buildConfig({
         useAsTitle: "name",
         defaultColumns: ["name", "slug", "role", "_status"],
         description:
-          "Autores/colunistas. Cada autor publica a página /autor/{slug} (bio + artigos) e pode ser ligado aos posts (byline linkável + autoria no SEO). Criar autor novo = 1 entrada aqui.",
+          "Autores/colunistas. Cada autor publica a página /autor/{slug} (bio + artigos) e pode ser ligado aos posts (byline linkável + autoria no SEO). Criar autor novo = 1 entrada aqui. Salvou = no ar.",
       },
-      versions: { drafts: true, maxPerDoc: 10 },
-      access: {
-        read: ({ req: { user } }) => (user ? true : { _status: { equals: "published" } }),
-      },
+      // Sem drafts (publica direto ao salvar): mantém o schema enxuto (uma tabela só).
+      access: { read: () => true },
       // Editar/publicar um autor revalida a página dele na hora.
       hooks: {
         afterChange: [

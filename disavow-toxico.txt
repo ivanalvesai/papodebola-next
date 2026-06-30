@@ -1,0 +1,14 @@
+# Disavow Papo de Bola — dominios toxicos (link farms / lojas de backlink)
+# Gerado 2026-06-16 a partir de backlinks-toxico.csv. Subir em search.google.com/search-console/disavow-links
+domain:netvouz.com
+domain:bye.fyi
+domain:maisev.com
+domain:topsimilarsites.com
+domain:urlm.com.br
+domain:smiletic.com
+domain:gottod.com
+domain:findit.co.in
+domain:addurl.in
+domain:realitygoal.com.ar
+domain:backlinkshop.shop
+domain:backlinkvault.shop

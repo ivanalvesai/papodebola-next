@@ -14,15 +14,11 @@ type Params = { slug: string };
 
 export async function generateMetadata({
   params,
-  searchParams,
 }: {
   params: Promise<Params>;
-  searchParams: Promise<Record<string, string | string[] | undefined>>;
 }): Promise<Metadata> {
   const { slug } = await params;
-  const sp = await searchParams;
-  const draft = sp?.previewSecret === process.env.CRON_SECRET;
-  const author = await getAuthorBySlug(slug, draft);
+  const author = await getAuthorBySlug(slug);
   if (!author) return {};
   const title = author.seo.metaTitle || `${author.name}${author.role ? ` — ${author.role}` : ""} | Papo de Bola`;
   const description =
@@ -32,22 +28,13 @@ export async function generateMetadata({
     title,
     description,
     alternates: { canonical: `/autor/${slug}` },
-    robots: draft ? { index: false, follow: false } : undefined,
   };
 }
 
-export default async function AutorPage({
-  params,
-  searchParams,
-}: {
-  params: Promise<Params>;
-  searchParams: Promise<Record<string, string | string[] | undefined>>;
-}) {
+export default async function AutorPage({ params }: { params: Promise<Params> }) {
   const { slug } = await params;
-  const sp = await searchParams;
-  const draft = sp?.previewSecret === process.env.CRON_SECRET;
 
-  const author = await getAuthorBySlug(slug, draft);
+  const author = await getAuthorBySlug(slug);
   if (!author) notFound();
 
   const posts = await getArticlesByAuthorId(author.id, 12).catch(() => []);

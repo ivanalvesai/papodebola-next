@@ -44,19 +44,15 @@ function mapAuthor(d: any): AuthorProfile {
   };
 }
 
-// Um autor pelo slug. draft=true (preview do /cms) ignora o filtro de publicado.
+// Um autor pelo slug. (Sem drafts: o autor é público assim que salvo no /cms.)
 export const getAuthorBySlug = cache(
-  async (slug: string, draft = false): Promise<AuthorProfile | null> => {
+  async (slug: string): Promise<AuthorProfile | null> => {
     if (process.env.NEXT_PHASE === "phase-production-build") return null;
     try {
       const payload = await getPayload({ config });
       const res = await payload.find({
         collection: "authors",
-        where: draft
-          ? { slug: { equals: slug } }
-          : { and: [{ slug: { equals: slug } }, { _status: { equals: "published" } }] },
-        draft,
-        overrideAccess: draft,
+        where: { slug: { equals: slug } },
         limit: 1,
         depth: 1,
       });
@@ -67,13 +63,12 @@ export const getAuthorBySlug = cache(
   }
 );
 
-// Slugs dos autores publicados (pro sitemap).
+// Slugs dos autores (pro sitemap).
 export const getAuthorSlugs = cache(async (): Promise<string[]> => {
   try {
     const payload = await getPayload({ config });
     const res = await payload.find({
       collection: "authors",
-      where: { _status: { equals: "published" } },
       limit: 200,
       depth: 0,
       pagination: false,

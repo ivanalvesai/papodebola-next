@@ -1,0 +1,189 @@
+#!/usr/bin/env bash
+# ==========================================================================
+# audit-vps.sh - Diagnostico READ-ONLY de postura de seguranca de uma VPS.
+#
+# NAO altera NADA no servidor. So fotografa o estado atual e te diz o que
+# olhar em cada caso. Seguro rodar como root ou com sudo.
+#
+# COMO RODAR:
+#   sudo bash audit-vps.sh
+#   sudo bash audit-vps.sh | tee audit-$(date +%F).txt   # salva o relatorio
+#
+# Cada bloco abaixo tem um comentario "O QUE OLHAR" explicando o que e bom
+# e qual e o sinal de alerta (procure por 🚩 / ALERTA nos comentarios).
+# ==========================================================================
+set +e
+line(){ printf '\n\033[1;36m=== %s ===\033[0m\n' "$1"; }
+
+
+# --------------------------------------------------------------------------
+line "1. IDENTIDADE & SISTEMA"
+# O QUE OLHAR:
+#   - Distro suportada (Debian/Ubuntu atual). Versao antiga = sem patches.
+#   - uptime de centenas de dias = kernel rodando sem reboot/patch ha muito.
+#   - Disco "/" com folga. Disco cheio derruba logs, auditd e o proprio app.
+# --------------------------------------------------------------------------
+uname -a
+cat /etc/os-release 2>/dev/null | head -3
+uptime
+free -h
+df -h / | tail -1
+echo "Voce esta logado como: $(id)"
+
+
+# --------------------------------------------------------------------------
+line "2. SSH - superficie de entrada numero 1"
+# O QUE OLHAR (config ideal):
+#   PermitRootLogin no
+#   PasswordAuthentication no   <- so chave, derruba 99% do brute-force
+#   PubkeyAuthentication yes
+#   MaxAuthTries 3
+#   PermitEmptyPasswords no
+#   Port custom (ex: 1822) reduz scan automatico
+# 🚩 ALERTA: root habilitado + senha habilitada = porta escancarada p/ bots.
+# --------------------------------------------------------------------------
+grep -RhiE "^(Port|PermitRootLogin|PasswordAuthentication|PubkeyAuthentication|MaxAuthTries|PermitEmptyPasswords|AllowUsers|AllowGroups)" \
+  /etc/ssh/sshd_config /etc/ssh/sshd_config.d/*.conf 2>/dev/null
+echo "--- chaves autorizadas por usuario ---"
+for h in /root /home/*; do
+  [ -f "$h/.ssh/authorized_keys" ] && echo "$h: $(grep -c . "$h/.ssh/authorized_keys") chave(s)"
+done
+
+
+# --------------------------------------------------------------------------
+line "3. USUARIOS - quem tem shell e quem e root"
+# O QUE OLHAR:
+#   - Apenas 'root' deve ter UID 0. Um 2o nome com UID 0 = BACKDOOR.
+#   - Grupo sudo deve ser enxuto, so quem voce reconhece.
+# 🚩 ALERTA CRITICO: qualquer conta com senha VAZIA no /etc/shadow.
+# --------------------------------------------------------------------------
+echo "--- com shell de login ---"
+grep -E "/(bash|sh|zsh)$" /etc/passwd
+echo "--- UID 0 (devem ser SO root) ---"
+awk -F: '$3==0{print $1}' /etc/passwd
+echo "--- membros do grupo sudo ---"
+getent group sudo
+echo "--- contas com senha vazia (PERIGO) ---"
+awk -F: '($2==""){print $1}' /etc/shadow 2>/dev/null
+
+
+# --------------------------------------------------------------------------
+line "4. APP - quem roda o que, como quem"
+# O QUE OLHAR:
+#   - O app (node/pm2/python/nginx-worker) deve rodar como usuario DEDICADO,
+#     nunca como root.
+# 🚩 ALERTA: app ou PM2 rodando como root = um RCE no app vira root no host.
+# --------------------------------------------------------------------------
+ps -eo user,pid,cmd --sort=user | grep -vE "^(root)?\s+[0-9]+ \[" | head -25
+command -v pm2 >/dev/null && pm2 list 2>/dev/null
+echo "--- servicos systemd ativos ---"
+systemctl list-units --type=service --state=running 2>/dev/null | head -25
+
+
+# --------------------------------------------------------------------------
+line "5. REDE - o que esta escutando e em qual interface"
+# O QUE OLHAR:
+#   - Servicos internos (DB, redis, app backend) devem bindar em 127.0.0.1.
+#   - So 22(ou custom)/80/443 deveriam aparecer em 0.0.0.0 / :::.
+#   - A linha 'default' revela a INTERFACE EXTERNA (eth0/ens192/etc) - anote,
+#     ela e usada nas regras de DOCKER-USER e egress depois.
+# 🚩 ALERTA: DB (3306/5432/6379/27017) ou container em 0.0.0.0 = exposto a
+#   internet inteira. Furo mais comum e mais explorado em VPS.
+# --------------------------------------------------------------------------
+ip -4 route | grep default
+echo "--- portas em LISTEN (atencao as 0.0.0.0 / :::) ---"
+ss -tlnp
+command -v docker >/dev/null && { echo "--- containers publicando portas ---"; docker ps --format "table {{.Names}}\t{{.Ports}}"; }
+
+
+# --------------------------------------------------------------------------
+line "6. FIREWALL - esta aberto ou fechado?"
+# O QUE OLHAR (config ideal):
+#   - INPUT com politica DROP + regras explicitas p/ lo, established, 22/80/443.
+#   - DOCKER-USER bloqueando trafego externo aos containers publicados.
+#     (IMPORTANTE: Docker fura UFW/iptables INPUT normal, por isso a chain
+#      DOCKER-USER e essencial p/ realmente proteger containers.)
+# 🚩 ALERTA: INPUT com politica ACCEPT e sem regras = host completamente nu.
+# --------------------------------------------------------------------------
+echo "--- politica e regras INPUT ---"
+iptables -L INPUT -n --line-numbers 2>&1 | head -20
+echo "--- DOCKER-USER (controla acesso externo a containers) ---"
+iptables -L DOCKER-USER -n --line-numbers 2>&1 | head -10
+echo "--- OUTPUT (egress) ---"
+iptables -L OUTPUT -n --line-numbers 2>&1 | head -10
+command -v ufw >/dev/null && ufw status verbose 2>/dev/null
+nft list ruleset 2>/dev/null | head -5
+
+
+# --------------------------------------------------------------------------
+line "7. PACOTES DE SEGURANCA - o que ja esta instalado"
+# O QUE OLHAR (idealmente todos presentes e ativos):
+#   - fail2ban           -> bane IP apos N falhas de login (anti brute-force)
+#   - auditd             -> trilha de auditoria (quem fez o que)
+#   - unattended-upgrades-> patches de seguranca automaticos
+#   - iptables-persistent-> regras de firewall sobrevivem reboot
+# 🚩 ALERTA: nenhum instalado = sem protecao a brute-force, sem rastreio,
+#   sem patch automatico.
+# --------------------------------------------------------------------------
+dpkg -l 2>/dev/null | grep -E "fail2ban|auditd|unattended-upgrades|iptables-persistent|apparmor" | awk '{print $2, $3}'
+echo "--- fail2ban jails ativos ---"
+command -v fail2ban-client >/dev/null && fail2ban-client status 2>/dev/null
+echo "--- auditd ---"
+command -v auditctl >/dev/null && { auditctl -s 2>/dev/null | head -2; echo "regras carregadas: $(auditctl -l 2>/dev/null | wc -l)"; }
+
+
+# --------------------------------------------------------------------------
+line "8. UPDATES PENDENTES"
+# O QUE OLHAR:
+#   - 0 pacotes de seguranca pendentes = sistema em dia.
+#   - Arquivo /var/run/reboot-required = kernel atualizado, falta reiniciar.
+# 🚩 ALERTA: muitos pacotes de seguranca parados = CVEs conhecidos abertos.
+# --------------------------------------------------------------------------
+apt-get -s upgrade 2>/dev/null | grep -E "^Inst" | wc -l | xargs echo "pacotes a atualizar:"
+apt-get -s upgrade 2>/dev/null | grep -i security | wc -l | xargs echo "  dos quais de seguranca:"
+ls /var/run/reboot-required 2>/dev/null && echo ">>> REBOOT PENDENTE (kernel atualizado)"
+
+
+# --------------------------------------------------------------------------
+line "9. PERSISTENCIA SUSPEITA - cron & timers"
+# O QUE OLHAR:
+#   - Voce deve RECONHECER cada entrada. Crons legitimos do seu projeto OK.
+# 🚩 ALERTA (sinal classico de malware/minerador): cron que baixa script de
+#   URL, usa base64, 'curl|bash', 'wget|sh', nomes aleatorios, ou roda de
+#   /tmp /dev/shm /var/tmp. Mineradores costumam se reinstalar via cron.
+# --------------------------------------------------------------------------
+echo "--- crontab root ---"; crontab -l 2>/dev/null
+echo "--- /etc/cron.d e afins ---"; ls -la /etc/cron.d /etc/cron.hourly /etc/cron.daily 2>/dev/null
+echo "--- crontabs de usuarios ---"; ls -la /var/spool/cron/crontabs 2>/dev/null
+echo "--- systemd timers ---"; systemctl list-timers --all --no-pager 2>/dev/null | head -15
+
+
+# --------------------------------------------------------------------------
+line "10. LOGINS - quem entrou recentemente"
+# O QUE OLHAR:
+#   - IPs conhecidos (seu range / IPs confiaveis).
+# 🚩 ALERTA: enxurrada de 'failed password'/'invalid user' de IPs estrangeiros
+#   = brute-force em andamento. Um login BEM-SUCEDIDO de IP desconhecido =
+#   possivel comprometimento, investigar imediatamente.
+# --------------------------------------------------------------------------
+last -a 2>/dev/null | head -15
+echo "--- falhas de auth recentes (tentativas de brute-force) ---"
+grep -aiE "failed password|invalid user" /var/log/auth.log 2>/dev/null | tail -10
+journalctl -u ssh --no-pager 2>/dev/null | grep -iE "failed|invalid" | tail -10
+
+
+# --------------------------------------------------------------------------
+line "EXTRA. ARQUIVOS PERIGOSOS (bonus)"
+# O QUE OLHAR:
+#   - Binarios SUID/SGID alem do padrao do sistema podem ser escalada de priv.
+#   - Arquivos executaveis em /tmp /dev/shm = tipico de malware.
+# --------------------------------------------------------------------------
+echo "--- world-writable em diretorios sensiveis ---"
+find /etc /usr/local/bin -maxdepth 2 -perm -0002 -type f 2>/dev/null | head -10
+echo "--- executaveis em /tmp /dev/shm /var/tmp (suspeito) ---"
+find /tmp /dev/shm /var/tmp -maxdepth 2 -type f -executable 2>/dev/null | head -10
+echo "--- SUID root (compare com baseline do sistema) ---"
+find / -xdev -perm -4000 -type f 2>/dev/null | head -20
+
+
+line "FIM - nada foi alterado."
