@@ -514,7 +514,14 @@ export default buildConfig({
           type: "code",
           admin: { language: "html", description: "Corpo em HTML (legado / fallback)" },
         },
-        { name: "author", type: "text", defaultValue: "Redação" },
+        // Legado (texto livre). Escondido do editor: usar "Autor (perfil)" abaixo.
+        // Mantido no schema/API como fallback dos ~400 posts antigos que só têm o texto.
+        {
+          name: "author",
+          type: "text",
+          defaultValue: "Redação",
+          admin: { hidden: true },
+        },
         {
           name: "authorProfile",
           type: "relationship",
