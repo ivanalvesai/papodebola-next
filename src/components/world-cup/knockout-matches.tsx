@@ -35,6 +35,9 @@ function KnockoutCard({ m }: { m: ChampionshipMatch }) {
   const awayScore = ls?.awayScore ?? m.awayScore;
   const statusDesc = ls?.statusDesc || m.statusDesc;
   const started = homeScore !== null && awayScore !== null;
+  // Pênaltis (mata-mata) vêm do cuptrees no `m`; o placar ao vivo (`ls`) não os carrega,
+  // então só mostra a disputa quando NÃO está ao vivo (jogo encerrado nos pênaltis).
+  const showPens = !isLive && started && m.homePens != null && m.awayPens != null;
   const t = br(m.timestamp);
   const href = worldCupMatchHref(m.timestamp, m.homeId, m.awayId, m.home, m.away);
 
@@ -52,11 +55,21 @@ function KnockoutCard({ m }: { m: ChampionshipMatch }) {
           <TeamLogo teamId={m.homeId} size={26} />
         </div>
         <span
-          className={`min-w-[60px] shrink-0 whitespace-nowrap px-2 text-center text-base font-bold ${
+          className={`min-w-[64px] shrink-0 whitespace-nowrap px-2 text-center text-base font-bold ${
             isLive ? "text-red" : "text-text-primary"
           }`}
         >
-          {started ? `${homeScore} X ${awayScore}` : "X"}
+          {started ? (
+            <>
+              {homeScore}
+              {showPens && <span className="text-[11px] font-semibold text-text-muted"> ({m.homePens})</span>}
+              <span className="px-1">X</span>
+              {showPens && <span className="text-[11px] font-semibold text-text-muted">({m.awayPens}) </span>}
+              {awayScore}
+            </>
+          ) : (
+            "X"
+          )}
         </span>
         <div className="flex min-w-0 items-center gap-2">
           <TeamLogo teamId={m.awayId} size={26} />
