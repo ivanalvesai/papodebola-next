@@ -7,6 +7,8 @@ export type MatchRecap = { category: string; slug: string };
 const MATCH_RECAPS: Record<number, MatchRecap> = {
   // Brasil 2 x 1 Japão — 16-avos da Copa do Mundo 2026 (29/06)
   12813012: { category: "Copa do Mundo", slug: "brasil-2-x-1-japao-oitavas-copa-2026" },
+  // Alemanha 1 (3) x (4) 1 Paraguai — Paraguai nos pênaltis, 16-avos (29/06)
+  12813014: { category: "Copa do Mundo", slug: "paraguai-x-alemanha-penaltis-copa-do-mundo-2026" },
 };
 
 export function getMatchRecap(eventId: number | undefined | null): MatchRecap | null {
