@@ -13,6 +13,7 @@ import {
   ArrowDown,
   Volume2,
   VolumeX,
+  Target,
 } from "lucide-react";
 import type {
   MatchDetail,
@@ -22,6 +23,7 @@ import type {
   MatchStatItem,
   TeamLineup,
   LineupPlayer,
+  ShootoutKick,
 } from "@/lib/data/match-detail";
 import type { StandingsGroup, StandingRow } from "@/types/standings";
 
@@ -136,6 +138,8 @@ function Header({
   const minute = liveMinute(event);
   const cd = mounted && event.statusType === "notstarted" ? countdown(event.startTimestamp) : null;
   const showScore = event.statusType !== "notstarted";
+  const hasPens = event.homePens != null && event.awayPens != null;
+  const penWinner = event.winnerCode === 1 ? event.home : event.winnerCode === 2 ? event.away : null;
 
   return (
     <div className="relative rounded-lg border border-border-custom bg-card-bg p-5">
@@ -176,11 +180,20 @@ function Header({
         </div>
         <div className="px-3 text-center">
           {showScore ? (
-            <div className="text-4xl font-extrabold tabular-nums text-text-primary">
-              {event.homeScore ?? 0}
-              <span className="px-2 text-text-muted">×</span>
-              {event.awayScore ?? 0}
-            </div>
+            <>
+              <div className="text-4xl font-extrabold tabular-nums text-text-primary">
+                {event.homeScore ?? 0}
+                {hasPens && <span className="align-middle text-xl text-text-muted"> ({event.homePens})</span>}
+                <span className="px-2 text-text-muted">×</span>
+                {hasPens && <span className="align-middle text-xl text-text-muted">({event.awayPens}) </span>}
+                {event.awayScore ?? 0}
+              </div>
+              {hasPens && penWinner && (
+                <div className="mt-1 text-[11px] font-bold uppercase tracking-wide text-green">
+                  {penWinner} venceu nos pênaltis
+                </div>
+              )}
+            </>
           ) : (
             <div className="text-2xl font-bold text-text-muted">×</div>
           )}
@@ -791,6 +804,114 @@ function MatchRecap({ event, incidents, competition }: { event: MatchEvent; inci
   );
 }
 
+// ---- disputa de pênaltis ----
+// Padrão de TODO jogo que vai para os pênaltis (Copa ou campeonato): ⚽ pro acerto e
+// ❌ pro erro, na ordem das cobranças, com o batedor e o motivo (defesa, para fora...).
+function shootoutOutcome(k: ShootoutKick): string {
+  if (k.scored) return "Converteu";
+  switch (k.reason) {
+    case "goalkeeperSave":
+      return "Defesa do goleiro";
+    case "offTarget":
+      return "Para fora";
+    case "post":
+    case "hitWoodwork":
+      return "Na trave";
+    default:
+      return "Perdeu";
+  }
+}
+
+function KickMark({ scored, size = "sm" }: { scored: boolean; size?: "sm" | "xs" }) {
+  if (scored)
+    return (
+      <span className={size === "sm" ? "text-sm leading-none" : "text-xs leading-none"} title="Convertido">
+        ⚽
+      </span>
+    );
+  return (
+    <span
+      className={`inline-flex items-center justify-center rounded-full bg-red font-bold leading-none text-white ${
+        size === "sm" ? "h-4 w-4 text-[10px]" : "h-3.5 w-3.5 text-[9px]"
+      }`}
+      title="Perdido"
+    >
+      ✕
+    </span>
+  );
+}
+
+function TeamShootoutStrip({
+  teamId,
+  name,
+  kicks,
+}: {
+  teamId: number;
+  name: string;
+  kicks: ShootoutKick[];
+}) {
+  const made = kicks.filter((k) => k.scored).length;
+  return (
+    <div className="flex items-center gap-2">
+      <TeamLogo teamId={teamId} size={20} />
+      <span className="w-20 shrink-0 truncate text-xs font-semibold text-text-primary sm:w-28">{name}</span>
+      <div className="flex flex-1 flex-wrap items-center gap-1">
+        {kicks.map((k) => (
+          <KickMark key={k.sequence} scored={k.scored} />
+        ))}
+      </div>
+      <span className="shrink-0 text-sm font-bold tabular-nums text-text-primary">{made}</span>
+    </div>
+  );
+}
+
+function ShootoutSection({ event, kicks }: { event: MatchEvent; kicks: ShootoutKick[] }) {
+  if (!kicks.length) return null;
+  const home = kicks.filter((k) => k.isHome);
+  const away = kicks.filter((k) => !k.isHome);
+  const penWinner = event.winnerCode === 1 ? event.home : event.winnerCode === 2 ? event.away : null;
+  const hi = Math.max(event.homePens ?? 0, event.awayPens ?? 0);
+  const lo = Math.min(event.homePens ?? 0, event.awayPens ?? 0);
+  return (
+    <Section title="Disputa de pênaltis" icon={Target}>
+      <div className="space-y-3">
+        {penWinner && (
+          <p className="text-sm font-semibold text-text-primary">
+            {penWinner} venceu por <span className="tabular-nums">{hi} a {lo}</span> nos pênaltis.
+          </p>
+        )}
+        {/* resumo: a sequência de ⚽/❌ de cada seleção, na ordem das cobranças */}
+        <div className="space-y-2 rounded-lg border border-border-light bg-body/40 p-3">
+          <TeamShootoutStrip teamId={event.homeId} name={event.home} kicks={home} />
+          <TeamShootoutStrip teamId={event.awayId} name={event.away} kicks={away} />
+        </div>
+        {/* detalhe: cada cobrança na ordem real, com o batedor e o resultado */}
+        <ol className="space-y-1">
+          {kicks.map((k) => {
+            const teamId = k.isHome ? event.homeId : event.awayId;
+            return (
+              <li
+                key={k.sequence}
+                className="flex items-center gap-2 border-b border-border-light py-1.5 last:border-0"
+              >
+                <span className="w-5 shrink-0 text-center text-[11px] font-bold tabular-nums text-text-muted">
+                  {k.sequence}
+                </span>
+                <TeamLogo teamId={teamId} size={16} />
+                <KickMark scored={k.scored} size="xs" />
+                <span className="min-w-0 flex-1 truncate text-sm text-text-primary">{k.player || "—"}</span>
+                <span className={`shrink-0 text-xs font-semibold ${k.scored ? "text-green" : "text-red"}`}>
+                  {shootoutOutcome(k)}
+                </span>
+              </li>
+            );
+          })}
+        </ol>
+      </div>
+    </Section>
+  );
+}
+
 // ---- classificação do grupo ----
 function GroupTable({ group, homeId, awayId }: { group: StandingsGroup; homeId: number; awayId: number }) {
   return (
@@ -850,6 +971,7 @@ export function LiveMatch({
   const [incidents, setIncidents] = useState(initial.incidents);
   const [commentary, setCommentary] = useState(initial.commentary);
   const [stats, setStats] = useState(initial.stats);
+  const [shootout, setShootout] = useState(initial.shootout);
   const [mounted, setMounted] = useState(false);
   const [soundOn, setSoundOn] = useState(true);
   const soundOnRef = useRef(true);
@@ -894,6 +1016,7 @@ export function LiveMatch({
       if (Array.isArray(data.incidents)) setIncidents(data.incidents);
       if (Array.isArray(data.commentary)) setCommentary(data.commentary);
       if (Array.isArray(data.stats)) setStats(data.stats);
+      if (Array.isArray(data.shootout)) setShootout(data.shootout);
       return true;
     } catch {
       return false;
@@ -953,6 +1076,8 @@ export function LiveMatch({
       )}
 
       {event.statusType === "finished" && <MatchRecap event={event} incidents={incidents} competition={competition} />}
+
+      <ShootoutSection event={event} kicks={shootout} />
 
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-[300px_minmax(0,1fr)_280px]">
         {/* Esquerda: escalação (+ estatísticas quando a direita é o grupo, ex: Copa) */}

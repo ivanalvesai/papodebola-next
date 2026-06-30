@@ -301,14 +301,27 @@ export interface MatchEvent {
   awayId: number;
   home: string;
   away: string;
-  homeScore: number | null;
+  homeScore: number | null; // placar do tempo normal/prorrogação (NÃO inclui pênaltis)
   awayScore: number | null;
+  // Disputa de pênaltis (quando o jogo foi decidido nas penalidades). null = não houve.
+  homePens: number | null;
+  awayPens: number | null;
+  winnerCode: number | null; // 1 = mandante, 2 = visitante (vencedor do confronto)
   statusType: string; // notstarted | inprogress | finished
   statusDesc: string; // PT-BR
   startTimestamp: number;
   periodStart: number; // currentPeriodStartTimestamp (pra cronômetro)
   live: boolean;
   venue: { stadium: string; city: string; country: string } | null;
+}
+
+// Uma cobrança da disputa de pênaltis (na ordem em que foi batida).
+export interface ShootoutKick {
+  sequence: number;
+  player: string;
+  isHome: boolean;
+  scored: boolean; // true = converteu (⚽); false = perdeu (❌)
+  reason: string; // motivo do erro/acerto (goalkeeperSave | offTarget | post | scored ...)
 }
 
 export interface MatchIncident {
@@ -372,6 +385,7 @@ export interface MatchDetail {
   away: TeamLineup | null;
   lineupsConfirmed: boolean;
   stats: MatchStatItem[];
+  shootout: ShootoutKick[]; // disputa de pênaltis (vazio quando não houve)
 }
 
 // Teto de segurança: nenhum jogo fica "ao vivo" mais que isso depois do apito
@@ -403,14 +417,25 @@ function normalizeEvent(e: any): MatchEvent {
     type = "finished";
   }
 
+  // Placar a exibir: `display` é o placar do tempo normal/prorrogação SEM os pênaltis
+  // (o `current` SOMA as penalidades → mostraria "4 x 5" num 1 x 1 decidido nos pênaltis).
+  // Cai pro `current` quando não há `display` (jogos sem disputa).
+  const hs = e?.homeScore || {};
+  const as = e?.awayScore || {};
+  const homePens = typeof hs.penalties === "number" ? hs.penalties : null;
+  const awayPens = typeof as.penalties === "number" ? as.penalties : null;
+
   return {
     id: e?.id,
     homeId: e?.homeTeam?.id || 0,
     awayId: e?.awayTeam?.id || 0,
     home: translateCountry(e?.homeTeam?.name || ""),
     away: translateCountry(e?.awayTeam?.name || ""),
-    homeScore: e?.homeScore?.current ?? null,
-    awayScore: e?.awayScore?.current ?? null,
+    homeScore: hs.display ?? hs.current ?? null,
+    awayScore: as.display ?? as.current ?? null,
+    homePens,
+    awayPens,
+    winnerCode: typeof e?.winnerCode === "number" ? e.winnerCode : null,
     statusType: type,
     statusDesc: translateStatus(e?.status?.description) || "",
     startTimestamp,
@@ -442,6 +467,22 @@ function normalizeIncidents(raw: any): MatchIncident[] {
     awayScore: typeof i?.awayScore === "number" ? i.awayScore : null,
     text: i?.text || null,
   }));
+}
+
+// Extrai a disputa de pênaltis dos incidents (incidentType "penaltyShootout"), na
+// ordem das cobranças (sequence). incidentClass "scored" = converteu; "missed" = perdeu.
+function normalizeShootout(raw: any): ShootoutKick[] {
+  const list: any[] = raw?.incidents || [];
+  return list
+    .filter((i) => i?.incidentType === "penaltyShootout")
+    .map((i) => ({
+      sequence: typeof i?.sequence === "number" ? i.sequence : 0,
+      player: i?.player?.name || "",
+      isHome: !!i?.isHome,
+      scored: i?.incidentClass === "scored",
+      reason: i?.reason || i?.incidentClass || "",
+    }))
+    .sort((a, b) => a.sequence - b.sequence);
 }
 
 function normalizePlayer(p: any): LineupPlayer {
@@ -771,6 +812,7 @@ async function fetchMatchDetailLive(id: number, startHint?: number): Promise<Mat
     away: normalizeLineup(lineRaw?.away),
     lineupsConfirmed: !!lineRaw?.confirmed,
     stats: normalizeStats(statRaw),
+    shootout: normalizeShootout(incRaw),
   };
 }
 
@@ -780,6 +822,7 @@ export interface MatchLive {
   incidents: MatchIncident[];
   commentary: MatchCommentary[];
   stats: MatchStatItem[];
+  shootout: ShootoutKick[];
 }
 
 export async function getMatchLive(id: number, startHint?: number): Promise<MatchLive | null> {
@@ -797,5 +840,6 @@ export async function getMatchLive(id: number, startHint?: number): Promise<Matc
     incidents: normalizeIncidents(incRaw),
     commentary: injectManualCommentary(id, await translateFeed(mergeFeed(normalizeCommentary(commRaw), incRaw))),
     stats: normalizeStats(statRaw),
+    shootout: normalizeShootout(incRaw),
   };
 }

@@ -136,6 +136,9 @@ async function MatchBody({ fixture, url }: { fixture: WorldCupFixture; url: stri
       away: fixture.away,
       homeScore: null,
       awayScore: null,
+      homePens: null,
+      awayPens: null,
+      winnerCode: null,
       statusType: fixture.timestamp > Date.now() / 1000 ? "notstarted" : "inprogress",
       statusDesc: "",
       startTimestamp: fixture.timestamp,
@@ -149,6 +152,7 @@ async function MatchBody({ fixture, url }: { fixture: WorldCupFixture; url: stri
     away: null,
     lineupsConfirmed: false,
     stats: [],
+    shootout: [],
   };
 
   return (
