@@ -178,9 +178,13 @@ export async function getKnockoutFixtures(
           away: fx.away,
           homeId: fx.homeId,
           awayId: fx.awayId,
-          homeScore: null,
-          awayScore: null,
-          status: "notstarted",
+          // Placar/status vêm do cuptrees (o matches/round vem vazio no mata-mata) →
+          // jogo encerrado já mostra placar + "Veja como foi" sem depender do polling.
+          homeScore: fx.homeScore ?? null,
+          awayScore: fx.awayScore ?? null,
+          homePens: fx.homePens ?? null,
+          awayPens: fx.awayPens ?? null,
+          status: fx.status || "notstarted",
           statusDesc: "",
           timestamp: fx.timestamp,
           round: fx.round,

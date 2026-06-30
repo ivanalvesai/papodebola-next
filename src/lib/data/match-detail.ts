@@ -25,6 +25,13 @@ export interface WorldCupFixture {
   timestamp: number;
   round: number;
   winnerId?: number; // time vencedor (quando o confronto já encerrou no cuptrees)
+  // Placar/status do confronto, quando o cuptrees já tem (mata-mata). O `matches/round`
+  // vem vazio no mata-mata, então o placar do card da fase sai DAQUI (sem chamada extra).
+  homeScore?: number | null;
+  awayScore?: number | null;
+  homePens?: number | null; // disputa de pênaltis (null = não houve)
+  awayPens?: number | null;
+  status?: string; // notstarted | inprogress | finished
 }
 
 // Lista achatada de todos os jogos de grupo (fixtures estáveis -> TTL longo).
@@ -75,6 +82,19 @@ async function fetchWorldCupFixturesLive(): Promise<WorldCupFixture[]> {
 // Fase do cuptrees -> "round" distinto dos grupos (1-3): R32=6, R16=7, QF=8, SF=9, Final=10.
 const KNOCKOUT_ROUND_BY_ORDER: Record<number, number> = { 1: 6, 2: 7, 3: 8, 4: 9, 5: 10 };
 
+// Placar de um lado vindo do cuptrees: "1 (3)" -> { score: 1, pen: 3 }; "2" -> { 2, null };
+// vazio/"-" -> { null, null } (jogo não começou).
+function parseCupSide(s: unknown): { score: number | null; pen: number | null } {
+  const nums = String(s ?? "").match(/\d+/g);
+  if (!nums || !nums.length) return { score: null, pen: null };
+  return { score: parseInt(nums[0], 10), pen: nums[1] != null ? parseInt(nums[1], 10) : null };
+}
+function parseCupScore(home: unknown, away: unknown) {
+  const h = parseCupSide(home);
+  const a = parseCupSide(away);
+  return { homeScore: h.score, awayScore: a.score, homePens: h.pen, awayPens: a.pen };
+}
+
 // Confrontos do mata-mata com os DOIS times confirmados (ambos top-2 de um grupo já
 // encerrado, todas as linhas com 3 jogos). Fonte: cuptrees (o bracket). Os slots
 // indefinidos vêm como placeholder ("3A/3B/.." ou "2I") sem team -> ficam de fora.
@@ -118,6 +138,11 @@ async function fetchWorldCupKnockoutFixturesLive(): Promise<WorldCupFixture[]> {
         const winnerId = b.finished
           ? p.find((x: any) => x?.winner)?.team?.id ?? undefined
           : undefined;
+        // Placar/pênaltis/status do bloco. O cuptrees traz "homeTeamScore": "1 (3)"
+        // (base = tempo normal/prorrogação; entre parênteses = pênaltis) e flags
+        // finished/eventInProgress. É a fonte do placar no card da fase do mata-mata.
+        const cs = parseCupScore(b.homeTeamScore, b.awayTeamScore);
+        const status = b.finished ? "finished" : b.eventInProgress ? "inprogress" : "notstarted";
         out.push({
           id: ev,
           homeId: ht.id,
@@ -127,6 +152,11 @@ async function fetchWorldCupKnockoutFixturesLive(): Promise<WorldCupFixture[]> {
           timestamp: b.seriesStartDateTimestamp || 0,
           round: KNOCKOUT_ROUND_BY_ORDER[rnd.order] || 6,
           winnerId,
+          homeScore: cs.homeScore,
+          awayScore: cs.awayScore,
+          homePens: cs.homePens,
+          awayPens: cs.awayPens,
+          status,
         });
       }
     }

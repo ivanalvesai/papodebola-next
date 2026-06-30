@@ -5,7 +5,7 @@ import Link from "next/link";
 export function WorldCupBanner() {
   return (
     <Link
-      href="/futebol/copa-do-mundo"
+      href="/futebol/copa-do-mundo/fase/16-avos"
       className="block"
       style={{
         background:

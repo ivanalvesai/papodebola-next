@@ -34,6 +34,9 @@ export interface ChampionshipMatch {
   statusDesc: string;
   timestamp: number;
   round: number;
+  // Disputa de pênaltis (mata-mata) — opcional. Quando presente, o card mostra "1 (3) X (4) 1".
+  homePens?: number | null;
+  awayPens?: number | null;
 }
 
 export interface CBFMatch {
