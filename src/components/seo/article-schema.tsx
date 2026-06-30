@@ -39,6 +39,8 @@ export function ArticleSchema({ article }: ArticleSchemaProps) {
     author: {
       "@type": isRealPerson ? "Person" : "Organization",
       name: authorName || "Redação Papo de Bola",
+      // Perfil do autor (E-E-A-T): liga o byline à página /autor/{slug}.
+      ...(article.authorSlug && { url: `${siteUrl}/autor/${article.authorSlug}` }),
     },
     publisher: {
       "@type": "Organization",

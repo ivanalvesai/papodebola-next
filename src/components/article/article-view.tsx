@@ -169,7 +169,16 @@ export function ArticleView({
             </span>
             <span className="flex items-center gap-1.5">
               <Pen className="h-3.5 w-3.5" />
-              {author}
+              {article.authorSlug ? (
+                <Link
+                  href={`/autor/${article.authorSlug}`}
+                  className="font-semibold text-text-secondary hover:text-green hover:underline"
+                >
+                  {author}
+                </Link>
+              ) : (
+                author
+              )}
             </span>
             <span className="flex items-center gap-1.5">
               <BookOpen className="h-3.5 w-3.5" />

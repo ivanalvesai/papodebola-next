@@ -15,6 +15,8 @@ export interface Article {
   tags: string[];
   team: string | null;
   author: string;
+  /** slug do autor (perfil no Payload) — quando há, o byline linka /autor/{slug}. */
+  authorSlug?: string;
   pubDate: string;
   createdAt: string;
   url: string;
