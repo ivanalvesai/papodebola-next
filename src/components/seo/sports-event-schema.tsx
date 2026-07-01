@@ -34,6 +34,45 @@ export function SportsEventSchema({
         ? "https://schema.org/EventPostponed"
         : "https://schema.org/EventScheduled";
 
+  // location é OBRIGATÓRIO no SportsEvent (Google marca "Missing field location" como
+  // crítico e o item perde o rich result). O feed às vezes não traz o estádio de jogos
+  // distantes no crawl → SEMPRE emitimos um location: estádio/cidade real quando houver,
+  // senão um fallback por país (nível de país é válido pro Google e some quando o
+  // estádio real popula via ISR).
+  const hasVenue = !!(venue?.stadium || venue?.city || venue?.country);
+  const location = hasVenue
+    ? {
+        "@type": "Place",
+        name: venue!.stadium || venue!.city || venue!.country,
+        ...(venue!.city || venue!.country
+          ? {
+              address: {
+                "@type": "PostalAddress",
+                ...(venue!.city ? { addressLocality: venue!.city } : {}),
+                ...(venue!.country ? { addressCountry: venue!.country } : {}),
+              },
+            }
+          : {}),
+      }
+    : isCopa
+      ? { "@type": "Place", name: "Sede da Copa do Mundo FIFA 2026" }
+      : {
+          "@type": "Place",
+          name: "Brasil",
+          address: { "@type": "PostalAddress", addressCountry: "Brazil" },
+        };
+
+  // organizer (recomendado): entidade que organiza a competição. FIFA na Copa, CBF nos
+  // campeonatos brasileiros, CONMEBOL nas competições continentais. Corrige o aviso
+  // "Missing field organizer".
+  const organizer = isCopa
+    ? { name: "FIFA", url: "https://www.fifa.com" }
+    : /libertadores|sudamericana|conmebol/i.test(competition)
+      ? { name: "CONMEBOL", url: "https://www.conmebol.com" }
+      : /s[eé]rie|brasileir|copa do brasil/i.test(competition)
+        ? { name: "CBF", url: "https://www.cbf.com.br" }
+        : null;
+
   const schema = {
     "@context": "https://schema.org",
     "@type": "SportsEvent",
@@ -52,33 +91,11 @@ export function SportsEventSchema({
       ? { endDate: new Date((startTimestamp + 7200) * 1000).toISOString() }
       : {}),
     eventStatus,
-    // location é OBRIGATÓRIO no SportsEvent. Emite com o que tiver (estádio, cidade ou
-    // país) — assim não acusa "Missing field location" quando o feed não traz o estádio.
-    ...(venue?.stadium || venue?.city || venue?.country
-      ? {
-          location: {
-            "@type": "Place",
-            name: venue.stadium || venue.city || venue.country,
-            ...(venue.city || venue.country
-              ? {
-                  address: {
-                    "@type": "PostalAddress",
-                    ...(venue.city ? { addressLocality: venue.city } : {}),
-                    ...(venue.country ? { addressCountry: venue.country } : {}),
-                  },
-                }
-              : {}),
-          },
-        }
-      : {}),
-    // FIFA como organizer só na Copa (senão um jogo de Série B vira "parte da Copa" pro
-    // Google). NÃO usar superEvent: o Google o valida como um 2º Event (o torneio inteiro)
-    // e acusa "Missing field" (startDate/location/offers/performer...) em TODA página da
-    // Copa, sem nenhum ganho de rich result (o card usa o evento do JOGO). O vínculo com
-    // o torneio fica no organizer (FIFA) + no name/description do próprio jogo.
-    ...(isCopa
-      ? { organizer: { "@type": "Organization", name: "FIFA", url: "https://www.fifa.com" } }
-      : {}),
+    location,
+    // organizer derivado da competição (ver acima). NÃO usar superEvent: o Google o valida
+    // como um 2º Event (o torneio inteiro) e acusa "Missing field" em toda página, sem ganho
+    // de rich result. O vínculo com o torneio fica no organizer + no name/description do jogo.
+    ...(organizer ? { organizer: { "@type": "Organization", ...organizer } } : {}),
     homeTeam: {
       "@type": "SportsTeam",
       name: home,
