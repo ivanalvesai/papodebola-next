@@ -3,7 +3,16 @@ import { translateStatus } from "@/lib/translations";
 import { translateCountry } from "@/lib/i18n/countries";
 import { SELECAO_BY_ID } from "@/lib/selecoes";
 import { worldCupMatchHref } from "@/lib/world-cup-match-url";
-import { TOURNAMENTS } from "@/lib/config";
+import { TOURNAMENTS, TOURNAMENT_BY_SLUG } from "@/lib/config";
+import {
+  getWorldCupFixtures,
+  getMatchEvent,
+  championshipMatchHref,
+  type WorldCupFixture,
+  type MatchEvent,
+} from "./match-detail";
+import { getChampionshipData } from "./championship";
+import type { ChampionshipMatch } from "@/types/match";
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
@@ -24,15 +33,11 @@ interface AgendaSource {
   ids: number[]; // uniqueTournament.id das competições principais
 }
 
+// FUTEBOL não usa mais o feed por data (matches/{d}/{m}/{y}) — ele devolve [] há semanas
+// (bug do provedor). É montado à parte em getFootballAgendaForDay() a partir de fontes
+// CONFIÁVEIS (rodadas/cuptrees da Copa + getChampionshipData por liga). Os outros esportes
+// seguem no feed por data com fallback ao vivo (funcionam).
 const SOURCES: AgendaSource[] = [
-  {
-    sport: "Futebol",
-    sportSlug: "futebol",
-    endpoint: (d, m, y) => `matches/${d}/${m}/${y}`,
-    // Copa do Mundo, Brasileirão A/B, Copa do Brasil, Libertadores, Sul-Americana,
-    // Champions, Premier, LaLiga, Serie A, Bundesliga, Ligue 1, Eliminatórias.
-    ids: [16, 325, 390, 373, 384, 480, 7, 17, 8, 23, 35, 34, 11, 13],
-  },
   {
     sport: "Basquete",
     sportSlug: "basquete",
@@ -132,6 +137,119 @@ function normalize(event: any, sportSlug: string): AgendaEvent {
   };
 }
 
+// ===== Futebol de um dia, de fontes CONFIÁVEIS (o feed por data está quebrado) =====
+// Copa: getWorldCupFixtures (grupos + mata-mata via cuptrees) + status/placar reais por
+// match/{id} nos jogos já iniciados. Campeonatos cobertos: getChampionshipData (round feeds).
+const FOOTBALL_AGENDA_CHAMPS = [
+  "brasileirao-serie-a",
+  "brasileirao-serie-b",
+  "copa-do-brasil",
+  "libertadores",
+  "sudamericana",
+];
+
+// [início, fim) do dia em horário de Brasília (00:00 BRT = 03:00 UTC), a partir do
+// ano/mês/dia da data pedida (o servidor roda em UTC; a data já vem "no dia" desejado).
+function dayBoundsBRT(date: Date): [number, number] {
+  const start = Date.UTC(date.getFullYear(), date.getMonth(), date.getDate(), 3, 0, 0) / 1000;
+  return [start, start + 24 * 3600];
+}
+
+function hhmm(ts: number): string {
+  return new Date(ts * 1000).toLocaleTimeString("pt-BR", {
+    hour: "2-digit",
+    minute: "2-digit",
+    timeZone: "America/Sao_Paulo",
+  });
+}
+
+function wcFixtureToAgenda(f: WorldCupFixture, ev: MatchEvent | null): AgendaEvent {
+  return {
+    id: f.id,
+    league: "Copa do Mundo",
+    home: f.home,
+    away: f.away,
+    homeId: f.homeId,
+    awayId: f.awayId,
+    homeScore: ev?.homeScore ?? null,
+    awayScore: ev?.awayScore ?? null,
+    status:
+      translateStatus(ev?.statusDesc) ||
+      (ev?.statusType === "finished" ? "Encerrado" : ev?.statusType === "inprogress" ? "Ao Vivo" : ""),
+    statusType: ev?.statusType || "notstarted",
+    time: hhmm(f.timestamp || 0),
+    timestamp: f.timestamp || 0,
+    href: worldCupMatchHref(f.timestamp || 0, f.homeId, f.awayId, f.home, f.away),
+  };
+}
+
+function champMatchToAgenda(m: ChampionshipMatch, league: string, slug: string): AgendaEvent {
+  return {
+    id: m.id,
+    league,
+    home: m.home,
+    away: m.away,
+    homeId: m.homeId,
+    awayId: m.awayId,
+    homeScore: m.homeScore,
+    awayScore: m.awayScore,
+    status:
+      m.statusDesc ||
+      (m.status === "finished" ? "Encerrado" : m.status === "inprogress" ? "Ao Vivo" : ""),
+    statusType: m.status,
+    time: hhmm(m.timestamp || 0),
+    timestamp: m.timestamp || 0,
+    href:
+      m.homeId && m.awayId && m.timestamp
+        ? championshipMatchHref(slug, m.timestamp, m.homeId, m.awayId, m.home, m.away)
+        : `/futebol/${slug}`,
+  };
+}
+
+export async function getFootballAgendaForDay(date: Date): Promise<AgendaLeagueGroup[]> {
+  const [start, end] = dayBoundsBRT(date);
+  const inDay = (ts?: number) => !!ts && ts >= start && ts < end;
+  const nowSec = Date.now() / 1000;
+
+  const [fixtures, ...champData] = await Promise.all([
+    getWorldCupFixtures().catch(() => [] as WorldCupFixture[]),
+    ...FOOTBALL_AGENDA_CHAMPS.map((s) => getChampionshipData(s).catch(() => null)),
+  ]);
+
+  const events: AgendaEvent[] = [];
+
+  // Copa: fixtures do dia; status/placar reais por match/{id} nos que já começaram
+  // (autoritativo — matches/round vem vazio no mata-mata e o feed por data está quebrado).
+  const dayFixtures = fixtures.filter((f) => inDay(f.timestamp));
+  const wcEvents = await Promise.all(
+    dayFixtures.map(async (f) => {
+      const ev = f.timestamp && f.timestamp <= nowSec ? await getMatchEvent(f.id, f.timestamp).catch(() => null) : null;
+      return wcFixtureToAgenda(f, ev);
+    })
+  );
+  events.push(...wcEvents);
+
+  // Campeonatos cobertos (fonte confiável: round feeds via getChampionshipData).
+  FOOTBALL_AGENDA_CHAMPS.forEach((slug, i) => {
+    const data = champData[i];
+    if (!data) return;
+    const league = TOURNAMENT_BY_SLUG[slug]?.name || data.tournament?.name || slug;
+    for (const list of Object.values(data.matchesByRound)) {
+      for (const mt of list) if (inDay(mt.timestamp)) events.push(champMatchToAgenda(mt, league, slug));
+    }
+  });
+
+  events.sort(sortForBar);
+  const byLeague = new Map<string, AgendaEvent[]>();
+  for (const e of events) {
+    const key = e.league || "Outros";
+    const list = byLeague.get(key);
+    if (list) list.push(e);
+    else byLeague.set(key, [e]);
+  }
+  return [...byLeague.entries()].map(([league, evs]) => ({ league, events: evs.slice(0, 40) }));
+}
+
 // data: objeto Date (qualquer hora do dia desejado, horário do servidor).
 export async function getGeneralAgenda(date: Date): Promise<AgendaSportGroup[]> {
   const d = date.getDate();
@@ -141,7 +259,14 @@ export async function getGeneralAgenda(date: Date): Promise<AgendaSportGroup[]> 
   const now = new Date();
   const isToday = d === now.getDate() && m === now.getMonth() + 1 && y === now.getFullYear();
 
-  const groups = await Promise.all(
+  // Futebol de fonte confiável (o feed por data está quebrado) — sempre em primeiro.
+  const footballGroup: AgendaSportGroup = {
+    sport: "Futebol",
+    sportSlug: "futebol",
+    leagues: await getFootballAgendaForDay(date).catch(() => []),
+  };
+
+  const otherGroups = await Promise.all(
     SOURCES.map(async (src) => {
       let data = await fetchAllSports<any>(src.endpoint(d, m, y), 1800).catch(() => null);
       // Fallback: o feed por data às vezes devolve 0 (instável na allsportsapi2). Em HOJE,
@@ -174,8 +299,8 @@ export async function getGeneralAgenda(date: Date): Promise<AgendaSportGroup[]> 
     })
   );
 
-  // Só os esportes com jogos no dia, e futebol sempre primeiro (ordem das SOURCES).
-  return groups.filter((g) => g.leagues.length > 0);
+  // Futebol sempre primeiro; só os esportes com jogos no dia.
+  return [footballGroup, ...otherGroups].filter((g) => g.leagues.length > 0);
 }
 
 // Ordena ao vivo primeiro, depois agendados, encerrados por último; dentro de
