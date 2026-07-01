@@ -1,21 +1,49 @@
 import type { Metadata } from "next";
-import { getCBFCalendar } from "@/lib/data/cbf-calendar";
 import { Calendar } from "lucide-react";
 import { PageBreadcrumb } from "@/components/seo/page-breadcrumb";
-import { TeamLogo } from "@/components/ui/team-logo";
 import { AgendaTabs } from "@/components/agenda/agenda-tabs";
+import { MatchCarousel } from "@/components/match-bar/match-carousel";
+import { LiveScoreProvider } from "@/components/world-cup/copa-live-provider";
+import { getFootballAgendaForDay, type AgendaEvent } from "@/lib/data/agenda";
+import type { MatchBarCardProps } from "@/components/match-bar/match-bar-card";
 
-export const revalidate = 43200;
+export const revalidate = 300;
 
 export const metadata: Metadata = {
   alternates: { canonical: "/jogos-de-hoje/futebol" },
-  title: "Jogos de Futebol: Agenda, Datas e Horários",
+  title: "Jogos de Futebol de Hoje: Copa do Mundo e Campeonatos",
   description:
-    "Acompanhe os jogos de futebol de hoje no Brasil e no mundo com datas, horários e informações atualizadas.",
+    "Todos os jogos de futebol de hoje: Copa do Mundo, Brasileirão, Copa do Brasil, Libertadores e mais, com horários, placar ao vivo e onde assistir.",
 };
 
+function toCard(e: AgendaEvent): MatchBarCardProps {
+  const status =
+    e.statusType === "inprogress"
+      ? "live"
+      : e.statusType === "finished"
+        ? "finished"
+        : "scheduled";
+  return {
+    id: `api_${e.id}`,
+    homeTeam: e.home,
+    awayTeam: e.away,
+    homeLogo: e.homeId ? `/api/team-img/${e.homeId}` : null,
+    awayLogo: e.awayId ? `/api/team-img/${e.awayId}` : null,
+    homeScore: e.homeScore,
+    awayScore: e.awayScore,
+    time: e.time,
+    timestamp: e.timestamp,
+    status,
+    statusText: e.status || (status === "live" ? "Ao Vivo" : ""),
+    league: e.league,
+    href: e.href,
+  };
+}
+
 export default async function AgendaFutebolPage() {
-  const calendar = await getCBFCalendar().catch(() => ({ championships: [], updatedAt: "" }));
+  const leagues = await getFootballAgendaForDay(new Date()).catch(() => []);
+  // Liga o polling ao vivo se houver jogo da Copa hoje (mesmo padrão da home).
+  const hasCopa = leagues.some((lg) => lg.league === "Copa do Mundo");
 
   return (
     <div className="mx-auto max-w-[1240px] px-4 py-8">
@@ -29,57 +57,40 @@ export default async function AgendaFutebolPage() {
       />
       <h1 className="text-xl font-bold text-text-primary mb-4 flex items-center gap-2">
         <Calendar className="h-6 w-6 text-green" />
-        Agenda do Futebol Brasileiro
+        Jogos de Futebol de Hoje
       </h1>
 
       <AgendaTabs active="futebol" />
 
-      <div className="space-y-8">
-        {calendar.championships.map((champ) => (
-          <div key={champ.cbfId} className="bg-card-bg rounded-lg border border-border-custom">
-            <h2 className="text-base font-bold text-text-primary px-6 py-4 border-b border-border-custom">
-              {champ.name}
-              <span className="ml-2 text-xs font-normal text-text-muted">
-                Rodada {champ.currentRound} | {champ.totalMatches} jogos
-              </span>
-            </h2>
-
-            {/* Upcoming matches */}
-            {champ.upcoming.length === 0 ? (
-              <p className="text-text-muted text-sm text-center py-6">Nenhum jogo proximo</p>
-            ) : (
-              <div className="divide-y divide-border-light">
-                {champ.upcoming.slice(0, 15).map((m) => (
-                  <div key={m.id} className="flex items-center gap-4 px-6 py-3 hover:bg-card-hover transition-colors">
-                    {/* Date */}
-                    <div className="w-20 text-center shrink-0">
-                      <div className="text-xs text-text-muted">{m.date}</div>
-                      <div className="text-sm font-bold text-text-primary">{m.time}</div>
-                    </div>
-
-                    {/* Teams */}
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-2 text-sm">
-                        <TeamLogo teamId={m.homeId} size={20} />
-                        <span className="font-semibold truncate">{m.home}</span>
-                        <span className="text-text-muted mx-1">vs</span>
-                        <TeamLogo teamId={m.awayId} size={20} />
-                        <span className="font-semibold truncate">{m.away}</span>
-                      </div>
-                    </div>
-
-                    {/* Round + Venue */}
-                    <div className="text-right shrink-0">
-                      <div className="text-[10px] text-green font-semibold">Rodada {m.round}</div>
-                      {m.venue && <div className="text-[10px] text-text-muted truncate max-w-[150px]">{m.venue}</div>}
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )}
+      {leagues.length === 0 ? (
+        <div className="bg-card-bg rounded-lg border border-border-custom py-12 text-center">
+          <Calendar className="h-10 w-10 text-text-muted mx-auto mb-3" />
+          <p className="text-text-muted text-sm">
+            Nenhum jogo dos principais campeonatos de futebol hoje. Confira a{" "}
+            <a href="/jogos-de-hoje" className="text-green font-semibold hover:underline">
+              agenda geral
+            </a>
+            .
+          </p>
+        </div>
+      ) : (
+        <LiveScoreProvider endpoints={hasCopa ? ["/api/copa/ao-vivo"] : []}>
+          <div className="space-y-4">
+            {leagues.map((lg) => (
+              <MatchCarousel
+                key={lg.league}
+                title={lg.league}
+                count={lg.events.length}
+                matches={lg.events.map(toCard)}
+              />
+            ))}
           </div>
-        ))}
-      </div>
+        </LiveScoreProvider>
+      )}
+
+      <p className="text-[11px] text-text-muted mt-6">
+        Horários de Brasília. Copa do Mundo e principais campeonatos do Brasil e do mundo.
+      </p>
     </div>
   );
 }
