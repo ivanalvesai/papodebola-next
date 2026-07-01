@@ -2,49 +2,44 @@ import type { Metadata } from "next";
 import { Calendar } from "lucide-react";
 import { PageBreadcrumb } from "@/components/seo/page-breadcrumb";
 import { AgendaTabs } from "@/components/agenda/agenda-tabs";
-import { MatchCarousel } from "@/components/match-bar/match-carousel";
 import { LiveScoreProvider } from "@/components/world-cup/copa-live-provider";
-import { getStoredFootballAgenda, type AgendaEvent } from "@/lib/data/agenda";
-import type { MatchBarCardProps } from "@/components/match-bar/match-bar-card";
+import { AgendaBlockRenderer, DEFAULT_AGENDA_LAYOUT } from "@/components/payload/agenda-blocks";
+import { getStoredFootballAgenda } from "@/lib/data/agenda";
+import { getPayloadPage } from "@/lib/data/payload-pages";
 
-// Lê o STORE (dev grava via cron; prod só lê — não bate na API). Revalida rápido só pra
-// refletir o store atualizado (a leitura é 1 arquivo do volume, barata).
+// Página gerida no CMS (collection `pages`, slug abaixo): textos + SEO + ORDEM dos widgets
+// de jogos editáveis. Os jogos vêm do STORE (dev grava; prod só lê — não bate na API).
+// Fallback no DEFAULT_AGENDA_LAYOUT se a Página não existir no CMS. revalidate curto pra
+// refletir o store (leitura barata).
 export const revalidate = 60;
 
-export const metadata: Metadata = {
-  alternates: { canonical: "/jogos-de-hoje/futebol" },
-  title: "Jogos de Futebol de Hoje: Copa do Mundo e Campeonatos",
-  description:
-    "Todos os jogos de futebol de hoje: Copa do Mundo, Brasileirão, Copa do Brasil, Libertadores e mais, com horários, placar ao vivo e onde assistir.",
-};
+const CMS_SLUG = "jogos-de-hoje-futebol";
 
-function toCard(e: AgendaEvent): MatchBarCardProps {
-  const status =
-    e.statusType === "inprogress"
-      ? "live"
-      : e.statusType === "finished"
-        ? "finished"
-        : "scheduled";
+const DEFAULT_TITLE = "Jogos de Futebol: Agenda, Datas e Horários | Papo de Bola";
+const DEFAULT_DESC =
+  "Acompanhe os jogos de futebol de hoje no Brasil e no mundo com datas, horários e informações atualizadas.";
+
+export async function generateMetadata(): Promise<Metadata> {
+  const page = await getPayloadPage(CMS_SLUG).catch(() => null);
+  const title = page?.seo?.metaTitle || DEFAULT_TITLE;
+  const description = page?.seo?.metaDescription || DEFAULT_DESC;
   return {
-    id: `api_${e.id}`,
-    homeTeam: e.home,
-    awayTeam: e.away,
-    homeLogo: e.homeId ? `/api/team-img/${e.homeId}` : null,
-    awayLogo: e.awayId ? `/api/team-img/${e.awayId}` : null,
-    homeScore: e.homeScore,
-    awayScore: e.awayScore,
-    time: e.time,
-    timestamp: e.timestamp,
-    status,
-    statusText: e.status || (status === "live" ? "Ao Vivo" : ""),
-    league: e.league,
-    href: e.href,
+    title: { absolute: title },
+    description,
+    alternates: { canonical: "/jogos-de-hoje/futebol" },
+    openGraph: { title, description, images: [{ url: "/og-image.jpg", width: 1200, height: 630 }] },
   };
 }
 
 export default async function AgendaFutebolPage() {
-  const leagues = await getStoredFootballAgenda().catch(() => []);
-  // Liga o polling ao vivo se houver jogo da Copa hoje (mesmo padrão da home).
+  const [page, leagues] = await Promise.all([
+    getPayloadPage(CMS_SLUG).catch(() => null),
+    getStoredFootballAgenda().catch(() => []),
+  ]);
+
+  const h1 = page?.hero?.h1 || "Agenda dos Jogos de Hoje de Futebol";
+  const layout = page?.layout && page.layout.length ? page.layout : DEFAULT_AGENDA_LAYOUT;
+  // Liga o polling ao vivo se houver jogo da Copa hoje (mesmo padrão da home/agenda).
   const hasCopa = leagues.some((lg) => lg.league === "Copa do Mundo");
 
   return (
@@ -57,42 +52,16 @@ export default async function AgendaFutebolPage() {
           { label: "Futebol" },
         ]}
       />
-      <h1 className="text-xl font-bold text-text-primary mb-4 flex items-center gap-2">
+      <h1 className="mb-4 flex items-center gap-2 text-xl font-bold text-text-primary">
         <Calendar className="h-6 w-6 text-green" />
-        Jogos de Futebol de Hoje
+        {h1}
       </h1>
 
       <AgendaTabs active="futebol" />
 
-      {leagues.length === 0 ? (
-        <div className="bg-card-bg rounded-lg border border-border-custom py-12 text-center">
-          <Calendar className="h-10 w-10 text-text-muted mx-auto mb-3" />
-          <p className="text-text-muted text-sm">
-            Nenhum jogo dos principais campeonatos de futebol hoje. Confira a{" "}
-            <a href="/jogos-de-hoje" className="text-green font-semibold hover:underline">
-              agenda geral
-            </a>
-            .
-          </p>
-        </div>
-      ) : (
-        <LiveScoreProvider endpoints={hasCopa ? ["/api/copa/ao-vivo"] : []}>
-          <div className="space-y-4">
-            {leagues.map((lg) => (
-              <MatchCarousel
-                key={lg.league}
-                title={lg.league}
-                count={lg.events.length}
-                matches={lg.events.map(toCard)}
-              />
-            ))}
-          </div>
-        </LiveScoreProvider>
-      )}
-
-      <p className="text-[11px] text-text-muted mt-6">
-        Horários de Brasília. Copa do Mundo e principais campeonatos do Brasil e do mundo.
-      </p>
+      <LiveScoreProvider endpoints={hasCopa ? ["/api/copa/ao-vivo"] : []}>
+        <AgendaBlockRenderer leagues={leagues} blocks={layout} />
+      </LiveScoreProvider>
     </div>
   );
 }

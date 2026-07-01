@@ -9,7 +9,14 @@ export const dynamic = "force-dynamic";
 
 // Slugs que têm rota DEDICADA (ex: /sobre) não respondem aqui — evita conteúdo
 // duplicado (/paginas/sobre e /sobre seriam a mesma página).
-const DEDICATED = new Set(["sobre", "contato", "parceiros", "politica-de-privacidade", "termos-de-uso"]);
+const DEDICATED = new Set([
+  "sobre",
+  "contato",
+  "parceiros",
+  "politica-de-privacidade",
+  "termos-de-uso",
+  "jogos-de-hoje-futebol", // renderizada pela rota /jogos-de-hoje/futebol (blocos dinâmicos)
+]);
 
 export async function generateMetadata({
   params,
