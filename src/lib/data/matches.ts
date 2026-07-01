@@ -5,7 +5,12 @@ import { translateCountry } from "@/lib/i18n/countries";
 import { SELECAO_BY_ID } from "@/lib/selecoes";
 import { worldCupMatchHref, matchDateSlug, matchPairSlug } from "@/lib/world-cup-match-url";
 import { getCBFUpcomingMatches } from "./cbf-calendar";
-import { getWorldCupKnockoutFixtures, type WorldCupFixture } from "./match-detail";
+import {
+  getWorldCupKnockoutFixtures,
+  getWorldCupKnockoutLiveScores,
+  type WorldCupFixture,
+  type WorldCupLiveScore,
+} from "./match-detail";
 import { withSnapshot } from "./snapshot-store";
 import type { NormalizedMatch } from "@/types/match";
 
@@ -107,7 +112,11 @@ function brasiliaDayStartSec(offset = 0): number {
 // proxy (jogo encerrado aparecendo como "notstarted") — pelo horário de início a
 // gente acerta sempre. Ao vivo/intervalo nunca some (jogo pode esticar). Use só onde
 // o foco é "o que vem" (barra, agenda) — não em telas de resultados/encerrados.
-const FINISHED_VISIBLE_AFTER_START_SEC = 3 * 3600;
+// 4h30 após o INÍCIO: cobre 90' + intervalo + prorrogação + pênaltis (~3h no pior caso,
+// jogo de mata-mata) + ~1h30 de vitrine pós-jogo. Antes eram 3h, e um jogo de mata-mata
+// que ia pra prorrogação/pênaltis (terminava ~3h após o apito) sumia da barra quase junto
+// com o fim — dava a impressão de "não mostra nada". Ao vivo/intervalo nunca some.
+const FINISHED_VISIBLE_AFTER_START_SEC = 4.5 * 3600;
 export function freshMatches(list: NormalizedMatch[]): NormalizedMatch[] {
   const now = Date.now() / 1000;
   return list.filter((m) => {
@@ -213,6 +222,17 @@ function knockoutFixtureToBarMatch(f: WorldCupFixture): NormalizedMatch {
   };
 }
 
+// WorldCupLiveScore (statusType do Sofascore) -> campos de status do card da barra.
+function liveScoreToBarStatus(
+  s: WorldCupLiveScore
+): Pick<NormalizedMatch, "status" | "statusText" | "minute"> {
+  if (s.statusType === "inprogress" || s.statusType === "interrupted")
+    return { status: "live", statusText: s.statusDesc || "Ao Vivo", minute: s.statusDesc || "" };
+  if (s.statusType === "finished")
+    return { status: "finished", statusText: "Encerrado", minute: "Encerrado" };
+  return { status: "scheduled", statusText: s.statusDesc || "Não iniciado", minute: "" };
+}
+
 async function fetchWorldCupBarMatchesLive(): Promise<NormalizedMatch[]> {
   // O feed por data (matches/{d}/{m}/{y}) ficou instável na allsportsapi2 (devolve 0
   // eventos pra todas as datas). Buscamos os jogos da Copa pelas RODADAS do torneio —
@@ -288,6 +308,23 @@ async function fetchWorldCupBarMatchesLive(): Promise<NormalizedMatch[]> {
     } else if (inWindow(live.timestamp || 0) && live.href) {
       byId.set(live.id, live);
     }
+  }
+  // 4) MATA-MATA encerrado/ao vivo via match/{id} (autoritativo). matches/round vem vazio no
+  //    knockout e matches/live só traz o que rola AGORA → um jogo recém-ENCERRADO ficaria
+  //    "scheduled" sem placar (o cuptrees tem lag). Sobrepõe status+placar nos cards do
+  //    cuptrees pra o "Encerrado 2x1" (ou AO VIVO) aparecer já no SSR, sem depender do polling.
+  const knockoutScores = await getWorldCupKnockoutLiveScores().catch(
+    () => [] as WorldCupLiveScore[]
+  );
+  for (const s of knockoutScores) {
+    const existing = byId.get(`api_${s.id}`);
+    if (!existing) continue;
+    byId.set(`api_${s.id}`, {
+      ...existing,
+      ...liveScoreToBarStatus(s),
+      homeScore: s.homeScore,
+      awayScore: s.awayScore,
+    });
   }
   return freshMatches([...byId.values()]).sort((a, b) => (a.timestamp || 0) - (b.timestamp || 0));
 }

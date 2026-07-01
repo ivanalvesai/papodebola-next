@@ -225,6 +225,15 @@ export async function getWorldCupLiveScores(): Promise<WorldCupLiveScore[]> {
   const now = Date.now() / 1000;
   const out: WorldCupLiveScore[] = [];
   const seen = new Set<number>();
+  // MATA-MATA primeiro (precedência): no knockout o matches/round volta VAZIO e o
+  // matches/live só traz o que está rolando AGORA — um jogo recém-ENCERRADO do mata-mata
+  // não apareceria (a barra ficava sem "Encerrado"/placar). match/{id} é autoritativo e
+  // nunca tem lag (ao contrário do cuptrees). Placar já vem SEM pênaltis (display).
+  for (const s of await getWorldCupKnockoutLiveScores()) {
+    if (seen.has(s.id)) continue;
+    seen.add(s.id);
+    out.push(s);
+  }
   for (const data of [...results.map((d) => ({ events: d?.events })), { events: liveWcEvents }]) {
     for (const e of data?.events || []) {
       if (seen.has(e.id)) continue;
@@ -240,6 +249,36 @@ export async function getWorldCupLiveScores(): Promise<WorldCupLiveScore[]> {
         statusDesc: translateStatus(e.status?.description) || "",
       });
     }
+  }
+  return out;
+}
+
+// Placares ao vivo/encerrados dos jogos do MATA-MATA, buscados por match/{id} (fonte
+// autoritativa). Necessário porque no knockout o matches/round volta vazio e o matches/live
+// só traz o que está rolando — sem isto, um jogo recém-encerrado do mata-mata some da barra
+// da home / da tabela (fica "scheduled" sem placar até o cuptrees atualizar, com lag).
+// Só busca os confrontos na janela "em jogo ou recém-terminado" (início -5h .. +15min),
+// então são ~1-4 chamadas match/{id} (cacheadas: 10s ao vivo, 1h encerrado). Vale pra
+// QUALQUER fase (16-avos … final) — os fixtures vêm do cuptrees, sem lista fixa.
+export async function getWorldCupKnockoutLiveScores(): Promise<WorldCupLiveScore[]> {
+  const fixtures = await getWorldCupKnockoutFixtures().catch(() => [] as WorldCupFixture[]);
+  const now = Date.now() / 1000;
+  const relevant = fixtures.filter(
+    (f) => f.timestamp && f.timestamp <= now + 15 * 60 && f.timestamp >= now - 5 * 3600
+  );
+  const events = await Promise.all(
+    relevant.map((f) => getMatchEvent(f.id, f.timestamp).catch(() => null))
+  );
+  const out: WorldCupLiveScore[] = [];
+  for (const ev of events) {
+    if (!ev) continue;
+    out.push({
+      id: ev.id,
+      homeScore: ev.homeScore, // display (tempo normal/prorrogação, sem pênaltis)
+      awayScore: ev.awayScore,
+      statusType: ev.statusType,
+      statusDesc: ev.statusDesc,
+    });
   }
   return out;
 }
