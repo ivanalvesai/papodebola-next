@@ -11,8 +11,7 @@ import {
   type WorldCupFixture,
   type MatchEvent,
 } from "./match-detail";
-import { getChampionshipData } from "./championship";
-import type { ChampionshipMatch } from "@/types/match";
+import { saveSnapshot, readSnapshot } from "./snapshot-store";
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
@@ -137,22 +136,34 @@ function normalize(event: any, sportSlug: string): AgendaEvent {
   };
 }
 
-// ===== Futebol de um dia, de fontes CONFIÁVEIS (o feed por data está quebrado) =====
-// Copa: getWorldCupFixtures (grupos + mata-mata via cuptrees) + status/placar reais por
-// match/{id} nos jogos já iniciados. Campeonatos cobertos: getChampionshipData (round feeds).
+// ===== Futebol de hoje, com CACHE (dev grava, prod lê) =====
+// O feed por data (matches/{d}/{m}/{y}) está quebrado. Arquitetura ([[arquitetura_so_dev_consulta_api]]):
+// SÓ o dev consulta a API (cron → refreshTodayFootballStore), grava em data/snapshots/agenda/
+// (volume COMPARTILHADO); prod e as páginas LEEM o store (getStoredFootballAgenda) — nunca
+// computam. Economia: rodada atual (não todas), congela encerrados (não re-consulta), TTL do
+// feed curto só p/ liga com jogo ao vivo/próximo, longo no resto.
+//
+// Campeonatos PRINCIPAIS (nunca "qualquer campeonato do mundo"): Brasileirão A/B/C + Copa do
+// Brasil + continentais. Copa do Mundo entra separada (fixtures).
 const FOOTBALL_AGENDA_CHAMPS = [
   "brasileirao-serie-a",
   "brasileirao-serie-b",
+  "brasileirao-serie-c",
   "copa-do-brasil",
   "libertadores",
   "sudamericana",
 ];
 
-// [início, fim) do dia em horário de Brasília (00:00 BRT = 03:00 UTC), a partir do
-// ano/mês/dia da data pedida (o servidor roda em UTC; a data já vem "no dia" desejado).
+// [início, fim) do dia em horário de Brasília (00:00 BRT = 03:00 UTC).
 function dayBoundsBRT(date: Date): [number, number] {
   const start = Date.UTC(date.getFullYear(), date.getMonth(), date.getDate(), 3, 0, 0) / 1000;
   return [start, start + 24 * 3600];
+}
+
+// YYYY-MM-DD no fuso de Brasília (chave do store do dia).
+function brDateStr(d: Date = new Date()): string {
+  const br = new Date(d.getTime() - 3 * 3600 * 1000);
+  return `${br.getUTCFullYear()}-${String(br.getUTCMonth() + 1).padStart(2, "0")}-${String(br.getUTCDate()).padStart(2, "0")}`;
 }
 
 function hhmm(ts: number): string {
@@ -183,61 +194,102 @@ function wcFixtureToAgenda(f: WorldCupFixture, ev: MatchEvent | null): AgendaEve
   };
 }
 
-function champMatchToAgenda(m: ChampionshipMatch, league: string, slug: string): AgendaEvent {
+function rawFootballEventToAgenda(e: any, league: string, slug: string): AgendaEvent {
+  const ts = e.startTimestamp || 0;
+  const statusType = e.status?.type || "";
+  const homeId = e.homeTeam?.id || 0;
+  const awayId = e.awayTeam?.id || 0;
+  const home = e.homeTeam?.name || "";
+  const away = e.awayTeam?.name || "";
   return {
-    id: m.id,
+    id: e.id,
     league,
-    home: m.home,
-    away: m.away,
-    homeId: m.homeId,
-    awayId: m.awayId,
-    homeScore: m.homeScore,
-    awayScore: m.awayScore,
+    home,
+    away,
+    homeId,
+    awayId,
+    homeScore: e.homeScore?.current ?? null,
+    awayScore: e.awayScore?.current ?? null,
     status:
-      m.statusDesc ||
-      (m.status === "finished" ? "Encerrado" : m.status === "inprogress" ? "Ao Vivo" : ""),
-    statusType: m.status,
-    time: hhmm(m.timestamp || 0),
-    timestamp: m.timestamp || 0,
-    href:
-      m.homeId && m.awayId && m.timestamp
-        ? championshipMatchHref(slug, m.timestamp, m.homeId, m.awayId, m.home, m.away)
-        : `/futebol/${slug}`,
+      translateStatus(e.status?.description) ||
+      (statusType === "finished" ? "Encerrado" : statusType === "inprogress" ? "Ao Vivo" : ""),
+    statusType,
+    time: hhmm(ts),
+    timestamp: ts,
+    href: homeId && awayId && ts ? championshipMatchHref(slug, ts, homeId, awayId, home, away) : `/futebol/${slug}`,
   };
 }
 
-export async function getFootballAgendaForDay(date: Date): Promise<AgendaLeagueGroup[]> {
+// Jogos de um campeonato num dia — LEVE: só a rodada atual (+ a próxima, p/ virada), não
+// TODAS as rodadas (getChampionshipData buscava até ~39 feeds → causava os ~40s). `matchTtl`
+// é adaptativo (curto só p/ liga com jogo ao vivo/próximo).
+async function champEventsForDay(
+  slug: string,
+  start: number,
+  end: number,
+  matchTtl: number
+): Promise<AgendaEvent[]> {
+  const t = TOURNAMENT_BY_SLUG[slug];
+  if (!t || !t.seasonId) return [];
+  const roundsData = await fetchAllSports<any>(
+    `tournament/${t.id}/season/${t.seasonId}/rounds`,
+    21600
+  ).catch(() => null);
+  const cr = roundsData?.currentRound?.round || 1;
+  const total = roundsData?.rounds?.length || cr;
+  const targets = [...new Set([cr, cr + 1].filter((r) => r >= 1 && r <= total))];
+  const feeds = await Promise.all(
+    targets.map((r) =>
+      fetchAllSports<any>(`tournament/${t.id}/season/${t.seasonId}/matches/round/${r}`, matchTtl).catch(
+        () => null
+      )
+    )
+  );
+  const out: AgendaEvent[] = [];
+  const seen = new Set<number>();
+  for (const f of feeds)
+    for (const e of f?.events || []) {
+      const ts = e.startTimestamp || 0;
+      if (ts < start || ts >= end || seen.has(e.id)) continue;
+      seen.add(e.id);
+      out.push(rawFootballEventToAgenda(e, t.name, slug));
+    }
+  return out;
+}
+
+// Computa o futebol de um dia das fontes confiáveis. `opts.ttlFor(slug)` = TTL do feed da
+// rodada por liga; `opts.frozen` = jogos já encerrados (id→evento) p/ NÃO re-consultar match/{id}.
+export async function getFootballAgendaForDay(
+  date: Date,
+  opts: { ttlFor?: (slug: string) => number; frozen?: Map<number, AgendaEvent> } = {}
+): Promise<AgendaLeagueGroup[]> {
   const [start, end] = dayBoundsBRT(date);
   const inDay = (ts?: number) => !!ts && ts >= start && ts < end;
   const nowSec = Date.now() / 1000;
+  const ttlFor = opts.ttlFor || (() => 600);
+  const frozen = opts.frozen;
 
-  const [fixtures, ...champData] = await Promise.all([
+  const [fixtures, ...champLists] = await Promise.all([
     getWorldCupFixtures().catch(() => [] as WorldCupFixture[]),
-    ...FOOTBALL_AGENDA_CHAMPS.map((s) => getChampionshipData(s).catch(() => null)),
+    ...FOOTBALL_AGENDA_CHAMPS.map((s) => champEventsForDay(s, start, end, ttlFor(s))),
   ]);
 
   const events: AgendaEvent[] = [];
 
-  // Copa: fixtures do dia; status/placar reais por match/{id} nos que já começaram
-  // (autoritativo — matches/round vem vazio no mata-mata e o feed por data está quebrado).
+  // Copa: fixtures do dia; status/placar reais por match/{id} nos que já começaram — mas
+  // jogo já ENCERRADO no store é congelado (não re-consulta a API).
   const dayFixtures = fixtures.filter((f) => inDay(f.timestamp));
   const wcEvents = await Promise.all(
     dayFixtures.map(async (f) => {
-      const ev = f.timestamp && f.timestamp <= nowSec ? await getMatchEvent(f.id, f.timestamp).catch(() => null) : null;
+      const fz = frozen?.get(f.id);
+      if (fz && fz.statusType === "finished") return fz;
+      const ev =
+        f.timestamp && f.timestamp <= nowSec ? await getMatchEvent(f.id, f.timestamp).catch(() => null) : null;
       return wcFixtureToAgenda(f, ev);
     })
   );
   events.push(...wcEvents);
-
-  // Campeonatos cobertos (fonte confiável: round feeds via getChampionshipData).
-  FOOTBALL_AGENDA_CHAMPS.forEach((slug, i) => {
-    const data = champData[i];
-    if (!data) return;
-    const league = TOURNAMENT_BY_SLUG[slug]?.name || data.tournament?.name || slug;
-    for (const list of Object.values(data.matchesByRound)) {
-      for (const mt of list) if (inDay(mt.timestamp)) events.push(champMatchToAgenda(mt, league, slug));
-    }
-  });
+  for (const list of champLists) events.push(...list);
 
   events.sort(sortForBar);
   const byLeague = new Map<string, AgendaEvent[]>();
@@ -250,6 +302,60 @@ export async function getFootballAgendaForDay(date: Date): Promise<AgendaLeagueG
   return [...byLeague.entries()].map(([league, evs]) => ({ league, events: evs.slice(0, 40) }));
 }
 
+// ---- Store (volume compartilhado): dev grava, prod/páginas leem ----
+interface StoredFootballAgenda {
+  date: string; // YYYY-MM-DD (BRT)
+  updatedAt: string;
+  leagues: AgendaLeagueGroup[];
+}
+
+// LEITURA (prod + páginas): só o store de HOJE. NUNCA bate na API. Vazio se o store é de
+// outro dia (o cron do dev regenera na virada).
+export async function getStoredFootballAgenda(): Promise<AgendaLeagueGroup[]> {
+  const snap = await readSnapshot<StoredFootballAgenda>("agenda", "football-today");
+  if (!snap || snap.date !== brDateStr()) return [];
+  return snap.leagues || [];
+}
+
+// REFRESH (só o dev, via cron): computa e grava. Econômico — congela encerrados e usa TTL
+// curto no feed da rodada SÓ p/ ligas com jogo ao vivo/prestes a começar.
+export async function refreshTodayFootballStore(): Promise<{
+  ok: true;
+  games: number;
+  leagues: number;
+}> {
+  const today = brDateStr();
+  const prev = await readSnapshot<StoredFootballAgenda>("agenda", "football-today");
+  const prevGames = prev && prev.date === today ? prev.leagues.flatMap((l) => l.events) : [];
+
+  const frozen = new Map<number, AgendaEvent>();
+  const nameToSlug = new Map(
+    FOOTBALL_AGENDA_CHAMPS.map((s) => [TOURNAMENT_BY_SLUG[s]?.name || s, s] as const)
+  );
+  const liveSlugs = new Set<string>();
+  const nowSec = Date.now() / 1000;
+  for (const g of prevGames) {
+    if (g.statusType === "finished") frozen.set(g.id, g);
+    const soon = g.timestamp > nowSec && g.timestamp - nowSec < 2 * 3600;
+    if (g.statusType === "inprogress" || soon) {
+      const slug = nameToSlug.get(g.league);
+      if (slug) liveSlugs.add(slug);
+    }
+  }
+  // Feed da rodada: 60s p/ liga com jogo ao vivo/próximo; 30min no resto (economia).
+  const ttlFor = (slug: string) => (liveSlugs.has(slug) ? 60 : 1800);
+
+  const leagues = await getFootballAgendaForDay(new Date(), { ttlFor, frozen });
+  await saveSnapshot("agenda", "football-today", {
+    date: today,
+    updatedAt: new Date().toISOString(),
+    leagues,
+  } satisfies StoredFootballAgenda);
+
+  const games = leagues.reduce((n, l) => n + l.events.length, 0);
+  return { ok: true, games, leagues: leagues.length };
+}
+
 // data: objeto Date (qualquer hora do dia desejado, horário do servidor).
 export async function getGeneralAgenda(date: Date): Promise<AgendaSportGroup[]> {
   const d = date.getDate();
@@ -259,11 +365,14 @@ export async function getGeneralAgenda(date: Date): Promise<AgendaSportGroup[]> 
   const now = new Date();
   const isToday = d === now.getDate() && m === now.getMonth() + 1 && y === now.getFullYear();
 
-  // Futebol de fonte confiável (o feed por data está quebrado) — sempre em primeiro.
+  // Futebol sempre em primeiro. HOJE: lê o STORE (dev grava via cron; prod só lê — nunca bate
+  // na API). Outros dias (seletor de data): computa na hora (leve; futuros = agendados).
   const footballGroup: AgendaSportGroup = {
     sport: "Futebol",
     sportSlug: "futebol",
-    leagues: await getFootballAgendaForDay(date).catch(() => []),
+    leagues: isToday
+      ? await getStoredFootballAgenda().catch(() => [])
+      : await getFootballAgendaForDay(date).catch(() => []),
   };
 
   const otherGroups = await Promise.all(

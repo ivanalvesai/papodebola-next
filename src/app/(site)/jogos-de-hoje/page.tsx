@@ -7,7 +7,9 @@ import { MatchCarousel } from "@/components/match-bar/match-carousel";
 import { getGeneralAgenda, type AgendaEvent } from "@/lib/data/agenda";
 import type { MatchBarCardProps } from "@/components/match-bar/match-bar-card";
 
-export const revalidate = 1800;
+// Futebol vem do store (barato); outros esportes do feed por data (funciona). Revalida
+// rápido pra refletir o store atualizado pelo cron do dev.
+export const revalidate = 60;
 
 export const metadata: Metadata = {
   title: "Agenda de Jogos de Hoje",

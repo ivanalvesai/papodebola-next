@@ -4,10 +4,12 @@ import { PageBreadcrumb } from "@/components/seo/page-breadcrumb";
 import { AgendaTabs } from "@/components/agenda/agenda-tabs";
 import { MatchCarousel } from "@/components/match-bar/match-carousel";
 import { LiveScoreProvider } from "@/components/world-cup/copa-live-provider";
-import { getFootballAgendaForDay, type AgendaEvent } from "@/lib/data/agenda";
+import { getStoredFootballAgenda, type AgendaEvent } from "@/lib/data/agenda";
 import type { MatchBarCardProps } from "@/components/match-bar/match-bar-card";
 
-export const revalidate = 300;
+// Lê o STORE (dev grava via cron; prod só lê — não bate na API). Revalida rápido só pra
+// refletir o store atualizado (a leitura é 1 arquivo do volume, barata).
+export const revalidate = 60;
 
 export const metadata: Metadata = {
   alternates: { canonical: "/jogos-de-hoje/futebol" },
@@ -41,7 +43,7 @@ function toCard(e: AgendaEvent): MatchBarCardProps {
 }
 
 export default async function AgendaFutebolPage() {
-  const leagues = await getFootballAgendaForDay(new Date()).catch(() => []);
+  const leagues = await getStoredFootballAgenda().catch(() => []);
   // Liga o polling ao vivo se houver jogo da Copa hoje (mesmo padrão da home).
   const hasCopa = leagues.some((lg) => lg.league === "Copa do Mundo");
 
