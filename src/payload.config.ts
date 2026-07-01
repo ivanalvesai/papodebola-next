@@ -267,6 +267,25 @@ export default buildConfig({
                 { name: "secondaryCtaHref", type: "text", admin: { description: "Empty-state: botão 2 (URL)" } },
               ],
             },
+            // Grid de cards de link (ex.: "Principais Campeonatos") — em colunas, e cada
+            // card é um item do array reordenável no /cms.
+            {
+              slug: "linkCards",
+              labels: { singular: "Cards de link (grid)", plural: "Cards de link" },
+              fields: [
+                { name: "title", type: "text", admin: { description: "Título acima dos cards (opcional)" } },
+                {
+                  name: "items",
+                  type: "array",
+                  label: "Cards",
+                  admin: { description: "Cada card é um link. Arraste para reordenar." },
+                  fields: [
+                    { name: "label", type: "text", required: true },
+                    { name: "href", type: "text", required: true },
+                  ],
+                },
+              ],
+            },
           ],
         },
         {

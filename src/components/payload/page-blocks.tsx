@@ -1,4 +1,5 @@
 import { RichText } from "@payloadcms/richtext-lexical/react";
+import { Globe } from "lucide-react";
 import type { PayloadPage } from "@/lib/data/payload-pages";
 
 // Renderiza uma "Página" do Payload (hero + blocos) com o visual do site.
@@ -132,6 +133,29 @@ export function PageBlock({ block }: { block: any }) {
       );
     case "note":
       return <p className="text-xs text-text-muted">{block.text}</p>;
+    case "linkCards": {
+      const items = (block.items || []).filter((it: any) => it?.label && it?.href);
+      if (!items.length) return null;
+      return (
+        <div>
+          {block.title && (
+            <h2 className="mb-3 text-lg font-bold text-text-primary">{block.title}</h2>
+          )}
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
+            {items.map((it: any, i: number) => (
+              <a
+                key={i}
+                href={it.href}
+                className="flex items-center gap-2 rounded-lg border border-border-custom bg-card-bg px-4 py-3 transition-colors hover:border-green"
+              >
+                <Globe className="h-4 w-4 shrink-0 text-green" />
+                <span className="text-sm font-semibold text-text-primary">{it.label}</span>
+              </a>
+            ))}
+          </div>
+        </div>
+      );
+    }
     default:
       return null;
   }
