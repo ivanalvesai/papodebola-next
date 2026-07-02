@@ -363,6 +363,33 @@ function CommentaryRow({ c, event }: { c: MatchCommentary; event: MatchEvent }) 
       </div>
     );
   }
+
+  // Comentário editorial (cadastrado no /cms) — conteúdo rico (texto + imagem + link).
+  // Com destaque: cabeçalho "💬 Comentário da Redação". Sem destaque: só o conteúdo (info),
+  // nas mesmas cores. `c.text` vazio = sem destaque.
+  if (c.type === "editorial") {
+    // Fase (ex: "Pré-jogo", "Intervalo") tem prioridade sobre o número do minuto.
+    const cmin = c.minuteLabel ? c.minuteLabel : c.minute != null ? `${c.minute}'` : "";
+    const showHeader = !!c.text;
+    return (
+      <div className="rounded-lg border border-green/50 bg-green/5 p-3.5">
+        {showHeader ? (
+          <div className="mb-2 flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-wide text-green">
+            <span>💬</span> {c.text}
+            {cmin && <span className="ml-auto tabular-nums text-text-muted">{cmin}</span>}
+          </div>
+        ) : (
+          cmin && <div className="mb-1 text-[11px] font-bold tabular-nums text-green">{cmin}</div>
+        )}
+        {c.html && (
+          <div
+            className="text-[13px] leading-relaxed text-text-primary [&_a]:font-semibold [&_a]:text-green [&_a:hover]:underline [&_img]:my-2 [&_img]:rounded-lg [&_figcaption]:mt-1 [&_figcaption]:text-[11px] [&_figcaption]:text-text-muted [&>p]:mb-2 [&>p:last-child]:mb-0"
+            dangerouslySetInnerHTML={{ __html: c.html }}
+          />
+        )}
+      </div>
+    );
+  }
   const info = COMM[c.type] || { label: "Lance do jogo" };
   const teamId = c.isHome == null ? 0 : c.isHome ? event.homeId : event.awayId;
   const teamName = c.isHome ? event.home : event.away;
@@ -1129,6 +1156,9 @@ export function LiveMatch({
           )}
         </div>
       </div>
+
+      {/* ID do jogo (pro admin usar no /cms → Comentários do jogo). Discreto. */}
+      <p className="pt-1 text-center text-[10px] text-text-muted/50">Jogo #{matchId}</p>
     </div>
   );
 }

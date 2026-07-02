@@ -427,6 +427,22 @@ export function ArticleView({
         .prose-article .pdb-callout-warning { background: #fffbeb; border-color: #f59e0b; }
         .prose-article .pdb-callout-success { background: #f0fdf4; border-color: #22c55e; }
         .prose-article .pdb-callout-highlight { background: #ecfdf5; border-color: #00965E; }
+        /* Comentário / Info em verde — mesmas cores do "Comentário da Redação" do lance a lance. */
+        .prose-article .pdb-callout-comment,
+        .prose-article .pdb-callout-comment-plain {
+          background: rgba(0, 150, 94, 0.05);
+          border: 1px solid rgba(0, 150, 94, 0.4);
+        }
+        .prose-article .pdb-callout-comment::before {
+          content: "💬 Comentário da Redação";
+          display: block;
+          margin-bottom: 8px;
+          font-size: 11px;
+          font-weight: 700;
+          letter-spacing: 0.03em;
+          text-transform: uppercase;
+          color: #00965E;
+        }
         .prose-article .pdb-img { margin: 8px 0 32px; }
         .prose-article .pdb-img img { max-width: 100%; height: auto; border-radius: 8px; display: block; }
         .prose-article .pdb-img-center { text-align: center; }

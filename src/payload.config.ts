@@ -543,6 +543,9 @@ export default buildConfig({
                           { label: "Atenção (amarelo)", value: "warning" },
                           { label: "Sucesso (verde)", value: "success" },
                           { label: "Destaque (verde PdB)", value: "highlight" },
+                          // Mesmas cores do "Comentário da Redação" do lance a lance:
+                          { label: "Comentário (verde, com selo 💬)", value: "comment" },
+                          { label: "Informação (verde, sem selo)", value: "comment-plain" },
                         ],
                       },
                       { name: "content", type: "richText", label: "Conteúdo", editor: lexicalEditor() },
@@ -667,6 +670,78 @@ export default buildConfig({
             { name: "metaTitle", type: "text" },
             { name: "metaDescription", type: "textarea" },
           ],
+        },
+      ],
+    },
+    {
+      slug: "matchComments",
+      labels: { singular: "Comentário do jogo", plural: "Comentários do jogo" },
+      admin: {
+        useAsTitle: "label",
+        defaultColumns: ["label", "matchId", "minute", "updatedAt"],
+        description:
+          "Comentários manuais injetados no lance a lance de um jogo (texto + imagem + link). Preencha o ID do jogo e o minuto; o card aparece encaixado no minuto, sem atrapalhar a API. Salvou = no ar (o lance a lance puxa no polling, ~10-15s).",
+      },
+      access: { read: () => true },
+      fields: [
+        {
+          name: "matchId",
+          type: "number",
+          required: true,
+          label: "ID do jogo (Sofascore)",
+          index: true,
+          admin: { description: "O número que aparece no rodapé da página do jogo (ex.: 12813014)." },
+        },
+        {
+          name: "minute",
+          type: "number",
+          label: "Minuto",
+          admin: { description: "Minuto do jogo onde encaixa (ex.: 37). Deixe vazio se for usar a Fase abaixo." },
+        },
+        {
+          name: "moment",
+          type: "text",
+          label: "Fase (quando não há minuto)",
+          admin: {
+            description:
+              "Use no lugar do minuto: Pré-jogo, Intervalo, Prorrogação, Fim de jogo (ou escreva livre). Posiciona no feed e aparece no lugar do minuto. Se vazio, usa o Minuto acima.",
+          },
+        },
+        {
+          name: "highlight",
+          type: "checkbox",
+          defaultValue: true,
+          label: "Destacar como \"Comentário da Redação\"",
+          admin: {
+            description:
+              "Ligado: mostra o cabeçalho \"💬 Comentário da Redação\" (rótulo abaixo). Desligado: só o texto/foto, sem o cabeçalho — mas nas mesmas cores do comentário.",
+          },
+        },
+        {
+          name: "label",
+          type: "text",
+          defaultValue: "Comentário da Redação",
+          label: "Rótulo do card",
+          admin: { condition: (_, s) => s?.highlight !== false, description: "Texto do cabeçalho (quando destacado)." },
+        },
+        {
+          name: "content",
+          type: "richText",
+          label: "Conteúdo",
+          editor: lexicalEditor({
+            features: ({ defaultFeatures }) => [
+              ...defaultFeatures,
+              // Imagem no comentário (upload) + legenda; links (abrir em nova aba) já vêm no default.
+              UploadFeature({
+                collections: {
+                  media: {
+                    fields: [{ name: "caption", type: "text", label: "Legenda (opcional)" }],
+                  },
+                },
+              }),
+            ],
+          }),
+          admin: { description: "Texto + imagem + link (com opção de abrir em nova aba), igual ao editor dos posts." },
         },
       ],
     },

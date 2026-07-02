@@ -6,6 +6,7 @@ import { translateEnPt } from "@/lib/services/translate";
 import { getWorldCupStandings } from "./standings";
 import { getChampionshipData } from "./championship";
 import { withSnapshot } from "./snapshot-store";
+import { getMatchComments } from "./match-comments";
 import { TOURNAMENT_BY_SLUG } from "@/lib/config";
 import type { StandingsGroup } from "@/types/standings";
 
@@ -444,6 +445,8 @@ export interface MatchCommentary {
   playerOut: string | null;
   reason: string | null; // motivo do cartão (ex: Foul, Violent conduct)
   minute: number | null;
+  html?: string | null; // conteúdo rico (comentário editorial do /cms): texto+imagem+link
+  minuteLabel?: string | null; // exibido no lugar do minuto (ex: "Pré-jogo", "Intervalo")
 }
 
 export interface MatchDetail {
@@ -828,13 +831,13 @@ const MANUAL_COMMENTARY: Record<number, MatchCommentary[]> = {
   ],
 };
 
-// Injeta os comentários manuais no feed (ordenado decrescente por minuto), na posição
-// do minuto. Aplicar DEPOIS da tradução (o texto manual já está em PT-BR).
-function injectManualCommentary(id: number, feed: MatchCommentary[]): MatchCommentary[] {
-  const manual = MANUAL_COMMENTARY[id];
-  if (!manual?.length) return feed;
+// Insere itens no feed (ordenado decrescente por minuto) na posição do minuto de cada um,
+// sem duplicar e sem mexer nos lances da API. Usado tanto pro comentário hardcoded (FIFA)
+// quanto pros comentários editoriais do /cms (getMatchComments).
+export function injectByMinute(feed: MatchCommentary[], items: MatchCommentary[]): MatchCommentary[] {
+  if (!items?.length) return feed;
   const result = [...feed];
-  for (const item of manual) {
+  for (const item of items) {
     if (result.some((x) => x.id === item.id)) continue;
     const idx = result.findIndex(
       (x) => x.minute != null && item.minute != null && x.minute < item.minute
@@ -845,6 +848,11 @@ function injectManualCommentary(id: number, feed: MatchCommentary[]): MatchComme
   return result;
 }
 
+// Comentário manual hardcoded (ex.: nota oficial da FIFA). Aplicar DEPOIS da tradução.
+function injectManualCommentary(id: number, feed: MatchCommentary[]): MatchCommentary[] {
+  return injectByMinute(feed, MANUAL_COMMENTARY[id] || []);
+}
+
 // Detalhe completo (server render inicial). Busca o event primeiro pra saber o
 // status e adaptar o TTL do resto (não martela a API em jogo encerrado).
 // Detalhe completo do jogo (placar, escalações, estatísticas e LANCE A LANCE). Salva
@@ -852,12 +860,16 @@ function injectManualCommentary(id: number, feed: MatchCommentary[]): MatchComme
 // → o lance a lance do jogo fica preservado pra sempre. Captura "a partir de agora":
 // todo jogo renderizado/visto é arquivado, e o encerrado congela no estado final.
 export async function getMatchDetail(id: number, startHint?: number): Promise<MatchDetail | null> {
-  return withSnapshot<MatchDetail>(
+  const detail = await withSnapshot<MatchDetail>(
     "matches",
     id,
     () => fetchMatchDetailLive(id, startHint),
     (d) => !!d.event
   );
+  // Comentários editoriais do /cms: injetados FORA do snapshot pra sempre virem frescos
+  // (mesmo quando a API cai e serve o snapshot). Encaixados pelo minuto, sem tocar na API.
+  if (detail) detail.commentary = injectByMinute(detail.commentary, await getMatchComments(id));
+  return detail;
 }
 
 async function fetchMatchDetailLive(id: number, startHint?: number): Promise<MatchDetail | null> {
@@ -907,7 +919,10 @@ export async function getMatchLive(id: number, startHint?: number): Promise<Matc
   return {
     event,
     incidents: normalizeIncidents(incRaw),
-    commentary: injectManualCommentary(id, await translateFeed(mergeFeed(normalizeCommentary(commRaw), incRaw))),
+    commentary: injectByMinute(
+      injectManualCommentary(id, await translateFeed(mergeFeed(normalizeCommentary(commRaw), incRaw))),
+      await getMatchComments(id)
+    ),
     stats: normalizeStats(statRaw),
     shootout: normalizeShootout(incRaw),
   };
