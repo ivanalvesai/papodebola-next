@@ -82,6 +82,75 @@ function extractAllBadges(html) {
   return badges;
 }
 
+// Remove tags e imagens (as fotos de atleta vêm base64 inline e incham tudo).
+function stripTags(s) {
+  return dec(s.replace(/<img[^>]*>/g, " ").replace(/<[^>]+>/g, " "));
+}
+
+// Isola um painel de aba pelo id (ex: "Artilheiros", "Defesa").
+function tabPane(html, id) {
+  const i = html.indexOf(`id="${id}"`);
+  if (i < 0) return "";
+  const rest = html.slice(i + 5);
+  const j = rest.search(/class="tab-pane|id="(?:Times|Partidas|Tabela|Artilheiros|Defesa|Documentos)"/);
+  return j > 0 ? rest.slice(0, j) : rest.slice(0, 300000);
+}
+
+// Normaliza pra comparação (sem acento, maiúsculo, só alfanumérico).
+function norm(s) {
+  return s.toUpperCase().normalize("NFD").replace(/[̀-ͯ]/g, "").replace(/[^A-Z0-9]/g, "");
+}
+
+// ARTILHEIROS (aba id="Artilheiros"): o SisGel gruda nome do atleta + time na mesma
+// célula ("FLAVIO ... UNIÃO DO PARQUE"). Separo o time comparando o SUFIXO (por palavras,
+// insensível a acento) com os times do campeonato.
+function parseArtilheiros(html, teamNames) {
+  const sorted = [...new Set(teamNames)].sort((a, b) => b.length - a.length);
+  const pane = tabPane(html, "Artilheiros");
+  const out = [];
+  const rowRe = /<tr>([\s\S]*?)<\/tr>/g;
+  let m;
+  while ((m = rowRe.exec(pane)) !== null) {
+    if (/<th/.test(m[1])) continue;
+    const cells = [...m[1].matchAll(/<td[^>]*>([\s\S]*?)<\/td>/g)]
+      .map((c) => stripTags(c[1])).filter((c) => c);
+    if (cells.length < 2) continue;
+    const goals = parseInt(cells[cells.length - 1].replace(/[^\d]/g, ""));
+    const words = cells[1].split(/\s+/);
+    let name = cells[1], team = "";
+    outer: for (const t of sorted) {
+      const nt = norm(t);
+      for (let k = 1; k < words.length; k++) {
+        if (norm(words.slice(-k).join(" ")) === nt) {
+          team = t;
+          name = words.slice(0, words.length - k).join(" ");
+          break outer;
+        }
+      }
+    }
+    if (name && !isNaN(goals)) out.push({ pos: out.length + 1, name, team, goals });
+  }
+  return out;
+}
+
+// MELHOR DEFESA (aba id="Defesa"): pos, time, gols sofridos.
+function parseDefesa(html) {
+  const pane = tabPane(html, "Defesa");
+  const out = [];
+  const rowRe = /<tr>([\s\S]*?)<\/tr>/g;
+  let m;
+  while ((m = rowRe.exec(pane)) !== null) {
+    if (/<th/.test(m[1])) continue;
+    const cells = [...m[1].matchAll(/<td[^>]*>([\s\S]*?)<\/td>/g)]
+      .map((c) => stripTags(c[1])).filter((c) => c);
+    if (cells.length < 2) continue;
+    const conceded = parseInt(cells[cells.length - 1].replace(/[^\d]/g, ""));
+    const team = cells[1];
+    if (team && !isNaN(conceded)) out.push({ pos: out.length + 1, team, conceded });
+  }
+  return out;
+}
+
 function parseClassification(html) {
   // Only parse the CLASSIFICAÇÃO tab — extract between id="Tabela" and the next tab-pane
   let section = html;
@@ -161,6 +230,9 @@ function parseRoundMeta(html) {
 
 // Parse a single <a href="/SisGel-PUB/jogo/..."> block into a match object.
 function parseGameBlock(gb, round, meta) {
+  // Token do jogo (o bloco começa logo após href="/SisGel-PUB/jogo/). Guarda pra
+  // futuramente montar a página de detalhe (gols/escalação/local) do jogo.
+  const tokenM = gb.match(/^([A-Za-z0-9_-]{10,})/);
   // Date: "sex - 10/04/2026" or just "10/04/2026"
   const dateM = gb.match(/(\d{2}\/\d{2}\/\d{4})/);
   // Time: "19h30" or "19:30" or standalone after date
@@ -191,6 +263,7 @@ function parseGameBlock(gb, round, meta) {
     round,
     phase: meta?.phase || "",
     roundLabel: meta?.label || "",
+    token: tokenM ? tokenM[1] : "",
     home, away,
     homeScore: scores.length >= 2 ? scores[0] : null,
     awayScore: scores.length >= 2 ? scores[1] : null,
@@ -269,12 +342,19 @@ async function scrapeOne(entry) {
   const allBadges = extractAllBadges(html);
   const totalTeams = groups.reduce((s, g) => s + g.teams.length, 0);
 
-  console.log(`  ${pageName}: ${groups.length} grupos, ${totalTeams} times, ${matches.length} jogos, ${Object.keys(allBadges).length} escudos`);
+  // Novos: artilheiros e melhor defesa (abas que antes eram ignoradas).
+  const teamNames = groups.flatMap((g) => g.teams.map((t) => t.name));
+  const scorers = parseArtilheiros(html, teamNames);
+  const defense = parseDefesa(html);
+
+  console.log(`  ${pageName}: ${groups.length} grupos, ${totalTeams} times, ${matches.length} jogos, ${scorers.length} artilheiros, ${defense.length} defesas, ${Object.keys(allBadges).length} escudos`);
 
   const localBadges = await downloadBadges(allBadges);
 
-  // Apply badges
+  // Apply badges (também nos artilheiros/defesa, pelo nome do time)
   for (const g of groups) for (const t of g.teams) t.badge = localBadges[t.name] || "";
+  for (const s of scorers) s.badge = localBadges[s.team] || "";
+  for (const d of defense) d.badge = localBadges[d.team] || "";
   for (const m of matches) {
     m.homeBadgeLocal = localBadges[m.home] || "";
     m.awayBadgeLocal = localBadges[m.away] || "";
@@ -293,6 +373,7 @@ async function scrapeOne(entry) {
     name: pageName, slug: slug(pageName),
     city: "Santana de Parnaiba", state: "SP", year: "2026",
     url: entry.url, groups, matches, matchesByRound: byRound,
+    scorers, defense,
     roundMeta: roundMetaByDisplay,
     totalRounds: Object.keys(byRound).length,
     updatedAt: new Date().toISOString(),

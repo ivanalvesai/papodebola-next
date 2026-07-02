@@ -41,10 +41,14 @@ interface RoundMeta {
   phase?: string; label?: string;
 }
 
+interface Scorer { pos: number; name: string; team: string; goals: number; badge?: string }
+interface Defense { pos: number; team: string; conceded: number; badge?: string }
+
 interface Championship {
   name: string; city: string; state: string; year: string;
   groups: Group[]; matches: Match[];
   matchesByRound: Record<string, Match[]>; roundMeta?: Record<string, RoundMeta>;
+  scorers?: Scorer[]; defense?: Defense[];
   totalRounds: number; updatedAt: string;
 }
 
@@ -276,6 +280,87 @@ export default function MunicipalPage() {
           )}
         </div>
       </div>
+
+      {/* Artilheiros + Melhor Defesa */}
+      {(champ.scorers?.length || champ.defense?.length) ? (
+        <div className="mt-6 grid grid-cols-1 gap-6 md:grid-cols-2">
+          {champ.scorers && champ.scorers.length > 0 && (
+            <div className="bg-card-bg rounded-lg border border-border-custom">
+              <h2 className="text-sm font-bold text-green px-4 py-3 border-b border-border-custom uppercase">
+                Artilheiros
+              </h2>
+              <div className="overflow-x-auto">
+                <table className="w-full text-xs">
+                  <thead>
+                    <tr className="text-text-muted border-b border-border-light">
+                      <th className="text-left py-2 px-3 font-semibold">#</th>
+                      <th className="text-left py-2 px-2 font-semibold">Atleta</th>
+                      <th className="text-left py-2 px-2 font-semibold">Time</th>
+                      <th className="py-2 px-3 font-semibold text-right">Gols</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {champ.scorers.slice(0, 15).map((s, i) => (
+                      <tr key={i} className="border-b border-border-light last:border-0 hover:bg-card-hover">
+                        <td className="py-2 px-3 font-semibold text-text-muted">{s.pos}</td>
+                        <td className="py-2 px-2 font-semibold text-text-primary capitalize">{s.name.toLowerCase()}</td>
+                        <td className="py-2 px-2">
+                          <div className="flex items-center gap-2">
+                            {s.badge ? (
+                              <Image src={s.badge} alt="" width={18} height={18} className="rounded-full shrink-0" unoptimized />
+                            ) : (
+                              <div className="w-[18px] h-[18px] rounded-full bg-body shrink-0" />
+                            )}
+                            <span className="text-text-muted truncate">{s.team}</span>
+                          </div>
+                        </td>
+                        <td className="py-2 px-3 text-right font-bold text-green">{s.goals}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          )}
+
+          {champ.defense && champ.defense.length > 0 && (
+            <div className="bg-card-bg rounded-lg border border-border-custom h-fit">
+              <h2 className="text-sm font-bold text-green px-4 py-3 border-b border-border-custom uppercase">
+                Melhor Defesa
+              </h2>
+              <div className="overflow-x-auto">
+                <table className="w-full text-xs">
+                  <thead>
+                    <tr className="text-text-muted border-b border-border-light">
+                      <th className="text-left py-2 px-3 font-semibold">#</th>
+                      <th className="text-left py-2 px-2 font-semibold">Time</th>
+                      <th className="py-2 px-3 font-semibold text-right">Gols sofridos</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {champ.defense.slice(0, 15).map((d, i) => (
+                      <tr key={i} className="border-b border-border-light last:border-0 hover:bg-card-hover">
+                        <td className="py-2 px-3 font-semibold text-text-muted">{d.pos}</td>
+                        <td className="py-2 px-2">
+                          <div className="flex items-center gap-2">
+                            {d.badge ? (
+                              <Image src={d.badge} alt="" width={20} height={20} className="rounded-full shrink-0" unoptimized />
+                            ) : (
+                              <div className="w-5 h-5 rounded-full bg-body shrink-0" />
+                            )}
+                            <span className="font-semibold text-text-primary truncate">{d.team}</span>
+                          </div>
+                        </td>
+                        <td className="py-2 px-3 text-right font-bold text-text-primary">{d.conceded}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          )}
+        </div>
+      ) : null}
     </div>
   );
 }
