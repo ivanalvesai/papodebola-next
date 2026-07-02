@@ -13,7 +13,6 @@ export function WorldCupBanner() {
       }}
     >
       <div className="mx-auto flex max-w-[1240px] flex-wrap items-center justify-center gap-3 px-5 py-3">
-        <span className="text-xl leading-none">🏆</span>
         <span
           className="text-center text-[15px] font-extrabold uppercase tracking-wide"
           style={{ color: "#0a4d2e" }}
