@@ -16,6 +16,7 @@ const DEDICATED = new Set([
   "politica-de-privacidade",
   "termos-de-uso",
   "jogos-de-hoje-futebol", // renderizada pela rota /jogos-de-hoje/futebol (blocos dinâmicos)
+  "santana-de-parnaiba-municipal", // renderizada no rodapé de /sp/santana-de-parnaiba/municipal
 ]);
 
 export async function generateMetadata({

@@ -54,6 +54,7 @@ const para = (content: any) => ({ blockType: "richText", content });
 const h2 = (text: string) => ({ blockType: "heading", text, level: "h2" });
 const h3 = (text: string) => ({ blockType: "heading", text, level: "h3" });
 const note = (text: string) => ({ blockType: "note", text });
+const yt = (url: string, title?: string, caption?: string) => ({ blockType: "youtube", url, title, caption });
 const infoCard = (label: string, value: string, href?: string) => ({
   blockType: "infoCard",
   label,
@@ -68,6 +69,27 @@ const list = (...items: any[][]) => ({
 
 /* ---------- conteúdo das páginas (fiel ao atual) ---------- */
 const PAGES: Record<string, any> = {
+  // Área editável (textos + vídeos do YouTube + notícias) que aparece NO RODAPÉ da
+  // página /sp/santana-de-parnaiba/municipal, abaixo dos dados raspados do SisGel.
+  "santana-de-parnaiba-municipal": {
+    title: "Futebol Municipal de Santana de Parnaíba",
+    slug: "santana-de-parnaiba-municipal",
+    seo: {
+      metaTitle: "Futebol Municipal de Santana de Parnaíba: tabelas, artilheiros e jogos",
+      metaDescription:
+        "Classificação, artilheiros, melhor defesa e jogos dos campeonatos municipais de Santana de Parnaíba (1ª, 2ª e 3ª divisão, Veterano e Veteraníssimo).",
+    },
+    layout: [
+      h2("Vídeos do futebol municipal"),
+      yt(
+        "https://www.youtube.com/watch?v=jNQXAC9IVRw",
+        "",
+        "Vídeo de exemplo — troque ou remova no /cms (aba Páginas)."
+      ),
+      h2("Notícias do futebol municipal"),
+      note("Adicione notícias e mais vídeos aqui pelo /cms → Páginas → Futebol Municipal (blocos de Texto, Cards de link ou Vídeo do YouTube)."),
+    ],
+  },
   contato: {
     title: "Contato",
     slug: "contato",
