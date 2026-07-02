@@ -99,6 +99,13 @@ const nextConfig: NextConfig = {
       { source: "/esporte/esports", destination: "/esports", permanent: true },
       { source: "/esporte/nfl", destination: "/futebol-americano", permanent: true },
 
+      // Artigos do portal anterior: a URL era /artigos/{slug}.html; hoje o mesmo artigo
+      // vive em /{categoria}/{slug}. Tirando o .html cai em /artigos/{slug}, que já faz
+      // 308 pra URL canônica por categoria → recupera o SEO das 260 URLs que ainda
+      // existem. As 24 apagadas (spam de cassino + ciberseguranca-* duplicado) caem em
+      // 404 de propósito. Descoberto na auditoria Screaming Frog de 01/07.
+      { source: "/artigos/:slug.html", destination: "/artigos/:slug", permanent: true },
+
       // Site legado (.htm, 2004–2013): recupera o equity dos backlinks (Wikipedia
       // DR97, portais) que apontam pra páginas antigas hoje em 404. Sem equivalente
       // 1:1 (não há páginas de jogador/jornalista), então 301 pro hub mais relevante:
