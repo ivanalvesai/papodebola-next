@@ -202,8 +202,50 @@ export default function MunicipalPage() {
               </div>
             </div>
           ))}
+
+          {/* Artilheiros — logo abaixo da classificação. Mostra ~5 e o resto rola. */}
+          {champ.scorers && champ.scorers.length > 0 && (
+            <div className="bg-card-bg rounded-lg border border-border-custom">
+              <h2 className="text-sm font-bold text-green px-4 py-3 border-b border-border-custom uppercase">
+                Artilheiros
+              </h2>
+              <div className="max-h-[236px] overflow-y-auto">
+                <table className="w-full text-xs">
+                  <thead className="sticky top-0 z-10 bg-card-bg">
+                    <tr className="text-text-muted border-b border-border-light">
+                      <th className="text-left py-2 px-3 font-semibold">#</th>
+                      <th className="text-left py-2 px-2 font-semibold">Atleta</th>
+                      <th className="text-left py-2 px-2 font-semibold">Time</th>
+                      <th className="py-2 px-3 font-semibold text-right">Gols</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {champ.scorers.map((s, i) => (
+                      <tr key={i} className="border-b border-border-light last:border-0 hover:bg-card-hover">
+                        <td className="py-2 px-3 font-semibold text-text-muted">{s.pos}</td>
+                        <td className="py-2 px-2 font-semibold text-text-primary capitalize">{s.name.toLowerCase()}</td>
+                        <td className="py-2 px-2">
+                          <div className="flex items-center gap-2">
+                            {s.badge ? (
+                              <Image src={s.badge} alt="" width={18} height={18} className="rounded-full shrink-0" unoptimized />
+                            ) : (
+                              <div className="w-[18px] h-[18px] rounded-full bg-body shrink-0" />
+                            )}
+                            <span className="text-text-muted truncate">{s.team}</span>
+                          </div>
+                        </td>
+                        <td className="py-2 px-3 text-right font-bold text-green">{s.goals}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          )}
         </div>
 
+        {/* Coluna direita: rodadas + melhor defesa (alinhados) */}
+        <div className="space-y-6">
         {/* Matches by round */}
         <div className="bg-card-bg rounded-lg border border-border-custom h-fit">
           <div className="px-4 py-3 border-b border-border-custom">
@@ -279,50 +321,8 @@ export default function MunicipalPage() {
             </div>
           )}
         </div>
-      </div>
 
-      {/* Artilheiros + Melhor Defesa */}
-      {(champ.scorers?.length || champ.defense?.length) ? (
-        <div className="mt-6 grid grid-cols-1 gap-6 md:grid-cols-2">
-          {champ.scorers && champ.scorers.length > 0 && (
-            <div className="bg-card-bg rounded-lg border border-border-custom">
-              <h2 className="text-sm font-bold text-green px-4 py-3 border-b border-border-custom uppercase">
-                Artilheiros
-              </h2>
-              <div className="overflow-x-auto">
-                <table className="w-full text-xs">
-                  <thead>
-                    <tr className="text-text-muted border-b border-border-light">
-                      <th className="text-left py-2 px-3 font-semibold">#</th>
-                      <th className="text-left py-2 px-2 font-semibold">Atleta</th>
-                      <th className="text-left py-2 px-2 font-semibold">Time</th>
-                      <th className="py-2 px-3 font-semibold text-right">Gols</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {champ.scorers.slice(0, 15).map((s, i) => (
-                      <tr key={i} className="border-b border-border-light last:border-0 hover:bg-card-hover">
-                        <td className="py-2 px-3 font-semibold text-text-muted">{s.pos}</td>
-                        <td className="py-2 px-2 font-semibold text-text-primary capitalize">{s.name.toLowerCase()}</td>
-                        <td className="py-2 px-2">
-                          <div className="flex items-center gap-2">
-                            {s.badge ? (
-                              <Image src={s.badge} alt="" width={18} height={18} className="rounded-full shrink-0" unoptimized />
-                            ) : (
-                              <div className="w-[18px] h-[18px] rounded-full bg-body shrink-0" />
-                            )}
-                            <span className="text-text-muted truncate">{s.team}</span>
-                          </div>
-                        </td>
-                        <td className="py-2 px-3 text-right font-bold text-green">{s.goals}</td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            </div>
-          )}
-
+          {/* Melhor Defesa — alinhado com o card de rodadas (coluna direita) */}
           {champ.defense && champ.defense.length > 0 && (
             <div className="bg-card-bg rounded-lg border border-border-custom h-fit">
               <h2 className="text-sm font-bold text-green px-4 py-3 border-b border-border-custom uppercase">
@@ -360,7 +360,9 @@ export default function MunicipalPage() {
             </div>
           )}
         </div>
-      ) : null}
+      </div>
+
+      {/* Espaço livre abaixo pra notícias, vídeos do YouTube etc. (Fase 2) */}
     </div>
   );
 }
