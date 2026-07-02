@@ -68,6 +68,20 @@ const list = (...items: any[][]) => ({
 
 /* ---------- conteúdo das páginas (fiel ao atual) ---------- */
 const PAGES: Record<string, any> = {
+  // Área editável (textos + vídeos do YouTube + notícias) que aparece NO RODAPÉ da
+  // página /sp/santana-de-parnaiba/municipal, abaixo dos dados raspados do SisGel.
+  "santana-de-parnaiba-municipal": {
+    title: "Futebol Municipal de Santana de Parnaíba",
+    slug: "santana-de-parnaiba-municipal",
+    seo: {
+      metaTitle: "Futebol Municipal de Santana de Parnaíba: tabelas, artilheiros e jogos",
+      metaDescription:
+        "Classificação, artilheiros, melhor defesa e jogos dos campeonatos municipais de Santana de Parnaíba (1ª, 2ª e 3ª divisão, Veterano e Veteraníssimo).",
+    },
+    // Começa vazio: os vídeos/notícias entram pelo /cms → Páginas → Futebol Municipal
+    // (blocos Vídeo do YouTube, Texto e Cards de link). Aparecem no rodapé da página.
+    layout: [],
+  },
   contato: {
     title: "Contato",
     slug: "contato",

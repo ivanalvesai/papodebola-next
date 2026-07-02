@@ -286,6 +286,25 @@ export default buildConfig({
                 },
               ],
             },
+            // Vídeo embed do YouTube. Adicione um bloco por vídeo (arraste pra reordenar).
+            {
+              slug: "youtube",
+              labels: { singular: "Vídeo do YouTube", plural: "Vídeos do YouTube" },
+              fields: [
+                {
+                  name: "url",
+                  type: "text",
+                  required: true,
+                  label: "Link do vídeo",
+                  admin: {
+                    description:
+                      "Cole o link (https://www.youtube.com/watch?v=XXXX, https://youtu.be/XXXX ou o link do Shorts).",
+                  },
+                },
+                { name: "title", type: "text", label: "Título (opcional)", admin: { description: "Aparece acima do vídeo." } },
+                { name: "caption", type: "text", label: "Legenda (opcional)", admin: { description: "Aparece abaixo do vídeo." } },
+              ],
+            },
           ],
         },
         {
