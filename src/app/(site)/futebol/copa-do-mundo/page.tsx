@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Trophy, Newspaper } from "lucide-react";
+import { Newspaper } from "lucide-react";
 import { PageBreadcrumb } from "@/components/seo/page-breadcrumb";
 import { WorldCupTournamentSchema } from "@/components/seo/world-cup-tournament-schema";
 import { GroupRow } from "@/components/world-cup/group-row";
@@ -57,10 +57,7 @@ export default async function CopaDoMundoPage() {
         items={[{ label: "Início", href: "/" }, { label: "Copa do Mundo 2026" }]}
       />
 
-      <h1 className="text-xl font-bold text-text-primary mb-1 flex items-center gap-2">
-        <Trophy className="h-5 w-5 text-green" />
-        {h1}
-      </h1>
+      <h1 className="text-xl font-bold text-text-primary mb-1">{h1}</h1>
       <p className="text-sm text-text-muted mb-6">{intro}</p>
 
       <section>
