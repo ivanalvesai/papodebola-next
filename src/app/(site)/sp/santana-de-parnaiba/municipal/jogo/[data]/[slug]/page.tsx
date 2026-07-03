@@ -14,29 +14,26 @@ export const dynamic = "force-dynamic";
 export async function generateMetadata({
   params,
 }: {
-  params: Promise<{ slug: string }>;
+  params: Promise<{ data: string; slug: string }>;
 }): Promise<Metadata> {
-  const { slug } = await params;
-  const g = await getMunicipalGame(slug);
+  const { data, slug } = await params;
+  const canonical = `/sp/santana-de-parnaiba/municipal/jogo/${data}/${slug}`;
+  const g = await getMunicipalGame(data, slug);
   if (g) {
     return {
       title: `${g.home} x ${g.away} ao vivo${g.division ? ` — ${g.division}` : ""} de Santana de Parnaíba`,
       description: `Assista ${g.home} x ${g.away}${g.date ? ` (${g.date}${g.time ? `, ${g.time}` : ""})` : ""} pelo futebol municipal de Santana de Parnaíba: transmissão ao vivo, escalações e comentários.`,
-      alternates: { canonical: `/sp/santana-de-parnaiba/municipal/jogo/${slug}` },
+      alternates: { canonical },
     };
   }
-  const m = await getMunicipalMatch(slug);
+  const m = await getMunicipalMatch(data, slug);
   if (!m) return {};
   const score = m.homeScore != null ? `${m.homeScore} x ${m.awayScore}` : "x";
   const title = `${m.home} ${score} ${m.away} — ${m.division} de Santana de Parnaíba`;
   const description = `Ficha do jogo ${m.home} x ${m.away} pelo ${m.division} de Santana de Parnaíba${
     m.venue ? `, no ${m.venue}` : ""
   }: placar, gols e escalações.`;
-  return {
-    title,
-    description,
-    alternates: { canonical: `/sp/santana-de-parnaiba/municipal/jogo/${slug}` },
-  };
+  return { title, description, alternates: { canonical } };
 }
 
 function Crest({ src, alt, size = 40 }: { src: string; alt: string; size?: number }) {
@@ -63,15 +60,15 @@ function Cards({ p }: { p: { yellow: number; red: number } }) {
 export default async function MunicipalMatchPage({
   params,
 }: {
-  params: Promise<{ slug: string }>;
+  params: Promise<{ data: string; slug: string }>;
 }) {
-  const { slug } = await params;
+  const { data, slug } = await params;
 
   // Jogo do CMS (com vídeo/comentários) tem prioridade sobre a ficha raspada.
-  const game = await getMunicipalGame(slug);
+  const game = await getMunicipalGame(data, slug);
   if (game) return <MunicipalGameView game={game} />;
 
-  const m = await getMunicipalMatch(slug);
+  const m = await getMunicipalMatch(data, slug);
   if (!m) notFound();
 
   const hasScore = m.homeScore !== null && m.awayScore !== null;

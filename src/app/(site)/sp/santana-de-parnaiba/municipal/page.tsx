@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { getPayloadPage } from "@/lib/data/payload-pages";
-import { getMunicipalGameSlugs } from "@/lib/data/municipal-game";
+import { getMunicipalGameKeys } from "@/lib/data/municipal-game";
 import { PageBlock } from "@/components/payload/page-blocks";
 import MunicipalData from "./municipal-client";
 
@@ -27,8 +27,8 @@ export async function generateMetadata(): Promise<Metadata> {
 export default async function MunicipalPage() {
   const page = await getPayloadPage(CMS_SLUG);
   const blocks = (page?.layout as any[]) || [];
-  // Slugs de jogos com página no CMS (vídeo) → viram link na lista mesmo sem placar.
-  const videoGameSlugs = await getMunicipalGameSlugs();
+  // Chaves (data/par) de jogos com página no CMS (vídeo) → viram link na lista mesmo sem placar.
+  const videoGameSlugs = await getMunicipalGameKeys();
 
   return (
     <>

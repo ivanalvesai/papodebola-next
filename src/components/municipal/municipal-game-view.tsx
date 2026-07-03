@@ -69,7 +69,7 @@ export function MunicipalGameView({ game }: { game: MunicipalGame }) {
               {[game.division, game.roundLabel].filter(Boolean).join(" · ")}
             </span>
           )}
-          <LiveBadge slug={game.slug} size="sm" />
+          <LiveBadge gameKey={`${game.dateSlug}/${game.slug}`} size="sm" />
         </div>
         <div className="flex items-center justify-center gap-4 sm:gap-8">
           <TeamHead name={game.home} badge={game.homeBadge} />
@@ -102,7 +102,7 @@ export function MunicipalGameView({ game }: { game: MunicipalGame }) {
                 allowFullScreen
               />
               <div className="pointer-events-none absolute left-2 top-2 z-10">
-                <LiveBadge slug={game.slug} />
+                <LiveBadge gameKey={`${game.dateSlug}/${game.slug}`} />
               </div>
             </div>
           ) : (

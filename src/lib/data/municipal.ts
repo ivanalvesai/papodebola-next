@@ -16,6 +16,7 @@ export interface MunicipalGoal {
 }
 export interface MunicipalMatch {
   slug: string;
+  dateSlug: string;
   token: string;
   division: string;
   divisionSlug: string;
@@ -47,12 +48,14 @@ async function readMatches(): Promise<Record<string, MunicipalMatch>> {
   }
 }
 
-export async function getMunicipalMatch(slug: string): Promise<MunicipalMatch | null> {
+// Chave composta no arquivo: "DD-MM-YYYY/home-away" (padrão da URL /jogo/[data]/[slug]).
+export async function getMunicipalMatch(dateSlug: string, pairSlug: string): Promise<MunicipalMatch | null> {
   const all = await readMatches();
-  return all[slug] || null;
+  return all[`${dateSlug}/${pairSlug}`] || null;
 }
 
-export async function getMunicipalMatchSlugs(): Promise<string[]> {
+// Retorna as chaves compostas "data/par" (o sitemap monta /jogo/{data}/{par}).
+export async function getMunicipalMatchKeys(): Promise<string[]> {
   const all = await readMatches();
   return Object.keys(all);
 }

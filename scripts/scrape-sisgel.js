@@ -152,11 +152,15 @@ function parseDefesa(html) {
   return out;
 }
 
-// Slug estável do jogo pra URL: home-away-{8 chars do token} (evita colisão em
-// confrontos repetidos). O token vem do bloco da rodada.
-function matchSlug(m) {
-  const tk = (m.token || "").replace(/[^a-zA-Z0-9]/g, "").slice(0, 8).toLowerCase();
-  return `${slug(m.home)}-${slug(m.away)}${tk ? "-" + tk : ""}`;
+// URL do jogo no padrão dos campeonatos: /jogo/{DD-MM-YYYY}/{home-away}. A DATA
+// desambigua confrontos repetidos (mesmos times em rodadas/dias diferentes) — melhor
+// pra SEO que o token, e estável (o token do SisGel podia variar entre coletas).
+function matchPairSlug(m) {
+  return `${slug(m.home)}-${slug(m.away)}`;
+}
+function matchDateSlug(m) {
+  const d = String(m.date || "").match(/(\d{2})\/(\d{2})\/(\d{4})/);
+  return d ? `${d[1]}-${d[2]}-${d[3]}` : "";
 }
 
 function sectionOf(html, label, end) {
@@ -414,7 +418,8 @@ async function scrapeOne(entry) {
   for (const m of matches) {
     m.homeBadgeLocal = localBadges[m.home] || "";
     m.awayBadgeLocal = localBadges[m.away] || "";
-    m.slug = matchSlug(m);
+    m.slug = matchPairSlug(m);
+    m.dateSlug = matchDateSlug(m);
   }
 
   const byRound = {};
@@ -448,15 +453,16 @@ async function scrapeMatchDetails(results) {
   for (const champ of results) {
     for (const m of champ.matches || []) {
       const finished = m.homeScore !== null && m.awayScore !== null;
-      if (!finished || !m.token || !m.slug) continue;
-      if (cache[m.slug]) { cached++; continue; }
+      const key = m.dateSlug && m.slug ? `${m.dateSlug}/${m.slug}` : "";
+      if (!finished || !m.token || !key) continue;
+      if (cache[key]) { cached++; continue; }
       if (fetched >= MAX) continue;
       try {
         const html = await fetch(`${BASE_URL}/SisGel-PUB/jogo/${m.token}`);
         if (html.includes("Erro - SisGel") || html.length < 3000) continue;
         const detail = parseMatchDetail(html);
-        cache[m.slug] = {
-          slug: m.slug, token: m.token, division: champ.name, divisionSlug: champ.slug,
+        cache[key] = {
+          slug: m.slug, dateSlug: m.dateSlug, token: m.token, division: champ.name, divisionSlug: champ.slug,
           round: m.round, phase: m.phase, roundLabel: m.roundLabel,
           home: m.home, away: m.away, homeScore: m.homeScore, awayScore: m.awayScore,
           date: m.date, time: m.time, venue: detail.venue || m.venue, status: m.status,
@@ -476,6 +482,13 @@ async function scrapeMatchDetails(results) {
 
 async function main() {
   console.log(`[${new Date().toISOString()}] SisGel scraper v3`);
+  // Dados anteriores: usados como FALLBACK se o SisGel perder/expirar um campeonato.
+  // Assim classificação/artilheiros/tabelas NÃO somem do site (SEO) quando o SisGel cai
+  // — mesma ideia dos snapshots do resto do site. Os detalhes de jogo (lance a lance) já
+  // persistem por serem cache aditivo (nunca removidos).
+  let prev = [];
+  try { prev = JSON.parse(fs.readFileSync(OUTPUT_FILE, "utf-8")); } catch { prev = []; }
+
   const results = [];
   for (const entry of CHAMPIONSHIP_URLS) {
     try {
@@ -484,9 +497,20 @@ async function main() {
     } catch (e) { console.error(`  Error: ${e.message}`); }
     await new Promise((r) => setTimeout(r, 500));
   }
+
+  // Merge: cada campeonato usa o dado NOVO; se falhou nesta coleta, mantém o último bom.
+  let kept = 0;
+  const merged = CHAMPIONSHIP_URLS.map((entry) => {
+    const fresh = results.find((r) => r.url === entry.url);
+    if (fresh) return fresh;
+    const old = prev.find((p) => p.url === entry.url);
+    if (old) { kept++; console.log(`  MANTIDO do cache: ${old.name} (SisGel não retornou)`); return old; }
+    return null;
+  }).filter(Boolean);
+
   fs.mkdirSync(DATA_DIR, { recursive: true });
-  fs.writeFileSync(OUTPUT_FILE, JSON.stringify(results, null, 2));
-  console.log(`\nSaved ${results.length} championships`);
+  fs.writeFileSync(OUTPUT_FILE, JSON.stringify(merged, null, 2));
+  console.log(`\nSaved ${merged.length} championships (${results.length} novos, ${kept} do cache)`);
 
   await scrapeMatchDetails(results);
 }

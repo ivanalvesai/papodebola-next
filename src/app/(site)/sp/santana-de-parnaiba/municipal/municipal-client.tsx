@@ -34,7 +34,7 @@ interface Match {
   round: number; phase?: string; roundLabel?: string; home: string; away: string;
   homeScore: number | null; awayScore: number | null;
   date: string; time: string; venue: string; status: string;
-  homeBadgeLocal: string; awayBadgeLocal: string; slug?: string;
+  homeBadgeLocal: string; awayBadgeLocal: string; slug?: string; dateSlug?: string;
 }
 
 interface RoundMeta {
@@ -66,7 +66,7 @@ export default function MunicipalPage({ videoGameSlugs = [] }: { videoGameSlugs?
     if (userNavigated || !data.length) return;
     for (let ci = 0; ci < data.length; ci++) {
       for (const [r, games] of Object.entries(data[ci].matchesByRound || {})) {
-        if ((games as Match[]).some((g) => g.slug && liveMap[g.slug]?.live)) {
+        if ((games as Match[]).some((g) => g.slug && g.dateSlug && liveMap[`${g.dateSlug}/${g.slug}`]?.live)) {
           setSelectedChamp(ci);
           setSelectedRound(Number(r));
           return;
@@ -328,8 +328,9 @@ export default function MunicipalPage({ videoGameSlugs = [] }: { videoGameSlugs?
             <div className="divide-y divide-border-light">
               {roundMatches.map((m, i) => {
                 const hasScore = m.homeScore !== null && m.awayScore !== null;
+                const gameKey = m.dateSlug && m.slug ? `${m.dateSlug}/${m.slug}` : "";
                 // Clicável se encerrado (tem ficha) OU se tem página de vídeo no CMS.
-                const clickable = !!m.slug && (hasScore || videoGameSlugs.includes(m.slug));
+                const clickable = !!gameKey && (hasScore || videoGameSlugs.includes(gameKey));
                 const inner = (
                   <>
                     <div className="text-[10px] text-text-muted text-center mb-2 space-y-0.5">
@@ -365,7 +366,7 @@ export default function MunicipalPage({ videoGameSlugs = [] }: { videoGameSlugs?
                     {clickable && hasScore && (
                       <div className="mt-1.5 text-center text-[10px] font-semibold text-green">ver ficha do jogo →</div>
                     )}
-                    {!hasScore && m.slug && liveMap[m.slug]?.live && (
+                    {!hasScore && gameKey && liveMap[gameKey]?.live && (
                       <div className="mt-1.5 flex justify-center">
                         <span className="inline-flex items-center gap-1 rounded px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wide text-white" style={{ background: "#E8312A" }}>
                           <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-white" /> Ao vivo
@@ -377,7 +378,7 @@ export default function MunicipalPage({ videoGameSlugs = [] }: { videoGameSlugs?
                 return clickable ? (
                   <Link
                     key={i}
-                    href={`/sp/santana-de-parnaiba/municipal/jogo/${m.slug}`}
+                    href={`/sp/santana-de-parnaiba/municipal/jogo/${gameKey}`}
                     className="block px-4 py-3 transition-colors hover:bg-card-hover"
                   >
                     {inner}
