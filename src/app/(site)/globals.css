@@ -165,23 +165,22 @@
 .pdb-sponsors { margin: 24px 0 0; padding: 16px; border: 1px solid #E2E8F0; border-radius: 12px; background: #fff; }
 .pdb-sponsors-label { display: block; font-size: 11px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: #94A3B8; margin-bottom: 10px; }
 
-/* Card = tile de logo grande (sem botão, sem slogan): a logo cobre o card. */
-.pdb-sponsor { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 8px; padding: 14px 12px; border: 1px solid #E2E8F0; border-radius: 10px; text-decoration: none; background: #fff; transition: border-color .15s, box-shadow .15s; }
+/* Card = a logo PREENCHE o card (sem nome, sem botão): o nome fica no title/alt. */
+.pdb-sponsor { display: flex; align-items: center; justify-content: center; padding: 4px; border: 1px solid #E2E8F0; border-radius: 10px; text-decoration: none; background: #fff; overflow: hidden; transition: border-color .15s, box-shadow .15s; }
 .pdb-sponsor:hover { border-color: #00965E; box-shadow: 0 2px 8px rgba(0,150,94,.12); }
-.pdb-sponsor-logo { width: 100%; height: 76px; display: flex; align-items: center; justify-content: center; overflow: hidden; }
-.pdb-sponsor-logo img { max-width: 100%; max-height: 76px; width: auto; height: auto; object-fit: contain; }
+.pdb-sponsor-logo { width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; }
+.pdb-sponsor-logo img { width: 100%; height: 100%; object-fit: contain; }
 .pdb-sponsor-ini { font-size: 30px; font-weight: 800; color: #00965E; letter-spacing: .02em; }
-.pdb-sponsor-name { font-size: 13px; font-weight: 700; color: #1A202C; line-height: 1.2; text-align: center; }
 
 /* Faixa estática (1-2 patrocinadores) */
 .pdb-strip-static { display: flex; flex-wrap: wrap; gap: 12px; justify-content: center; }
-.pdb-strip-static .pdb-sponsor { width: 170px; flex: none; }
+.pdb-strip-static .pdb-sponsor { width: 180px; height: 100px; flex: none; }
 
 /* Carrossel (3+ patrocinadores): passa devagar, pausa no hover. */
 .pdb-marquee { overflow: hidden; -webkit-mask-image: linear-gradient(90deg, transparent, #000 6%, #000 94%, transparent); mask-image: linear-gradient(90deg, transparent, #000 6%, #000 94%, transparent); }
 .pdb-marquee-track { display: flex; gap: 12px; width: max-content; animation: pdb-marquee 36s linear infinite; }
 .pdb-marquee:hover .pdb-marquee-track { animation-play-state: paused; }
-.pdb-marquee .pdb-sponsor { width: 170px; flex: none; }
+.pdb-marquee .pdb-sponsor { width: 180px; height: 100px; flex: none; }
 @keyframes pdb-marquee { from { transform: translateX(0); } to { transform: translateX(-50%); } }
 @media (prefers-reduced-motion: reduce) {
   .pdb-marquee { overflow-x: auto; -webkit-mask-image: none; mask-image: none; }
@@ -189,7 +188,7 @@
 }
 
 /* card solto dentro de um comentário/artigo (fora da faixa) */
-.prose-article .pdb-sponsor, .pdb-callout .pdb-sponsor { margin: 12px auto; width: 200px; }
+.prose-article .pdb-sponsor, .pdb-callout .pdb-sponsor { margin: 12px auto; width: 220px; height: 120px; }
 
 /* Banner grande (imagem larga clicável). */
 .pdb-banner-wrap { margin: 0 0 16px; }

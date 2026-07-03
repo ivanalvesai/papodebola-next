@@ -87,10 +87,10 @@ export function sponsorCardHtml(s: Sponsor, de = "site"): string {
   const logo = s.logo
     ? `<img src="${esc(s.logo)}" alt="${esc(s.name)}" loading="lazy" />`
     : `<span class="pdb-sponsor-ini">${esc(initials)}</span>`;
+  // Sem nome no card: a logo preenche o card; o nome fica no title/alt (tooltip).
   return (
     `<a class="pdb-sponsor" href="${href}" rel="sponsored noopener" target="_blank" title="${esc(s.name)}">` +
     `<span class="pdb-sponsor-logo">${logo}</span>` +
-    `<span class="pdb-sponsor-name">${esc(s.name)}</span>` +
     `</a>`
   );
 }
