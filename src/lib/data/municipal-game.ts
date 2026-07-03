@@ -1,6 +1,7 @@
 import { getPayload } from "payload";
 import config from "@payload-config";
 import { convertLexicalToHTML } from "@payloadcms/richtext-lexical/html";
+import { normalizeSponsor, sponsorCardHtml } from "./sponsor";
 import { readFile } from "fs/promises";
 import { join } from "path";
 
@@ -28,6 +29,7 @@ export interface MunicipalGame {
   homeBadge: string;
   awayBadge: string;
   startTs: number; // epoch ms do apito (data+hora em Brasília); 0 se não der pra parsear
+  showSponsors: boolean; // exibe a faixa de patrocinadores no rodapé da página do jogo
 }
 
 // "DD/MM/YYYY" → "DD-MM-YYYY" (padrão da URL /jogo/[data]/...).
@@ -78,6 +80,12 @@ const converters: any = ({ defaultConverters }: any) => ({
       const inner = x?.root?.children?.length ? convertLexicalToHTML({ data: x }) : "";
       return `<div class="pdb-callout pdb-callout-${style}">${inner}</div>`;
     },
+    // card de patrocinador inserido no editor (relação populada pela depth da query).
+    sponsorCard: ({ node }: any) => {
+      const s = node?.fields?.sponsor;
+      if (!s || typeof s !== "object") return "";
+      return sponsorCardHtml(normalizeSponsor(s), "comentario");
+    },
   },
   upload: ({ node }: any) => {
     const doc = node?.value;
@@ -105,7 +113,7 @@ export async function getMunicipalGame(dateSlug: string, pairSlug: string): Prom
       collection: "municipalGames",
       where: { slug: { equals: pairSlug } },
       limit: 20,
-      depth: 1,
+      depth: 2,
     });
     const docs: any[] = res.docs;
     // Casa pela DATA (permite o mesmo confronto em dias diferentes). Fallback: único doc.
@@ -140,6 +148,7 @@ export async function getMunicipalGame(dateSlug: string, pairSlug: string): Prom
       homeBadge: badges.home,
       awayBadge: badges.away,
       startTs: parseStart(d.date || "", d.time || ""),
+      showSponsors: d.showSponsors !== false,
     };
   } catch {
     return null;

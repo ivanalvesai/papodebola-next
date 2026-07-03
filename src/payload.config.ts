@@ -315,6 +315,16 @@ export default buildConfig({
             { name: "metaDescription", type: "textarea" },
           ],
         },
+        {
+          name: "showSponsors",
+          type: "checkbox",
+          defaultValue: false,
+          label: "Exibir faixa de patrocinadores nesta página",
+          admin: {
+            description:
+              "Mostra a faixa com os patrocinadores ATIVOS abaixo do conteúdo desta página. Usado na página do Municipal.",
+          },
+        },
       ],
     },
     {
@@ -568,6 +578,20 @@ export default buildConfig({
                         ],
                       },
                       { name: "content", type: "richText", label: "Conteúdo", editor: lexicalEditor() },
+                    ],
+                  },
+                  {
+                    slug: "sponsorCard",
+                    labels: { singular: "Patrocinador (card)", plural: "Patrocinadores (cards)" },
+                    fields: [
+                      {
+                        name: "sponsor",
+                        type: "relationship",
+                        relationTo: "sponsors",
+                        required: true,
+                        label: "Empresa",
+                        admin: { description: "Escolha um patrocinador cadastrado. O card sai clicável (link rastreado)." },
+                      },
                     ],
                   },
                 ],
@@ -851,11 +875,80 @@ export default buildConfig({
                       { name: "content", type: "richText", label: "Conteúdo", editor: lexicalEditor() },
                     ],
                   },
+                  {
+                    slug: "sponsorCard",
+                    labels: { singular: "Patrocinador (card)", plural: "Patrocinadores (cards)" },
+                    fields: [
+                      {
+                        name: "sponsor",
+                        type: "relationship",
+                        relationTo: "sponsors",
+                        required: true,
+                        label: "Empresa",
+                        admin: { description: "Escolha um patrocinador cadastrado. O card sai clicável (link rastreado)." },
+                      },
+                    ],
+                  },
                 ],
               }),
             ],
           }),
-          admin: { description: "O 'lance a lance' editorial: escreva textos e insira comentários (bloco verde) que aparecem abaixo do vídeo." },
+          admin: { description: "O 'lance a lance' editorial: escreva textos, comentários (bloco verde) e cards de patrocinador que aparecem abaixo do vídeo." },
+        },
+        {
+          name: "showSponsors",
+          type: "checkbox",
+          defaultValue: true,
+          label: "Exibir faixa de patrocinadores nesta página",
+          admin: { description: "Mostra a faixa com os patrocinadores ATIVOS no rodapé da página do jogo. Desmarque pra ocultar." },
+        },
+      ],
+    },
+    // Patrocinadores: cadastro único, reusado em cards (no editor) e faixas. Os links
+    // passam pelo /parceiro/{slug} (conta cliques + UTM) e saem com rel="sponsored" (SEO).
+    {
+      slug: "sponsors",
+      labels: { singular: "Patrocinador", plural: "Patrocinadores" },
+      admin: {
+        useAsTitle: "name",
+        defaultColumns: ["name", "active", "clicks", "updatedAt"],
+        description:
+          "Cadastre a empresa 1x e insira o card no editor (bloco 'Patrocinador') ou deixe nas faixas. Marque 'Ativo' pra aparecer nas faixas de patrocinadores. Cliques contados via /parceiro/{slug}.",
+      },
+      access: { read: () => true },
+      fields: [
+        { name: "name", type: "text", required: true, label: "Nome" },
+        {
+          name: "slug",
+          type: "text",
+          required: true,
+          index: true,
+          label: "Slug",
+          admin: { description: "Usado na URL /parceiro/{slug} (ex.: grafica-giga)." },
+        },
+        { name: "tagline", type: "textarea", label: "Slogan / descrição curta" },
+        { name: "logo", type: "upload", relationTo: "media", label: "Logo (opcional)" },
+        {
+          type: "row",
+          fields: [
+            { name: "site", type: "text", label: "Site", admin: { width: "50%" } },
+            { name: "whatsapp", type: "text", label: "WhatsApp (link ou número)", admin: { width: "50%" } },
+          ],
+        },
+        {
+          type: "row",
+          fields: [
+            { name: "instagram", type: "text", label: "Instagram (@ ou link)", admin: { width: "50%" } },
+            { name: "facebook", type: "text", label: "Facebook (link)", admin: { width: "50%" } },
+          ],
+        },
+        { name: "active", type: "checkbox", defaultValue: true, label: "Ativo (aparece nas faixas de patrocinadores)" },
+        {
+          name: "clicks",
+          type: "number",
+          defaultValue: 0,
+          label: "Cliques",
+          admin: { readOnly: true, description: "Contador de cliques no link /parceiro/{slug}." },
         },
       ],
     },

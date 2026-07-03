@@ -2,6 +2,7 @@ import Link from "next/link";
 import Image from "next/image";
 import type { MunicipalGame } from "@/lib/data/municipal-game";
 import { LiveBadge } from "./live-badge";
+import { SponsorStrip } from "@/components/sponsors/sponsor-strip";
 
 // Página de jogo do municipal com VÍDEO (ao vivo) + comentários editáveis, no layout dos
 // jogos da Copa: escalação na esquerda, vídeo + lance a lance (textos/comentários) no meio,
@@ -126,6 +127,9 @@ export function MunicipalGameView({ game }: { game: MunicipalGame }) {
           </div>
         </div>
       </div>
+
+      {/* Faixa de patrocinadores (togglável no /cms por jogo). */}
+      {game.showSponsors && <SponsorStrip de="jogo-municipal" />}
 
       {/* Estilos do conteúdo (parágrafos, imagens e o bloco de comentário verde). */}
       <style>{`
