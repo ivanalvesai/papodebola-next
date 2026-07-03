@@ -10,6 +10,7 @@ import { matchDateSlug, matchPairSlug } from "@/lib/world-cup-match-url";
 import { getPayloadTeamSlugs } from "@/lib/data/payload-teams";
 import { getPayloadPageSlugs } from "@/lib/data/payload-pages";
 import { getAuthorSlugs } from "@/lib/data/authors";
+import { getMunicipalMatchSlugs } from "@/lib/data/municipal";
 import { getChampionshipData } from "@/lib/data/championship";
 import { getTennisDraw, TENNIS_TOURNAMENTS, tennisMatchHref, type TennisTournamentSlug } from "@/lib/data/tennis";
 
@@ -261,8 +262,17 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     priority: 0.4,
   }));
 
+  // Páginas de jogo do municipal (SisGel) — ficha estática de cada jogo finalizado.
+  const municipalMatchPages: MetadataRoute.Sitemap = (await getMunicipalMatchSlugs()).map((slug) => ({
+    url: `${BASE}/sp/santana-de-parnaiba/municipal/jogo/${slug}`,
+    lastModified: now,
+    changeFrequency: "monthly",
+    priority: 0.4,
+  }));
+
   return [
     ...staticPages,
+    ...municipalMatchPages,
     ...teamPages,
     ...champPages,
     ...sportPages,

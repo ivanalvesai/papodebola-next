@@ -126,12 +126,29 @@ async function fetchWorldCupKnockoutFixturesLive(): Promise<WorldCupFixture[]> {
       for (const r of rows) if (r.teamId) confirmed.add(r.teamId);
     }
   }
+  // O cuptrees demora a "propagar" o vencedor pro slot da próxima fase: o participante
+  // fica como placeholder (ex: "W83") mesmo com o confronto de origem já encerrado. Isso
+  // segurava a página do jogo seguinte (ex: Portugal x Espanha nas oitavas) em 404. Aqui
+  // resolvemos o placeholder pelo VENCEDOR do bloco de origem (participant.sourceBlockId →
+  // blockId do confronto anterior), pra a página existir assim que os 2 lados estão decididos.
+  const winnerByBlockId = new Map<number, any>();
+  for (const rnd of tree?.cupTrees?.[0]?.rounds || []) {
+    for (const b of rnd.blocks || []) {
+      if (b.finished && b.blockId != null) {
+        const w = (b.participants || []).find((x: any) => x?.winner)?.team;
+        if (w?.id) winnerByBlockId.set(b.blockId, w);
+      }
+    }
+  }
+  const teamOf = (p: any) =>
+    p?.team ?? (p?.sourceBlockId != null ? winnerByBlockId.get(p.sourceBlockId) : undefined);
+
   const out: WorldCupFixture[] = [];
   for (const rnd of tree?.cupTrees?.[0]?.rounds || []) {
     for (const b of rnd.blocks || []) {
       const p = b.participants || [];
-      const ht = p[0]?.team;
-      const at = p[1]?.team;
+      const ht = teamOf(p[0]);
+      const at = teamOf(p[1]);
       const evRaw = Array.isArray(b.events) ? b.events[0] : null;
       const ev = typeof evRaw === "object" && evRaw ? evRaw.id : evRaw;
       if (ht?.id && at?.id && typeof ev === "number" && confirmed.has(ht.id) && confirmed.has(at.id)) {

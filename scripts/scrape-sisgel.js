@@ -13,6 +13,7 @@ const BASE_URL = "https://prefeitura.santanadeparnaiba.sp.gov.br";
 const DATA_DIR = path.join(__dirname, "..", "data");
 const BADGES_DIR = path.join(__dirname, "..", "public", "escudos-municipal");
 const OUTPUT_FILE = path.join(DATA_DIR, "sisgel.json");
+const MATCHES_FILE = path.join(DATA_DIR, "sisgel-matches.json");
 
 const CHAMPIONSHIP_URLS = [
   { name: "1ª Divisão Futebol 2026", url: `${BASE_URL}/SisGel-PUB/campeonatos/lfB49S_FU1vwXm0fPah6fytx1WipJcZxDzPKxYy8KUa35E8M9NGYZaSUu906_RwF8WksUA2` },
@@ -149,6 +150,58 @@ function parseDefesa(html) {
     if (team && !isNaN(conceded)) out.push({ pos: out.length + 1, team, conceded });
   }
   return out;
+}
+
+// Slug estável do jogo pra URL: home-away-{8 chars do token} (evita colisão em
+// confrontos repetidos). O token vem do bloco da rodada.
+function matchSlug(m) {
+  const tk = (m.token || "").replace(/[^a-zA-Z0-9]/g, "").slice(0, 8).toLowerCase();
+  return `${slug(m.home)}-${slug(m.away)}${tk ? "-" + tk : ""}`;
+}
+
+function sectionOf(html, label, end) {
+  const i = html.indexOf(label);
+  if (i < 0) return "";
+  const j = end ? html.indexOf(end, i + label.length) : -1;
+  return html.slice(i, j > 0 ? j : html.length);
+}
+
+// Detalhe de UM jogo (página /SisGel-PUB/jogo/{token}) — pra a página estática de
+// lance a lance: gols (autor + qtd + time), escalação (mandante/visitante + cartões)
+// e arbitragem. Sem tempo real. Fotos base64 são descartadas.
+function parseMatchDetail(html) {
+  // Gols: cada <tr> tem 4 <td> = [bola mandante][nome mandante][nome visitante (righted)][bola visitante].
+  // Os dois lados no MESMO tr (o lado sem gol fica vazio). Contar bolas por LADO, não por linha.
+  const gseg = sectionOf(html, "Gols da Partida", "Informações sobre o jogo");
+  const goals = [];
+  const nameOf = (td) => { const m = td.match(/<span>\s*([A-ZÀ-Ü][^<]{2,40}?)\s*<\/span>/); return m ? dec(m[1]) : ""; };
+  const ballsOf = (td) => (td.match(/fa-soccer-ball-o/g) || []).length;
+  for (const tr of gseg.matchAll(/<tr>([\s\S]*?)<\/tr>/g)) {
+    const tds = [...tr[1].matchAll(/<td[^>]*>([\s\S]*?)<\/td>/g)].map((x) => x[1]);
+    if (tds.length < 4) continue;
+    const hn = nameOf(tds[1]), hb = ballsOf(tds[0]);
+    const an = nameOf(tds[2]), ab = ballsOf(tds[3]);
+    if (hn && hb > 0) goals.push({ player: hn, goals: hb, isHome: true });
+    if (an && ab > 0) goals.push({ player: an, goals: ab, isHome: false });
+  }
+  // Escalação: tabela 2 colunas (td1 = mandante, td2 = visitante).
+  const aseg = sectionOf(html, "Atletas e Diretores", "Comentário").split("Gols da Partida")[0];
+  const home = [], away = [];
+  for (const tr of aseg.matchAll(/<tr>([\s\S]*?)<\/tr>/g)) {
+    const tds = [...tr[1].matchAll(/<td[^>]*>([\s\S]*?)<\/td>/g)];
+    tds.forEach((td, idx) => {
+      const nm = td[1].match(/<span>\s*([A-ZÀ-Ü][^<]{2,40}?)\s*<\/span>/);
+      if (!nm) return;
+      const p = { name: dec(nm[1]), yellow: (td[1].match(/amarelo/g) || []).length, red: (td[1].match(/vermelho/g) || []).length };
+      if (idx === 0) home.push(p);
+      else if (idx === 1) away.push(p);
+    });
+  }
+  const referee = dec(sectionOf(html, ">Arbitragem<", "Comentário").replace(/<[^>]+>/g, " "))
+    .replace(/^Arbitragem\s*/i, "").trim();
+  const venue = dec(sectionOf(html, ">Local<", "Arbitragem").replace(/<[^>]+>/g, " "))
+    .replace(/^Local\s*/i, "").trim();
+  return { goals, lineups: { home, away }, referee, venue };
 }
 
 function parseClassification(html) {
@@ -358,6 +411,7 @@ async function scrapeOne(entry) {
   for (const m of matches) {
     m.homeBadgeLocal = localBadges[m.home] || "";
     m.awayBadgeLocal = localBadges[m.away] || "";
+    m.slug = matchSlug(m);
   }
 
   const byRound = {};
@@ -380,6 +434,43 @@ async function scrapeOne(entry) {
   };
 }
 
+// Detalhe de cada jogo FINALIZADO (gols/escalação/arbitragem) pra a página estática.
+// Cache por slug em sisgel-matches.json: jogo finalizado é imutável → busca 1x. Steady
+// state = só os jogos novos por run. Trava de segurança em MAX buscas/run.
+async function scrapeMatchDetails(results) {
+  let cache = {};
+  try { cache = JSON.parse(fs.readFileSync(MATCHES_FILE, "utf-8")); } catch { cache = {}; }
+  let fetched = 0, cached = 0;
+  const MAX = 400;
+  for (const champ of results) {
+    for (const m of champ.matches || []) {
+      const finished = m.homeScore !== null && m.awayScore !== null;
+      if (!finished || !m.token || !m.slug) continue;
+      if (cache[m.slug]) { cached++; continue; }
+      if (fetched >= MAX) continue;
+      try {
+        const html = await fetch(`${BASE_URL}/SisGel-PUB/jogo/${m.token}`);
+        if (html.includes("Erro - SisGel") || html.length < 3000) continue;
+        const detail = parseMatchDetail(html);
+        cache[m.slug] = {
+          slug: m.slug, token: m.token, division: champ.name, divisionSlug: champ.slug,
+          round: m.round, phase: m.phase, roundLabel: m.roundLabel,
+          home: m.home, away: m.away, homeScore: m.homeScore, awayScore: m.awayScore,
+          date: m.date, time: m.time, venue: detail.venue || m.venue, status: m.status,
+          homeBadge: m.homeBadgeLocal, awayBadge: m.awayBadgeLocal,
+          goals: detail.goals, lineups: detail.lineups, referee: detail.referee,
+          scrapedAt: new Date().toISOString(),
+        };
+        fetched++;
+        if (fetched % 20 === 0) console.log(`    detalhes de jogo: ${fetched} novos...`);
+      } catch (e) { console.error(`    detalhe err ${m.slug}: ${e.message}`); }
+      await new Promise((r) => setTimeout(r, 250));
+    }
+  }
+  fs.writeFileSync(MATCHES_FILE, JSON.stringify(cache, null, 2));
+  console.log(`Detalhes de jogo: ${fetched} novos, ${cached} em cache, ${Object.keys(cache).length} total`);
+}
+
 async function main() {
   console.log(`[${new Date().toISOString()}] SisGel scraper v3`);
   const results = [];
@@ -393,6 +484,8 @@ async function main() {
   fs.mkdirSync(DATA_DIR, { recursive: true });
   fs.writeFileSync(OUTPUT_FILE, JSON.stringify(results, null, 2));
   console.log(`\nSaved ${results.length} championships`);
+
+  await scrapeMatchDetails(results);
 }
 
 main().catch((e) => { console.error(e); process.exit(1); });
