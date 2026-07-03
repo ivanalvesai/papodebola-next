@@ -1,6 +1,7 @@
 import Link from "next/link";
 import Image from "next/image";
 import type { MunicipalGame } from "@/lib/data/municipal-game";
+import { sponsorBannerHtml } from "@/lib/data/sponsor";
 import { LiveBadge } from "./live-badge";
 import { SponsorStrip } from "@/components/sponsors/sponsor-strip";
 
@@ -49,11 +50,26 @@ function Lineup({ title, players }: { title: string; players: string[] }) {
   );
 }
 
+// Renderiza os banners de uma posição (topo, acima do placar, etc.). Nada se vazio.
+function Banners({ game, at }: { game: MunicipalGame; at: string }) {
+  const list = game.banners.filter((b) => b.position === at);
+  if (!list.length) return null;
+  return (
+    <>
+      {list.map((b, i) => (
+        <div key={i} dangerouslySetInnerHTML={{ __html: sponsorBannerHtml(b.sponsor, at) }} />
+      ))}
+    </>
+  );
+}
+
 export function MunicipalGameView({ game }: { game: MunicipalGame }) {
   const id = ytId(game.youtubeUrl);
+  const context = [game.division, game.roundLabel].filter(Boolean).join(" · ");
 
   return (
     <div className="mx-auto max-w-[1240px] px-4 py-8">
+      <Banners game={game} at="top" />
       <nav className="mb-4 flex flex-wrap items-center gap-1 text-xs text-text-muted">
         <Link href="/" className="hover:text-green">Início</Link>
         <span>/</span>
@@ -61,6 +77,21 @@ export function MunicipalGameView({ game }: { game: MunicipalGame }) {
         <span>/</span>
         <span className="text-text-secondary">{game.home} x {game.away}</span>
       </nav>
+
+      <h1 className="mb-4 text-lg font-bold text-text-primary">
+        {game.seo.h1 ? (
+          game.seo.h1
+        ) : (
+          <>
+            {game.home} x {game.away}
+            <span className="ml-2 text-sm font-normal text-text-muted">
+              {context ? `· ${context} ` : ""}· Futebol Municipal de Santana de Parnaíba
+            </span>
+          </>
+        )}
+      </h1>
+
+      <Banners game={game} at="above-score" />
 
       {/* Placar / cabeçalho */}
       <div className="rounded-lg border border-border-custom bg-card-bg p-6">
@@ -87,12 +118,19 @@ export function MunicipalGameView({ game }: { game: MunicipalGame }) {
       <div className="mt-6 grid grid-cols-1 gap-6 lg:grid-cols-[260px_1fr_260px]">
         {/* Esquerda: escalação */}
         <div className="order-2 space-y-4 lg:order-1">
+          <h2 className="text-sm font-bold uppercase tracking-wide text-text-primary">
+            {game.seo.headingLineups || "Escalações"}
+          </h2>
           <Lineup title={game.home} players={game.homeLineup} />
           <Lineup title={game.away} players={game.awayLineup} />
         </div>
 
         {/* Meio: vídeo + lance a lance (textos/comentários) */}
         <div className="order-1 space-y-5 lg:order-2">
+          <Banners game={game} at="above-player" />
+          <h2 className="text-sm font-bold uppercase tracking-wide text-text-primary">
+            {game.seo.headingPlayByPlay || "Lance a lance"}
+          </h2>
           {id ? (
             <div className="relative overflow-hidden rounded-lg border border-border-custom bg-black" style={{ aspectRatio: "16 / 9" }}>
               <iframe
@@ -121,15 +159,20 @@ export function MunicipalGameView({ game }: { game: MunicipalGame }) {
 
         {/* Direita: gols */}
         <div className="order-3">
+          <h2 className="mb-3 text-sm font-bold uppercase tracking-wide text-text-primary">
+            {game.seo.headingGoals || "Gols"}
+          </h2>
           <div className="rounded-lg border border-border-custom bg-card-bg">
-            <h3 className="border-b border-border-custom px-4 py-2.5 text-xs font-bold uppercase text-green">Gols</h3>
             <p className="px-4 py-3 text-xs text-text-muted">Os gols aparecem aqui quando o jogo começar.</p>
           </div>
         </div>
       </div>
 
-      {/* Faixa de patrocinadores (togglável no /cms por jogo). */}
-      {game.showSponsors && <SponsorStrip de="jogo-municipal" />}
+      {/* Banners de rodapé + faixa de patrocinadores (togglável no /cms por jogo). */}
+      <div className="mt-6 space-y-4">
+        <Banners game={game} at="footer" />
+        {game.showSponsors && <SponsorStrip de="jogo-municipal" />}
+      </div>
 
       {/* Estilos do conteúdo (parágrafos, imagens e o bloco de comentário verde). */}
       <style>{`
