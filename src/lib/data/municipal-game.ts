@@ -2,6 +2,7 @@ import { getPayload } from "payload";
 import config from "@payload-config";
 import { convertLexicalToHTML } from "@payloadcms/richtext-lexical/html";
 import { normalizeSponsor, sponsorCardHtml, type Sponsor } from "./sponsor";
+import { getMunicipalRosterByPair } from "./municipal";
 import { readFile } from "fs/promises";
 import { join } from "path";
 
@@ -141,6 +142,19 @@ export async function getMunicipalGame(dateSlug: string, pairSlug: string): Prom
     }
     const ds = toDateSlug(d.date);
     const badges = await sisgelBadges(d.slug, ds);
+    // Escalação: usa o que foi digitado no CMS; se vazio, puxa o elenco completo do
+    // SisGel (por divisão), casando pelo slug do par (ex.: "u-parque-santana").
+    const cmsHome = lines(d.homeLineup);
+    const cmsAway = lines(d.awayLineup);
+    let homeLineup = cmsHome;
+    let awayLineup = cmsAway;
+    if (cmsHome.length === 0 || cmsAway.length === 0) {
+      const roster = await getMunicipalRosterByPair(d.slug, d.division || "");
+      if (roster) {
+        if (cmsHome.length === 0) homeLineup = roster.home;
+        if (cmsAway.length === 0) awayLineup = roster.away;
+      }
+    }
     return {
       slug: d.slug,
       dateSlug: ds,
@@ -153,8 +167,8 @@ export async function getMunicipalGame(dateSlug: string, pairSlug: string): Prom
       venue: d.venue || "",
       division: d.division || "",
       youtubeUrl: d.youtubeUrl || "",
-      homeLineup: lines(d.homeLineup),
-      awayLineup: lines(d.awayLineup),
+      homeLineup,
+      awayLineup,
       contentHtml: html,
       homeBadge: badges.home,
       awayBadge: badges.away,
