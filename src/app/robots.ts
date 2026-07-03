@@ -13,7 +13,10 @@ export default function robots(): MetadataRoute.Robots {
         // crawlers/ferramentas (ex: Screaming Frog) desperdicem budget: numa auditoria de
         // 01/07, 95% das ~85k URLs rastreadas eram só variações de _rsc. Não afeta
         // indexação (o HTML real das páginas não tem _rsc).
-        disallow: ["/painel-pdb-9x/", "/admin/", "/api/", "/*_rsc="],
+        // "/parceiro/" são redirects de saída pra patrocinadores (link rastreado); não são
+        // páginas indexáveis e não devem passar autoridade pro site do parceiro (par com o
+        // rel="sponsored" dos links). Bloquear evita que o Google siga o redirect.
+        disallow: ["/painel-pdb-9x/", "/admin/", "/api/", "/parceiro/", "/*_rsc="],
       },
     ],
     sitemap: `${BASE}/sitemap.xml`,
