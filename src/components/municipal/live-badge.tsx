@@ -31,7 +31,7 @@ export function LiveBadge({ gameKey, size = "md" }: { gameKey: string; size?: "s
   return (
     <span
       className={`inline-flex items-center gap-1 rounded font-bold uppercase tracking-wide text-white ${
-        sm ? "px-1.5 py-0.5 text-[9px]" : "px-2 py-1 text-xs"
+        sm ? "px-1.5 py-0.5 text-[11px]" : "px-2 py-1 text-xs"
       }`}
       style={{ background: "#E8312A" }}
     >
