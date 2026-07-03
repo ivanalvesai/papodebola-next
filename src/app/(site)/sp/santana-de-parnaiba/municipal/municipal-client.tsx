@@ -57,6 +57,22 @@ export default function MunicipalPage({ videoGameSlugs = [] }: { videoGameSlugs?
   const [loading, setLoading] = useState(true);
   const [selectedChamp, setSelectedChamp] = useState(0);
   const [selectedRound, setSelectedRound] = useState(1);
+  const [liveMap, setLiveMap] = useState<Record<string, { live?: boolean }>>({});
+
+  // AO VIVO dos jogos com página de vídeo no CMS (polling leve; o endpoint controla a
+  // consulta ao YouTube — só a partir do apito, e para quando o jogo acaba).
+  useEffect(() => {
+    if (!videoGameSlugs.length) return;
+    let cancelled = false;
+    const check = () =>
+      fetch("/api/municipal-live", { cache: "no-store" })
+        .then((r) => r.json())
+        .then((d) => { if (!cancelled) setLiveMap(d || {}); })
+        .catch(() => {});
+    check();
+    const t = setInterval(check, 60_000);
+    return () => { cancelled = true; clearInterval(t); };
+  }, [videoGameSlugs.length]);
 
   useEffect(() => {
     fetch("/api/municipal")
@@ -329,9 +345,14 @@ export default function MunicipalPage({ videoGameSlugs = [] }: { videoGameSlugs?
                         <span className="text-xs font-semibold text-text-primary truncate">{m.away}</span>
                       </div>
                     </div>
-                    {clickable && (
-                      <div className="mt-1.5 text-center text-[10px] font-semibold text-green">
-                        {hasScore ? "ver ficha do jogo →" : "assistir ao vivo →"}
+                    {clickable && hasScore && (
+                      <div className="mt-1.5 text-center text-[10px] font-semibold text-green">ver ficha do jogo →</div>
+                    )}
+                    {!hasScore && m.slug && liveMap[m.slug]?.live && (
+                      <div className="mt-1.5 flex justify-center">
+                        <span className="inline-flex items-center gap-1 rounded px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wide text-white" style={{ background: "#E8312A" }}>
+                          <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-white" /> Ao vivo
+                        </span>
                       </div>
                     )}
                   </>

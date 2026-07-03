@@ -1,5 +1,7 @@
 import Link from "next/link";
+import Image from "next/image";
 import type { MunicipalGame } from "@/lib/data/municipal-game";
+import { LiveBadge } from "./live-badge";
 
 // Página de jogo do municipal com VÍDEO (ao vivo) + comentários editáveis, no layout dos
 // jogos da Copa: escalação na esquerda, vídeo + lance a lance (textos/comentários) no meio,
@@ -13,13 +15,17 @@ function ytId(url: string): string {
   return m ? m[1] : "";
 }
 
-function TeamHead({ name }: { name: string }) {
+function TeamHead({ name, badge }: { name: string; badge: string }) {
   const initials = name.replace(/F\.?C\.?/gi, "").trim().slice(0, 3).toUpperCase();
   return (
     <div className="flex flex-1 flex-col items-center gap-2 text-center">
-      <div className="flex h-14 w-14 items-center justify-center rounded-full bg-body text-xs font-bold text-text-muted">
-        {initials}
-      </div>
+      {badge ? (
+        <Image src={badge} alt={name} width={56} height={56} className="h-14 w-14 rounded-full object-contain" unoptimized />
+      ) : (
+        <div className="flex h-14 w-14 items-center justify-center rounded-full bg-body text-xs font-bold text-text-muted">
+          {initials}
+        </div>
+      )}
       <span className="text-sm font-bold text-text-primary">{name}</span>
     </div>
   );
@@ -57,18 +63,21 @@ export function MunicipalGameView({ game }: { game: MunicipalGame }) {
 
       {/* Placar / cabeçalho */}
       <div className="rounded-lg border border-border-custom bg-card-bg p-6">
-        {(game.division || game.roundLabel) && (
-          <p className="mb-4 text-center text-[11px] font-bold uppercase tracking-wide text-green">
-            {[game.division, game.roundLabel].filter(Boolean).join(" · ")}
-          </p>
-        )}
+        <div className="mb-4 flex items-center justify-center gap-2">
+          {(game.division || game.roundLabel) && (
+            <span className="text-[11px] font-bold uppercase tracking-wide text-green">
+              {[game.division, game.roundLabel].filter(Boolean).join(" · ")}
+            </span>
+          )}
+          <LiveBadge slug={game.slug} size="sm" />
+        </div>
         <div className="flex items-center justify-center gap-4 sm:gap-8">
-          <TeamHead name={game.home} />
+          <TeamHead name={game.home} badge={game.homeBadge} />
           <div className="shrink-0 text-center">
             <div className="text-2xl font-extrabold tabular-nums text-text-primary">{game.time || "x"}</div>
             {game.date && <div className="text-[11px] text-text-muted">{game.date}</div>}
           </div>
-          <TeamHead name={game.away} />
+          <TeamHead name={game.away} badge={game.awayBadge} />
         </div>
         {game.venue && <div className="mt-4 text-center text-xs text-text-muted">{game.venue}</div>}
       </div>
@@ -84,7 +93,7 @@ export function MunicipalGameView({ game }: { game: MunicipalGame }) {
         {/* Meio: vídeo + lance a lance (textos/comentários) */}
         <div className="order-1 space-y-5 lg:order-2">
           {id ? (
-            <div className="overflow-hidden rounded-lg border border-border-custom bg-black" style={{ aspectRatio: "16 / 9" }}>
+            <div className="relative overflow-hidden rounded-lg border border-border-custom bg-black" style={{ aspectRatio: "16 / 9" }}>
               <iframe
                 src={`https://www.youtube-nocookie.com/embed/${id}`}
                 title={`${game.home} x ${game.away}`}
@@ -92,6 +101,9 @@ export function MunicipalGameView({ game }: { game: MunicipalGame }) {
                 allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
                 allowFullScreen
               />
+              <div className="pointer-events-none absolute left-2 top-2 z-10">
+                <LiveBadge slug={game.slug} />
+              </div>
             </div>
           ) : (
             <div className="flex items-center justify-center rounded-lg border border-dashed border-border-custom bg-body p-8 text-center text-sm text-text-muted" style={{ aspectRatio: "16 / 9" }}>
