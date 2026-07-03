@@ -17,6 +17,7 @@ export interface Sponsor {
   format: SponsorFormat;
   logo: string; // URL da logo do card (vazio se não tem)
   banner: string; // URL da imagem larga do banner (vazio se não tem)
+  bannerCentered: boolean; // true = imagem centralizada/transparente; false = esticada
   site: string;
   whatsapp: string;
   instagram: string;
@@ -67,6 +68,7 @@ export function normalizeSponsor(doc: any): Sponsor {
     format: doc?.format === "banner" ? "banner" : "card",
     logo: mediaUrl(doc?.logo),
     banner: mediaUrl(doc?.banner),
+    bannerCentered: doc?.bannerCentered === true,
     site: doc?.site || "",
     whatsapp: doc?.whatsapp || "",
     instagram: doc?.instagram || "",
@@ -100,10 +102,13 @@ export function sponsorBannerHtml(s: Sponsor, position = "above-score"): string 
   const inner = s.banner
     ? `<img src="${esc(s.banner)}" alt="${esc(s.name)}" loading="lazy" />`
     : `<span class="pdb-banner-fallback"><strong>${esc(s.name)}</strong>${s.tagline ? `<span>${esc(s.tagline)}</span>` : ""}</span>`;
+  // Centralizado (transparente, tamanho natural) só quando tem imagem; o fallback textual
+  // sempre estica.
+  const cls = s.banner && s.bannerCentered ? "pdb-banner pdb-banner-contain" : "pdb-banner";
   return (
     `<div class="pdb-banner-wrap">` +
     `<span class="pdb-ad-label">Patrocínio</span>` +
-    `<a class="pdb-banner" href="${href}" rel="sponsored noopener" target="_blank" title="${esc(s.name)}">${inner}</a>` +
+    `<a class="${cls}" href="${href}" rel="sponsored noopener" target="_blank" title="${esc(s.name)}">${inner}</a>` +
     `</div>`
   );
 }

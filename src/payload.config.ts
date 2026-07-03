@@ -986,7 +986,19 @@ export default buildConfig({
           relationTo: "media",
           label: "Banner (imagem larga)",
           admin: {
-            description: "Imagem larga do banner (recomendado ~1200×250). Usada quando o tipo é 'Banner grande'.",
+            description:
+              "Esticado: ~1200px de largura (o site tem até 1240px), altura à vontade (ex.: 1200×150 a 1200×250). Centralizado: qualquer tamanho, aparece no tamanho natural (até ~150px de altura). Usado quando o tipo é 'Banner grande'.",
+            condition: (_, s) => s?.format === "banner",
+          },
+        },
+        {
+          name: "bannerCentered",
+          type: "checkbox",
+          defaultValue: false,
+          label: "Imagem centralizada (fundo transparente, não estica)",
+          admin: {
+            description:
+              "Marque pra banners finos: a imagem fica centralizada no tamanho natural, com fundo transparente (na cor do site). Desmarcado = a imagem estica pra ocupar toda a largura.",
             condition: (_, s) => s?.format === "banner",
           },
         },
