@@ -82,9 +82,9 @@ export const PHASE_BY_SLUG: Record<string, WorldCupPhase> = Object.fromEntries(
 // fase quando a Copa progride). Ajustar se o calendário oficial mudar.
 const PHASE_FOCUS_FROM: Record<string, string> = {
   "16-avos": "2026-06-28",
-  oitavas: "2026-07-03",
-  quartas: "2026-07-08",
-  semifinais: "2026-07-13",
+  oitavas: "2026-07-04",
+  quartas: "2026-07-09",
+  semifinais: "2026-07-14",
   final: "2026-07-17",
 };
 const FOCUS_ORDER = ["16-avos", "oitavas", "quartas", "semifinais", "final"];

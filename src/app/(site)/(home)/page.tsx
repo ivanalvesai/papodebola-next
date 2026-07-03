@@ -17,6 +17,8 @@ import { getTodayMatches, getWorldCupBarMatches, getBrazilianBarMatches, freshMa
 import { getTransfers } from "@/lib/data/home"; // getHighlights desativado (ver Destaques)
 import { getLatestArticles } from "@/lib/data/articles";
 import { getBrasileiraoStandings, getWorldCupStandings } from "@/lib/data/standings";
+import { getKnockoutFixtures } from "@/lib/data/world-cup";
+import { currentKnockoutPhase } from "@/lib/world-cup-phases";
 import { getTopScorers } from "@/lib/data/scorers";
 import { getChampionshipData } from "@/lib/data/championship";
 import { enrichStandingsWithForm } from "@/lib/standings-utils";
@@ -48,6 +50,9 @@ export async function generateMetadata(): Promise<Metadata> {
 }
 
 export default async function HomePage() {
+  // Fase atual da Copa (por data) → o card lateral acompanha o mata-mata em vez de
+  // ficar preso nos grupos. Grupos só até os 16-avos começarem.
+  const wcPhase = currentKnockoutPhase();
   const [
     todayMatches,
     copaBar,
@@ -57,6 +62,7 @@ export default async function HomePage() {
     articles,
     rawStandings,
     worldCupGroups,
+    worldCupKnockout,
     scorers,
     champData,
   ] = await Promise.all([
@@ -68,6 +74,9 @@ export default async function HomePage() {
     getLatestArticles(20).catch(() => []),
     getBrasileiraoStandings().catch(() => []),
     getWorldCupStandings().catch(() => []),
+    wcPhase.slug === "grupos"
+      ? Promise.resolve([])
+      : getKnockoutFixtures(wcPhase.slug, wcPhase.round).catch(() => []),
     getTopScorers().catch(() => []),
     getChampionshipData("brasileirao-serie-a").catch(() => null as ChampionshipData | null),
   ]);
@@ -145,7 +154,7 @@ export default async function HomePage() {
             {/* Tabelas no celular: logo apos as noticias, antes do Mercado da Bola.
                 So aparece no mobile (no desktop ficam no sidebar). */}
             <div className="space-y-6 lg:hidden">
-              <WorldCupGroupsWidget groups={worldCupGroups} />
+              <WorldCupGroupsWidget groups={worldCupGroups} phase={wcPhase} knockout={worldCupKnockout} />
               <StandingsWidget standings={standings} />
             </div>
             <TransfersSection transfers={transfers} />
@@ -157,7 +166,7 @@ export default async function HomePage() {
                 as Ultimas Noticias + Brasileirao logo abaixo. So no desktop; no mobile
                 sobem pra logo apos as noticias (ver bloco lg:hidden no main). */}
             <div className="hidden lg:block space-y-6">
-              <WorldCupGroupsWidget groups={worldCupGroups} />
+              <WorldCupGroupsWidget groups={worldCupGroups} phase={wcPhase} knockout={worldCupKnockout} />
               <StandingsWidget standings={standings} />
             </div>
             <MyTeamWidget />
