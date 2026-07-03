@@ -176,13 +176,16 @@ function parseMatchDetail(html) {
   const goals = [];
   const nameOf = (td) => { const m = td.match(/<span>\s*([A-ZÀ-Ü][^<]{2,40}?)\s*<\/span>/); return m ? dec(m[1]) : ""; };
   const ballsOf = (td) => (td.match(/fa-soccer-ball-o/g) || []).length;
+  // "Gol Contra": o SisGel marca o gol na célula do lado do jogador que fez contra,
+  // mas o gol conta pro time ADVERSÁRIO. Então invertemos o lado (isHome) e marcamos ownGoal.
+  const isOG = (td) => /Gol\s*Contra/i.test(td);
   for (const tr of gseg.matchAll(/<tr>([\s\S]*?)<\/tr>/g)) {
     const tds = [...tr[1].matchAll(/<td[^>]*>([\s\S]*?)<\/td>/g)].map((x) => x[1]);
     if (tds.length < 4) continue;
-    const hn = nameOf(tds[1]), hb = ballsOf(tds[0]);
-    const an = nameOf(tds[2]), ab = ballsOf(tds[3]);
-    if (hn && hb > 0) goals.push({ player: hn, goals: hb, isHome: true });
-    if (an && ab > 0) goals.push({ player: an, goals: ab, isHome: false });
+    const hn = nameOf(tds[1]), hb = ballsOf(tds[0]), hog = isOG(tds[0]);
+    const an = nameOf(tds[2]), ab = ballsOf(tds[3]), aog = isOG(tds[3]);
+    if (hn && hb > 0) goals.push({ player: hn, goals: hb, isHome: !hog, ownGoal: hog });
+    if (an && ab > 0) goals.push({ player: an, goals: ab, isHome: aog, ownGoal: aog });
   }
   // Escalação: tabela 2 colunas (td1 = mandante, td2 = visitante).
   const aseg = sectionOf(html, "Atletas e Diretores", "Comentário").split("Gols da Partida")[0];

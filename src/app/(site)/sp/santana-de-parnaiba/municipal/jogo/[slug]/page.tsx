@@ -108,6 +108,7 @@ export default async function MunicipalMatchPage({
                   <span>⚽</span>
                   <span className="capitalize">{g.player.toLowerCase()}</span>
                   {g.goals > 1 && <span className="text-text-muted">({g.goals})</span>}
+                  {g.ownGoal && <span className="text-text-muted">(gol contra)</span>}
                 </li>
               ))}
               {homeGoals.length === 0 && <li className="text-text-muted">—</li>}
@@ -115,6 +116,7 @@ export default async function MunicipalMatchPage({
             <ul className="space-y-1.5 text-right">
               {awayGoals.map((g, i) => (
                 <li key={i} className="flex items-center justify-end gap-2 text-text-primary">
+                  {g.ownGoal && <span className="text-text-muted">(gol contra)</span>}
                   {g.goals > 1 && <span className="text-text-muted">({g.goals})</span>}
                   <span className="capitalize">{g.player.toLowerCase()}</span>
                   <span>⚽</span>
