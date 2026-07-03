@@ -76,3 +76,25 @@ export const KNOCKOUT_PHASES = WC_PHASES.filter((p) => p.slug !== "grupos");
 export const PHASE_BY_SLUG: Record<string, WorldCupPhase> = Object.fromEntries(
   WC_PHASES.map((p) => [p.slug, p])
 );
+
+// Data (YYYY-MM-DD) a partir da qual cada fase eliminatória vira o "foco" da Copa — o
+// banner/atalhos passam a apontar pra ela. Auto-avança sozinho (evita ficar preso numa
+// fase quando a Copa progride). Ajustar se o calendário oficial mudar.
+const PHASE_FOCUS_FROM: Record<string, string> = {
+  "16-avos": "2026-06-28",
+  oitavas: "2026-07-03",
+  quartas: "2026-07-08",
+  semifinais: "2026-07-13",
+  final: "2026-07-17",
+};
+const FOCUS_ORDER = ["16-avos", "oitavas", "quartas", "semifinais", "final"];
+
+// Fase eliminatória "atual" pela data de hoje (pula a disputa de 3º — o foco é a final).
+export function currentKnockoutPhase(now: Date = new Date()): WorldCupPhase {
+  const today = now.toISOString().slice(0, 10);
+  let current = "16-avos";
+  for (const slug of FOCUS_ORDER) {
+    if ((PHASE_FOCUS_FROM[slug] || "9999-99-99") <= today) current = slug;
+  }
+  return PHASE_BY_SLUG[current];
+}
