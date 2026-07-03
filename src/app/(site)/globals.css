@@ -197,7 +197,11 @@
 .pdb-banner img { display: block; width: 100%; height: auto; }
 /* Centralizado: tamanho natural, fundo transparente (cor do site), sem moldura. */
 .pdb-banner-contain { border: none; border-radius: 0; overflow: visible; text-align: center; background: transparent; }
-.pdb-banner-contain img { display: inline-block; width: auto; max-width: 100%; max-height: 150px; margin: 0 auto; }
+.pdb-banner-contain img { display: inline-block; width: auto; max-width: 100%; max-height: 160px; margin: 0 auto; }
+/* No celular o banner centralizado preenche a largura (senão fica pequeno vs. desktop). */
+@media (max-width: 640px) {
+  .pdb-banner-contain img { width: 100%; max-height: none; }
+}
 .pdb-banner-fallback { display: flex; flex-direction: column; gap: 4px; padding: 22px 20px; background: linear-gradient(90deg, #00965E, #00b473); color: #fff; }
 .pdb-banner-fallback strong { font-size: 18px; }
 .pdb-banner-fallback span { font-size: 13px; opacity: .92; }
