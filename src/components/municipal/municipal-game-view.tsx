@@ -36,7 +36,7 @@ function TeamHead({ name, badge }: { name: string; badge: string }) {
 function Lineup({ title, players }: { title: string; players: string[] }) {
   return (
     <div className="rounded-lg border border-border-custom bg-card-bg">
-      <h3 className="border-b border-border-custom px-4 py-2.5 text-xs font-bold uppercase text-green">{title}</h3>
+      <h3 className="border-b border-border-custom px-4 py-2.5 text-sm font-bold uppercase text-green">{title}</h3>
       {players.length > 0 ? (
         <ul className="divide-y divide-border-light">
           {players.map((p, i) => (
@@ -44,7 +44,7 @@ function Lineup({ title, players }: { title: string; players: string[] }) {
           ))}
         </ul>
       ) : (
-        <p className="px-4 py-3 text-xs text-text-muted">Escalação a definir.</p>
+        <p className="px-4 py-3 text-sm text-text-muted">Escalação a definir.</p>
       )}
     </div>
   );
@@ -97,7 +97,7 @@ export function MunicipalGameView({ game }: { game: MunicipalGame }) {
       <div className="rounded-lg border border-border-custom bg-card-bg p-6">
         <div className="mb-4 flex items-center justify-center gap-2">
           {(game.division || game.roundLabel) && (
-            <span className="text-[11px] font-bold uppercase tracking-wide text-green">
+            <span className="text-sm font-bold uppercase tracking-wide text-green">
               {[game.division, game.roundLabel].filter(Boolean).join(" · ")}
             </span>
           )}
@@ -107,11 +107,11 @@ export function MunicipalGameView({ game }: { game: MunicipalGame }) {
           <TeamHead name={game.home} badge={game.homeBadge} />
           <div className="shrink-0 text-center">
             <div className="text-2xl font-extrabold tabular-nums text-text-primary">{game.time || "x"}</div>
-            {game.date && <div className="text-[11px] text-text-muted">{game.date}</div>}
+            {game.date && <div className="text-xs text-text-muted">{game.date}</div>}
           </div>
           <TeamHead name={game.away} badge={game.awayBadge} />
         </div>
-        {game.venue && <div className="mt-4 text-center text-xs text-text-muted">{game.venue}</div>}
+        {game.venue && <div className="mt-4 text-center text-sm text-text-muted">{game.venue}</div>}
       </div>
 
       {/* 3 colunas: escalação | vídeo + comentários | gols */}
@@ -163,7 +163,7 @@ export function MunicipalGameView({ game }: { game: MunicipalGame }) {
             {game.seo.headingGoals || "Gols"}
           </h2>
           <div className="rounded-lg border border-border-custom bg-card-bg">
-            <p className="px-4 py-3 text-xs text-text-muted">Os gols aparecem aqui quando o jogo começar.</p>
+            <p className="px-4 py-3 text-sm text-text-muted">Os gols aparecem aqui quando o jogo começar.</p>
           </div>
         </div>
       </div>

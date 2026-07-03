@@ -99,7 +99,7 @@ export default async function MunicipalMatchPage({
 
       {/* Placar */}
       <div className="rounded-lg border border-border-custom bg-card-bg p-6">
-        <p className="mb-4 text-center text-[11px] font-bold uppercase tracking-wide text-green">
+        <p className="mb-4 text-center text-sm font-bold uppercase tracking-wide text-green">
           {m.division}
           {m.roundLabel ? ` · ${m.roundLabel}` : m.round ? ` · ${m.round}ª rodada` : ""}
         </p>
@@ -116,7 +116,7 @@ export default async function MunicipalMatchPage({
             <span className="text-sm font-bold text-text-primary">{m.away}</span>
           </div>
         </div>
-        <div className="mt-4 space-y-0.5 text-center text-xs text-text-muted">
+        <div className="mt-4 space-y-0.5 text-center text-sm text-text-muted">
           {m.date && <div className="font-semibold">{m.date}{m.time ? ` · ${m.time}` : ""}</div>}
           {m.venue && <div>{m.venue}</div>}
           {m.referee && <div>Arbitragem: {m.referee}</div>}
