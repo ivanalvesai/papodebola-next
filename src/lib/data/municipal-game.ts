@@ -12,6 +12,7 @@ const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || "https://www.papodebola.com
 
 export interface MunicipalGame {
   slug: string;
+  dateSlug: string;
   matchup: string;
   home: string;
   away: string;
@@ -29,15 +30,23 @@ export interface MunicipalGame {
   startTs: number; // epoch ms do apito (data+hora em Brasília); 0 se não der pra parsear
 }
 
+// "DD/MM/YYYY" → "DD-MM-YYYY" (padrão da URL /jogo/[data]/...).
+export function toDateSlug(date: string): string {
+  const d = String(date || "").match(/(\d{2})\/(\d{2})\/(\d{4})/);
+  return d ? `${d[1]}-${d[2]}-${d[3]}` : "";
+}
+
 // Escudos: o municipalGames não guarda badge; puxamos do sisgel.json (a partida com o
-// mesmo slug tem homeBadgeLocal/awayBadgeLocal). Reaproveita os escudos já baixados.
-async function sisgelBadges(slug: string): Promise<{ home: string; away: string }> {
+// mesmo par + data tem homeBadgeLocal/awayBadgeLocal). Reaproveita os escudos já baixados.
+async function sisgelBadges(pairSlug: string, dateSlug: string): Promise<{ home: string; away: string }> {
   try {
     const raw = await readFile(join(process.cwd(), "data", "sisgel.json"), "utf-8");
     const champs = JSON.parse(raw);
     for (const c of champs || []) {
       for (const m of c.matches || []) {
-        if (m.slug === slug) return { home: m.homeBadgeLocal || "", away: m.awayBadgeLocal || "" };
+        if (m.slug === pairSlug && (!dateSlug || m.dateSlug === dateSlug)) {
+          return { home: m.homeBadgeLocal || "", away: m.awayBadgeLocal || "" };
+        }
       }
     }
   } catch {
@@ -88,17 +97,19 @@ const lines = (s: unknown): string[] =>
     .map((x) => x.trim())
     .filter(Boolean);
 
-export async function getMunicipalGame(slug: string): Promise<MunicipalGame | null> {
-  if (!slug || process.env.NEXT_PHASE === "phase-production-build") return null;
+export async function getMunicipalGame(dateSlug: string, pairSlug: string): Promise<MunicipalGame | null> {
+  if (!pairSlug || process.env.NEXT_PHASE === "phase-production-build") return null;
   try {
     const payload = await getPayload({ config });
     const res = await payload.find({
       collection: "municipalGames",
-      where: { slug: { equals: slug } },
-      limit: 1,
+      where: { slug: { equals: pairSlug } },
+      limit: 20,
       depth: 1,
     });
-    const d: any = res.docs[0];
+    const docs: any[] = res.docs;
+    // Casa pela DATA (permite o mesmo confronto em dias diferentes). Fallback: único doc.
+    const d: any = docs.find((x) => toDateSlug(x.date) === dateSlug) || (docs.length === 1 ? docs[0] : null);
     if (!d) return null;
     let html = "";
     const c = d.content;
@@ -109,9 +120,11 @@ export async function getMunicipalGame(slug: string): Promise<MunicipalGame | nu
         html = "";
       }
     }
-    const badges = await sisgelBadges(d.slug);
+    const ds = toDateSlug(d.date);
+    const badges = await sisgelBadges(d.slug, ds);
     return {
       slug: d.slug,
+      dateSlug: ds,
       matchup: d.matchup || [d.home, d.away].filter(Boolean).join(" x "),
       home: d.home || "",
       away: d.away || "",
@@ -133,7 +146,8 @@ export async function getMunicipalGame(slug: string): Promise<MunicipalGame | nu
   }
 }
 
-export async function getMunicipalGameSlugs(): Promise<string[]> {
+// Chaves compostas "DD-MM-YYYY/home-away" dos jogos com página no CMS (pra lista + sitemap).
+export async function getMunicipalGameKeys(): Promise<string[]> {
   if (process.env.NEXT_PHASE === "phase-production-build") return [];
   try {
     const payload = await getPayload({ config });
@@ -143,7 +157,9 @@ export async function getMunicipalGameSlugs(): Promise<string[]> {
       depth: 0,
       pagination: false,
     });
-    return res.docs.map((d: any) => d.slug).filter(Boolean);
+    return res.docs
+      .map((d: any) => (d.slug && d.date ? `${toDateSlug(d.date)}/${d.slug}` : ""))
+      .filter(Boolean);
   } catch {
     return [];
   }

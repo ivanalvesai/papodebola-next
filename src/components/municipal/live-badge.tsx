@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 
 // Badge "AO VIVO" que consulta /api/municipal-live e só aparece enquanto o jogo está no ar.
 // Usado na página do jogo (a lista usa o mapa próprio pra não fazer N polls).
-export function LiveBadge({ slug, size = "md" }: { slug: string; size?: "sm" | "md" }) {
+export function LiveBadge({ gameKey, size = "md" }: { gameKey: string; size?: "sm" | "md" }) {
   const [live, setLive] = useState(false);
 
   useEffect(() => {
@@ -13,7 +13,7 @@ export function LiveBadge({ slug, size = "md" }: { slug: string; size?: "sm" | "
       try {
         const r = await fetch("/api/municipal-live", { cache: "no-store" });
         const d = await r.json();
-        if (!cancelled) setLive(!!d?.[slug]?.live);
+        if (!cancelled) setLive(!!d?.[gameKey]?.live);
       } catch {
         /* ignora */
       }
@@ -24,7 +24,7 @@ export function LiveBadge({ slug, size = "md" }: { slug: string; size?: "sm" | "
       cancelled = true;
       clearInterval(t);
     };
-  }, [slug]);
+  }, [gameKey]);
 
   if (!live) return null;
   const sm = size === "sm";

@@ -10,7 +10,8 @@ import { matchDateSlug, matchPairSlug } from "@/lib/world-cup-match-url";
 import { getPayloadTeamSlugs } from "@/lib/data/payload-teams";
 import { getPayloadPageSlugs } from "@/lib/data/payload-pages";
 import { getAuthorSlugs } from "@/lib/data/authors";
-import { getMunicipalMatchSlugs } from "@/lib/data/municipal";
+import { getMunicipalMatchKeys } from "@/lib/data/municipal";
+import { getMunicipalGameKeys } from "@/lib/data/municipal-game";
 import { getChampionshipData } from "@/lib/data/championship";
 import { getTennisDraw, TENNIS_TOURNAMENTS, tennisMatchHref, type TennisTournamentSlug } from "@/lib/data/tennis";
 
@@ -262,9 +263,14 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     priority: 0.4,
   }));
 
-  // Páginas de jogo do municipal (SisGel) — ficha estática de cada jogo finalizado.
-  const municipalMatchPages: MetadataRoute.Sitemap = (await getMunicipalMatchSlugs()).map((slug) => ({
-    url: `${BASE}/sp/santana-de-parnaiba/municipal/jogo/${slug}`,
+  // Páginas de jogo do municipal (SisGel) — chave "DD-MM-YYYY/home-away" → /jogo/{data}/{par}.
+  // Inclui as fichas raspadas (jogos encerrados) + os jogos com vídeo/comentários do CMS.
+  const municipalKeys = new Set<string>([
+    ...(await getMunicipalMatchKeys().catch(() => [])),
+    ...(await getMunicipalGameKeys().catch(() => [])),
+  ]);
+  const municipalMatchPages: MetadataRoute.Sitemap = [...municipalKeys].map((key) => ({
+    url: `${BASE}/sp/santana-de-parnaiba/municipal/jogo/${key}`,
     lastModified: now,
     changeFrequency: "monthly",
     priority: 0.4,

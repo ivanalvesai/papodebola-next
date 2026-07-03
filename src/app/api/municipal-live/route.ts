@@ -33,6 +33,10 @@ function parseStart(date: string, time: string): number {
   if (!d) return 0;
   return Date.UTC(+d[3], +d[2] - 1, +d[1], +(t ? t[1] : 0) + 3, +(t ? t[2] : 0));
 }
+function dateSlugOf(date: string): string {
+  const d = String(date || "").match(/(\d{2})\/(\d{2})\/(\d{4})/);
+  return d ? `${d[1]}-${d[2]}-${d[3]}` : "";
+}
 
 // true = ao vivo agora, false = não está ao vivo, null = não deu pra checar (erro de rede).
 // Marcador correto: liveBroadcastDetails."isLiveNow":true. NÃO usar "isLive" (é só "é
@@ -63,36 +67,37 @@ export async function GET() {
     const payload = await getPayload({ config });
     const res = await payload.find({ collection: "municipalGames", limit: 100, depth: 0, pagination: false });
     for (const d of res.docs as any[]) {
+      const key = d.slug && d.date ? `${dateSlugOf(d.date)}/${d.slug}` : d.slug;
       const start = parseStart(d.date, d.time);
       const vid = ytId(d.youtubeUrl);
       if (!start || !vid) {
-        out[d.slug] = { live: false, state: "unknown" };
+        out[key] = { live: false, state: "unknown" };
         continue;
       }
       if (now < start) {
-        out[d.slug] = { live: false, state: "upcoming" };
+        out[key] = { live: false, state: "upcoming" };
       } else if (now < start + WINDOW_ASSUME_LIVE) {
-        out[d.slug] = { live: true, state: "live" };
+        out[key] = { live: true, state: "live" };
       } else if (now < start + WINDOW_MAX) {
         const c = cache.get(vid);
         if (c?.ended) {
-          out[d.slug] = { live: false, state: "ended" };
+          out[key] = { live: false, state: "ended" };
         } else if (c && now - c.checkedAt < CHECK_EVERY) {
-          out[d.slug] = { live: c.live, state: c.live ? "live" : "ended" };
+          out[key] = { live: c.live, state: c.live ? "live" : "ended" };
         } else {
           const res2 = await isLiveNow(vid);
           if (res2 === false) {
             // confirmadamente fora do ar após 90min = acabou → marca e PARA de consultar.
             cache.set(vid, { live: false, ended: true, checkedAt: now });
-            out[d.slug] = { live: false, state: "ended" };
+            out[key] = { live: false, state: "ended" };
           } else {
             // true OU erro de rede (null) → mantém ao vivo (não encerra por um erro).
             cache.set(vid, { live: true, ended: false, checkedAt: now });
-            out[d.slug] = { live: true, state: "live" };
+            out[key] = { live: true, state: "live" };
           }
         }
       } else {
-        out[d.slug] = { live: false, state: "ended" };
+        out[key] = { live: false, state: "ended" };
       }
     }
   } catch {
