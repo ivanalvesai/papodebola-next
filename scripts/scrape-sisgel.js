@@ -482,6 +482,13 @@ async function scrapeMatchDetails(results) {
 
 async function main() {
   console.log(`[${new Date().toISOString()}] SisGel scraper v3`);
+  // Dados anteriores: usados como FALLBACK se o SisGel perder/expirar um campeonato.
+  // Assim classificação/artilheiros/tabelas NÃO somem do site (SEO) quando o SisGel cai
+  // — mesma ideia dos snapshots do resto do site. Os detalhes de jogo (lance a lance) já
+  // persistem por serem cache aditivo (nunca removidos).
+  let prev = [];
+  try { prev = JSON.parse(fs.readFileSync(OUTPUT_FILE, "utf-8")); } catch { prev = []; }
+
   const results = [];
   for (const entry of CHAMPIONSHIP_URLS) {
     try {
@@ -490,9 +497,20 @@ async function main() {
     } catch (e) { console.error(`  Error: ${e.message}`); }
     await new Promise((r) => setTimeout(r, 500));
   }
+
+  // Merge: cada campeonato usa o dado NOVO; se falhou nesta coleta, mantém o último bom.
+  let kept = 0;
+  const merged = CHAMPIONSHIP_URLS.map((entry) => {
+    const fresh = results.find((r) => r.url === entry.url);
+    if (fresh) return fresh;
+    const old = prev.find((p) => p.url === entry.url);
+    if (old) { kept++; console.log(`  MANTIDO do cache: ${old.name} (SisGel não retornou)`); return old; }
+    return null;
+  }).filter(Boolean);
+
   fs.mkdirSync(DATA_DIR, { recursive: true });
-  fs.writeFileSync(OUTPUT_FILE, JSON.stringify(results, null, 2));
-  console.log(`\nSaved ${results.length} championships`);
+  fs.writeFileSync(OUTPUT_FILE, JSON.stringify(merged, null, 2));
+  console.log(`\nSaved ${merged.length} championships (${results.length} novos, ${kept} do cache)`);
 
   await scrapeMatchDetails(results);
 }
