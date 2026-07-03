@@ -4,6 +4,15 @@
 
 @custom-variant dark (&:is(.dark *));
 
+/* Legibilidade (jul/2026): o site jogava a maior parte do texto em 12–14px, o que dava
+   a sensação de letra miúda/"cerrilhada" a 100% de zoom. O ge usa ~16px no conteúdo que
+   se lê. Aqui aumentamos só os tamanhos pequenos do Tailwind (apenas font-size, sem tocar
+   no espaçamento/layout) pra aproximar da leitura do ge. Ajustável. */
+@theme {
+  --text-xs: 0.8125rem;   /* 12px -> 13px */
+  --text-sm: 0.9375rem;   /* 14px -> 15px */
+}
+
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
