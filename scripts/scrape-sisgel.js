@@ -170,14 +170,19 @@ function sectionOf(html, label, end) {
 // lance a lance: gols (autor + qtd + time), escalação (mandante/visitante + cartões)
 // e arbitragem. Sem tempo real. Fotos base64 são descartadas.
 function parseMatchDetail(html) {
-  // Gols: cada <tr> tem o nome e N ícones de bola; class "righted" = visitante.
+  // Gols: cada <tr> tem 4 <td> = [bola mandante][nome mandante][nome visitante (righted)][bola visitante].
+  // Os dois lados no MESMO tr (o lado sem gol fica vazio). Contar bolas por LADO, não por linha.
   const gseg = sectionOf(html, "Gols da Partida", "Informações sobre o jogo");
   const goals = [];
+  const nameOf = (td) => { const m = td.match(/<span>\s*([A-ZÀ-Ü][^<]{2,40}?)\s*<\/span>/); return m ? dec(m[1]) : ""; };
+  const ballsOf = (td) => (td.match(/fa-soccer-ball-o/g) || []).length;
   for (const tr of gseg.matchAll(/<tr>([\s\S]*?)<\/tr>/g)) {
-    const row = tr[1];
-    const nm = row.match(/<span>\s*([A-ZÀ-Ü][^<]{2,40}?)\s*<\/span>/);
-    const balls = (row.match(/fa-soccer-ball-o/g) || []).length;
-    if (nm && balls > 0) goals.push({ player: dec(nm[1]), goals: balls, isHome: !/class="[^"]*righted/.test(row) });
+    const tds = [...tr[1].matchAll(/<td[^>]*>([\s\S]*?)<\/td>/g)].map((x) => x[1]);
+    if (tds.length < 4) continue;
+    const hn = nameOf(tds[1]), hb = ballsOf(tds[0]);
+    const an = nameOf(tds[2]), ab = ballsOf(tds[3]);
+    if (hn && hb > 0) goals.push({ player: hn, goals: hb, isHome: true });
+    if (an && ab > 0) goals.push({ player: an, goals: ab, isHome: false });
   }
   // Escalação: tabela 2 colunas (td1 = mandante, td2 = visitante).
   const aseg = sectionOf(html, "Atletas e Diretores", "Comentário").split("Gols da Partida")[0];
@@ -194,7 +199,9 @@ function parseMatchDetail(html) {
   }
   const referee = dec(sectionOf(html, ">Arbitragem<", "Comentário").replace(/<[^>]+>/g, " "))
     .replace(/^Arbitragem\s*/i, "").trim();
-  return { goals, lineups: { home, away }, referee };
+  const venue = dec(sectionOf(html, ">Local<", "Arbitragem").replace(/<[^>]+>/g, " "))
+    .replace(/^Local\s*/i, "").trim();
+  return { goals, lineups: { home, away }, referee, venue };
 }
 
 function parseClassification(html) {
@@ -449,7 +456,7 @@ async function scrapeMatchDetails(results) {
           slug: m.slug, token: m.token, division: champ.name, divisionSlug: champ.slug,
           round: m.round, phase: m.phase, roundLabel: m.roundLabel,
           home: m.home, away: m.away, homeScore: m.homeScore, awayScore: m.awayScore,
-          date: m.date, time: m.time, venue: m.venue, status: m.status,
+          date: m.date, time: m.time, venue: detail.venue || m.venue, status: m.status,
           homeBadge: m.homeBadgeLocal, awayBadge: m.awayBadgeLocal,
           goals: detail.goals, lineups: detail.lineups, referee: detail.referee,
           scrapedAt: new Date().toISOString(),
