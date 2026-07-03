@@ -794,31 +794,15 @@ export default buildConfig({
       slug: "municipalGames",
       labels: { singular: "Jogo do municipal", plural: "Jogos do municipal" },
       admin: {
-        useAsTitle: "cmsTitle",
-        defaultColumns: ["cmsTitle", "date", "time", "roundLabel", "updatedAt"],
+        useAsTitle: "matchup",
+        // A DATA aparece na coluna "date" da lista → distingue jogos dos mesmos times em
+        // rodadas diferentes. (useAsTitle precisa ser campo real; virtual quebra o Payload.)
+        defaultColumns: ["matchup", "date", "time", "roundLabel", "updatedAt"],
         description:
-          "Página de jogo do municipal com vídeo do YouTube (embed) + comentários editáveis, no layout dos jogos da Copa. URL: /sp/santana-de-parnaiba/municipal/jogo/{data}/{slug}. Salvou = no ar.",
+          "Página de jogo do municipal com vídeo do YouTube (embed) + comentários editáveis, no layout dos jogos da Copa. URL: /sp/santana-de-parnaiba/municipal/jogo/{data}/{slug}. Salvou = no ar. Use a coluna Data pra achar o jogo certo.",
       },
       access: { read: () => true },
       fields: [
-        {
-          // Título só pro CMS: confronto + data → distingue jogos dos mesmos times em
-          // rodadas diferentes. Virtual (não vai pro banco, sem migração).
-          name: "cmsTitle",
-          type: "text",
-          virtual: true,
-          admin: { hidden: true },
-          hooks: {
-            afterRead: [
-              ({ data }: { data?: Record<string, unknown> }) => {
-                const d = data || {};
-                const match =
-                  (d.matchup as string) || [d.home, d.away].filter(Boolean).join(" x ") || "Jogo";
-                return d.date ? `${match} — ${d.date as string}` : match;
-              },
-            ],
-          },
-        },
         {
           name: "slug",
           type: "text",
