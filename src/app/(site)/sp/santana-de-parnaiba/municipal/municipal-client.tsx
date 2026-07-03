@@ -34,7 +34,7 @@ interface Match {
   round: number; phase?: string; roundLabel?: string; home: string; away: string;
   homeScore: number | null; awayScore: number | null;
   date: string; time: string; venue: string; status: string;
-  homeBadgeLocal: string; awayBadgeLocal: string;
+  homeBadgeLocal: string; awayBadgeLocal: string; slug?: string;
 }
 
 interface RoundMeta {
@@ -283,8 +283,9 @@ export default function MunicipalPage() {
             <div className="divide-y divide-border-light">
               {roundMatches.map((m, i) => {
                 const hasScore = m.homeScore !== null && m.awayScore !== null;
-                return (
-                  <div key={i} className="px-4 py-3">
+                const clickable = hasScore && !!m.slug;
+                const inner = (
+                  <>
                     <div className="text-[10px] text-text-muted text-center mb-2 space-y-0.5">
                       {m.date && <div className="font-semibold">{m.date} {m.time && `- ${m.time}`}</div>}
                       {m.venue && <div>{m.venue}</div>}
@@ -315,7 +316,21 @@ export default function MunicipalPage() {
                         <span className="text-xs font-semibold text-text-primary truncate">{m.away}</span>
                       </div>
                     </div>
-                  </div>
+                    {clickable && (
+                      <div className="mt-1.5 text-center text-[10px] font-semibold text-green">ver ficha do jogo →</div>
+                    )}
+                  </>
+                );
+                return clickable ? (
+                  <Link
+                    key={i}
+                    href={`/sp/santana-de-parnaiba/municipal/jogo/${m.slug}`}
+                    className="block px-4 py-3 transition-colors hover:bg-card-hover"
+                  >
+                    {inner}
+                  </Link>
+                ) : (
+                  <div key={i} className="px-4 py-3">{inner}</div>
                 );
               })}
             </div>
