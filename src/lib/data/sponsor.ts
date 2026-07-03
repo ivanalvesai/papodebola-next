@@ -7,12 +7,16 @@ import config from "@payload-config";
 // Todo link do card aponta pra /parceiro/{slug} (conta clique + UTM) e sai rel="sponsored".
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
+export type SponsorFormat = "card" | "banner";
+
 export interface Sponsor {
   id: number | string;
   name: string;
   slug: string;
   tagline: string;
-  logo: string; // URL (vazio se não tem)
+  format: SponsorFormat;
+  logo: string; // URL da logo do card (vazio se não tem)
+  banner: string; // URL da imagem larga do banner (vazio se não tem)
   site: string;
   whatsapp: string;
   instagram: string;
@@ -52,15 +56,17 @@ export function sponsorTarget(s: Sponsor): string {
   );
 }
 
+const mediaUrl = (m: any): string => (m && typeof m === "object" ? String(m.url || "") : "");
+
 export function normalizeSponsor(doc: any): Sponsor {
-  const logo = doc?.logo;
-  const logoUrl = logo && typeof logo === "object" ? String(logo.url || "") : "";
   return {
     id: doc?.id,
     name: doc?.name || "",
     slug: doc?.slug || "",
     tagline: doc?.tagline || "",
-    logo: logoUrl,
+    format: doc?.format === "banner" ? "banner" : "card",
+    logo: mediaUrl(doc?.logo),
+    banner: mediaUrl(doc?.banner),
     site: doc?.site || "",
     whatsapp: doc?.whatsapp || "",
     instagram: doc?.instagram || "",
@@ -70,7 +76,8 @@ export function normalizeSponsor(doc: any): Sponsor {
   };
 }
 
-// HTML de UM card (usado pelo conversor Lexical e pela faixa). `de` vira UTM no /parceiro.
+// HTML de UM card = tile de logo (logo grande cobrindo o card, sem botão). Clicável.
+// Usado pelo conversor Lexical e pela faixa. `de` vira UTM no /parceiro.
 export function sponsorCardHtml(s: Sponsor, de = "site"): string {
   if (!s || !s.slug) return "";
   const href = `/parceiro/${encodeURIComponent(s.slug)}?de=${encodeURIComponent(de)}`;
@@ -78,35 +85,57 @@ export function sponsorCardHtml(s: Sponsor, de = "site"): string {
   const logo = s.logo
     ? `<img src="${esc(s.logo)}" alt="${esc(s.name)}" loading="lazy" />`
     : `<span class="pdb-sponsor-ini">${esc(initials)}</span>`;
-  const tag = s.tagline ? `<span class="pdb-sponsor-tag">${esc(s.tagline)}</span>` : "";
   return (
-    `<a class="pdb-sponsor" href="${href}" rel="sponsored noopener" target="_blank">` +
+    `<a class="pdb-sponsor" href="${href}" rel="sponsored noopener" target="_blank" title="${esc(s.name)}">` +
     `<span class="pdb-sponsor-logo">${logo}</span>` +
-    `<span class="pdb-sponsor-body"><span class="pdb-sponsor-name">${esc(s.name)}</span>${tag}</span>` +
-    `<span class="pdb-sponsor-cta">Visitar</span>` +
+    `<span class="pdb-sponsor-name">${esc(s.name)}</span>` +
     `</a>`
   );
 }
 
-// HTML da faixa inteira (rótulo "Patrocínio" + grid de cards).
+// HTML de um BANNER grande (imagem larga clicável). Fallback textual se não tiver imagem.
+export function sponsorBannerHtml(s: Sponsor, position = "above-score"): string {
+  if (!s || !s.slug) return "";
+  const href = `/parceiro/${encodeURIComponent(s.slug)}?de=banner-${encodeURIComponent(position)}`;
+  const inner = s.banner
+    ? `<img src="${esc(s.banner)}" alt="${esc(s.name)}" loading="lazy" />`
+    : `<span class="pdb-banner-fallback"><strong>${esc(s.name)}</strong>${s.tagline ? `<span>${esc(s.tagline)}</span>` : ""}</span>`;
+  return (
+    `<div class="pdb-banner-wrap">` +
+    `<span class="pdb-ad-label">Patrocínio</span>` +
+    `<a class="pdb-banner" href="${href}" rel="sponsored noopener" target="_blank" title="${esc(s.name)}">${inner}</a>` +
+    `</div>`
+  );
+}
+
+// HTML da faixa do rodapé. Com 3+ logos vira CARROSSEL (passa devagar, pausa no hover);
+// com 1-2, fica estático e centralizado.
 export function sponsorStripHtml(list: Sponsor[], de = "site", label = "Patrocínio"): string {
-  const cards = list.filter((s) => s && s.slug).map((s) => sponsorCardHtml(s, de)).join("");
-  if (!cards) return "";
+  const items = list.filter((s) => s && s.slug);
+  if (!items.length) return "";
+  const cards = items.map((s) => sponsorCardHtml(s, de)).join("");
+  const inner =
+    items.length >= 3
+      ? `<div class="pdb-marquee"><div class="pdb-marquee-track" style="animation-duration:${items.length * 6}s">${cards}${cards}</div></div>`
+      : `<div class="pdb-strip-static">${cards}</div>`;
   return (
     `<aside class="pdb-sponsors" aria-label="Patrocinadores">` +
     `<span class="pdb-sponsors-label">${esc(label)}</span>` +
-    `<div class="pdb-sponsors-grid">${cards}</div>` +
+    inner +
     `</aside>`
   );
 }
 
-export async function getActiveSponsors(): Promise<Sponsor[]> {
+// Patrocinadores ATIVOS. Por padrão só os de tipo "card" (a faixa do rodapé); passe
+// format:"banner" pra buscar os banners.
+export async function getActiveSponsors(opts?: { format?: SponsorFormat }): Promise<Sponsor[]> {
   if (process.env.NEXT_PHASE === "phase-production-build") return [];
+  const format = opts?.format || "card";
   try {
     const payload = await getPayload({ config });
     const res = await payload.find({
       collection: "sponsors",
-      where: { active: { equals: true } },
+      where: { active: { equals: true }, format: { equals: format } },
       sort: "name",
       limit: 50,
       depth: 1,

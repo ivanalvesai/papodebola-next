@@ -1,6 +1,7 @@
 import Link from "next/link";
 import Image from "next/image";
 import type { MunicipalGame } from "@/lib/data/municipal-game";
+import { sponsorBannerHtml } from "@/lib/data/sponsor";
 import { LiveBadge } from "./live-badge";
 import { SponsorStrip } from "@/components/sponsors/sponsor-strip";
 
@@ -49,11 +50,25 @@ function Lineup({ title, players }: { title: string; players: string[] }) {
   );
 }
 
+// Renderiza os banners de uma posição (topo, acima do placar, etc.). Nada se vazio.
+function Banners({ game, at }: { game: MunicipalGame; at: string }) {
+  const list = game.banners.filter((b) => b.position === at);
+  if (!list.length) return null;
+  return (
+    <>
+      {list.map((b, i) => (
+        <div key={i} dangerouslySetInnerHTML={{ __html: sponsorBannerHtml(b.sponsor, at) }} />
+      ))}
+    </>
+  );
+}
+
 export function MunicipalGameView({ game }: { game: MunicipalGame }) {
   const id = ytId(game.youtubeUrl);
 
   return (
     <div className="mx-auto max-w-[1240px] px-4 py-8">
+      <Banners game={game} at="top" />
       <nav className="mb-4 flex flex-wrap items-center gap-1 text-xs text-text-muted">
         <Link href="/" className="hover:text-green">Início</Link>
         <span>/</span>
@@ -61,6 +76,8 @@ export function MunicipalGameView({ game }: { game: MunicipalGame }) {
         <span>/</span>
         <span className="text-text-secondary">{game.home} x {game.away}</span>
       </nav>
+
+      <Banners game={game} at="above-score" />
 
       {/* Placar / cabeçalho */}
       <div className="rounded-lg border border-border-custom bg-card-bg p-6">
@@ -93,6 +110,7 @@ export function MunicipalGameView({ game }: { game: MunicipalGame }) {
 
         {/* Meio: vídeo + lance a lance (textos/comentários) */}
         <div className="order-1 space-y-5 lg:order-2">
+          <Banners game={game} at="above-player" />
           {id ? (
             <div className="relative overflow-hidden rounded-lg border border-border-custom bg-black" style={{ aspectRatio: "16 / 9" }}>
               <iframe
@@ -128,8 +146,11 @@ export function MunicipalGameView({ game }: { game: MunicipalGame }) {
         </div>
       </div>
 
-      {/* Faixa de patrocinadores (togglável no /cms por jogo). */}
-      {game.showSponsors && <SponsorStrip de="jogo-municipal" />}
+      {/* Banners de rodapé + faixa de patrocinadores (togglável no /cms por jogo). */}
+      <div className="mt-6 space-y-4">
+        <Banners game={game} at="footer" />
+        {game.showSponsors && <SponsorStrip de="jogo-municipal" />}
+      </div>
 
       {/* Estilos do conteúdo (parágrafos, imagens e o bloco de comentário verde). */}
       <style>{`

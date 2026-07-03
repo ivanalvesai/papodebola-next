@@ -1,7 +1,7 @@
 import { getPayload } from "payload";
 import config from "@payload-config";
 import { convertLexicalToHTML } from "@payloadcms/richtext-lexical/html";
-import { normalizeSponsor, sponsorCardHtml } from "./sponsor";
+import { normalizeSponsor, sponsorCardHtml, type Sponsor } from "./sponsor";
 import { readFile } from "fs/promises";
 import { join } from "path";
 
@@ -30,7 +30,10 @@ export interface MunicipalGame {
   awayBadge: string;
   startTs: number; // epoch ms do apito (data+hora em Brasília); 0 se não der pra parsear
   showSponsors: boolean; // exibe a faixa de patrocinadores no rodapé da página do jogo
+  banners: { sponsor: Sponsor; position: string }[]; // banners posicionados na página
 }
+
+export type BannerPosition = "top" | "above-score" | "above-player" | "footer";
 
 // "DD/MM/YYYY" → "DD-MM-YYYY" (padrão da URL /jogo/[data]/...).
 export function toDateSlug(date: string): string {
@@ -149,6 +152,11 @@ export async function getMunicipalGame(dateSlug: string, pairSlug: string): Prom
       awayBadge: badges.away,
       startTs: parseStart(d.date || "", d.time || ""),
       showSponsors: d.showSponsors !== false,
+      banners: Array.isArray(d.banners)
+        ? d.banners
+            .filter((b: any) => b?.sponsor && typeof b.sponsor === "object")
+            .map((b: any) => ({ sponsor: normalizeSponsor(b.sponsor), position: b.position || "above-score" }))
+        : [],
     };
   } catch {
     return null;

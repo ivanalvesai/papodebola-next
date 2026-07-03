@@ -902,6 +902,38 @@ export default buildConfig({
           label: "Exibir faixa de patrocinadores nesta página",
           admin: { description: "Mostra a faixa com os patrocinadores ATIVOS no rodapé da página do jogo. Desmarque pra ocultar." },
         },
+        {
+          name: "banners",
+          type: "array",
+          label: "Banners nesta página",
+          admin: {
+            description:
+              "Posicione banners grandes na página do jogo. Escolha o patrocinador (tipo Banner) e onde ele aparece.",
+          },
+          fields: [
+            {
+              name: "sponsor",
+              type: "relationship",
+              relationTo: "sponsors",
+              required: true,
+              label: "Patrocinador",
+              filterOptions: () => ({ format: { equals: "banner" } }),
+            },
+            {
+              name: "position",
+              type: "select",
+              required: true,
+              defaultValue: "above-score",
+              label: "Posição",
+              options: [
+                { label: "Topo da página", value: "top" },
+                { label: "Acima do placar", value: "above-score" },
+                { label: "Acima do player (vídeo)", value: "above-player" },
+                { label: "Rodapé (junto da faixa)", value: "footer" },
+              ],
+            },
+          ],
+        },
       ],
     },
     // Patrocinadores: cadastro único, reusado em cards (no editor) e faixas. Os links
@@ -911,9 +943,9 @@ export default buildConfig({
       labels: { singular: "Patrocinador", plural: "Patrocinadores" },
       admin: {
         useAsTitle: "name",
-        defaultColumns: ["name", "active", "clicks", "updatedAt"],
+        defaultColumns: ["name", "format", "active", "clicks", "updatedAt"],
         description:
-          "Cadastre a empresa 1x e insira o card no editor (bloco 'Patrocinador') ou deixe nas faixas. Marque 'Ativo' pra aparecer nas faixas de patrocinadores. Cliques contados via /parceiro/{slug}.",
+          "Cadastre a empresa 1x. Tipo 'Card' aparece na faixa do rodapé; tipo 'Banner' você posiciona na página do jogo. Marque 'Ativo' pra publicar. Cliques contados via /parceiro/{slug}.",
       },
       access: { read: () => true },
       fields: [
@@ -927,7 +959,37 @@ export default buildConfig({
           admin: { description: "Usado na URL /parceiro/{slug} (ex.: grafica-giga)." },
         },
         { name: "tagline", type: "textarea", label: "Slogan / descrição curta" },
-        { name: "logo", type: "upload", relationTo: "media", label: "Logo (opcional)" },
+        {
+          name: "format",
+          type: "select",
+          defaultValue: "card",
+          label: "Tipo de patrocínio",
+          options: [
+            { label: "Card pequeno (rodapé — logo grande)", value: "card" },
+            { label: "Banner grande (imagem larga — posicionável)", value: "banner" },
+          ],
+          admin: {
+            description:
+              "Card = tile de logo na faixa do rodapé. Banner = imagem larga que você posiciona (topo, acima do placar, acima do player).",
+          },
+        },
+        {
+          name: "logo",
+          type: "upload",
+          relationTo: "media",
+          label: "Logo (card)",
+          admin: { description: "Logo do card pequeno. Aparece grande, cobrindo o card." },
+        },
+        {
+          name: "banner",
+          type: "upload",
+          relationTo: "media",
+          label: "Banner (imagem larga)",
+          admin: {
+            description: "Imagem larga do banner (recomendado ~1200×250). Usada quando o tipo é 'Banner grande'.",
+            condition: (_, s) => s?.format === "banner",
+          },
+        },
         {
           type: "row",
           fields: [
