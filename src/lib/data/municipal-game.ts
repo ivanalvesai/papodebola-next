@@ -31,6 +31,14 @@ export interface MunicipalGame {
   startTs: number; // epoch ms do apito (data+hora em Brasília); 0 se não der pra parsear
   showSponsors: boolean; // exibe a faixa de patrocinadores no rodapé da página do jogo
   banners: { sponsor: Sponsor; position: string }[]; // banners posicionados na página
+  seo: {
+    h1: string;
+    headingLineups: string;
+    headingPlayByPlay: string;
+    headingGoals: string;
+    metaTitle: string;
+    metaDescription: string;
+  };
 }
 
 export type BannerPosition = "top" | "above-score" | "above-player" | "footer";
@@ -157,6 +165,14 @@ export async function getMunicipalGame(dateSlug: string, pairSlug: string): Prom
             .filter((b: any) => b?.sponsor && typeof b.sponsor === "object")
             .map((b: any) => ({ sponsor: normalizeSponsor(b.sponsor), position: b.position || "above-score" }))
         : [],
+      seo: {
+        h1: d.seo?.h1 || "",
+        headingLineups: d.seo?.headingLineups || "",
+        headingPlayByPlay: d.seo?.headingPlayByPlay || "",
+        headingGoals: d.seo?.headingGoals || "",
+        metaTitle: d.seo?.metaTitle || "",
+        metaDescription: d.seo?.metaDescription || "",
+      },
     };
   } catch {
     return null;

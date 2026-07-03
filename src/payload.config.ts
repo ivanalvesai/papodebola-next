@@ -934,6 +934,33 @@ export default buildConfig({
             },
           ],
         },
+        {
+          name: "seo",
+          type: "group",
+          label: "SEO e cabeçalhos",
+          admin: {
+            description:
+              "Controle os títulos da página. Deixe vazio pra usar o padrão automático (ex.: H1 = 'Time x Time · Fase · Futebol Municipal de Santana de Parnaíba').",
+          },
+          fields: [
+            {
+              name: "h1",
+              type: "text",
+              label: "Título principal (H1)",
+              admin: { description: "Ex.: União do Parque x S.C. Santana - Primeira Fase. Vazio = gera automático." },
+            },
+            {
+              type: "row",
+              fields: [
+                { name: "headingLineups", type: "text", label: "H2 — Escalações", admin: { width: "33%", placeholder: "Escalações" } },
+                { name: "headingPlayByPlay", type: "text", label: "H2 — Lance a lance", admin: { width: "34%", placeholder: "Lance a lance" } },
+                { name: "headingGoals", type: "text", label: "H2 — Gols", admin: { width: "33%", placeholder: "Gols" } },
+              ],
+            },
+            { name: "metaTitle", type: "text", label: "SEO — Título (meta title)", admin: { description: "Vazio = gera automático." } },
+            { name: "metaDescription", type: "textarea", label: "SEO — Descrição (meta description)", admin: { description: "Vazio = gera automático." } },
+          ],
+        },
       ],
     },
     // Patrocinadores: cadastro único, reusado em cards (no editor) e faixas. Os links

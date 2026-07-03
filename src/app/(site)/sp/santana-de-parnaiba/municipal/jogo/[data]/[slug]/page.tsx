@@ -21,8 +21,12 @@ export async function generateMetadata({
   const g = await getMunicipalGame(data, slug);
   if (g) {
     return {
-      title: `${g.home} x ${g.away} ao vivo${g.division ? ` — ${g.division}` : ""} de Santana de Parnaíba`,
-      description: `Assista ${g.home} x ${g.away}${g.date ? ` (${g.date}${g.time ? `, ${g.time}` : ""})` : ""} pelo futebol municipal de Santana de Parnaíba: transmissão ao vivo, escalações e comentários.`,
+      title:
+        g.seo.metaTitle ||
+        `${g.home} x ${g.away} ao vivo${g.division ? ` — ${g.division}` : ""} de Santana de Parnaíba`,
+      description:
+        g.seo.metaDescription ||
+        `Assista ${g.home} x ${g.away}${g.date ? ` (${g.date}${g.time ? `, ${g.time}` : ""})` : ""} pelo futebol municipal de Santana de Parnaíba: transmissão ao vivo, escalações e comentários.`,
       alternates: { canonical },
     };
   }
@@ -74,6 +78,7 @@ export default async function MunicipalMatchPage({
   const hasScore = m.homeScore !== null && m.awayScore !== null;
   const homeGoals = m.goals.filter((g) => g.isHome);
   const awayGoals = m.goals.filter((g) => !g.isHome);
+  const ctx = [m.division, m.roundLabel || (m.round ? `${m.round}ª rodada` : "")].filter(Boolean).join(" · ");
 
   return (
     <div className="mx-auto max-w-[900px] px-4 py-8">
@@ -84,6 +89,13 @@ export default async function MunicipalMatchPage({
         <span>/</span>
         <span className="text-text-secondary">{m.home} x {m.away}</span>
       </nav>
+
+      <h1 className="mb-4 text-lg font-bold text-text-primary">
+        {m.home} x {m.away}
+        <span className="ml-2 text-sm font-normal text-text-muted">
+          {ctx ? `· ${ctx} ` : ""}· Futebol Municipal de Santana de Parnaíba
+        </span>
+      </h1>
 
       {/* Placar */}
       <div className="rounded-lg border border-border-custom bg-card-bg p-6">
