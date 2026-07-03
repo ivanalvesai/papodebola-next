@@ -764,6 +764,101 @@ export default buildConfig({
         },
       ],
     },
+    // Jogos do municipal com VÍDEO ao vivo + comentários editáveis (layout tipo Copa).
+    // Usado pra jogos que não têm lance a lance da API (ex.: transmissão de YouTube).
+    {
+      slug: "municipalGames",
+      labels: { singular: "Jogo do municipal", plural: "Jogos do municipal" },
+      admin: {
+        useAsTitle: "matchup",
+        defaultColumns: ["matchup", "date", "slug", "updatedAt"],
+        description:
+          "Página de jogo do municipal com vídeo do YouTube (embed) + comentários editáveis, no layout dos jogos da Copa. URL: /sp/santana-de-parnaiba/municipal/jogo/{slug}. Salvou = no ar.",
+      },
+      access: { read: () => true },
+      fields: [
+        {
+          name: "slug",
+          type: "text",
+          required: true,
+          index: true,
+          label: "Slug da URL",
+          admin: { description: "Ex.: u-parque-santana-2lstw9fr — precisa bater com o slug do jogo na lista pra virar link automático." },
+        },
+        { name: "matchup", type: "text", label: "Confronto (título)", admin: { description: "Ex.: U Parque x Santana" } },
+        {
+          type: "row",
+          fields: [
+            { name: "home", type: "text", label: "Mandante", admin: { width: "50%" } },
+            { name: "away", type: "text", label: "Visitante", admin: { width: "50%" } },
+          ],
+        },
+        {
+          type: "row",
+          fields: [
+            { name: "date", type: "text", label: "Data", admin: { width: "33%", description: "05/07/2026" } },
+            { name: "time", type: "text", label: "Horário", admin: { width: "33%", description: "09h40" } },
+            { name: "roundLabel", type: "text", label: "Rodada", admin: { width: "34%", description: "9ª rodada" } },
+          ],
+        },
+        {
+          type: "row",
+          fields: [
+            { name: "venue", type: "text", label: "Local", admin: { width: "50%" } },
+            { name: "division", type: "text", label: "Divisão", admin: { width: "50%", description: "Ex.: 1ª Divisão" } },
+          ],
+        },
+        {
+          name: "youtubeUrl",
+          type: "text",
+          label: "Vídeo do YouTube (abaixo do placar)",
+          admin: { description: "Cole o link (watch, youtu.be ou live). Aparece grande no meio, abaixo do placar." },
+        },
+        {
+          type: "row",
+          fields: [
+            { name: "homeLineup", type: "textarea", label: "Escalação mandante (1 por linha)", admin: { width: "50%" } },
+            { name: "awayLineup", type: "textarea", label: "Escalação visitante (1 por linha)", admin: { width: "50%" } },
+          ],
+        },
+        {
+          name: "content",
+          type: "richText",
+          label: "Textos e comentários (abaixo do vídeo)",
+          editor: lexicalEditor({
+            features: ({ defaultFeatures }) => [
+              ...defaultFeatures,
+              UploadFeature({ collections: { media: { fields: [{ name: "caption", type: "text", label: "Legenda (opcional)" }] } } }),
+              BlocksFeature({
+                blocks: [
+                  {
+                    slug: "callout",
+                    labels: { singular: "Comentário / Destaque", plural: "Comentários" },
+                    fields: [
+                      {
+                        name: "style",
+                        type: "select",
+                        label: "Estilo",
+                        defaultValue: "comment",
+                        options: [
+                          { label: "Comentário (verde, com selo 💬)", value: "comment" },
+                          { label: "Informação (verde, sem selo)", value: "comment-plain" },
+                          { label: "Destaque (verde PdB)", value: "highlight" },
+                          { label: "Informação (azul)", value: "info" },
+                          { label: "Atenção (amarelo)", value: "warning" },
+                        ],
+                      },
+                      { name: "content", type: "richText", label: "Conteúdo", editor: lexicalEditor() },
+                    ],
+                  },
+                ],
+              }),
+            ],
+          }),
+          admin: { description: "O 'lance a lance' editorial: escreva textos e insira comentários (bloco verde) que aparecem abaixo do vídeo." },
+        },
+      ],
+    },
   ],
   // Fila de jobs — necessária pro Scheduled Publish. Sem autoRun (rodaria em dev E
   // prod, com corrida de qual revalida). Um cron 1/min no SERVIDOR bate em

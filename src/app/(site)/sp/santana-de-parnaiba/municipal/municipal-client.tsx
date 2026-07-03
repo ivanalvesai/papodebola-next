@@ -52,11 +52,27 @@ interface Championship {
   totalRounds: number; updatedAt: string;
 }
 
-export default function MunicipalPage() {
+export default function MunicipalPage({ videoGameSlugs = [] }: { videoGameSlugs?: string[] }) {
   const [data, setData] = useState<Championship[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedChamp, setSelectedChamp] = useState(0);
   const [selectedRound, setSelectedRound] = useState(1);
+  const [liveMap, setLiveMap] = useState<Record<string, { live?: boolean }>>({});
+
+  // AO VIVO dos jogos com página de vídeo no CMS (polling leve; o endpoint controla a
+  // consulta ao YouTube — só a partir do apito, e para quando o jogo acaba).
+  useEffect(() => {
+    if (!videoGameSlugs.length) return;
+    let cancelled = false;
+    const check = () =>
+      fetch("/api/municipal-live", { cache: "no-store" })
+        .then((r) => r.json())
+        .then((d) => { if (!cancelled) setLiveMap(d || {}); })
+        .catch(() => {});
+    check();
+    const t = setInterval(check, 60_000);
+    return () => { cancelled = true; clearInterval(t); };
+  }, [videoGameSlugs.length]);
 
   useEffect(() => {
     fetch("/api/municipal")
@@ -295,7 +311,8 @@ export default function MunicipalPage() {
             <div className="divide-y divide-border-light">
               {roundMatches.map((m, i) => {
                 const hasScore = m.homeScore !== null && m.awayScore !== null;
-                const clickable = hasScore && !!m.slug;
+                // Clicável se encerrado (tem ficha) OU se tem página de vídeo no CMS.
+                const clickable = !!m.slug && (hasScore || videoGameSlugs.includes(m.slug));
                 const inner = (
                   <>
                     <div className="text-[10px] text-text-muted text-center mb-2 space-y-0.5">
@@ -328,8 +345,15 @@ export default function MunicipalPage() {
                         <span className="text-xs font-semibold text-text-primary truncate">{m.away}</span>
                       </div>
                     </div>
-                    {clickable && (
+                    {clickable && hasScore && (
                       <div className="mt-1.5 text-center text-[10px] font-semibold text-green">ver ficha do jogo →</div>
+                    )}
+                    {!hasScore && m.slug && liveMap[m.slug]?.live && (
+                      <div className="mt-1.5 flex justify-center">
+                        <span className="inline-flex items-center gap-1 rounded px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wide text-white" style={{ background: "#E8312A" }}>
+                          <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-white" /> Ao vivo
+                        </span>
+                      </div>
                     )}
                   </>
                 );
