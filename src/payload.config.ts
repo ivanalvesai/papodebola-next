@@ -1043,6 +1043,30 @@ export default buildConfig({
             { name: "facebook", type: "text", label: "Facebook (link)", admin: { width: "50%" } },
           ],
         },
+        {
+          name: "linkTo",
+          type: "select",
+          defaultValue: "auto",
+          label: "Pra onde o card/banner leva ao clicar",
+          options: [
+            { label: "Automático (site → WhatsApp → Instagram → Facebook)", value: "auto" },
+            { label: "Site", value: "site" },
+            { label: "WhatsApp", value: "whatsapp" },
+            { label: "Instagram", value: "instagram" },
+            { label: "Facebook", value: "facebook" },
+            { label: "URL personalizada", value: "custom" },
+          ],
+          admin: { description: "Escolha o destino do clique. Ex.: 'WhatsApp' abre a conversa mesmo tendo site cadastrado." },
+        },
+        {
+          name: "linkCustom",
+          type: "text",
+          label: "URL personalizada",
+          admin: {
+            description: "Cole o link completo (https://...). Usado quando o destino é 'URL personalizada'.",
+            condition: (_, s) => s?.linkTo === "custom",
+          },
+        },
         { name: "active", type: "checkbox", defaultValue: true, label: "Ativo (aparece nas faixas de patrocinadores)" },
         {
           name: "clicks",

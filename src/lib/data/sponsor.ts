@@ -22,6 +22,8 @@ export interface Sponsor {
   whatsapp: string;
   instagram: string;
   facebook: string;
+  linkTo: "auto" | "site" | "whatsapp" | "instagram" | "facebook" | "custom";
+  linkCustom: string;
   active: boolean;
   clicks: number;
 }
@@ -47,14 +49,29 @@ export function normalizeUrl(kind: "site" | "whatsapp" | "instagram" | "facebook
   return `https://${v}`; // site
 }
 
-// Link "de verdade" do patrocinador (o /parceiro redireciona pra cá). Prioridade: site.
+// Link "de verdade" do patrocinador (o /parceiro redireciona pra cá). Respeita o destino
+// escolhido em linkTo; "auto" usa a ordem site → whatsapp → instagram → facebook. Se o
+// destino escolhido estiver vazio, cai no automático.
 export function sponsorTarget(s: Sponsor): string {
-  return (
+  const auto = () =>
     normalizeUrl("site", s.site) ||
     normalizeUrl("whatsapp", s.whatsapp) ||
     normalizeUrl("instagram", s.instagram) ||
-    normalizeUrl("facebook", s.facebook)
-  );
+    normalizeUrl("facebook", s.facebook);
+  switch (s.linkTo) {
+    case "site":
+      return normalizeUrl("site", s.site) || auto();
+    case "whatsapp":
+      return normalizeUrl("whatsapp", s.whatsapp) || auto();
+    case "instagram":
+      return normalizeUrl("instagram", s.instagram) || auto();
+    case "facebook":
+      return normalizeUrl("facebook", s.facebook) || auto();
+    case "custom":
+      return (s.linkCustom && (/^https?:\/\//i.test(s.linkCustom) ? s.linkCustom : `https://${s.linkCustom}`)) || auto();
+    default:
+      return auto();
+  }
 }
 
 const mediaUrl = (m: any): string => (m && typeof m === "object" ? String(m.url || "") : "");
@@ -73,6 +90,8 @@ export function normalizeSponsor(doc: any): Sponsor {
     whatsapp: doc?.whatsapp || "",
     instagram: doc?.instagram || "",
     facebook: doc?.facebook || "",
+    linkTo: doc?.linkTo || "auto",
+    linkCustom: doc?.linkCustom || "",
     active: doc?.active !== false,
     clicks: Number(doc?.clicks || 0),
   };
