@@ -112,6 +112,82 @@ export async function getMunicipalMatch(dateSlug: string, pairSlug: string): Pro
   };
 }
 
+// Mesma slugificação do scraper (scripts/scrape-sisgel.js) — pra casar nome de time -> slug.
+const slugify = (name: string) =>
+  (name || "")
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[̀-ͯ]/g, "")
+    .replace(/[^a-z0-9]/g, "-")
+    .replace(/-+/g, "-")
+    .replace(/^-|-$/g, "");
+
+// Elenco (nomes) do mandante/visitante de um confronto, achado pelo SLUG do par
+// (ex.: "u-parque-santana", o mesmo slug do jogo com vídeo no CMS). Como pode ser um jogo
+// futuro (sem ficha do par ainda), pega o elenco de CADA time separadamente: divide o slug
+// nos slugs dos dois times e busca o elenco de cada um (por divisão, com dica opcional).
+export async function getMunicipalRosterByPair(
+  pairSlug: string,
+  divisionHint?: string
+): Promise<{ home: string[]; away: string[] } | null> {
+  if (!pairSlug) return null;
+  const all = await readMatches();
+  // teamSlug -> (divisionSlug -> Map(nomeUpper -> nomeOriginal))
+  const byTeam: Record<string, Record<string, Map<string, string>>> = {};
+  for (const m of Object.values(all)) {
+    for (const [team, players] of [
+      [m.home, m.lineups?.home],
+      [m.away, m.lineups?.away],
+    ] as const) {
+      const ts = slugify(team);
+      if (!ts) continue;
+      (byTeam[ts] ||= {});
+      (byTeam[ts][m.divisionSlug] ||= new Map());
+      for (const p of players || []) {
+        const n = (p.name || "").trim();
+        if (n) byTeam[ts][m.divisionSlug].set(n.toUpperCase(), n);
+      }
+    }
+  }
+
+  // Divide "u-parque-santana" no par de slugs de time conhecidos (mandante-visitante).
+  const parts = pairSlug.split("-");
+  let homeSlug = "";
+  let awaySlug = "";
+  for (let i = 1; i < parts.length; i++) {
+    const l = parts.slice(0, i).join("-");
+    const r = parts.slice(i).join("-");
+    if (byTeam[l] && byTeam[r]) {
+      homeSlug = l;
+      awaySlug = r;
+      break;
+    }
+  }
+  if (!homeSlug) return null;
+
+  const hint = slugify(divisionHint || "");
+  const pick = (ts: string): string[] => {
+    const byDiv = byTeam[ts];
+    if (!byDiv) return [];
+    // prefere a divisão que casa com a dica (ex.: "1ª Divisão" -> "1-divisao..."); senão
+    // a divisão com mais jogadores (o elenco mais completo).
+    let best = "";
+    let bestSize = -1;
+    for (const d of Object.keys(byDiv)) {
+      if (hint && d.startsWith(hint)) {
+        best = d;
+        break;
+      }
+      if (byDiv[d].size > bestSize) {
+        bestSize = byDiv[d].size;
+        best = d;
+      }
+    }
+    return [...(byDiv[best]?.values() || [])].sort((a, b) => a.localeCompare(b, "pt-BR"));
+  };
+  return { home: pick(homeSlug), away: pick(awaySlug) };
+}
+
 // Retorna as chaves compostas "data/par" (o sitemap monta /jogo/{data}/{par}).
 export async function getMunicipalMatchKeys(): Promise<string[]> {
   const all = await readMatches();
