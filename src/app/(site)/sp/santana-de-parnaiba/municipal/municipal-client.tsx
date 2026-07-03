@@ -58,6 +58,22 @@ export default function MunicipalPage({ videoGameSlugs = [] }: { videoGameSlugs?
   const [selectedChamp, setSelectedChamp] = useState(0);
   const [selectedRound, setSelectedRound] = useState(1);
   const [liveMap, setLiveMap] = useState<Record<string, { live?: boolean }>>({});
+  const [userNavigated, setUserNavigated] = useState(false);
+
+  // Se houver jogo AO VIVO, a página abre na divisão + rodada dele (enquanto ao vivo).
+  // Só até o usuário navegar manualmente — aí respeita a escolha dele.
+  useEffect(() => {
+    if (userNavigated || !data.length) return;
+    for (let ci = 0; ci < data.length; ci++) {
+      for (const [r, games] of Object.entries(data[ci].matchesByRound || {})) {
+        if ((games as Match[]).some((g) => g.slug && liveMap[g.slug]?.live)) {
+          setSelectedChamp(ci);
+          setSelectedRound(Number(r));
+          return;
+        }
+      }
+    }
+  }, [liveMap, data, userNavigated]);
 
   // AO VIVO dos jogos com página de vídeo no CMS (polling leve; o endpoint controla a
   // consulta ao YouTube — só a partir do apito, e para quando o jogo acaba).
@@ -142,6 +158,7 @@ export default function MunicipalPage({ videoGameSlugs = [] }: { videoGameSlugs?
               <button
                 key={i}
                 onClick={() => {
+                  setUserNavigated(true);
                   setSelectedChamp(i);
                   const rs = Object.keys(c.matchesByRound || {}).map(Number).sort((a: number, b: number) => a - b);
                   let lp = rs[0] || 0;
@@ -279,7 +296,7 @@ export default function MunicipalPage({ videoGameSlugs = [] }: { videoGameSlugs?
           <div className="px-4 py-3 border-b border-border-custom">
             <div className="flex items-center justify-between bg-body rounded-lg px-3 py-2">
               <button
-                onClick={() => setSelectedRound((r) => Math.max(rounds[0] || 0, r - 1))}
+                onClick={() => { setUserNavigated(true); setSelectedRound((r) => Math.max(rounds[0] || 0, r - 1)); }}
                 disabled={selectedRound <= (rounds[0] || 0)}
                 className="p-1 rounded hover:bg-border-light disabled:opacity-30"
               >
@@ -296,7 +313,7 @@ export default function MunicipalPage({ videoGameSlugs = [] }: { videoGameSlugs?
                 </span>
               </div>
               <button
-                onClick={() => setSelectedRound((r) => Math.min(rounds[rounds.length - 1] || 0, r + 1))}
+                onClick={() => { setUserNavigated(true); setSelectedRound((r) => Math.min(rounds[rounds.length - 1] || 0, r + 1)); }}
                 disabled={selectedRound >= (rounds[rounds.length - 1] || 0)}
                 className="p-1 rounded hover:bg-border-light disabled:opacity-30"
               >
