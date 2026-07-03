@@ -1,11 +1,14 @@
 import Link from "next/link";
+import { currentKnockoutPhase } from "@/lib/world-cup-phases";
 
 // A Copa começou (11/06/2026) — banner comemorativo em dourado, "rumo ao hexa".
 // (Antes era contagem regressiva pra abertura; removida quando a bola rolou.)
+// O link acompanha a FASE ATUAL do mata-mata (por data) — não fica preso numa fase.
 export function WorldCupBanner() {
+  const phase = currentKnockoutPhase();
   return (
     <Link
-      href="/futebol/copa-do-mundo/fase/16-avos"
+      href={phase.href}
       className="block"
       style={{
         background:

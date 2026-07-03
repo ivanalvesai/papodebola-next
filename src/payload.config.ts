@@ -794,20 +794,38 @@ export default buildConfig({
       slug: "municipalGames",
       labels: { singular: "Jogo do municipal", plural: "Jogos do municipal" },
       admin: {
-        useAsTitle: "matchup",
-        defaultColumns: ["matchup", "date", "slug", "updatedAt"],
+        useAsTitle: "cmsTitle",
+        defaultColumns: ["cmsTitle", "date", "time", "roundLabel", "updatedAt"],
         description:
-          "Página de jogo do municipal com vídeo do YouTube (embed) + comentários editáveis, no layout dos jogos da Copa. URL: /sp/santana-de-parnaiba/municipal/jogo/{slug}. Salvou = no ar.",
+          "Página de jogo do municipal com vídeo do YouTube (embed) + comentários editáveis, no layout dos jogos da Copa. URL: /sp/santana-de-parnaiba/municipal/jogo/{data}/{slug}. Salvou = no ar.",
       },
       access: { read: () => true },
       fields: [
+        {
+          // Título só pro CMS: confronto + data → distingue jogos dos mesmos times em
+          // rodadas diferentes. Virtual (não vai pro banco, sem migração).
+          name: "cmsTitle",
+          type: "text",
+          virtual: true,
+          admin: { hidden: true },
+          hooks: {
+            afterRead: [
+              ({ data }: { data?: Record<string, unknown> }) => {
+                const d = data || {};
+                const match =
+                  (d.matchup as string) || [d.home, d.away].filter(Boolean).join(" x ") || "Jogo";
+                return d.date ? `${match} — ${d.date as string}` : match;
+              },
+            ],
+          },
+        },
         {
           name: "slug",
           type: "text",
           required: true,
           index: true,
           label: "Slug da URL",
-          admin: { description: "Ex.: u-parque-santana-2lstw9fr — precisa bater com o slug do jogo na lista pra virar link automático." },
+          admin: { description: "Ex.: u-parque-santana — o par de times (sem a data). A data vem do campo Data; a URL final é /jogo/{data}/{slug}." },
         },
         { name: "matchup", type: "text", label: "Confronto (título)", admin: { description: "Ex.: U Parque x Santana" } },
         {
