@@ -52,7 +52,7 @@ interface Championship {
   totalRounds: number; updatedAt: string;
 }
 
-export default function MunicipalPage() {
+export default function MunicipalPage({ videoGameSlugs = [] }: { videoGameSlugs?: string[] }) {
   const [data, setData] = useState<Championship[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedChamp, setSelectedChamp] = useState(0);
@@ -295,7 +295,8 @@ export default function MunicipalPage() {
             <div className="divide-y divide-border-light">
               {roundMatches.map((m, i) => {
                 const hasScore = m.homeScore !== null && m.awayScore !== null;
-                const clickable = hasScore && !!m.slug;
+                // Clicável se encerrado (tem ficha) OU se tem página de vídeo no CMS.
+                const clickable = !!m.slug && (hasScore || videoGameSlugs.includes(m.slug));
                 const inner = (
                   <>
                     <div className="text-[10px] text-text-muted text-center mb-2 space-y-0.5">
@@ -329,7 +330,9 @@ export default function MunicipalPage() {
                       </div>
                     </div>
                     {clickable && (
-                      <div className="mt-1.5 text-center text-[10px] font-semibold text-green">ver ficha do jogo →</div>
+                      <div className="mt-1.5 text-center text-[10px] font-semibold text-green">
+                        {hasScore ? "ver ficha do jogo →" : "assistir ao vivo →"}
+                      </div>
                     )}
                   </>
                 );

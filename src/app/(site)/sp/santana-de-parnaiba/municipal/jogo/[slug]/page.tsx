@@ -3,8 +3,12 @@ import { notFound } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
 import { getMunicipalMatch } from "@/lib/data/municipal";
+import { getMunicipalGame } from "@/lib/data/municipal-game";
+import { MunicipalGameView } from "@/components/municipal/municipal-game-view";
 
-// Ficha estática de um jogo municipal (SisGel): placar, gols e escalações. Sem tempo real.
+// Página de jogo do municipal. Se houver um "Jogo do municipal" no CMS com este slug
+// (jogo com vídeo/comentários, ex.: transmissão de YouTube), renderiza esse. Senão, a
+// ficha estática do SisGel (placar, gols, escalações). Sem tempo real.
 export const dynamic = "force-dynamic";
 
 export async function generateMetadata({
@@ -13,6 +17,14 @@ export async function generateMetadata({
   params: Promise<{ slug: string }>;
 }): Promise<Metadata> {
   const { slug } = await params;
+  const g = await getMunicipalGame(slug);
+  if (g) {
+    return {
+      title: `${g.home} x ${g.away} ao vivo${g.division ? ` — ${g.division}` : ""} de Santana de Parnaíba`,
+      description: `Assista ${g.home} x ${g.away}${g.date ? ` (${g.date}${g.time ? `, ${g.time}` : ""})` : ""} pelo futebol municipal de Santana de Parnaíba: transmissão ao vivo, escalações e comentários.`,
+      alternates: { canonical: `/sp/santana-de-parnaiba/municipal/jogo/${slug}` },
+    };
+  }
   const m = await getMunicipalMatch(slug);
   if (!m) return {};
   const score = m.homeScore != null ? `${m.homeScore} x ${m.awayScore}` : "x";
@@ -54,6 +66,11 @@ export default async function MunicipalMatchPage({
   params: Promise<{ slug: string }>;
 }) {
   const { slug } = await params;
+
+  // Jogo do CMS (com vídeo/comentários) tem prioridade sobre a ficha raspada.
+  const game = await getMunicipalGame(slug);
+  if (game) return <MunicipalGameView game={game} />;
+
   const m = await getMunicipalMatch(slug);
   if (!m) notFound();
 
