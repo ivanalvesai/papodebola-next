@@ -20,7 +20,7 @@ function TeamHead({ name, badge }: { name: string; badge: string }) {
   return (
     <div className="flex flex-1 flex-col items-center gap-2 text-center">
       {badge ? (
-        <Image src={badge} alt={name} width={56} height={56} className="h-14 w-14 rounded-full object-contain" unoptimized />
+        <Image src={badge} alt={name} width={56} height={56} className="h-14 w-14 rounded-full object-contain" unoptimized priority />
       ) : (
         <div className="flex h-14 w-14 items-center justify-center rounded-full bg-body text-xs font-bold text-text-muted">
           {initials}
