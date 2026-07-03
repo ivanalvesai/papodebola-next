@@ -160,3 +160,21 @@
 .animate-modal-pop {
   animation: pdb-modal-pop 0.25s ease-out;
 }
+
+/* ── Patrocinadores (cards + faixa). Fonte do HTML: src/lib/data/sponsor.ts ── */
+.pdb-sponsors { margin: 24px 0 0; padding: 16px; border: 1px solid #E2E8F0; border-radius: 12px; background: #fff; }
+.pdb-sponsors-label { display: block; font-size: 11px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: #94A3B8; margin-bottom: 10px; }
+.pdb-sponsors-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 10px; }
+.pdb-sponsor { display: flex; align-items: center; gap: 12px; padding: 12px; border: 1px solid #E2E8F0; border-radius: 10px; text-decoration: none; background: #F8FAFC; max-width: 460px; transition: border-color .15s, box-shadow .15s; }
+.pdb-sponsors-grid .pdb-sponsor { max-width: none; }
+.pdb-sponsor:hover { border-color: #00965E; box-shadow: 0 2px 8px rgba(0,150,94,.12); }
+.pdb-sponsor-logo { flex: none; width: 48px; height: 48px; border-radius: 8px; background: #fff; border: 1px solid #E2E8F0; display: flex; align-items: center; justify-content: center; overflow: hidden; }
+.pdb-sponsor-logo img { width: 100%; height: 100%; object-fit: contain; }
+.pdb-sponsor-ini { font-size: 15px; font-weight: 800; color: #00965E; }
+.pdb-sponsor-body { display: flex; flex-direction: column; min-width: 0; flex: 1; }
+.pdb-sponsor-name { font-size: 14px; font-weight: 700; color: #1A202C; line-height: 1.2; }
+.pdb-sponsor-tag { font-size: 12px; color: #64748B; line-height: 1.3; margin-top: 2px; overflow: hidden; text-overflow: ellipsis; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; }
+.pdb-sponsor-cta { flex: none; font-size: 12px; font-weight: 700; color: #00965E; padding: 6px 12px; border: 1px solid #00965E; border-radius: 999px; white-space: nowrap; }
+.pdb-sponsor:hover .pdb-sponsor-cta { background: #00965E; color: #fff; }
+/* card solto dentro de um comentário/artigo (fora da grid) */
+.prose-article .pdb-sponsor, .pdb-callout .pdb-sponsor { margin: 12px 0; }

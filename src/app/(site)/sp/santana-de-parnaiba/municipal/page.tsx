@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { getPayloadPage } from "@/lib/data/payload-pages";
 import { getMunicipalGameKeys } from "@/lib/data/municipal-game";
 import { PageBlock } from "@/components/payload/page-blocks";
+import { SponsorStrip } from "@/components/sponsors/sponsor-strip";
 import MunicipalData from "./municipal-client";
 
 // A parte de DADOS (classificação, artilheiros, defesa, rodadas) é o client component
@@ -27,12 +28,19 @@ export async function generateMetadata(): Promise<Metadata> {
 export default async function MunicipalPage() {
   const page = await getPayloadPage(CMS_SLUG);
   const blocks = (page?.layout as any[]) || [];
+  const showSponsors = (page as any)?.showSponsors === true;
   // Chaves (data/par) de jogos com página no CMS (vídeo) → viram link na lista mesmo sem placar.
   const videoGameSlugs = await getMunicipalGameKeys();
 
   return (
     <>
       <MunicipalData videoGameSlugs={videoGameSlugs} />
+
+      {showSponsors && (
+        <div className="mx-auto max-w-[1240px] px-4 pt-2">
+          <SponsorStrip de="municipal" />
+        </div>
+      )}
 
       {blocks.length > 0 && (
         <div className="mx-auto max-w-[1240px] px-4 pb-12">

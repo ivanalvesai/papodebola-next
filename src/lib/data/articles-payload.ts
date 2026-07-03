@@ -3,6 +3,7 @@ import { getPayload } from "payload";
 import config from "@payload-config";
 import { convertLexicalToHTML } from "@payloadcms/richtext-lexical/html";
 import { articleHref, cleanTag } from "@/lib/config";
+import { normalizeSponsor, sponsorCardHtml } from "./sponsor";
 import type { Article } from "@/types/article";
 
 // Leitura de artigos do Payload (Fase 3c). getArticles/getArticleBySlug tentam
@@ -60,6 +61,11 @@ const lexicalConverters: any = ({ defaultConverters }: any) => ({
       const x = node?.fields?.content;
       const inner = x?.root?.children?.length ? convertLexicalToHTML({ data: x }) : "";
       return `<div class="pdb-callout pdb-callout-${style}">${inner}</div>`;
+    },
+    sponsorCard: ({ node }: any) => {
+      const s = node?.fields?.sponsor;
+      if (!s || typeof s !== "object") return "";
+      return sponsorCardHtml(normalizeSponsor(s), "artigo");
     },
   },
   // Imagem inserida no editor (upload node) com alinhamento (campo do UploadFeature).
