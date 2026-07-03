@@ -12,6 +12,7 @@ export interface MunicipalGoal {
   player: string;
   goals: number;
   isHome: boolean;
+  ownGoal?: boolean;
 }
 export interface MunicipalMatch {
   slug: string;

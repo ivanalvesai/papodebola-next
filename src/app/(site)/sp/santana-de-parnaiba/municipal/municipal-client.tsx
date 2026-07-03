@@ -103,42 +103,54 @@ export default function MunicipalPage() {
     <div className="mx-auto max-w-[1240px] px-4 py-8">
       <Breadcrumb />
       {/* Header */}
-      <div className="flex items-center gap-3 mb-4">
-        <Trophy className="h-7 w-7 text-green" />
+      <div className="mb-5 flex items-center gap-3">
+        <Trophy className="h-7 w-7 shrink-0 text-green" />
         <div>
-          <h1 className="text-xl font-bold text-text-primary">Campeonatos Municipais</h1>
-          <p className="text-xs text-text-muted flex items-center gap-1">
+          <h1 className="text-2xl font-bold text-text-primary">Campeonatos Municipais de Santana de Parnaíba</h1>
+          <p className="flex items-center gap-1 text-xs text-text-muted">
             <MapPin className="h-3 w-3" />
-            Santana de Parnaiba/SP | Atualizado: {new Date(champ.updatedAt).toLocaleDateString("pt-BR")}
+            Santana de Parnaíba/SP · Classificação, artilheiros e resultados · Atualizado: {new Date(champ.updatedAt).toLocaleDateString("pt-BR")}
           </p>
         </div>
       </div>
 
-      {/* Championship tabs */}
+      {/* Cards das divisões */}
       {data.length > 1 && (
-        <div className="flex gap-2 flex-wrap mb-6">
-          {data.map((c, i) => (
-            <button
-              key={i}
-              onClick={() => {
-                setSelectedChamp(i);
-                const rs = Object.keys(c.matchesByRound || {}).map(Number).sort((a: number, b: number) => a - b);
-                let lp = rs[0] || 0;
-                for (const r of rs) {
-                  const gs = (c.matchesByRound?.[String(r)] || []) as Match[];
-                  if (gs.some((g: Match) => g.homeScore !== null && g.awayScore !== null)) lp = r;
-                }
-                setSelectedRound(lp);
-              }}
-              className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors ${
-                selectedChamp === i
-                  ? "bg-green text-white"
-                  : "bg-body text-text-secondary hover:text-green border border-border-custom"
-              }`}
-            >
-              {c.name}
-            </button>
-          ))}
+        <div className="mb-6 grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
+          {data.map((c, i) => {
+            const teamCount = c.groups.reduce((s, g) => s + g.teams.length, 0);
+            const leader = c.groups[0]?.teams?.[0]?.name || "";
+            const short = c.name.replace(/\s*futebol\s*20\d\d/i, "").trim();
+            const active = selectedChamp === i;
+            return (
+              <button
+                key={i}
+                onClick={() => {
+                  setSelectedChamp(i);
+                  const rs = Object.keys(c.matchesByRound || {}).map(Number).sort((a: number, b: number) => a - b);
+                  let lp = rs[0] || 0;
+                  for (const r of rs) {
+                    const gs = (c.matchesByRound?.[String(r)] || []) as Match[];
+                    if (gs.some((g: Match) => g.homeScore !== null && g.awayScore !== null)) lp = r;
+                  }
+                  setSelectedRound(lp);
+                }}
+                className={`rounded-lg border p-3 text-left transition-colors ${
+                  active
+                    ? "border-green bg-green/5"
+                    : "border-border-custom bg-card-bg hover:border-green"
+                }`}
+              >
+                <div className={`text-sm font-bold ${active ? "text-green" : "text-text-primary"}`}>{short}</div>
+                <div className="mt-0.5 text-xs text-text-muted">{teamCount} times</div>
+                {leader && (
+                  <div className="mt-1 truncate text-xs text-text-secondary">
+                    Líder: <span className="font-semibold">{leader}</span>
+                  </div>
+                )}
+              </button>
+            );
+          })}
         </div>
       )}
 
