@@ -24,7 +24,7 @@ export const EDITABLE: Record<string, EditableDef> = {
 
   // ===== Copa do Mundo (hub) =====
   "copa.meta.title": { page: "/futebol/copa-do-mundo", pageLabel: "Copa do Mundo (hub)", section: "SEO", label: "Meta title", type: "text", default: "Copa do Mundo 2026: Jogos de Hoje, Tabela e Onde Assistir" },
-  "copa.meta.description": { page: "/futebol/copa-do-mundo", pageLabel: "Copa do Mundo (hub)", section: "SEO", label: "Meta description", type: "multiline", default: "Copa do Mundo 2026 ao vivo: jogos de hoje, chaveamento do mata-mata, horários de Brasília, onde assistir, tabela e classificação dos grupos. Tudo atualizado." },
+  "copa.meta.description": { page: "/futebol/copa-do-mundo", pageLabel: "Copa do Mundo (hub)", section: "SEO", label: "Meta description", type: "multiline", default: "Copa do Mundo 2026 ao vivo: jogos de hoje, chaveamento do mata-mata, onde assistir, tabela e classificação dos grupos." },
   "copa.h1": { page: "/futebol/copa-do-mundo", pageLabel: "Copa do Mundo (hub)", section: "Topo", label: "Título principal (H1)", type: "text", default: "Copa do Mundo 2026: jogos, tabela e chaveamento" },
   "copa.intro": { page: "/futebol/copa-do-mundo", pageLabel: "Copa do Mundo (hub)", section: "Topo", label: "Texto de introdução", type: "multiline", default: "Acompanhe a Copa do Mundo 2026: os jogos de hoje, o chaveamento do mata-mata com horários de Brasília e onde assistir. Logo abaixo, a classificação final dos grupos e os artilheiros." },
   "copa.standings.empty": { page: "/futebol/copa-do-mundo", pageLabel: "Copa do Mundo (hub)", section: "Mensagens", label: "Quando a classificação está indisponível", type: "text", default: "Classificação indisponível no momento." },
