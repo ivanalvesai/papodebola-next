@@ -9,7 +9,7 @@ import { TeamLogo } from "@/components/ui/team-logo";
 import { PANEL_TEAMS_BR, SPORTS } from "@/lib/config";
 import { CopaNavButton } from "./copa-nav-button";
 
-export function MainNav() {
+export function MainNav({ copaHref }: { copaHref?: string }) {
   const pathname = usePathname();
   const { toggle } = useSidePanel();
   const [openDropdown, setOpenDropdown] = useState<string | null>(null);
@@ -213,7 +213,7 @@ export function MainNav() {
 
           {/* Copa do Mundo — botão dourado especial (mesma cor do banner da home) */}
           <li className="py-2 pl-2">
-            <CopaNavButton />
+            <CopaNavButton href={copaHref} />
           </li>
         </ul>
       </div>

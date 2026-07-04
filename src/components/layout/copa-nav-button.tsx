@@ -8,20 +8,22 @@ const WC_GOLD =
 
 /**
  * Botão especial da Copa do Mundo pro menu (topo e lateral). Dourado igual ao banner
- * da home, com troféu e um brilho que varre (shine) pra dar destaque. Aponta sempre
- * pra /futebol/copa-do-mundo.
+ * da home, com troféu e um brilho que varre (shine) pra dar destaque. O destino segue a
+ * FASE ATUAL (grupos → mata-mata) via prop `href`; default no hub por retrocompat.
  */
 export function CopaNavButton({
   onClick,
   variant = "top",
+  href = "/futebol/copa-do-mundo",
 }: {
   onClick?: () => void;
   variant?: "top" | "side";
+  href?: string;
 }) {
   const full = variant === "side";
   return (
     <Link
-      href="/futebol/copa-do-mundo"
+      href={href}
       onClick={onClick}
       aria-label="Copa do Mundo 2026"
       className={`pdb-copa-btn group relative inline-flex items-center gap-1.5 overflow-hidden whitespace-nowrap rounded-full font-extrabold uppercase tracking-wide text-black [text-shadow:0_1px_2px_rgba(255,255,255,0.5)] shadow-[0_2px_8px_rgba(201,162,39,0.45)] ring-1 ring-[#8a6c1b]/40 transition-transform duration-200 hover:scale-[1.04] ${
