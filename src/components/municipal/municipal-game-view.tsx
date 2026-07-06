@@ -33,14 +33,32 @@ function TeamHead({ name, badge }: { name: string; badge: string }) {
   );
 }
 
-function Lineup({ title, players }: { title: string; players: string[] }) {
+// Cartões do jogador (amarelo/vermelho) — retângulos coloridos, igual à ficha do SisGel.
+function Cards({ yellow, red }: { yellow: number; red: number }) {
+  if (!yellow && !red) return null;
+  return (
+    <span className="ml-1.5 inline-flex gap-0.5 align-middle">
+      {Array.from({ length: yellow }).map((_, i) => (
+        <span key={`y${i}`} className="inline-block h-3 w-2 rounded-[1px] bg-yellow-400" title="Cartão amarelo" />
+      ))}
+      {Array.from({ length: red }).map((_, i) => (
+        <span key={`r${i}`} className="inline-block h-3 w-2 rounded-[1px] bg-red-600" title="Cartão vermelho" />
+      ))}
+    </span>
+  );
+}
+
+function Lineup({ title, players }: { title: string; players: MunicipalGame["homeLineup"] }) {
   return (
     <div className="rounded-lg border border-border-custom bg-card-bg">
       <h3 className="border-b border-border-custom px-4 py-2.5 text-sm font-bold uppercase text-green">{title}</h3>
       {players.length > 0 ? (
         <ul className="divide-y divide-border-light">
           {players.map((p, i) => (
-            <li key={i} className="px-4 py-1.5 text-sm capitalize text-text-secondary">{p.toLowerCase()}</li>
+            <li key={i} className="px-4 py-1.5 text-sm capitalize text-text-secondary">
+              {p.name.toLowerCase()}
+              <Cards yellow={p.yellow} red={p.red} />
+            </li>
           ))}
         </ul>
       ) : (

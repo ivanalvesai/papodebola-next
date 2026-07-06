@@ -2,7 +2,7 @@ import { getPayload } from "payload";
 import config from "@payload-config";
 import { convertLexicalToHTML } from "@payloadcms/richtext-lexical/html";
 import { normalizeSponsor, sponsorCardHtml, type Sponsor } from "./sponsor";
-import { getMunicipalRosterByPair, getMunicipalMatch, type MunicipalGoal } from "./municipal";
+import { getMunicipalRosterByPair, getMunicipalMatch, type MunicipalGoal, type MunicipalPlayer } from "./municipal";
 import { readFile } from "fs/promises";
 import { join } from "path";
 
@@ -24,8 +24,8 @@ export interface MunicipalGame {
   venue: string;
   division: string;
   youtubeUrl: string;
-  homeLineup: string[];
-  awayLineup: string[];
+  homeLineup: MunicipalPlayer[]; // nome + cartões (amarelo/vermelho) do jogo
+  awayLineup: MunicipalPlayer[];
   contentHtml: string;
   homeBadge: string;
   awayBadge: string;
@@ -145,22 +145,28 @@ export async function getMunicipalGame(dateSlug: string, pairSlug: string): Prom
     }
     const ds = toDateSlug(d.date);
     const badges = await sisgelBadges(d.slug, ds);
-    // Escalação: usa o que foi digitado no CMS; se vazio, puxa o elenco completo do
-    // SisGel (por divisão), casando pelo slug do par (ex.: "u-parque-santana").
+    // Placar + gols + escalação do SisGel (mesmo jogo, casado por data/slug). NÃO toca no
+    // conteúdo do CMS (vídeo/comentários) — só acrescenta o resultado/cartões.
+    const sis = await getMunicipalMatch(ds, d.slug);
+    // Escalação (prioridade): digitada no CMS > SisGel do jogo (elenco + CARTÕES) > elenco
+    // por divisão (jogo futuro, sem ficha do par ainda, sem cartões).
+    const toPlayers = (names: string[]): MunicipalPlayer[] => names.map((name) => ({ name, yellow: 0, red: 0 }));
     const cmsHome = lines(d.homeLineup);
     const cmsAway = lines(d.awayLineup);
-    let homeLineup = cmsHome;
-    let awayLineup = cmsAway;
+    let homeLineup = toPlayers(cmsHome);
+    let awayLineup = toPlayers(cmsAway);
     if (cmsHome.length === 0 || cmsAway.length === 0) {
-      const roster = await getMunicipalRosterByPair(d.slug, d.division || "");
-      if (roster) {
-        if (cmsHome.length === 0) homeLineup = roster.home;
-        if (cmsAway.length === 0) awayLineup = roster.away;
+      if (sis && (sis.lineups.home.length > 0 || sis.lineups.away.length > 0)) {
+        if (cmsHome.length === 0) homeLineup = sis.lineups.home;
+        if (cmsAway.length === 0) awayLineup = sis.lineups.away;
+      } else {
+        const roster = await getMunicipalRosterByPair(d.slug, d.division || "");
+        if (roster) {
+          if (cmsHome.length === 0) homeLineup = toPlayers(roster.home);
+          if (cmsAway.length === 0) awayLineup = toPlayers(roster.away);
+        }
       }
     }
-    // Placar + gols do SisGel (mesmo jogo, casado por data/slug). NÃO toca no conteúdo do
-    // CMS (vídeo/comentários) — só acrescenta o resultado quando o jogo já aconteceu.
-    const sis = await getMunicipalMatch(ds, d.slug);
     return {
       slug: d.slug,
       dateSlug: ds,
