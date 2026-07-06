@@ -140,12 +140,19 @@ export async function getKnockoutFixtures(
   // já na oitava ("Brasil x Vencedor do Jogo 78"), dirigido pelo cuptrees. O nº do jogo
   // sai do calendário FIFA; o vencedor, do flag `winnerId` do fixture.
   const winnerByGame = new Map<number, { id: number; name: string }>();
-  for (const s of KNOCKOUT_SCHEDULE) {
-    if (s.phase !== "16-avos") continue;
-    const sh = resolveSlot(s.homeSlot, standings);
-    const sa = resolveSlot(s.awaySlot, standings);
+  const resolveWinnerSlot = (slot: string): { id: number; name: string } | null => {
+    const m = slot.match(/Vencedor do Jogo\s+(\d+)/i);
+    return m ? winnerByGame.get(parseInt(m[1], 10)) || null : null;
+  };
+  // Cascata: processa os jogos em ORDEM crescente pra cada fase resolver usando os
+  // vencedores da anterior (16-avos → oitavas → quartas → semis). Antes só cobria os
+  // 16-avos, então as QUARTAS (slots "Vencedor do Jogo 89-96" = oitavas) nunca resolviam
+  // e ficavam todas em placeholder mesmo com o chaveamento já definido.
+  for (const s of [...KNOCKOUT_SCHEDULE].sort((a, b) => a.game - b.game)) {
+    const sh = resolveSlot(s.homeSlot, standings) || resolveWinnerSlot(s.homeSlot);
+    const sa = resolveSlot(s.awaySlot, standings) || resolveWinnerSlot(s.awaySlot);
     let fx = sh && sa ? fxByPair.get(pairKey(sh.id, sa.id)) : undefined;
-    if (!fx && (sh || sa)) fx = fxByTeam.get(`6-${(sh || sa)!.id}`);
+    if (!fx && (sh || sa)) fx = fxByTeam.get(`${PHASE_ROUND[s.phase]}-${(sh || sa)!.id}`);
     if (fx?.winnerId) {
       winnerByGame.set(s.game, {
         id: fx.winnerId,
@@ -153,10 +160,6 @@ export async function getKnockoutFixtures(
       });
     }
   }
-  const resolveWinnerSlot = (slot: string): { id: number; name: string } | null => {
-    const m = slot.match(/Vencedor do Jogo\s+(\d+)/i);
-    return m ? winnerByGame.get(parseInt(m[1], 10)) || null : null;
-  };
 
   return KNOCKOUT_SCHEDULE.filter((s) => s.phase === phaseSlug).map((sched): KnockoutItem => {
     const h = resolveSlot(sched.homeSlot, standings) || resolveWinnerSlot(sched.homeSlot);
