@@ -50,6 +50,29 @@ function Lineup({ title, players }: { title: string; players: string[] }) {
   );
 }
 
+// Gols do SisGel (quando o jogo já aconteceu). Casa em duas colunas (mandante/visitante).
+function Goals({ goals }: { goals: MunicipalGame["goals"] }) {
+  if (!goals.length) {
+    return <p className="px-4 py-3 text-sm text-text-muted">Os gols aparecem aqui quando o jogo começar.</p>;
+  }
+  const home = goals.filter((g) => g.isHome);
+  const away = goals.filter((g) => !g.isHome);
+  const item = (g: MunicipalGame["goals"][number], i: number, right: boolean) => (
+    <li key={i} className={`flex items-center gap-1.5 ${right ? "flex-row-reverse text-right" : ""}`}>
+      <span>⚽</span>
+      <span className="capitalize">{g.player.toLowerCase()}</span>
+      {g.goals > 1 && <span className="text-text-muted">({g.goals})</span>}
+      {g.ownGoal && <span className="text-text-muted">(contra)</span>}
+    </li>
+  );
+  return (
+    <div className="grid grid-cols-2 gap-3 p-4 text-sm text-text-secondary">
+      <ul className="space-y-1.5">{home.length ? home.map((g, i) => item(g, i, false)) : <li className="text-text-muted">—</li>}</ul>
+      <ul className="space-y-1.5">{away.length ? away.map((g, i) => item(g, i, true)) : <li className="text-text-muted text-right">—</li>}</ul>
+    </div>
+  );
+}
+
 // Renderiza os banners de uma posição (topo, acima do placar, etc.). Nada se vazio.
 function Banners({ game, at }: { game: MunicipalGame; at: string }) {
   const list = game.banners.filter((b) => b.position === at);
@@ -106,8 +129,19 @@ export function MunicipalGameView({ game }: { game: MunicipalGame }) {
         <div className="flex items-center justify-center gap-4 sm:gap-8">
           <TeamHead name={game.home} badge={game.homeBadge} />
           <div className="shrink-0 text-center">
-            <div className="text-2xl font-extrabold tabular-nums text-text-primary">{game.time || "x"}</div>
-            {game.date && <div className="text-xs text-text-muted">{game.date}</div>}
+            {game.homeScore != null && game.awayScore != null ? (
+              <div className="text-3xl font-extrabold tabular-nums text-text-primary">
+                {game.homeScore} <span className="text-text-muted">-</span> {game.awayScore}
+              </div>
+            ) : (
+              <div className="text-2xl font-extrabold tabular-nums text-text-primary">{game.time || "x"}</div>
+            )}
+            {game.date && (
+              <div className="text-xs text-text-muted">
+                {game.date}
+                {game.homeScore != null && game.time ? ` · ${game.time}` : ""}
+              </div>
+            )}
           </div>
           <TeamHead name={game.away} badge={game.awayBadge} />
         </div>
@@ -163,7 +197,7 @@ export function MunicipalGameView({ game }: { game: MunicipalGame }) {
             {game.seo.headingGoals || "Gols"}
           </h2>
           <div className="rounded-lg border border-border-custom bg-card-bg">
-            <p className="px-4 py-3 text-sm text-text-muted">Os gols aparecem aqui quando o jogo começar.</p>
+            <Goals goals={game.goals} />
           </div>
         </div>
       </div>
