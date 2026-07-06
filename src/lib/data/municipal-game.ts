@@ -2,7 +2,7 @@ import { getPayload } from "payload";
 import config from "@payload-config";
 import { convertLexicalToHTML } from "@payloadcms/richtext-lexical/html";
 import { normalizeSponsor, sponsorCardHtml, type Sponsor } from "./sponsor";
-import { getMunicipalRosterByPair } from "./municipal";
+import { getMunicipalRosterByPair, getMunicipalMatch, type MunicipalGoal } from "./municipal";
 import { readFile } from "fs/promises";
 import { join } from "path";
 
@@ -29,6 +29,9 @@ export interface MunicipalGame {
   contentHtml: string;
   homeBadge: string;
   awayBadge: string;
+  homeScore: number | null; // placar final do SisGel (null se ainda não jogou/sem dado)
+  awayScore: number | null;
+  goals: MunicipalGoal[]; // gols do SisGel (mesmo jogo), sem tocar no conteúdo do CMS
   startTs: number; // epoch ms do apito (data+hora em Brasília); 0 se não der pra parsear
   showSponsors: boolean; // exibe a faixa de patrocinadores no rodapé da página do jogo
   banners: { sponsor: Sponsor; position: string }[]; // banners posicionados na página
@@ -155,6 +158,9 @@ export async function getMunicipalGame(dateSlug: string, pairSlug: string): Prom
         if (cmsAway.length === 0) awayLineup = roster.away;
       }
     }
+    // Placar + gols do SisGel (mesmo jogo, casado por data/slug). NÃO toca no conteúdo do
+    // CMS (vídeo/comentários) — só acrescenta o resultado quando o jogo já aconteceu.
+    const sis = await getMunicipalMatch(ds, d.slug);
     return {
       slug: d.slug,
       dateSlug: ds,
@@ -172,6 +178,9 @@ export async function getMunicipalGame(dateSlug: string, pairSlug: string): Prom
       contentHtml: html,
       homeBadge: badges.home,
       awayBadge: badges.away,
+      homeScore: sis?.homeScore ?? null,
+      awayScore: sis?.awayScore ?? null,
+      goals: sis?.goals || [],
       startTs: parseStart(d.date || "", d.time || ""),
       showSponsors: d.showSponsors !== false,
       banners: Array.isArray(d.banners)
