@@ -50,6 +50,44 @@ function Lineup({ title, players }: { title: string; players: string[] }) {
   );
 }
 
+// Title-case PT-BR: minúsculo nas preposições (de/do/da...), preserva siglas (S.C., F.C.).
+const PREP = new Set(["de", "do", "da", "dos", "das", "e"]);
+function titleCase(s: string): string {
+  return String(s || "")
+    .toLowerCase()
+    .split(/\s+/)
+    .filter(Boolean)
+    .map((w, i) => {
+      if (/^[a-zà-ÿ]\.([a-zà-ÿ]\.)+$/i.test(w)) return w.toUpperCase(); // S.C., F.C.
+      if (i > 0 && PREP.has(w)) return w;
+      return w.charAt(0).toUpperCase() + w.slice(1);
+    })
+    .join(" ");
+}
+
+// Resumo textual do jogo encerrado (mesmo padrão da Copa) — bom pra SEO e leitura rápida.
+function Recap({ game }: { game: MunicipalGame }) {
+  if (game.homeScore == null || game.awayScore == null) return null;
+  const hs = game.homeScore;
+  const as = game.awayScore;
+  const h = titleCase(game.home);
+  const a = titleCase(game.away);
+  let result: string;
+  if (hs > as) result = `${h} venceu ${a} por ${hs} a ${as}`;
+  else if (as > hs) result = `${a} venceu ${h} por ${as} a ${hs}`;
+  else result = `${h} e ${a} empataram em ${hs} a ${as}`;
+  const goals = game.goals.map(
+    (g) => `${titleCase(g.player)}${g.ownGoal ? " (contra)" : ""}${g.goals > 1 ? ` (${g.goals})` : ""}`
+  );
+  const comp = [game.division, "Campeonato Municipal de Santana de Parnaíba"].filter(Boolean).join(" · ");
+  return (
+    <p className="mt-4 rounded-lg border border-border-custom bg-card-bg p-3 text-sm leading-relaxed text-text-secondary">
+      <strong className="text-text-primary">{result}</strong> — {comp}.
+      {goals.length > 0 && <> Gols: {goals.join(", ")}.</>}
+    </p>
+  );
+}
+
 // Gols do SisGel (quando o jogo já aconteceu). Casa em duas colunas (mandante/visitante).
 function Goals({ goals }: { goals: MunicipalGame["goals"] }) {
   if (!goals.length) {
@@ -147,6 +185,9 @@ export function MunicipalGameView({ game }: { game: MunicipalGame }) {
         </div>
         {game.venue && <div className="mt-4 text-center text-sm text-text-muted">{game.venue}</div>}
       </div>
+
+      {/* Resumo textual do resultado (aparece só com o jogo encerrado). */}
+      <Recap game={game} />
 
       {/* 3 colunas: escalação | vídeo + comentários | gols */}
       <div className="mt-6 grid grid-cols-1 gap-6 lg:grid-cols-[260px_1fr_260px]">
