@@ -4,8 +4,10 @@ import { Trophy, Newspaper } from "lucide-react";
 import { PageBreadcrumb } from "@/components/seo/page-breadcrumb";
 import { PhaseNav } from "@/components/world-cup/phase-nav";
 import { KnockoutMatches } from "@/components/world-cup/knockout-matches";
+import { WorldCupScorers } from "@/components/world-cup/world-cup-scorers";
 import { NewsFeed } from "@/components/news/news-feed";
 import { getKnockoutFixtures } from "@/lib/data/world-cup";
+import { getWorldCupScorers } from "@/lib/data/scorers";
 import { getArticles } from "@/lib/data/articles";
 import { KNOCKOUT_PHASES, PHASE_BY_SLUG } from "@/lib/world-cup-phases";
 import { knockoutVenueLabel } from "@/lib/world-cup-knockout-schedule";
@@ -44,8 +46,9 @@ export default async function CopaFasePage({
   const phase = PHASE_BY_SLUG[fase];
   if (!phase || phase.slug === "grupos" || phase.round === null) notFound();
 
-  const [items, cupNews] = await Promise.all([
+  const [items, scorers, cupNews] = await Promise.all([
     getKnockoutFixtures(phase.slug, phase.round),
+    getWorldCupScorers().catch(() => []),
     getArticles({ category: COPA_CATEGORY, perPage: 20 }),
   ]);
 
@@ -104,6 +107,9 @@ export default async function CopaFasePage({
         <PhaseNav active={phase.slug} />
         <KnockoutMatches items={items} />
       </section>
+
+      {/* Artilharia: segue em todas as fases (mesma da hub), até a final. */}
+      <WorldCupScorers scorers={scorers} />
 
       {/* Notícias da Copa: dá profundidade e linka internamente enquanto o
           chaveamento não está definido. */}
