@@ -396,6 +396,11 @@ export function ArticleView({
           color: #fff;
           border-bottom: 0;
         }
+        /* O texto da célula do cabeçalho vem dentro de <p>/<strong> (Lexical) e herdava
+           a cor escura do parágrafo — força branco pra ler no fundo verde. */
+        .prose-article th p,
+        .prose-article th strong,
+        .prose-article th a { color: #fff; margin: 0; }
         .prose-article tr:nth-child(even) td { background: #f6f9f8; }
         .prose-article tr:last-child td { border-bottom: 0; }
         .prose-article hr { border: 0; border-top: 1px solid #e2e5e9; margin: 40px 0; }
@@ -520,6 +525,23 @@ export function ArticleView({
         }
         .prose-article .pdb-pros li::before { content: "✅"; position: absolute; left: 0; }
         .prose-article .pdb-cons li::before { content: "❌"; position: absolute; left: 0; }
+        /* --- Temas de cor dos cards (o select "Cor" define a classe pdb-theme-*) --- */
+        .prose-article .pdb-theme-verde    { --pdb-accent:#00965E; --pdb-soft:rgba(0,150,94,0.06);   --pdb-ring:rgba(0,150,94,0.35); }
+        .prose-article .pdb-theme-azul     { --pdb-accent:#2563eb; --pdb-soft:rgba(37,99,235,0.06);  --pdb-ring:rgba(37,99,235,0.35); }
+        .prose-article .pdb-theme-vermelho { --pdb-accent:#dc2626; --pdb-soft:rgba(220,38,38,0.06);  --pdb-ring:rgba(220,38,38,0.35); }
+        .prose-article .pdb-theme-dourado  { --pdb-accent:#b8860b; --pdb-soft:rgba(184,134,11,0.09); --pdb-ring:rgba(184,134,11,0.4); }
+        .prose-article .pdb-theme-roxo     { --pdb-accent:#7c3aed; --pdb-soft:rgba(124,58,237,0.06); --pdb-ring:rgba(124,58,237,0.35); }
+        .prose-article .pdb-theme-escuro   { --pdb-accent:#1A1D23; --pdb-soft:rgba(26,29,35,0.05);   --pdb-ring:rgba(26,29,35,0.3); }
+        /* Aplica a cor do tema (var --pdb-accent) nos elementos dos cards. */
+        .prose-article .pdb-prediction { border-color: var(--pdb-ring, rgba(0,150,94,0.35)); background: var(--pdb-soft, rgba(0,150,94,0.06)); }
+        .prose-article .pdb-pred-label { color: var(--pdb-accent, #00965E); }
+        .prose-article .pdb-pred-odd { border-color: var(--pdb-ring, rgba(0,150,94,0.4)); }
+        .prose-article a.pdb-cta-primary { background: var(--pdb-accent, #00965E); }
+        .prose-article a.pdb-cta-primary:hover { background: var(--pdb-accent, #00965E); filter: brightness(0.92); }
+        .prose-article a.pdb-cta-outline { border-color: var(--pdb-accent, #00965E); color: var(--pdb-accent, #00965E) !important; }
+        .prose-article .pdb-statcard { border-left: 4px solid var(--pdb-accent, #00965E); }
+        .prose-article .pdb-statcard-title { color: var(--pdb-accent, #00965E); }
+        .prose-article .pdb-proscons .pdb-pros { border-top: 3px solid var(--pdb-accent, #00965E); }
         @media (max-width: 768px) {
           .prose-article .pdb-columns { grid-template-columns: 1fr; }
           .prose-article .pdb-proscons { grid-template-columns: 1fr; }

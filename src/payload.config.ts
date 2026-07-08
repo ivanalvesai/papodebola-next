@@ -605,6 +605,7 @@ export default buildConfig({
                       { name: "house", type: "text", label: "Casa de aposta", admin: { description: 'Ex.: "Betano"' } },
                       { name: "url", type: "text", label: "Link de afiliado (opcional)" },
                       { name: "note", type: "textarea", label: "Análise (opcional)" },
+                      { name: "cor", type: "select", label: "Cor do card", defaultValue: "verde", options: [{ label: "Verde (padrão)", value: "verde" }, { label: "Azul", value: "azul" }, { label: "Vermelho", value: "vermelho" }, { label: "Dourado", value: "dourado" }, { label: "Roxo", value: "roxo" }, { label: "Escuro", value: "escuro" }] },
                     ],
                   },
                   // Card de destaque com estatísticas (ex.: "Destaque da Espanha: Oyarzabal + dados").
@@ -624,6 +625,7 @@ export default buildConfig({
                           { name: "value", type: "text", label: "Valor" },
                         ],
                       },
+                      { name: "cor", type: "select", label: "Cor do card", defaultValue: "verde", options: [{ label: "Verde (padrão)", value: "verde" }, { label: "Azul", value: "azul" }, { label: "Vermelho", value: "vermelho" }, { label: "Dourado", value: "dourado" }, { label: "Roxo", value: "roxo" }, { label: "Escuro", value: "escuro" }] },
                     ],
                   },
                   // Botão call-to-action (ex.: "Apostar na Betano"). rel=sponsored nofollow.
@@ -639,10 +641,11 @@ export default buildConfig({
                         label: "Estilo",
                         defaultValue: "primary",
                         options: [
-                          { label: "Verde (primário)", value: "primary" },
+                          { label: "Preenchido", value: "primary" },
                           { label: "Contorno", value: "outline" },
                         ],
                       },
+                      { name: "cor", type: "select", label: "Cor do botão", defaultValue: "verde", options: [{ label: "Verde (padrão)", value: "verde" }, { label: "Azul", value: "azul" }, { label: "Vermelho", value: "vermelho" }, { label: "Dourado", value: "dourado" }, { label: "Roxo", value: "roxo" }, { label: "Escuro", value: "escuro" }] },
                     ],
                   },
                   // Box de prós e contras (✅ / ❌) em duas colunas.
@@ -654,6 +657,7 @@ export default buildConfig({
                       { name: "pros", type: "array", label: "Prós", fields: [{ name: "item", type: "text" }] },
                       { name: "consTitle", type: "text", label: "Título dos contras", defaultValue: "Desvantagens" },
                       { name: "cons", type: "array", label: "Contras", fields: [{ name: "item", type: "text" }] },
+                      { name: "cor", type: "select", label: "Cor do card", defaultValue: "verde", options: [{ label: "Verde (padrão)", value: "verde" }, { label: "Azul", value: "azul" }, { label: "Vermelho", value: "vermelho" }, { label: "Dourado", value: "dourado" }, { label: "Roxo", value: "roxo" }, { label: "Escuro", value: "escuro" }] },
                     ],
                   },
                 ],
