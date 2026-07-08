@@ -594,6 +594,68 @@ export default buildConfig({
                       },
                     ],
                   },
+                  // Card de palpite/previsão (ex.: "Previsão de placar: Espanha 1 x 0 Bélgica — Odd 7,50 na Betano").
+                  {
+                    slug: "prediction",
+                    labels: { singular: "Previsão / Palpite (card)", plural: "Previsões / Palpites" },
+                    fields: [
+                      { name: "label", type: "text", label: "Rótulo", defaultValue: "Previsão de placar" },
+                      { name: "text", type: "text", required: true, label: "Palpite", admin: { description: 'Ex.: "Espanha 1 x 0 Bélgica" ou "Menos de 2.5 gols"' } },
+                      { name: "odd", type: "text", label: "Odd", admin: { description: 'Ex.: "7,50"' } },
+                      { name: "house", type: "text", label: "Casa de aposta", admin: { description: 'Ex.: "Betano"' } },
+                      { name: "url", type: "text", label: "Link de afiliado (opcional)" },
+                      { name: "note", type: "textarea", label: "Análise (opcional)" },
+                    ],
+                  },
+                  // Card de destaque com estatísticas (ex.: "Destaque da Espanha: Oyarzabal + dados").
+                  {
+                    slug: "statCard",
+                    labels: { singular: "Destaque com dados (card)", plural: "Destaques com dados" },
+                    fields: [
+                      { name: "title", type: "text", required: true, label: "Título", admin: { description: 'Ex.: "Destaque da Espanha"' } },
+                      { name: "subtitle", type: "text", label: "Subtítulo", admin: { description: 'Ex.: nome do jogador, "Mikel Oyarzabal"' } },
+                      { name: "imageUrl", type: "text", label: "Imagem (URL, opcional)", admin: { description: "Cole a URL de uma foto ou escudo (opcional)." } },
+                      {
+                        name: "rows",
+                        type: "array",
+                        label: "Dados (rótulo + valor)",
+                        fields: [
+                          { name: "label", type: "text", label: "Rótulo" },
+                          { name: "value", type: "text", label: "Valor" },
+                        ],
+                      },
+                    ],
+                  },
+                  // Botão call-to-action (ex.: "Apostar na Betano"). rel=sponsored nofollow.
+                  {
+                    slug: "ctaButton",
+                    labels: { singular: "Botão (call-to-action)", plural: "Botões" },
+                    fields: [
+                      { name: "label", type: "text", required: true, label: "Texto do botão" },
+                      { name: "url", type: "text", required: true, label: "Link" },
+                      {
+                        name: "style",
+                        type: "select",
+                        label: "Estilo",
+                        defaultValue: "primary",
+                        options: [
+                          { label: "Verde (primário)", value: "primary" },
+                          { label: "Contorno", value: "outline" },
+                        ],
+                      },
+                    ],
+                  },
+                  // Box de prós e contras (✅ / ❌) em duas colunas.
+                  {
+                    slug: "prosCons",
+                    labels: { singular: "Prós e Contras", plural: "Prós e Contras" },
+                    fields: [
+                      { name: "prosTitle", type: "text", label: "Título dos prós", defaultValue: "Vantagens" },
+                      { name: "pros", type: "array", label: "Prós", fields: [{ name: "item", type: "text" }] },
+                      { name: "consTitle", type: "text", label: "Título dos contras", defaultValue: "Desvantagens" },
+                      { name: "cons", type: "array", label: "Contras", fields: [{ name: "item", type: "text" }] },
+                    ],
+                  },
                 ],
               }),
             ],
