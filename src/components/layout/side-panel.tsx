@@ -196,6 +196,17 @@ export function SidePanel() {
           </Link>
         </div>
 
+        {/* Apostas — hub /apostas (entre Europa e Esportes) */}
+        <div className="border-b border-border-custom">
+          <Link
+            href="/apostas"
+            onClick={close}
+            className="block px-5 py-2.5 text-xs font-bold text-text-primary uppercase tracking-wider bg-body hover:bg-green-light hover:text-green transition-colors"
+          >
+            Apostas
+          </Link>
+        </div>
+
         {/* Sports */}
         <div className="border-b border-border-custom">
           <div className="px-5 py-2.5 text-xs font-bold text-text-primary uppercase tracking-wider bg-body">
