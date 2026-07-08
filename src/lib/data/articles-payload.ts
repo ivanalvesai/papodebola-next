@@ -150,8 +150,13 @@ export async function getArticlesPayload(options?: {
     // Só posts PUBLICADOS no site — rascunhos (Studio→CMS) ficam só no /cms.
     and.push({ _status: { equals: "published" } });
     if (category) and.push({ category: { equals: category } });
-    // Craques têm página própria — excluídos das listagens (igual ao WP), salvo se pedido.
-    if (category !== "Craques") and.push({ category: { not_equals: "Craques" } });
+    // Categorias "siladas": têm página/seção PRÓPRIA e NÃO entram nas listagens gerais
+    // (home "Últimas Notícias", /noticias, "Leia também", sitemap geral). Só aparecem quando
+    // a categoria é pedida explicitamente. Craques = página própria; Casas de Apostas = seção
+    // dedicada (card "Casas de Apostas" na home + hub /casas-de-apostas), fora do feed editorial.
+    for (const siloed of ["Craques", "Casas de Apostas"]) {
+      if (category !== siloed) and.push({ category: { not_equals: siloed } });
+    }
     if (search) and.push({ title: { like: search } });
     if (tag) and.push({ "tags.tag": { like: tag } });
 
