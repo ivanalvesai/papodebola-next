@@ -43,6 +43,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     { url: `${BASE}/jogos-de-hoje`, lastModified: now, changeFrequency: "daily", priority: 0.7 },
     { url: `${BASE}/jogos-de-hoje/futebol`, lastModified: now, changeFrequency: "daily", priority: 0.7 },
     { url: `${BASE}/ao-vivo`, lastModified: now, changeFrequency: "hourly", priority: 0.8 },
+    { url: `${BASE}/casas-de-apostas`, lastModified: now, changeFrequency: "daily", priority: 0.7 },
     { url: `${BASE}/futebol/onde-assistir`, lastModified: now, changeFrequency: "hourly", priority: 0.8 },
     { url: `${BASE}/futebol/selecao-brasileira`, lastModified: now, changeFrequency: "daily", priority: 0.8 },
     { url: `${BASE}/sp`, lastModified: now, changeFrequency: "weekly", priority: 0.5 },

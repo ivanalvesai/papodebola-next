@@ -5,6 +5,7 @@ import { LiveScoreProvider } from "@/components/world-cup/copa-live-provider";
 // Destaques e Melhores Momentos desativado temporariamente (reativar depois).
 // import { HighlightsSection } from "@/components/home/highlights-section";
 import { NewsSection } from "@/components/home/news-section";
+import { CasasApostasSection } from "@/components/home/casas-apostas-section";
 import { TransfersSection } from "@/components/home/transfers-section";
 import { StandingsWidget } from "@/components/sidebar/standings-widget";
 import { WorldCupGroupsWidget } from "@/components/sidebar/world-cup-groups-widget";
@@ -15,7 +16,7 @@ import { MyTeamWidget } from "@/components/sidebar/my-team-widget";
 
 import { getTodayMatches, getWorldCupBarMatches, getBrazilianBarMatches, freshMatches, relevantBarMatches } from "@/lib/data/matches";
 import { getTransfers } from "@/lib/data/home"; // getHighlights desativado (ver Destaques)
-import { getLatestArticles } from "@/lib/data/articles";
+import { getLatestArticles, getArticles } from "@/lib/data/articles";
 import { getBrasileiraoStandings, getWorldCupStandings } from "@/lib/data/standings";
 import { getKnockoutFixtures } from "@/lib/data/world-cup";
 import { currentKnockoutPhase } from "@/lib/world-cup-phases";
@@ -60,6 +61,7 @@ export default async function HomePage() {
     // highlights,  // Destaques desativado temporariamente
     transfers,
     articles,
+    casasArticles,
     rawStandings,
     worldCupGroups,
     worldCupKnockout,
@@ -72,6 +74,9 @@ export default async function HomePage() {
     // getHighlights().catch(() => []),  // Destaques desativado temporariamente
     getTransfers().catch(() => []),
     getLatestArticles(20).catch(() => []),
+    getArticles({ perPage: 12, category: "Casas de Apostas" })
+      .then((r) => r.articles)
+      .catch(() => []),
     getBrasileiraoStandings().catch(() => []),
     getWorldCupStandings().catch(() => []),
     wcPhase.slug === "grupos"
@@ -151,6 +156,9 @@ export default async function HomePage() {
             {/* Destaques e Melhores Momentos — desativado temporariamente, reativar depois:
             <HighlightsSection highlights={highlights} /> */}
             <NewsSection articles={articles} />
+            {/* Card "Casas de Apostas" entre as Ultimas Noticias e o Mercado da Bola.
+                So aparece quando ha post publicado na categoria (senao nao renderiza). */}
+            <CasasApostasSection articles={casasArticles} />
             {/* Tabelas no celular: logo apos as noticias, antes do Mercado da Bola.
                 So aparece no mobile (no desktop ficam no sidebar). */}
             <div className="space-y-6 lg:hidden">
