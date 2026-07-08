@@ -163,6 +163,7 @@ export const WP_CATEGORIES = [
   'Copa Sudamericana',
   'Eliminatórias',
   'Futebol Brasileiro',
+  'Casas de Apostas',
 ] as const;
 
 // Slug de categoria pra URLs limpas (/noticias/brasileirao em vez de ?cat=Brasileirão).

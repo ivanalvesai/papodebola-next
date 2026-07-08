@@ -8,6 +8,7 @@ import { ShareButtons } from "@/components/article/share-buttons";
 import { ArticleSchema } from "@/components/seo/article-schema";
 import { PageBreadcrumb } from "@/components/seo/page-breadcrumb";
 import { StandingsWidget } from "@/components/sidebar/standings-widget";
+import { BettingDisclaimer } from "@/components/apostas/betting-disclaimer";
 
 type Standings = Awaited<ReturnType<typeof getBrasileiraoStandings>>;
 
@@ -191,6 +192,7 @@ export function ArticleView({
       {/* Content + sidebar de engajamento (sidebar só no desktop) */}
       <div className="mx-auto max-w-[1040px] px-4 py-12 lg:grid lg:grid-cols-[minmax(0,1fr)_300px] lg:gap-10 lg:items-start">
         <div className="mx-auto w-full max-w-[680px] min-w-0 lg:mx-0 lg:max-w-none">
+          {article.category === "Casas de Apostas" && <BettingDisclaimer className="mb-6" />}
           <article className="prose-article" dangerouslySetInnerHTML={{ __html: bodyHtml }} />
 
           {/* Tags */}
@@ -373,18 +375,34 @@ export function ArticleView({
         }
         .prose-article table {
           width: 100%;
-          border-collapse: collapse;
+          border-collapse: separate;
+          border-spacing: 0;
           margin: 0 0 32px;
           font-size: 16px;
+          border: 1px solid #e2e5e9;
+          border-radius: 12px;
+          overflow: hidden;
         }
         .prose-article th,
         .prose-article td {
-          border: 1px solid #e2e5e9;
-          padding: 10px 12px;
+          padding: 12px 14px;
           text-align: left;
           vertical-align: top;
+          border-bottom: 1px solid #eaedf0;
         }
-        .prose-article th { background: #f8f9fa; font-weight: 700; color: #1A1D23; }
+        .prose-article th {
+          background: #00965E;
+          font-weight: 700;
+          color: #fff;
+          border-bottom: 0;
+        }
+        /* O texto da célula do cabeçalho vem dentro de <p>/<strong> (Lexical) e herdava
+           a cor escura do parágrafo — força branco pra ler no fundo verde. */
+        .prose-article th p,
+        .prose-article th strong,
+        .prose-article th a { color: #fff; margin: 0; }
+        .prose-article tr:nth-child(even) td { background: #f6f9f8; }
+        .prose-article tr:last-child td { border-bottom: 0; }
         .prose-article hr { border: 0; border-top: 1px solid #e2e5e9; margin: 40px 0; }
         @media (max-width: 768px) {
           .prose-article p,
@@ -449,8 +467,84 @@ export function ArticleView({
         .prose-article .pdb-img-center img { margin-left: auto; margin-right: auto; }
         .prose-article .pdb-img-right img { margin-left: auto; margin-right: 0; }
         .prose-article .pdb-img-left img { margin-left: 0; margin-right: auto; }
+        /* Cards de apostas: previsão/palpite, destaque com dados, botão CTA, prós/contras */
+        .prose-article .pdb-prediction {
+          border: 1px solid rgba(0,150,94,0.35);
+          background: rgba(0,150,94,0.05);
+          border-radius: 12px;
+          padding: 16px 18px;
+          margin: 0 0 32px;
+        }
+        .prose-article .pdb-pred-head {
+          display: flex; align-items: center; justify-content: space-between;
+          gap: 12px; flex-wrap: wrap; margin-bottom: 6px;
+        }
+        .prose-article .pdb-pred-label {
+          font-size: 12px; font-weight: 700; text-transform: uppercase;
+          letter-spacing: 0.03em; color: #00965E;
+        }
+        .prose-article .pdb-pred-odd {
+          font-size: 13px; font-weight: 700; color: #1A1D23; background: #fff;
+          border: 1px solid rgba(0,150,94,0.4); border-radius: 999px; padding: 3px 12px;
+        }
+        .prose-article .pdb-pred-text { font-size: 20px; font-weight: 700; color: #1A1D23; line-height: 1.3; margin: 0; }
+        .prose-article .pdb-pred-note { font-size: 15px; color: #444; margin: 10px 0 0; line-height: 1.6; }
+        .prose-article a.pdb-cta {
+          display: inline-block; margin-top: 14px; padding: 11px 22px; border-radius: 8px;
+          font-weight: 700; font-size: 15px; text-decoration: none; text-align: center;
+        }
+        .prose-article a.pdb-cta-primary { background: #00965E; color: #fff !important; }
+        .prose-article a.pdb-cta-primary:hover { background: #007a4d; }
+        .prose-article a.pdb-cta-outline { border: 2px solid #00965E; color: #00965E !important; }
+        .prose-article .pdb-statcard {
+          display: flex; gap: 16px; align-items: flex-start;
+          border: 1px solid #e2e5e9; border-radius: 12px; padding: 16px 18px; margin: 0 0 32px; background: #fff;
+        }
+        .prose-article .pdb-statcard-img {
+          width: 72px; height: 72px; border-radius: 10px; object-fit: cover; flex-shrink: 0; margin: 0;
+        }
+        .prose-article .pdb-statcard-title {
+          font-size: 13px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.03em; color: #00965E;
+        }
+        .prose-article .pdb-statcard-sub { font-size: 19px; font-weight: 700; color: #1A1D23; margin-top: 2px; }
+        .prose-article .pdb-statcard-list { list-style: none; margin: 12px 0 0; padding: 0; }
+        .prose-article .pdb-statcard-list li {
+          display: flex; justify-content: space-between; gap: 12px;
+          font-size: 15px; padding: 6px 0; border-bottom: 1px solid #f0f2f4; margin: 0; color: #444;
+        }
+        .prose-article .pdb-statcard-list li:last-child { border-bottom: 0; }
+        .prose-article .pdb-statcard-list strong { color: #1A1D23; }
+        .prose-article .pdb-proscons { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin: 0 0 32px; }
+        .prose-article .pdb-pros, .prose-article .pdb-cons {
+          border: 1px solid #e2e5e9; border-radius: 12px; padding: 14px 16px; background: #fff;
+        }
+        .prose-article .pdb-pc-title { font-weight: 700; color: #1A1D23; margin-bottom: 8px; font-size: 15px; }
+        .prose-article .pdb-pros ul, .prose-article .pdb-cons ul { list-style: none; margin: 0; padding: 0; }
+        .prose-article .pdb-pros li, .prose-article .pdb-cons li {
+          position: relative; padding-left: 26px; margin: 0 0 8px; font-size: 15px; line-height: 1.5; color: #333;
+        }
+        .prose-article .pdb-pros li::before { content: "✅"; position: absolute; left: 0; }
+        .prose-article .pdb-cons li::before { content: "❌"; position: absolute; left: 0; }
+        /* --- Temas de cor dos cards (o select "Cor" define a classe pdb-theme-*) --- */
+        .prose-article .pdb-theme-verde    { --pdb-accent:#00965E; --pdb-soft:rgba(0,150,94,0.06);   --pdb-ring:rgba(0,150,94,0.35); }
+        .prose-article .pdb-theme-azul     { --pdb-accent:#2563eb; --pdb-soft:rgba(37,99,235,0.06);  --pdb-ring:rgba(37,99,235,0.35); }
+        .prose-article .pdb-theme-vermelho { --pdb-accent:#dc2626; --pdb-soft:rgba(220,38,38,0.06);  --pdb-ring:rgba(220,38,38,0.35); }
+        .prose-article .pdb-theme-dourado  { --pdb-accent:#b8860b; --pdb-soft:rgba(184,134,11,0.09); --pdb-ring:rgba(184,134,11,0.4); }
+        .prose-article .pdb-theme-roxo     { --pdb-accent:#7c3aed; --pdb-soft:rgba(124,58,237,0.06); --pdb-ring:rgba(124,58,237,0.35); }
+        .prose-article .pdb-theme-escuro   { --pdb-accent:#1A1D23; --pdb-soft:rgba(26,29,35,0.05);   --pdb-ring:rgba(26,29,35,0.3); }
+        /* Aplica a cor do tema (var --pdb-accent) nos elementos dos cards. */
+        .prose-article .pdb-prediction { border-color: var(--pdb-ring, rgba(0,150,94,0.35)); background: var(--pdb-soft, rgba(0,150,94,0.06)); }
+        .prose-article .pdb-pred-label { color: var(--pdb-accent, #00965E); }
+        .prose-article .pdb-pred-odd { border-color: var(--pdb-ring, rgba(0,150,94,0.4)); }
+        .prose-article a.pdb-cta-primary { background: var(--pdb-accent, #00965E); }
+        .prose-article a.pdb-cta-primary:hover { background: var(--pdb-accent, #00965E); filter: brightness(0.92); }
+        .prose-article a.pdb-cta-outline { border-color: var(--pdb-accent, #00965E); color: var(--pdb-accent, #00965E) !important; }
+        .prose-article .pdb-statcard { border-left: 4px solid var(--pdb-accent, #00965E); }
+        .prose-article .pdb-statcard-title { color: var(--pdb-accent, #00965E); }
+        .prose-article .pdb-proscons .pdb-pros { border-top: 3px solid var(--pdb-accent, #00965E); }
         @media (max-width: 768px) {
           .prose-article .pdb-columns { grid-template-columns: 1fr; }
+          .prose-article .pdb-proscons { grid-template-columns: 1fr; }
         }
       `}</style>
     </>

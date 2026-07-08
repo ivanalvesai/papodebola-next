@@ -43,6 +43,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     { url: `${BASE}/jogos-de-hoje`, lastModified: now, changeFrequency: "daily", priority: 0.7 },
     { url: `${BASE}/jogos-de-hoje/futebol`, lastModified: now, changeFrequency: "daily", priority: 0.7 },
     { url: `${BASE}/ao-vivo`, lastModified: now, changeFrequency: "hourly", priority: 0.8 },
+    { url: `${BASE}/casas-de-apostas`, lastModified: now, changeFrequency: "daily", priority: 0.7 },
     { url: `${BASE}/futebol/onde-assistir`, lastModified: now, changeFrequency: "hourly", priority: 0.8 },
     { url: `${BASE}/futebol/selecao-brasileira`, lastModified: now, changeFrequency: "daily", priority: 0.8 },
     { url: `${BASE}/sp`, lastModified: now, changeFrequency: "weekly", priority: 0.5 },
@@ -210,6 +211,20 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       : {}),
   }));
 
+  // Casas de Apostas — categoria SILADA (fora do feed geral acima), então os posts
+  // publicados entram no sitemap por um bloco próprio pra não perder indexação.
+  const { articles: betArticles } = await getArticles({
+    perPage: 100,
+    category: "Casas de Apostas",
+  }).catch(() => ({ articles: [] }));
+  const betPages: MetadataRoute.Sitemap = betArticles.map((a) => ({
+    url: `${BASE}${a.url}`,
+    lastModified: a.updatedAt || a.pubDate ? new Date(a.updatedAt || a.pubDate) : now,
+    changeFrequency: "weekly" as const,
+    priority: 0.6,
+    ...(a.image ? { images: [a.image.startsWith("http") ? a.image : `${BASE}${a.image}`] } : {}),
+  }));
+
   // Craques (cluster /futebol/craque/[slug]) — só os publicados. getArticles acima
   // já exclui a categoria, então não há entrada /artigos duplicada pro mesmo conteúdo.
   const craques = await getCraques().catch(() => []);
@@ -292,6 +307,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     ...champMatchPages,
     ...selecaoPages,
     ...articlePages,
+    ...betPages,
     ...craquePages,
   ];
 }

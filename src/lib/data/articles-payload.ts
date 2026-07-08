@@ -21,6 +21,18 @@ function stripHtml(html: string): string {
     .trim();
 }
 
+function escHtml(s: string): string {
+  return String(s || "").replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+}
+function escAttr(s: string): string {
+  return escHtml(s).replace(/"/g, "&quot;");
+}
+// Classe de tema de cor dos cards (whitelist — o valor vem de um select, mas garante).
+const CARD_COLORS = ["verde", "azul", "vermelho", "dourado", "roxo", "escuro"];
+function themeClass(cor: string): string {
+  return "pdb-theme-" + (CARD_COLORS.includes(cor) ? cor : "verde");
+}
+
 // Corpo do post em HTML: prefere o editor visual (Lexical, campo `content`); cai pro
 // HTML legado (`body`) enquanto o post não foi migrado. Garante que nada some na
 // transição e que o HTML renderizado (logo, o SEO) continue equivalente.
@@ -66,6 +78,50 @@ const lexicalConverters: any = ({ defaultConverters }: any) => ({
       const s = node?.fields?.sponsor;
       if (!s || typeof s !== "object") return "";
       return sponsorCardHtml(normalizeSponsor(s), "artigo");
+    },
+    // Card de palpite/previsão: rótulo + palpite + badge de odd/casa + análise + botão.
+    prediction: ({ node }: any) => {
+      const f = node?.fields || {};
+      if (!f.text) return "";
+      const oddHouse = [f.odd ? `Odd ${escHtml(f.odd)}` : "", f.house ? escHtml(f.house) : ""]
+        .filter(Boolean)
+        .join(" · ");
+      const badge = oddHouse ? `<span class="pdb-pred-odd">${oddHouse}</span>` : "";
+      const note = f.note ? `<p class="pdb-pred-note">${escHtml(f.note)}</p>` : "";
+      const btn = f.url
+        ? `<a class="pdb-cta pdb-cta-primary" href="${escAttr(f.url)}" target="_blank" rel="sponsored nofollow noopener">Apostar${f.house ? " na " + escHtml(f.house) : ""}</a>`
+        : "";
+      return `<div class="pdb-prediction ${themeClass(f.cor)}"><div class="pdb-pred-head"><span class="pdb-pred-label">${escHtml(f.label || "Palpite")}</span>${badge}</div><div class="pdb-pred-text">${escHtml(f.text)}</div>${note}${btn}</div>`;
+    },
+    // Card de destaque com dados: título + subtítulo + foto opcional + linhas rótulo/valor.
+    statCard: ({ node }: any) => {
+      const f = node?.fields || {};
+      if (!f.title) return "";
+      const img = f.imageUrl
+        ? `<img class="pdb-statcard-img" src="${escAttr(f.imageUrl)}" alt="${escAttr(f.subtitle || f.title)}" loading="lazy" />`
+        : "";
+      const sub = f.subtitle ? `<div class="pdb-statcard-sub">${escHtml(f.subtitle)}</div>` : "";
+      const rows = (f.rows || [])
+        .filter((r: any) => r?.label || r?.value)
+        .map((r: any) => `<li><span>${escHtml(r.label || "")}</span><strong>${escHtml(r.value || "")}</strong></li>`)
+        .join("");
+      const list = rows ? `<ul class="pdb-statcard-list">${rows}</ul>` : "";
+      return `<div class="pdb-statcard ${themeClass(f.cor)}">${img}<div class="pdb-statcard-body"><div class="pdb-statcard-title">${escHtml(f.title)}</div>${sub}${list}</div></div>`;
+    },
+    // Botão call-to-action (afiliado): rel=sponsored nofollow.
+    ctaButton: ({ node }: any) => {
+      const f = node?.fields || {};
+      if (!f.label || !f.url) return "";
+      const cls = f.style === "outline" ? "pdb-cta-outline" : "pdb-cta-primary";
+      return `<a class="pdb-cta ${cls} ${themeClass(f.cor)}" href="${escAttr(f.url)}" target="_blank" rel="sponsored nofollow noopener">${escHtml(f.label)}</a>`;
+    },
+    // Prós e contras em duas colunas (✅ / ❌).
+    prosCons: ({ node }: any) => {
+      const f = node?.fields || {};
+      const pros = (f.pros || []).filter((p: any) => p?.item).map((p: any) => `<li>${escHtml(p.item)}</li>`).join("");
+      const cons = (f.cons || []).filter((c: any) => c?.item).map((c: any) => `<li>${escHtml(c.item)}</li>`).join("");
+      if (!pros && !cons) return "";
+      return `<div class="pdb-proscons ${themeClass(f.cor)}"><div class="pdb-pros"><div class="pdb-pc-title">${escHtml(f.prosTitle || "Vantagens")}</div><ul>${pros}</ul></div><div class="pdb-cons"><div class="pdb-pc-title">${escHtml(f.consTitle || "Desvantagens")}</div><ul>${cons}</ul></div></div>`;
     },
   },
   // Imagem inserida no editor (upload node) com alinhamento (campo do UploadFeature).
@@ -150,8 +206,13 @@ export async function getArticlesPayload(options?: {
     // Só posts PUBLICADOS no site — rascunhos (Studio→CMS) ficam só no /cms.
     and.push({ _status: { equals: "published" } });
     if (category) and.push({ category: { equals: category } });
-    // Craques têm página própria — excluídos das listagens (igual ao WP), salvo se pedido.
-    if (category !== "Craques") and.push({ category: { not_equals: "Craques" } });
+    // Categorias "siladas": têm página/seção PRÓPRIA e NÃO entram nas listagens gerais
+    // (home "Últimas Notícias", /noticias, "Leia também", sitemap geral). Só aparecem quando
+    // a categoria é pedida explicitamente. Craques = página própria; Casas de Apostas = seção
+    // dedicada (card "Casas de Apostas" na home + hub /casas-de-apostas), fora do feed editorial.
+    for (const siloed of ["Craques", "Casas de Apostas"]) {
+      if (category !== siloed) and.push({ category: { not_equals: siloed } });
+    }
     if (search) and.push({ title: { like: search } });
     if (tag) and.push({ "tags.tag": { like: tag } });
 
