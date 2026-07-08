@@ -8,6 +8,7 @@ import { ShareButtons } from "@/components/article/share-buttons";
 import { ArticleSchema } from "@/components/seo/article-schema";
 import { PageBreadcrumb } from "@/components/seo/page-breadcrumb";
 import { StandingsWidget } from "@/components/sidebar/standings-widget";
+import { BettingDisclaimer } from "@/components/apostas/betting-disclaimer";
 
 type Standings = Awaited<ReturnType<typeof getBrasileiraoStandings>>;
 
@@ -191,6 +192,7 @@ export function ArticleView({
       {/* Content + sidebar de engajamento (sidebar só no desktop) */}
       <div className="mx-auto max-w-[1040px] px-4 py-12 lg:grid lg:grid-cols-[minmax(0,1fr)_300px] lg:gap-10 lg:items-start">
         <div className="mx-auto w-full max-w-[680px] min-w-0 lg:mx-0 lg:max-w-none">
+          {article.category === "Casas de Apostas" && <BettingDisclaimer className="mb-6" />}
           <article className="prose-article" dangerouslySetInnerHTML={{ __html: bodyHtml }} />
 
           {/* Tags */}
