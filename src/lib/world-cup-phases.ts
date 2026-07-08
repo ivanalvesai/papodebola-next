@@ -83,7 +83,7 @@ export const PHASE_BY_SLUG: Record<string, WorldCupPhase> = Object.fromEntries(
 const PHASE_FOCUS_FROM: Record<string, string> = {
   "16-avos": "2026-06-28",
   oitavas: "2026-07-04",
-  quartas: "2026-07-09",
+  quartas: "2026-07-08", // antecipado 1 dia (oitavas encerraram 07/07; quartas começam 09/07)
   semifinais: "2026-07-14",
   final: "2026-07-17",
 };
