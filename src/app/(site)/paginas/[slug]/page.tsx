@@ -15,7 +15,7 @@ const DEDICATED = new Set([
   "parceiros",
   "politica-de-privacidade",
   "termos-de-uso",
-  "casas-de-apostas", // renderizada pela rota /casas-de-apostas (índice + SEO da página CMS)
+  "apostas", // renderizada pela rota /apostas (índice de apostas + SEO da página CMS)
   "jogos-de-hoje-futebol", // renderizada pela rota /jogos-de-hoje/futebol (blocos dinâmicos)
   "santana-de-parnaiba-municipal", // renderizada no rodapé de /sp/santana-de-parnaiba/municipal
 ]);

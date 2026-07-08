@@ -56,6 +56,9 @@ const nextConfig: NextConfig = {
       // Basquete = NBA (NBB depois): removida a landing genérica /basquete -> /nba.
       { source: "/basquete", destination: "/nba", permanent: true },
       { source: "/basquete/nba", destination: "/nba", permanent: true },
+      // Apostas: slug encurtada /casas-de-apostas -> /apostas (a antiga chegou a ir pra prod).
+      { source: "/casas-de-apostas", destination: "/apostas", permanent: true },
+      { source: "/casas-de-apostas/:slug*", destination: "/apostas/:slug*", permanent: true },
       // Craques: o post do WP abre tanto em /artigos/[slug] (rota genérica) quanto em
       // /futebol/craque/[slug] (página canônica) = conteúdo duplicado. Redireciona a
       // genérica na camada de roteamento (308 real, antes do streaming do RSC, que

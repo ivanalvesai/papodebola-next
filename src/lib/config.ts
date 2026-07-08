@@ -230,6 +230,8 @@ export const CATEGORY_HUB: Record<string, string> = {
   "Mercado da Bola": "/futebol/mercado-da-bola",
   "Eliminatórias": "/futebol/eliminatorias",
   "Futebol Brasileiro": "/futebol/brasileiro",
+  // Apostas: o hub é /apostas (não /casas-de-apostas). Posts da categoria caem em /apostas/{slug}.
+  "Casas de Apostas": "/apostas",
 };
 
 // URL canônica de uma notícia (estilo ge.globo). Ordem: (1) hub próprio (CATEGORY_HUB),
