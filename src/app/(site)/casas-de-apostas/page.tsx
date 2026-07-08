@@ -1,37 +1,57 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { getArticles } from "@/lib/data/articles";
+import { getPayloadPage } from "@/lib/data/payload-pages";
+import { PageBlock } from "@/components/payload/page-blocks";
 import { CasasApostasIndex } from "@/components/apostas/casas-apostas-index";
 import { BettingDisclaimer } from "@/components/apostas/betting-disclaimer";
 
 // Índice de notícias de "Casas de Apostas" (estilo home / lance.com.br/sites-de-apostas):
 // recebe TODAS as notícias da categoria. O guia comparativo (money page) é um POST em
 // /casas-de-apostas/melhores-casas-apostas-brasil, destacado num banner aqui. ISR 30min.
+//
+// SEO + H1/subtítulo + intro são EDITÁVEIS no /cms → Páginas (collection "pages", slug
+// "casas-de-apostas"): a página do CMS controla os metadados e um texto opcional acima das
+// notícias; o layout de notícias (destaque/linha/feed) fica no código. Sem página no CMS,
+// usa os defaults abaixo.
 export const revalidate = 1800;
 
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || "https://www.papodebola.com.br";
 const GUIDE_SLUG = "melhores-casas-apostas-brasil";
 
-export const metadata: Metadata = {
-  title: {
-    absolute: "Casas de Apostas: Notícias, Bônus e Guia das Bets | Papo de Bola",
-  },
-  description:
-    "Últimas notícias sobre casas de apostas no Brasil: bônus, novas plataformas .bet.br, dicas e o guia comparativo das melhores casas de aposta autorizadas pela SPA.",
-  alternates: { canonical: "/casas-de-apostas" },
-  openGraph: {
-    title: "Casas de Apostas — Papo de Bola",
-    description:
-      "Notícias, análises e guia das melhores casas de apostas autorizadas no Brasil.",
-    url: `${SITE_URL}/casas-de-apostas`,
-    type: "website",
-  },
-};
+const DEFAULT_TITLE = "Casas de Apostas: Notícias, Bônus e Guia das Bets | Papo de Bola";
+const DEFAULT_DESC =
+  "Últimas notícias sobre casas de apostas no Brasil: bônus, novas plataformas .bet.br, dicas e o guia comparativo das melhores casas de aposta autorizadas pela SPA.";
+const DEFAULT_H1 = "Casas de Apostas";
+const DEFAULT_SUBTITLE = "Notícias, análises e guias das casas de apostas autorizadas no Brasil.";
+
+export async function generateMetadata(): Promise<Metadata> {
+  const page = await getPayloadPage("casas-de-apostas");
+  const title = page?.seo?.metaTitle || DEFAULT_TITLE;
+  const description = page?.seo?.metaDescription || DEFAULT_DESC;
+  return {
+    title: { absolute: title },
+    description,
+    alternates: { canonical: "/casas-de-apostas" },
+    openGraph: {
+      title,
+      description,
+      url: `${SITE_URL}/casas-de-apostas`,
+      type: "website",
+    },
+  };
+}
 
 export default async function CasasDeApostasPage() {
-  const { articles } = await getArticles({ perPage: 30, category: "Casas de Apostas" }).catch(
-    () => ({ articles: [] })
-  );
+  const [page, res] = await Promise.all([
+    getPayloadPage("casas-de-apostas"),
+    getArticles({ perPage: 30, category: "Casas de Apostas" }).catch(() => ({ articles: [] })),
+  ]);
+  const articles = res.articles;
+
+  const h1 = page?.hero?.h1 || DEFAULT_H1;
+  const subtitle = page?.hero?.subtitle || DEFAULT_SUBTITLE;
+  const introBlocks = page?.layout || [];
 
   // O guia comparativo é destacado num banner e não repete no grid de notícias.
   const guide = articles.find((a) => a.slug === GUIDE_SLUG) || null;
@@ -55,14 +75,19 @@ export default async function CasasDeApostasPage() {
         / <span className="text-text-secondary">Casas de Apostas</span>
       </nav>
 
-      <h1 className="text-2xl font-bold leading-tight text-text-primary sm:text-3xl">
-        Casas de Apostas
-      </h1>
-      <p className="mt-1 text-sm text-text-muted">
-        Notícias, análises e guias das casas de apostas autorizadas no Brasil.
-      </p>
+      <h1 className="text-2xl font-bold leading-tight text-text-primary sm:text-3xl">{h1}</h1>
+      <p className="mt-1 text-sm text-text-muted">{subtitle}</p>
 
       <BettingDisclaimer className="mt-4" />
+
+      {/* Intro opcional editável no /cms (blocos da página). Fica acima das notícias. */}
+      {introBlocks.length > 0 && (
+        <div className="mt-5 space-y-4 rounded-lg border border-border-custom bg-card-bg p-6 leading-relaxed text-text-secondary">
+          {introBlocks.map((block: unknown, i: number) => (
+            <PageBlock key={i} block={block} />
+          ))}
+        </div>
+      )}
 
       {/* Banner do guia comparativo (money page) — só quando o post está publicado. */}
       {guide && (
