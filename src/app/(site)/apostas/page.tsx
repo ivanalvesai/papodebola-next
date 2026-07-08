@@ -8,12 +8,12 @@ import { BettingDisclaimer } from "@/components/apostas/betting-disclaimer";
 
 // Índice de notícias de "Casas de Apostas" (estilo home / lance.com.br/sites-de-apostas):
 // recebe TODAS as notícias da categoria. O guia comparativo (money page) é um POST em
-// /casas-de-apostas/melhores-casas-apostas-brasil, destacado num banner aqui. ISR 30min.
+// /apostas/melhores-casas-apostas-brasil, destacado num banner aqui. ISR 30min.
 //
-// SEO + H1/subtítulo + intro são EDITÁVEIS no /cms → Páginas (collection "pages", slug
-// "casas-de-apostas"): a página do CMS controla os metadados e um texto opcional acima das
-// notícias; o layout de notícias (destaque/linha/feed) fica no código. Sem página no CMS,
-// usa os defaults abaixo.
+// SEO + H1/subtítulo + conteúdo são EDITÁVEIS no /cms → Páginas (collection "pages", slug
+// "apostas"): a página do CMS controla os metadados e os blocos de conteúdo
+// (texto/galeria/tabela...), que renderizam ABAIXO das notícias (texto de SEO da página, que
+// desce conforme os posts entram). O layout de notícias (destaque/linha/feed) fica no código.
 export const revalidate = 1800;
 
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || "https://www.papodebola.com.br";
@@ -26,25 +26,25 @@ const DEFAULT_H1 = "Casas de Apostas";
 const DEFAULT_SUBTITLE = "Notícias, análises e guias das casas de apostas autorizadas no Brasil.";
 
 export async function generateMetadata(): Promise<Metadata> {
-  const page = await getPayloadPage("casas-de-apostas");
+  const page = await getPayloadPage("apostas");
   const title = page?.seo?.metaTitle || DEFAULT_TITLE;
   const description = page?.seo?.metaDescription || DEFAULT_DESC;
   return {
     title: { absolute: title },
     description,
-    alternates: { canonical: "/casas-de-apostas" },
+    alternates: { canonical: "/apostas" },
     openGraph: {
       title,
       description,
-      url: `${SITE_URL}/casas-de-apostas`,
+      url: `${SITE_URL}/apostas`,
       type: "website",
     },
   };
 }
 
-export default async function CasasDeApostasPage() {
+export default async function ApostasPage() {
   const [page, res] = await Promise.all([
-    getPayloadPage("casas-de-apostas"),
+    getPayloadPage("apostas"),
     getArticles({ perPage: 30, category: "Casas de Apostas" }).catch(() => ({ articles: [] })),
   ]);
   const articles = res.articles;
@@ -62,7 +62,7 @@ export default async function CasasDeApostasPage() {
     "@type": "BreadcrumbList",
     itemListElement: [
       { "@type": "ListItem", position: 1, name: "Início", item: SITE_URL },
-      { "@type": "ListItem", position: 2, name: "Casas de Apostas", item: `${SITE_URL}/casas-de-apostas` },
+      { "@type": "ListItem", position: 2, name: "Casas de Apostas", item: `${SITE_URL}/apostas` },
     ],
   };
 
@@ -79,15 +79,6 @@ export default async function CasasDeApostasPage() {
       <p className="mt-1 text-sm text-text-muted">{subtitle}</p>
 
       <BettingDisclaimer className="mt-4" />
-
-      {/* Intro opcional editável no /cms (blocos da página). Fica acima das notícias. */}
-      {introBlocks.length > 0 && (
-        <div className="mt-5 space-y-4 rounded-lg border border-border-custom bg-card-bg p-6 leading-relaxed text-text-secondary">
-          {introBlocks.map((block: unknown, i: number) => (
-            <PageBlock key={i} block={block} />
-          ))}
-        </div>
-      )}
 
       {/* Banner do guia comparativo (money page) — só quando o post está publicado. */}
       {guide && (
@@ -107,10 +98,21 @@ export default async function CasasDeApostasPage() {
         </Link>
       )}
 
-      <div className="mt-6">
-        {news.length > 0 ? (
-          <CasasApostasIndex articles={news} />
-        ) : (
+      <div className="mt-6 space-y-8">
+        {news.length > 0 && <CasasApostasIndex articles={news} />}
+
+        {/* Conteúdo editável no /cms → Páginas → "Casas de Apostas (índice)" (blocos: texto,
+            galeria, tabela, colunas...). Renderiza ABAIXO das notícias — é o texto de
+            SEO/keywords da página; conforme os posts entram, ele desce naturalmente. */}
+        {introBlocks.length > 0 && (
+          <div className="space-y-4 rounded-lg border border-border-custom bg-card-bg p-6 leading-relaxed text-text-secondary">
+            {introBlocks.map((block: unknown, i: number) => (
+              <PageBlock key={i} block={block} />
+            ))}
+          </div>
+        )}
+
+        {news.length === 0 && introBlocks.length === 0 && (
           <div className="rounded-lg border border-border-custom bg-card-bg p-10 text-center text-text-muted">
             Ainda não há notícias sobre casas de apostas. Volte em breve.
           </div>

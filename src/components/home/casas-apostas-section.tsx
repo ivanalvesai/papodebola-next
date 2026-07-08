@@ -27,7 +27,7 @@ export function CasasApostasSection({ articles }: Props) {
           </span>
         </h2>
         <Link
-          href="/casas-de-apostas"
+          href="/apostas"
           className="shrink-0 text-xs font-bold uppercase tracking-wide text-green hover:underline"
         >
           Ver mais

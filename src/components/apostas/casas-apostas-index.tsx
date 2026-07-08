@@ -125,7 +125,7 @@ export function CasasApostasIndex({ articles }: { articles: Article[] }) {
             initial={feed}
             category="Casas de Apostas"
             excludeSlugs={excludeSlugs}
-            seeAllHref="/noticias/casas-de-apostas"
+            seeAllHref="/apostas"
           />
         </section>
       )}
