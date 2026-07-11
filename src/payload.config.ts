@@ -443,6 +443,22 @@ export default buildConfig({
       },
       // 3e: edição/publicação no /cms revalida o site na hora (substitui o mu-plugin).
       hooks: {
+        // Ao PUBLICAR sem "Data de publicação" preenchida, carimba a data com o horário
+        // da publicação. Sem isto, um post publicado com data vazia (NULL) sobe pro TOPO
+        // da home (Postgres ordena `data DESC` como NULLS FIRST) e vira o destaque errado.
+        beforeChange: [
+          /* eslint-disable-next-line @typescript-eslint/no-explicit-any */
+          ({ data, originalDoc }: any) => {
+            if (
+              data?._status === "published" &&
+              !data?.publishedDate &&
+              !originalDoc?.publishedDate
+            ) {
+              data.publishedDate = new Date().toISOString();
+            }
+            return data;
+          },
+        ],
         afterChange: [
           /* eslint-disable-next-line @typescript-eslint/no-explicit-any */
           ({ doc }: any) => {
