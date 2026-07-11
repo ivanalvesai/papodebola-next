@@ -9,11 +9,11 @@ export function Header() {
         {/* Logo */}
         <Link href="/" className="flex items-center gap-2 shrink-0">
           <Image
-            src="/android-chrome-512x512.png"
-            alt="Papo de Bola"
-            width={36}
-            height={36}
-            className="h-9 w-9"
+            src="/logo-papo-de-bola.png"
+            alt="Logotipo do Portal Papo de Bola, Futebol e Esportes"
+            width={399}
+            height={360}
+            className="h-11 w-auto"
             priority
           />
           <span className="text-lg font-bold text-text-primary tracking-tight">
