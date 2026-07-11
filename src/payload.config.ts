@@ -550,6 +550,31 @@ export default buildConfig({
                     ],
                   },
                   {
+                    slug: "instagram",
+                    labels: { singular: "Post do Instagram", plural: "Posts do Instagram" },
+                    fields: [
+                      {
+                        name: "url",
+                        type: "text",
+                        required: true,
+                        label: "Link do post do Instagram",
+                        admin: {
+                          description:
+                            "Cole o link do post ou reel (ex.: https://www.instagram.com/p/XXXXXXX/). O card mostra a foto e a legenda completa, igual ao do ge.",
+                        },
+                      },
+                      {
+                        name: "caption",
+                        type: "textarea",
+                        label: "Legenda de reserva (opcional)",
+                        admin: {
+                          description:
+                            "Texto exibido só se o Instagram não carregar (rede/bloqueio). Opcional — o normal é o próprio card do Instagram trazer a legenda.",
+                        },
+                      },
+                    ],
+                  },
+                  {
                     slug: "columns",
                     labels: { singular: "Colunas", plural: "Colunas" },
                     fields: [

@@ -36,6 +36,14 @@ function themeClass(cor: string): string {
 // Corpo do post em HTML: prefere o editor visual (Lexical, campo `content`); cai pro
 // HTML legado (`body`) enquanto o post não foi migrado. Garante que nada some na
 // transição e que o HTML renderizado (logo, o SEO) continue equivalente.
+// Normaliza um link do Instagram pro permalink canônico que o embed.js entende
+// (post/reel/tv). Descarta query string e afins. Retorna "" se não for do Instagram.
+function normalizeInstagramUrl(url: string): string {
+  const m = String(url || "").match(/instagram\.com\/(p|reel|tv)\/([A-Za-z0-9_-]+)/i);
+  if (!m) return "";
+  return `https://www.instagram.com/${m[1].toLowerCase()}/${m[2]}/`;
+}
+
 // URL do YouTube/Vimeo -> URL de embed (iframe).
 function videoEmbedSrc(url: string): string {
   if (!url) return "";
@@ -57,6 +65,17 @@ const lexicalConverters: any = ({ defaultConverters }: any) => ({
       const cap = node?.fields?.caption;
       const figcap = cap ? `<figcaption>${cap}</figcaption>` : "";
       return `<figure class="pdb-video"><div class="pdb-video-frame"><iframe src="${src}" title="${cap || "Vídeo"}" loading="lazy" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe></div>${figcap}</figure>`;
+    },
+    // Card do Instagram: blockquote oficial (instagram-media). O embed.js (carregado
+    // pelo InstagramEmbedLoader no article-view) troca por um card com foto + legenda
+    // completa. Se não carregar, fica o link + a legenda de reserva (fallback).
+    instagram: ({ node }: any) => {
+      const url = normalizeInstagramUrl(node?.fields?.url || "");
+      if (!url) return "";
+      const cap = node?.fields?.caption
+        ? `<p style="margin:14px 0 0">${escHtml(String(node.fields.caption))}</p>`
+        : "";
+      return `<blockquote class="instagram-media" data-instgrm-permalink="${escAttr(url)}" data-instgrm-version="14" style="background:#FFF;border:0;border-radius:3px;box-shadow:0 0 1px 0 rgba(0,0,0,0.5),0 1px 10px 0 rgba(0,0,0,0.15);margin:1px auto 32px;max-width:540px;min-width:326px;padding:0;width:99.375%"><a href="${escAttr(url)}" target="_blank" rel="noopener nofollow">Ver esta publicação no Instagram</a>${cap}</blockquote>`;
     },
     columns: ({ node }: any) => {
       const cols = [node?.fields?.col1, node?.fields?.col2, node?.fields?.col3].filter(
