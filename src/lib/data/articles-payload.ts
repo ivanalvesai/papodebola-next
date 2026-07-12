@@ -79,6 +79,34 @@ const lexicalConverters: any = ({ defaultConverters }: any) => ({
         : "";
       return `<blockquote class="instagram-media" data-instgrm-captioned data-instgrm-permalink="${escAttr(url)}" data-instgrm-version="14" style="background:#FFF;border:0;border-radius:3px;box-shadow:0 0 1px 0 rgba(0,0,0,0.5),0 1px 10px 0 rgba(0,0,0,0.15);margin:1px auto 32px;max-width:540px;min-width:326px;padding:0;width:99.375%"><a href="${escAttr(url)}" target="_blank" rel="noopener nofollow">Ver esta publicação no Instagram</a>${cap}</blockquote>`;
     },
+    // Escalação no campo: desenha um campinho e posiciona os titulares pela formação
+    // (ex.: 4-3-3). Os jogadores vêm na ordem goleiro→ataque; a formação define as linhas.
+    lineup: ({ node }: any) => {
+      const f = node?.fields || {};
+      const players = (f.players || []).filter((p: any) => p?.name);
+      if (!players.length) return "";
+      const team = escHtml(String(f.team || ""));
+      const formation = String(f.formation || "").trim();
+      const label = String(f.label || "").trim();
+      // Formação -> linhas de linha de fundo pra frente. Prefixa o goleiro (1).
+      const outfield = formation.split(/[^0-9]+/).filter(Boolean).map(Number).filter((n) => n > 0);
+      const lines = outfield.length ? [1, ...outfield] : [players.length];
+      const rows: any[][] = [];
+      let idx = 0;
+      for (const cnt of lines) {
+        rows.push(players.slice(idx, idx + cnt));
+        idx += cnt;
+      }
+      if (idx < players.length) rows[rows.length - 1].push(...players.slice(idx)); // sobra vai pro ataque
+      const playerHtml = (p: any) =>
+        `<span class="pdb-player"><span class="pdb-player-num">${escHtml(String(p.number || ""))}</span><span class="pdb-player-name">${escHtml(p.name)}</span></span>`;
+      const rowsHtml = rows
+        .map((r) => `<div class="pdb-pitch-line">${r.map(playerHtml).join("")}</div>`)
+        .join("");
+      const meta = [label, formation].filter(Boolean).map(escHtml).join(" · ");
+      const head = `<figcaption class="pdb-lineup-head"><span class="pdb-lineup-team">${team}</span>${meta ? `<span class="pdb-lineup-meta">${meta}</span>` : ""}</figcaption>`;
+      return `<figure class="pdb-lineup">${head}<div class="pdb-pitch">${rowsHtml}</div></figure>`;
+    },
     columns: ({ node }: any) => {
       const cols = [node?.fields?.col1, node?.fields?.col2, node?.fields?.col3].filter(
         (x: any) => x?.root?.children?.length

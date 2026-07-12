@@ -575,6 +575,39 @@ export default buildConfig({
                     ],
                   },
                   {
+                    slug: "lineup",
+                    labels: { singular: "Escalação no campo", plural: "Escalações no campo" },
+                    fields: [
+                      { name: "team", type: "text", required: true, label: "Time" },
+                      {
+                        name: "formation",
+                        type: "text",
+                        required: true,
+                        label: "Formação",
+                        admin: { description: "Ex.: 4-3-3, 4-2-3-1, 3-5-2. Define como os jogadores se posicionam no campo." },
+                      },
+                      {
+                        name: "label",
+                        type: "text",
+                        label: "Rótulo",
+                        defaultValue: "Provável",
+                        admin: { description: 'Ex.: "Provável" ou "Confirmada". Aparece ao lado da formação.' },
+                      },
+                      {
+                        name: "players",
+                        type: "array",
+                        label: "Jogadores (do goleiro para o ataque)",
+                        minRows: 1,
+                        maxRows: 11,
+                        admin: { description: "Liste os 11 titulares NA ORDEM: goleiro primeiro, depois defensores, meias e atacantes. É essa ordem que posiciona no campo." },
+                        fields: [
+                          { name: "name", type: "text", required: true, label: "Nome" },
+                          { name: "number", type: "text", label: "Número (opcional)" },
+                        ],
+                      },
+                    ],
+                  },
+                  {
                     slug: "columns",
                     labels: { singular: "Colunas", plural: "Colunas" },
                     fields: [
