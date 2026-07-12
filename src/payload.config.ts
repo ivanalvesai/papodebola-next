@@ -603,6 +603,12 @@ export default buildConfig({
                         fields: [
                           { name: "name", type: "text", required: true, label: "Nome" },
                           { name: "number", type: "text", label: "Número (opcional)" },
+                          {
+                            name: "playerId",
+                            type: "text",
+                            label: "ID do jogador (foto, opcional)",
+                            admin: { description: "ID na API esportiva (Sofascore). Preenchido → mostra a FOTO do jogador no campo. Vazio → mostra só o número." },
+                          },
                         ],
                       },
                     ],

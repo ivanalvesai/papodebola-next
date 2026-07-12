@@ -98,8 +98,14 @@ const lexicalConverters: any = ({ defaultConverters }: any) => ({
         idx += cnt;
       }
       if (idx < players.length) rows[rows.length - 1].push(...players.slice(idx)); // sobra vai pro ataque
-      const playerHtml = (p: any) =>
-        `<span class="pdb-player"><span class="pdb-player-num">${escHtml(String(p.number || ""))}</span><span class="pdb-player-name">${escHtml(p.name)}</span></span>`;
+      const playerHtml = (p: any) => {
+        const num = escHtml(String(p.number || ""));
+        const pid = String(p.playerId || "").trim();
+        const marker = pid
+          ? `<span class="pdb-player-photo"><img src="/api/player-img/${encodeURIComponent(pid)}" alt="${escAttr(p.name)}" loading="lazy" />${num ? `<span class="pdb-player-badge">${num}</span>` : ""}</span>`
+          : `<span class="pdb-player-num">${num}</span>`;
+        return `<span class="pdb-player">${marker}<span class="pdb-player-name">${escHtml(p.name)}</span></span>`;
+      };
       const rowsHtml = rows
         .map((r) => `<div class="pdb-pitch-line">${r.map(playerHtml).join("")}</div>`)
         .join("");
