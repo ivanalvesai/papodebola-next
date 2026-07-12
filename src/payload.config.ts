@@ -578,7 +578,17 @@ export default buildConfig({
                     slug: "lineup",
                     labels: { singular: "Escalação no campo", plural: "Escalações no campo" },
                     fields: [
-                      { name: "team", type: "text", required: true, label: "Time" },
+                      {
+                        name: "team",
+                        type: "text",
+                        required: true,
+                        label: "Time",
+                        admin: {
+                          components: {
+                            Field: "@/components/cms/lineup-team-field#LineupTeamField",
+                          },
+                        },
+                      },
                       {
                         name: "formation",
                         type: "text",

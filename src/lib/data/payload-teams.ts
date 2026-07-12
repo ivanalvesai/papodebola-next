@@ -75,6 +75,26 @@ export const getPayloadTeamSlugMap = cache(async (): Promise<Record<number, stri
   }
 });
 
+// Lista {id, name} de todos os times publicados (Série B). Usada pelo dropdown do bloco
+// "Escalação no campo" no editor (junto com os times do config = Série A/EU).
+export const getPayloadTeamsList = cache(async (): Promise<{ id: number; name: string }[]> => {
+  try {
+    const payload = await getPayload({ config });
+    const res = await payload.find({
+      collection: "teams",
+      where: { _status: { equals: "published" } },
+      limit: 500,
+      depth: 0,
+      pagination: false,
+    });
+    return (res.docs as unknown as PayloadTeam[])
+      .filter((d) => d.sofascoreId && d.name)
+      .map((d) => ({ id: d.sofascoreId, name: d.name }));
+  } catch {
+    return [];
+  }
+});
+
 // Identidade usada pela camada de dados (getTeamPageDataFor) a partir do doc do CMS.
 export function teamInfoFromDoc(doc: PayloadTeam): TeamInfo {
   return { id: doc.sofascoreId, name: doc.name, slug: doc.slug, tournament: doc.tournament };
