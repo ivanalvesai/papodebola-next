@@ -386,6 +386,17 @@ export function ArticleView({
           font-weight: 700; font-size: 14px; display: flex; align-items: center; justify-content: center;
           box-shadow: 0 1px 3px rgba(0,0,0,.4);
         }
+        /* Marcador com FOTO do jogador (quando há playerId). Círculo branco + número num selo. */
+        .prose-article .pdb-player-photo { position: relative; width: 46px; height: 46px; margin: 0 0 2px; }
+        .prose-article .pdb-player-photo img {
+          width: 46px; height: 46px; border-radius: 50%; object-fit: cover; object-position: top center;
+          background: #fff; box-shadow: 0 1px 3px rgba(0,0,0,.45); display: block; margin: 0;
+        }
+        .prose-article .pdb-player-badge {
+          position: absolute; bottom: -2px; right: -4px; min-width: 18px; height: 18px; padding: 0 4px;
+          border-radius: 9px; background: #00965E; color: #fff; font-size: 10px; font-weight: 700;
+          display: flex; align-items: center; justify-content: center; box-shadow: 0 1px 2px rgba(0,0,0,.4);
+        }
         .prose-article .pdb-player-name {
           font-size: 11px; line-height: 1.2; color: #fff; font-weight: 700;
           text-shadow: 0 1px 2px rgba(0,0,0,.6);
