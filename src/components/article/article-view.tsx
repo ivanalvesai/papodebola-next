@@ -360,6 +360,36 @@ export function ArticleView({
           display: block;
         }
         .prose-article figure { margin: 0 0 32px; }
+        /* Escalação no campo (bloco "lineup") — campinho com os titulares por formação. */
+        .prose-article figure.pdb-lineup { max-width: 460px; margin: 0 auto 32px; }
+        .prose-article .pdb-lineup-head {
+          display: flex; align-items: baseline; justify-content: space-between;
+          gap: 8px; margin-bottom: 8px; flex-wrap: wrap;
+        }
+        .prose-article .pdb-lineup-team { font-weight: 700; color: #1A1D23; font-size: 16px; }
+        .prose-article .pdb-lineup-meta { font-size: 13px; color: #00965E; font-weight: 700; }
+        .prose-article .pdb-pitch {
+          display: flex; flex-direction: column-reverse; justify-content: space-between;
+          gap: 6px; min-height: 460px; padding: 18px 6px; border-radius: 12px;
+          background:
+            linear-gradient(90deg, rgba(255,255,255,.18) 0 2px, transparent 2px) center/100% 100%,
+            repeating-linear-gradient(0deg, #2f9e52 0 46px, #2b9149 46px 92px);
+          box-shadow: inset 0 0 0 2px rgba(255,255,255,.25);
+        }
+        .prose-article .pdb-pitch-line { display: flex; justify-content: space-around; align-items: center; }
+        .prose-article .pdb-player {
+          display: flex; flex-direction: column; align-items: center;
+          width: 70px; text-align: center; gap: 4px;
+        }
+        .prose-article .pdb-player-num {
+          width: 34px; height: 34px; border-radius: 50%; background: #fff; color: #00965E;
+          font-weight: 700; font-size: 14px; display: flex; align-items: center; justify-content: center;
+          box-shadow: 0 1px 3px rgba(0,0,0,.4);
+        }
+        .prose-article .pdb-player-name {
+          font-size: 11px; line-height: 1.2; color: #fff; font-weight: 700;
+          text-shadow: 0 1px 2px rgba(0,0,0,.6);
+        }
         /* Alinhamento de imagens (classes do editor do WP). Sem isto, imagem menor
            que a coluna fica encostada na esquerda (img e display:block com margem
            lateral 0). Honra aligncenter/alignleft/alignright e o bloco Gutenberg. */
