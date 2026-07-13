@@ -223,7 +223,12 @@ export default function ChampionshipClient() {
       label: /^\d+$/.test(k) ? `Rodada ${k}` : k,
     }));
   const currentKey = data?.currentRoundKey || String(data?.currentRound || 1);
-  const roundMatches = data?.matchesByRound?.[selectedKey] || [];
+  // Mata-mata (ida/volta espalhados por dias): jogo mais RECENTE primeiro (a volta
+  // decisiva fica no topo). Rodada de grupo/liga: cronológico (mais antigo primeiro).
+  const selectedIsKO = !!data?.roundList?.find((r) => r.key === selectedKey)?.knockout;
+  const roundMatches = [...(data?.matchesByRound?.[selectedKey] || [])].sort((a, b) =>
+    selectedIsKO ? (b.timestamp || 0) - (a.timestamp || 0) : (a.timestamp || 0) - (b.timestamp || 0)
+  );
 
   return (
     <div className="mx-auto max-w-[1240px] px-4 py-8">
