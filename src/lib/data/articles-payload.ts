@@ -93,10 +93,13 @@ const lexicalConverters: any = ({ defaultConverters }: any) => ({
     tweet: ({ node }: any) => {
       const url = normalizeTweetUrl(node?.fields?.url || "");
       if (!url) return "";
-      const cap = node?.fields?.caption
-        ? `<p style="margin:14px 0 0">${escHtml(String(node.fields.caption))}</p>`
-        : "";
-      return `<blockquote class="twitter-tweet" data-dnt="true" data-lang="pt"><a href="${escAttr(url)}" target="_blank" rel="noopener nofollow">Ver post no X</a>${cap}</blockquote>`;
+      // A legenda (se houver) vira o TEXTO do link — o widgets.js substitui o
+      // blockquote inteiro pelo card; se não carregar, fica esse link. Nada de <p>
+      // solto (o widget do X não remove conteúdo extra, aí vazaria abaixo do card).
+      const label = node?.fields?.caption
+        ? escHtml(String(node.fields.caption))
+        : "Ver post no X";
+      return `<blockquote class="twitter-tweet" data-dnt="true" data-lang="pt"><a href="${escAttr(url)}" target="_blank" rel="noopener nofollow">${label}</a></blockquote>`;
     },
     // Escalação no campo: desenha um campinho e posiciona os titulares pela formação
     // (ex.: 4-3-3). Os jogadores vêm na ordem goleiro→ataque; a formação define as linhas.
