@@ -9,10 +9,12 @@ import type { ChampionshipMatch } from "@/types/match";
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
 // Rótulos PT dos rounds de mata-mata (por slug da API). Fallback: o `name` da API.
+// Convenção "avos de final": o número = quantidade de CONFRONTOS (= times/2). Logo,
+// Round of 32 (32 times, 16 jogos) = "16 avos de final".
 const KO_LABEL: Record<string, string> = {
-  "round-of-128": "128 avos de final",
-  "round-of-64": "64 avos de final",
-  "round-of-32": "32 avos de final",
+  "round-of-128": "64 avos de final",
+  "round-of-64": "32 avos de final",
+  "round-of-32": "16 avos de final",
   "round-of-16": "Oitavas de final",
   quarterfinals: "Quartas de final",
   "quarter-finals": "Quartas de final",
