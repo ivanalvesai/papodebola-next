@@ -3,10 +3,67 @@ import { TOURNAMENT_BY_SLUG } from "@/lib/config";
 import { translateStatus } from "@/lib/translations";
 import { getStandings } from "./standings";
 import { withSnapshot } from "./snapshot-store";
-import type { ChampionshipData } from "@/types/tournament";
+import type { ChampionshipData, RoundRef } from "@/types/tournament";
 import type { ChampionshipMatch } from "@/types/match";
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
+
+// Rótulos PT dos rounds de mata-mata (por slug da API). Fallback: o `name` da API.
+// Convenção "avos de final": o número = quantidade de CONFRONTOS (= times/2). Logo,
+// Round of 32 (32 times, 16 jogos) = "16 avos de final".
+const KO_LABEL: Record<string, string> = {
+  "round-of-128": "64 avos de final",
+  "round-of-64": "32 avos de final",
+  "round-of-32": "16 avos de final",
+  "round-of-16": "Oitavas de final",
+  quarterfinals: "Quartas de final",
+  "quarter-finals": "Quartas de final",
+  semifinals: "Semifinal",
+  "semi-finals": "Semifinal",
+  final: "Final",
+  "3rd-place": "Disputa de 3º lugar",
+  "third-place": "Disputa de 3º lugar",
+};
+// Ordem do chaveamento (pra listar 32avos → oitavas → quartas → semi → final).
+const KO_RANK: Record<string, number> = {
+  "round-of-128": 1,
+  "round-of-64": 2,
+  "round-of-32": 3,
+  "round-of-16": 4,
+  quarterfinals: 5,
+  "quarter-finals": 5,
+  semifinals: 6,
+  "semi-finals": 6,
+  "3rd-place": 7,
+  "third-place": 7,
+  final: 8,
+};
+const koLabel = (slug?: string, name?: string) =>
+  (slug && KO_LABEL[slug]) || name || "Fase final";
+
+// Monta a lista ordenada de rounds (grupos por número; mata-mata por chaveamento).
+function buildRoundList(apiRounds: any[]): { list: RoundRef[]; groupRounds: number[] } {
+  const group: RoundRef[] = [];
+  const ko: RoundRef[] = [];
+  for (const r of apiRounds || []) {
+    if (r?.slug) {
+      ko.push({ key: r.slug, round: r.round, slug: r.slug, label: koLabel(r.slug, r.name), knockout: true });
+    } else if (typeof r?.round === "number") {
+      group.push({ key: String(r.round), round: r.round, label: `Rodada ${r.round}`, knockout: false });
+    }
+  }
+  group.sort((a, b) => a.round - b.round);
+  ko.sort((a, b) => (KO_RANK[a.slug!] ?? 99) - (KO_RANK[b.slug!] ?? 99));
+  return { list: [...group, ...ko], groupRounds: group.map((r) => r.round) };
+}
+
+// Path do feed de jogos de um round (mata-mata precisa do slug pra não colidir com a
+// rodada de grupo de mesmo número).
+function roundMatchesPath(id: number, seasonId: number, ref: RoundRef): string {
+  return ref.knockout
+    ? `tournament/${id}/season/${seasonId}/matches/round/${ref.round}/slug/${ref.slug}`
+    : `tournament/${id}/season/${seasonId}/matches/round/${ref.round}`;
+}
 
 function normalizeMatch(event: any, round: number): ChampionshipMatch {
   return {
@@ -61,10 +118,13 @@ export async function getChampionshipLiveScores(
   if (!inWindow) return [];
 
   const { id, seasonId } = tournament;
-  const cr = cd.currentRound || 1;
+  // Round atual pode ser mata-mata (precisa do slug). Usa o roundList/currentRoundKey.
+  const curRef =
+    (cd.roundList || []).find((r) => r.key === cd.currentRoundKey) ||
+    ({ key: String(cd.currentRound || 1), round: cd.currentRound || 1, label: "", knockout: false } as RoundRef);
 
   const data = await fetchAllSports<any>(
-    `tournament/${id}/season/${seasonId}/matches/round/${cr}`,
+    roundMatchesPath(id, seasonId, curRef),
     20 // curto: placar ao vivo
   );
   return (data?.events || []).map((e: any) => ({
@@ -102,37 +162,57 @@ async function fetchChampionshipDataLive(
   );
 
   const currentRound = roundsData?.currentRound?.round || 1;
-  const totalRounds = roundsData?.rounds?.length || 38;
-  const rounds = Array.from({ length: totalRounds }, (_, i) => i + 1);
+  const currentRoundKey = roundsData?.currentRound?.slug || String(currentRound);
+  const { list: allRounds, groupRounds } = buildRoundList(roundsData?.rounds || []);
+  const hasKnockout = allRounds.some((r) => r.knockout);
+  // Fallback (API não trouxe rounds): liga sequencial de 38 rodadas.
+  const roundRefs: RoundRef[] = allRounds.length
+    ? allRounds
+    : Array.from({ length: 38 }, (_, i) => ({ key: String(i + 1), round: i + 1, label: `Rodada ${i + 1}`, knockout: false }));
 
-  // Fetch standings
+  // Fetch standings (pode ter N grupos — Série D tem 16)
   const standings = await getStandings(id, seasonId, 21600);
 
-  // Rodadas 1..currentRound+1 em PARALELO (sem sleep). Antes era um loop sequencial com
-  // await sleep(250) por rodada → ~N×250ms de latência FIXA em toda página de jogo de
-  // liga (medido ~5s p/ Série A/B). O semáforo do fetchAllSports já limita a 2 simultâneas
-  // + retry em 429, então o paralelo é seguro. Mesma otimização já feita em getWorldCupFixtures.
-  // Past rounds (< currentRound) nunca mudam → TTL 24h; atual/próxima → 6h.
-  const endRound = Math.min(totalRounds, currentRound + 1);
+  // Quais rounds buscar:
+  // - Torneio com mata-mata (Série D): busca TODOS os rounds de grupo (fase curta, ~10) +
+  //   todos os do mata-mata. A "current" aponta pro KO, então o antigo "currentRound+1"
+  //   não serve.
+  // - Liga sequencial (Série A/B/C): mantém a otimização — só até currentRound+1 (evita
+  //   38 requests). Rounds futuros continuam no seletor, só sem jogos carregados ainda.
+  const groupRefs = roundRefs.filter((r) => !r.knockout);
+  const koRefs = roundRefs.filter((r) => r.knockout);
+  const groupToFetch = hasKnockout
+    ? groupRefs
+    : groupRefs.filter((r) => r.round <= Math.min(groupRefs.length || 38, currentRound + 1));
+  const toFetch = [...groupToFetch, ...koRefs];
+
+  // Em PARALELO (o semáforo do fetchAllSports limita a 2 simultâneas + retry em 429).
+  // Past group rounds (< current) TTL 24h; atual/próxima e mata-mata → 6h.
   const roundData = await Promise.all(
-    Array.from({ length: endRound }, (_, i) => i + 1).map((r) =>
+    toFetch.map((ref) =>
       fetchAllSports<any>(
-        `tournament/${id}/season/${seasonId}/matches/round/${r}`,
-        r < currentRound ? 86400 : 21600
-      ).then((data) => ({ r, data }))
+        roundMatchesPath(id, seasonId, ref),
+        !ref.knockout && ref.round < currentRound ? 86400 : 21600
+      ).then((data) => ({ ref, data }))
     )
   );
-  const matchesByRound: Record<number, ChampionshipMatch[]> = {};
-  for (const { r, data } of roundData) {
-    if (data?.events) {
-      matchesByRound[r] = data.events.map((e: any) => normalizeMatch(e, r));
+  const matchesByRound: Record<string, ChampionshipMatch[]> = {};
+  for (const { ref, data } of roundData) {
+    if (data?.events?.length) {
+      matchesByRound[ref.key] = data.events.map((e: any) => normalizeMatch(e, ref.round));
     }
   }
 
+  // Dropa APENAS rounds de mata-mata sem jogos (ex.: "Round of 64" placeholder vazio).
+  // Rounds de grupo ficam no seletor mesmo sem jogos carregados (ligas sequenciais).
+  const roundList = roundRefs.filter((r) => !r.knockout || matchesByRound[r.key]?.length);
+
   return {
     tournament: { id, seasonId, name },
-    rounds,
+    rounds: groupRounds.length ? groupRounds : roundRefs.filter((r) => !r.knockout).map((r) => r.round),
+    roundList,
     currentRound,
+    currentRoundKey,
     standings,
     matchesByRound,
     updatedAt: new Date().toISOString(),

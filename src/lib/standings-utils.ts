@@ -5,10 +5,12 @@ import type { ChampionshipMatch } from "@/types/match";
 
 export function enrichStandingsWithForm(
   standings: StandingsGroup[],
-  matchesByRound: Record<number, ChampionshipMatch[]>,
+  matchesByRound: Record<string, ChampionshipMatch[]>,
   currentRound: number
 ): StandingsGroup[] {
-  const rounds = Object.keys(matchesByRound).map(Number).sort((a, b) => a - b);
+  // Só rounds de GRUPO/LIGA (chave numérica). Mata-mata tem chave slug ("round-of-32")
+  // → vira NaN e é ignorado (não conta no form/posição da fase de grupos).
+  const rounds = Object.keys(matchesByRound).map(Number).filter(Number.isFinite).sort((a, b) => a - b);
 
   return standings.map((group) => ({
     ...group,
@@ -22,7 +24,7 @@ export function enrichStandingsWithForm(
 
 function calcForm(
   teamId: number,
-  matchesByRound: Record<number, ChampionshipMatch[]>,
+  matchesByRound: Record<string, ChampionshipMatch[]>,
   rounds: number[],
   currentRound: number
 ): FormResult[] {
@@ -50,7 +52,7 @@ function calcForm(
 
 function calcPosChange(
   row: StandingRow,
-  matchesByRound: Record<number, ChampionshipMatch[]>,
+  matchesByRound: Record<string, ChampionshipMatch[]>,
   rounds: number[],
   currentRound: number
 ): number {
