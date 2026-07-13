@@ -6,14 +6,118 @@ import { useParams } from "next/navigation";
 import { TOURNAMENT_BY_SLUG, TEAM_BY_ID } from "@/lib/config";
 import { matchDateSlug, matchPairSlug } from "@/lib/world-cup-match-url";
 import { enrichStandingsWithForm } from "@/lib/standings-utils";
-import { RoundNav } from "@/components/championship/round-nav";
+import { RoundNav, type RoundNavItem } from "@/components/championship/round-nav";
 import { PageBreadcrumb } from "@/components/seo/page-breadcrumb";
 import { TeamLogo } from "@/components/ui/team-logo";
 import { ChevronUp, ChevronDown, Minus, ChevronRight } from "lucide-react";
 import type { ChampionshipData } from "@/types/tournament";
-import type { StandingRow, FormResult } from "@/types/standings";
+import type { StandingsGroup, StandingRow, FormResult } from "@/types/standings";
 import type { ChampionshipMatch } from "@/types/match";
 import type { ChampionshipLiveScore } from "@/lib/data/championship";
+
+// "Brasileiro Serie D 2026, Group A1" -> "Grupo A1". Sem "Group" -> retorna vazio
+// (tabela única: não mostra cabeçalho de grupo).
+function cleanGroupName(name: string): string {
+  const m = name.match(/Group\s+([A-Za-z]?\d+[A-Za-z]?)/i);
+  return m ? `Grupo ${m[1].toUpperCase()}` : "";
+}
+
+// Tabela de classificação de UM grupo. groupMode = torneio com vários grupos
+// (top-2 classifica, verde). Tabela única (liga) mantém acesso/rebaixamento.
+function StandingsTable({
+  rows,
+  groupMode,
+  payloadTeamSlugs,
+}: {
+  rows: StandingRow[];
+  groupMode: boolean;
+  payloadTeamSlugs?: Record<number, string>;
+}) {
+  return (
+    <div className="overflow-x-auto">
+      <table className="w-full text-xs">
+        <thead>
+          <tr className="text-text-muted border-b border-border-light">
+            <th className="text-left py-2 px-2 font-semibold w-8">#</th>
+            <th className="text-left py-2 px-2 font-semibold">Time</th>
+            <th className="py-2 px-1 font-semibold">P</th>
+            <th className="py-2 px-1 font-semibold">J</th>
+            <th className="py-2 px-1 font-semibold">V</th>
+            <th className="py-2 px-1 font-semibold">E</th>
+            <th className="py-2 px-1 font-semibold">D</th>
+            <th className="py-2 px-1 font-semibold">GP</th>
+            <th className="py-2 px-1 font-semibold">GC</th>
+            <th className="py-2 px-1 font-semibold">SG</th>
+            <th className="py-2 px-1 font-semibold text-center">Resultados</th>
+          </tr>
+        </thead>
+        <tbody>
+          {rows.map((r: StandingRow) => {
+            let border = "";
+            if (groupMode) {
+              // Top 2 de cada grupo avançam ao mata-mata.
+              if (r.pos <= 2) border = "border-l-2 border-l-green";
+            } else {
+              if (r.pos <= 4) border = "border-l-2 border-l-green";
+              else if (r.pos <= 6) border = "border-l-2 border-l-orange";
+              else if (r.pos >= rows.length - 3) border = "border-l-2 border-l-red";
+            }
+            const slug = TEAM_BY_ID[r.teamId]?.slug || payloadTeamSlugs?.[r.teamId];
+
+            return (
+              <tr key={r.teamId} className={`border-b border-border-light last:border-0 hover:bg-card-hover ${border}`}>
+                <td className="py-2 px-2">
+                  <div className="flex items-center gap-0.5">
+                    <span className="font-semibold text-text-muted w-4 text-center">{r.pos}</span>
+                    {r.posChange > 0 && <ChevronUp className="h-3 w-3 text-green" />}
+                    {r.posChange < 0 && <ChevronDown className="h-3 w-3 text-red" />}
+                    {r.posChange === 0 && <Minus className="h-2.5 w-2.5 text-text-muted opacity-30" />}
+                  </div>
+                </td>
+                <td className="py-2 px-2">
+                  {slug ? (
+                    <Link href={`/futebol/times/${slug}`} className="flex items-center gap-2 hover:text-green">
+                      <TeamLogo teamId={r.teamId} size={18} />
+                      <span className="font-semibold text-text-primary">{r.team}</span>
+                    </Link>
+                  ) : (
+                    <div className="flex items-center gap-2">
+                      <TeamLogo teamId={r.teamId} size={18} />
+                      <span className="font-semibold text-text-primary">{r.team}</span>
+                    </div>
+                  )}
+                </td>
+                <td className="py-2 px-1 text-center font-bold">{r.pts}</td>
+                <td className="py-2 px-1 text-center text-text-muted">{r.matches}</td>
+                <td className="py-2 px-1 text-center text-text-muted">{r.wins}</td>
+                <td className="py-2 px-1 text-center text-text-muted">{r.draws}</td>
+                <td className="py-2 px-1 text-center text-text-muted">{r.losses}</td>
+                <td className="py-2 px-1 text-center text-text-muted">{r.gf}</td>
+                <td className="py-2 px-1 text-center text-text-muted">{r.ga}</td>
+                <td className="py-2 px-1 text-center text-text-muted">{r.gd > 0 ? `+${r.gd}` : r.gd}</td>
+                <td className="py-2 px-1">
+                  <div className="flex items-center justify-center gap-0.5">
+                    {(r.recentForm || []).length > 0 ? (
+                      [...(r.recentForm as FormResult[])].reverse().map((f: FormResult, i: number) => (
+                        <span
+                          key={i}
+                          className={`inline-block w-2.5 h-2.5 rounded-full ${f === "W" ? "bg-green" : f === "L" ? "bg-red" : "bg-text-muted"}`}
+                          title={f === "W" ? "Vitoria" : f === "L" ? "Derrota" : "Empate"}
+                        />
+                      ))
+                    ) : (
+                      <span className="text-[9px] text-text-muted">-</span>
+                    )}
+                  </div>
+                </td>
+              </tr>
+            );
+          })}
+        </tbody>
+      </table>
+    </div>
+  );
+}
 
 export default function ChampionshipClient() {
   const params = useParams();
@@ -22,7 +126,7 @@ export default function ChampionshipClient() {
 
   const [data, setData] = useState<ChampionshipData | null>(null);
   const [loading, setLoading] = useState(true);
-  const [selectedRound, setSelectedRound] = useState(1);
+  const [selectedKey, setSelectedKey] = useState<string>("1");
   // Placar/status ao vivo da rodada atual (polling 30s) → selo AO VIVO + placar na tabela.
   const [liveScores, setLiveScores] = useState<Record<number, ChampionshipLiveScore>>({});
 
@@ -32,9 +136,9 @@ export default function ChampionshipClient() {
 
     fetch(`/api/championship/${slug}`)
       .then((r) => r.json())
-      .then((d) => {
+      .then((d: ChampionshipData) => {
         setData(d);
-        setSelectedRound(d.currentRound || 1);
+        setSelectedKey(d.currentRoundKey || String(d.currentRound || 1));
       })
       .catch(() => {})
       .finally(() => setLoading(false));
@@ -105,20 +209,27 @@ export default function ChampionshipClient() {
   }
 
   // Enrich standings with form from already-loaded matches — zero extra requests
-  const enriched = data
+  const enriched: StandingsGroup[] = data
     ? enrichStandingsWithForm(data.standings || [], data.matchesByRound || {}, data.currentRound || 1)
     : [];
-  const standings = enriched[0]?.rows || [];
-  const roundMatches = data?.matchesByRound?.[selectedRound] || [];
+  const groupMode = enriched.length > 1;
+
+  // Seletor de rounds: usa o roundList (grupos + mata-mata com rótulo). Fallback: deriva
+  // das chaves de matchesByRound (snapshot antigo sem roundList).
+  const roundItems: RoundNavItem[] =
+    data?.roundList?.map((r) => ({ key: r.key, label: r.label })) ||
+    Object.keys(data?.matchesByRound || {}).map((k) => ({
+      key: k,
+      label: /^\d+$/.test(k) ? `Rodada ${k}` : k,
+    }));
+  const currentKey = data?.currentRoundKey || String(data?.currentRound || 1);
+  const roundMatches = data?.matchesByRound?.[selectedKey] || [];
 
   return (
     <div className="mx-auto max-w-[1240px] px-4 py-8">
       <PageBreadcrumb
         className="mb-4"
-        items={[
-          { label: "Início", href: "/" },
-          { label: tournament.name },
-        ]}
+        items={[{ label: "Início", href: "/" }, { label: tournament.name }]}
       />
       <h1 className="text-xl font-bold text-text-primary mb-6">{tournament.name}</h1>
 
@@ -126,97 +237,40 @@ export default function ChampionshipClient() {
         {/* Standings */}
         <div className="bg-card-bg rounded-lg border border-border-custom">
           <h2 className="text-sm font-bold text-text-primary px-4 py-3 border-b border-border-custom">
-            Classificacao
+            Classificação
+            {groupMode && (
+              <span className="ml-2 text-[11px] font-medium text-text-muted">
+                · Fase de grupos ({enriched.length} grupos · top 2 avançam)
+              </span>
+            )}
           </h2>
-          {standings.length === 0 ? (
+          {enriched.length === 0 ? (
             <p className="text-text-muted text-sm text-center py-6">Classificação indisponível</p>
-          ) : (
-            <div className="overflow-x-auto">
-              <table className="w-full text-xs">
-                <thead>
-                  <tr className="text-text-muted border-b border-border-light">
-                    <th className="text-left py-2 px-2 font-semibold w-8">#</th>
-                    <th className="text-left py-2 px-2 font-semibold">Time</th>
-                    <th className="py-2 px-1 font-semibold">P</th>
-                    <th className="py-2 px-1 font-semibold">J</th>
-                    <th className="py-2 px-1 font-semibold">V</th>
-                    <th className="py-2 px-1 font-semibold">E</th>
-                    <th className="py-2 px-1 font-semibold">D</th>
-                    <th className="py-2 px-1 font-semibold">GP</th>
-                    <th className="py-2 px-1 font-semibold">GC</th>
-                    <th className="py-2 px-1 font-semibold">SG</th>
-                    <th className="py-2 px-1 font-semibold text-center">Resultados</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {standings.map((r: StandingRow) => {
-                    let border = "";
-                    if (r.pos <= 4) border = "border-l-2 border-l-green";
-                    else if (r.pos <= 6) border = "border-l-2 border-l-orange";
-                    else if (r.pos >= standings.length - 3) border = "border-l-2 border-l-red";
-
-                    return (
-                      <tr key={r.teamId} className={`border-b border-border-light last:border-0 hover:bg-card-hover ${border}`}>
-                        <td className="py-2 px-2">
-                          <div className="flex items-center gap-0.5">
-                            <span className="font-semibold text-text-muted w-4 text-center">{r.pos}</span>
-                            {r.posChange > 0 && <ChevronUp className="h-3 w-3 text-green" />}
-                            {r.posChange < 0 && <ChevronDown className="h-3 w-3 text-red" />}
-                            {r.posChange === 0 && <Minus className="h-2.5 w-2.5 text-text-muted opacity-30" />}
-                          </div>
-                        </td>
-                        <td className="py-2 px-2">
-                          {(TEAM_BY_ID[r.teamId]?.slug || data?.payloadTeamSlugs?.[r.teamId]) ? (
-                            <Link
-                              href={`/futebol/times/${TEAM_BY_ID[r.teamId]?.slug || data?.payloadTeamSlugs?.[r.teamId]}`}
-                              className="flex items-center gap-2 hover:text-green"
-                            >
-                              <TeamLogo teamId={r.teamId} size={18} />
-                              <span className="font-semibold text-text-primary">{r.team}</span>
-                            </Link>
-                          ) : (
-                            <div className="flex items-center gap-2">
-                              <TeamLogo teamId={r.teamId} size={18} />
-                              <span className="font-semibold text-text-primary">{r.team}</span>
-                            </div>
-                          )}
-                        </td>
-                        <td className="py-2 px-1 text-center font-bold">{r.pts}</td>
-                        <td className="py-2 px-1 text-center text-text-muted">{r.matches}</td>
-                        <td className="py-2 px-1 text-center text-text-muted">{r.wins}</td>
-                        <td className="py-2 px-1 text-center text-text-muted">{r.draws}</td>
-                        <td className="py-2 px-1 text-center text-text-muted">{r.losses}</td>
-                        <td className="py-2 px-1 text-center text-text-muted">{r.gf}</td>
-                        <td className="py-2 px-1 text-center text-text-muted">{r.ga}</td>
-                        <td className="py-2 px-1 text-center text-text-muted">{r.gd > 0 ? `+${r.gd}` : r.gd}</td>
-                        <td className="py-2 px-1">
-                          <div className="flex items-center justify-center gap-0.5">
-                            {(r.recentForm || []).length > 0
-                              ? ([...(r.recentForm as FormResult[])].reverse()).map((f: FormResult, i: number) => (
-                                  <span key={i} className={`inline-block w-2.5 h-2.5 rounded-full ${f === "W" ? "bg-green" : f === "L" ? "bg-red" : "bg-text-muted"}`} title={f === "W" ? "Vitoria" : f === "L" ? "Derrota" : "Empate"} />
-                                ))
-                              : <span className="text-[9px] text-text-muted">-</span>
-                            }
-                          </div>
-                        </td>
-                      </tr>
-                    );
-                  })}
-                </tbody>
-              </table>
+          ) : groupMode ? (
+            <div className="divide-y divide-border-custom">
+              {enriched.map((group, gi) => (
+                <div key={group.name || gi}>
+                  <h3 className="text-xs font-bold text-green px-4 py-2 bg-body/60">
+                    {cleanGroupName(group.name) || `Grupo ${gi + 1}`}
+                  </h3>
+                  <StandingsTable rows={group.rows} groupMode payloadTeamSlugs={data?.payloadTeamSlugs} />
+                </div>
+              ))}
             </div>
+          ) : (
+            <StandingsTable rows={enriched[0].rows} groupMode={false} payloadTeamSlugs={data?.payloadTeamSlugs} />
           )}
         </div>
 
         {/* Matches by round */}
         <div className="bg-card-bg rounded-lg border border-border-custom">
           <div className="px-4 py-3 border-b border-border-custom">
-            {data && (
+            {roundItems.length > 0 && (
               <RoundNav
-                rounds={data.rounds}
-                currentRound={data.currentRound}
-                selectedRound={selectedRound}
-                onRoundChange={setSelectedRound}
+                rounds={roundItems}
+                currentKey={currentKey}
+                selectedKey={selectedKey}
+                onChange={setSelectedKey}
               />
             )}
           </div>

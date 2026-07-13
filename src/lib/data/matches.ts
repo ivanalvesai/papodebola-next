@@ -410,10 +410,14 @@ const FUTEBOL_TODAY_ORDER = [
 // ligas RELEVANTES (FUTEBOL_TODAY_ORDER) — NUNCA o feed global (matches/live traz
 // centenas de ligas menores do mundo). Com link pro lance a lance. Evita o "todos os
 // jogos do mundo" na barra (que aparecia quando a Copa entrou no mata-mata ou em hiccup).
+// Ligas que NÃO entram na barra ao vivo da HOME (mas seguem em /futebol e na própria
+// página do campeonato). Série D fica fora da home a pedido (muitos jogos, poluiria a barra).
+const HOME_BAR_EXCLUDE = new Set([10326]); // Brasileirão Série D
+
 export function relevantBarMatches(matches: NormalizedMatch[]): NormalizedMatch[] {
   const allow = new Set(FUTEBOL_TODAY_ORDER);
   return matches
-    .filter((m) => m.leagueId != null && allow.has(m.leagueId))
+    .filter((m) => m.leagueId != null && allow.has(m.leagueId) && !HOME_BAR_EXCLUDE.has(m.leagueId))
     .map((m) => ({ ...m, href: m.href ?? leagueMatchHref(m) }))
     .sort(sortForBar);
 }
