@@ -575,6 +575,31 @@ export default buildConfig({
                     ],
                   },
                   {
+                    slug: "tweet",
+                    labels: { singular: "Post do X (Twitter)", plural: "Posts do X (Twitter)" },
+                    fields: [
+                      {
+                        name: "url",
+                        type: "text",
+                        required: true,
+                        label: "Link do post do X",
+                        admin: {
+                          description:
+                            "Cole o link do post do X/Twitter (ex.: https://x.com/usuario/status/123456789). O card mostra o post oficial, igual ao do ge.",
+                        },
+                      },
+                      {
+                        name: "caption",
+                        type: "textarea",
+                        label: "Texto de reserva (opcional)",
+                        admin: {
+                          description:
+                            "Exibido só se o X não carregar (rede/bloqueio). Opcional — o normal é o próprio card do X trazer o conteúdo do post.",
+                        },
+                      },
+                    ],
+                  },
+                  {
                     slug: "lineup",
                     labels: { singular: "Escalação no campo", plural: "Escalações no campo" },
                     fields: [

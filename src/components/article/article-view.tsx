@@ -6,6 +6,7 @@ import { slugifyCategory, WP_CATEGORY_BY_SLUG } from "@/lib/config";
 import type { getBrasileiraoStandings } from "@/lib/data/standings";
 import { ShareButtons } from "@/components/article/share-buttons";
 import { InstagramEmbedLoader } from "@/components/article/instagram-embed";
+import { TweetEmbedLoader } from "@/components/article/x-embed";
 import { ArticleSchema } from "@/components/seo/article-schema";
 import { PageBreadcrumb } from "@/components/seo/page-breadcrumb";
 import { StandingsWidget } from "@/components/sidebar/standings-widget";
@@ -196,6 +197,7 @@ export function ArticleView({
           {article.category === "Casas de Apostas" && <BettingDisclaimer className="mb-6" />}
           <article className="prose-article" dangerouslySetInnerHTML={{ __html: bodyHtml }} />
           {bodyHtml.includes("instagram-media") && <InstagramEmbedLoader />}
+          {bodyHtml.includes("twitter-tweet") && <TweetEmbedLoader />}
 
           {/* Tags */}
           {article.tags && article.tags.length > 0 && (
@@ -346,6 +348,15 @@ export function ArticleView({
         /* Card do Instagram (blockquote.instagram-media): sem a decoração de citação
            do site. Antes do embed.js trocar pelo card, fica um bloco limpo com o link. */
         .prose-article blockquote.instagram-media {
+          border-left: 0;
+          padding: 0;
+          margin: 1px auto 32px;
+          color: inherit;
+          font-style: normal;
+        }
+        /* Card do X (blockquote.twitter-tweet): sem a decoração de citação do site.
+           Antes do widgets.js trocar pelo card, fica um bloco limpo com o link. */
+        .prose-article blockquote.twitter-tweet {
           border-left: 0;
           padding: 0;
           margin: 1px auto 32px;

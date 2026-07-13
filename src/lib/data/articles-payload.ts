@@ -44,6 +44,14 @@ function normalizeInstagramUrl(url: string): string {
   return `https://www.instagram.com/${m[1].toLowerCase()}/${m[2]}/`;
 }
 
+// Link de post do X/Twitter (x.com ou twitter.com) -> URL canônica do status. O
+// widgets.js do X renderiza o card a partir dessa URL. Aceita query params (?s=).
+function normalizeTweetUrl(url: string): string {
+  const m = String(url || "").match(/(?:twitter|x)\.com\/([A-Za-z0-9_]+)\/status\/(\d+)/i);
+  if (!m) return "";
+  return `https://twitter.com/${m[1]}/status/${m[2]}`;
+}
+
 // URL do YouTube/Vimeo -> URL de embed (iframe).
 function videoEmbedSrc(url: string): string {
   if (!url) return "";
@@ -78,6 +86,17 @@ const lexicalConverters: any = ({ defaultConverters }: any) => ({
         ? `<p style="margin:14px 0 0">${escHtml(String(node.fields.caption))}</p>`
         : "";
       return `<blockquote class="instagram-media" data-instgrm-captioned data-instgrm-permalink="${escAttr(url)}" data-instgrm-version="14" style="background:#FFF;border:0;border-radius:3px;box-shadow:0 0 1px 0 rgba(0,0,0,0.5),0 1px 10px 0 rgba(0,0,0,0.15);margin:1px auto 32px;max-width:540px;min-width:326px;padding:0;width:99.375%"><a href="${escAttr(url)}" target="_blank" rel="noopener nofollow">Ver esta publicação no Instagram</a>${cap}</blockquote>`;
+    },
+    // Card do X (Twitter): blockquote oficial (twitter-tweet). O widgets.js (carregado
+    // pelo TweetEmbedLoader no article-view) troca o blockquote pelo card do post a partir
+    // da URL do status. Se não carregar, fica o link + o texto de reserva (opcional).
+    tweet: ({ node }: any) => {
+      const url = normalizeTweetUrl(node?.fields?.url || "");
+      if (!url) return "";
+      const cap = node?.fields?.caption
+        ? `<p style="margin:14px 0 0">${escHtml(String(node.fields.caption))}</p>`
+        : "";
+      return `<blockquote class="twitter-tweet" data-dnt="true" data-lang="pt"><a href="${escAttr(url)}" target="_blank" rel="noopener nofollow">Ver post no X</a>${cap}</blockquote>`;
     },
     // Escalação no campo: desenha um campinho e posiciona os titulares pela formação
     // (ex.: 4-3-3). Os jogadores vêm na ordem goleiro→ataque; a formação define as linhas.
