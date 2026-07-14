@@ -467,10 +467,10 @@ export function ArticleView({
         .prose-article tr:nth-child(even) td { background: #f6f9f8; }
         .prose-article tr:last-child td { border-bottom: 0; }
         /* Primeira coluna = cabeçalho verde, MESMO em linhas adicionadas à mão no editor
-           (que vêm como célula normal <td>, sem o estado "header"). Assim o redator só
+           (que vêm como célula normal td, sem o estado "header"). Assim o redator só
            adiciona a linha e a coluna "Informação" já sai verde — sem marcar header por
-           célula. `tr td:first-child` iguala a especificidade da regra de zebra acima e
-           vence por ordem de fonte (senão as linhas pares ficariam cinza). */
+           célula. O seletor tr td:first-child iguala a especificidade da regra de zebra
+           acima e vence por ordem de fonte (senão as linhas pares ficariam cinza). */
         .prose-article tr td:first-child {
           background: #00965E;
           color: #fff;
