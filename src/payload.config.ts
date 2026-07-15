@@ -70,6 +70,287 @@ const teamLayoutTab = (name: string, label: string): Field => ({
 
 // Payload (Fase 1 da migração). Admin em /cms e API em /cms-api pra NÃO colidir
 // com o /admin (404 no middleware) nem com as rotas em /api do app. Postgres.
+// Editor rich text COMPLETO (mesmos cards: video, Instagram, X, escalacao, colunas,
+// destaque, tabela) — compartilhado por POSTS e PAGINAS do CMS (bloco Texto).
+const richTextEditor = lexicalEditor({
+            features: ({ defaultFeatures }) => [
+              ...defaultFeatures,
+              // Tabelas nativas no editor (botão + menu "/").
+              EXPERIMENTAL_TableFeature(),
+              // Imagem com campo de Alinhamento (Centro/Esquerda/Direita) na inserção.
+              UploadFeature({
+                collections: {
+                  media: {
+                    fields: [
+                      {
+                        name: "alignment",
+                        type: "select",
+                        label: "Alinhamento",
+                        defaultValue: "center",
+                        options: [
+                          { label: "Centro", value: "center" },
+                          { label: "Esquerda", value: "left" },
+                          { label: "Direita", value: "right" },
+                        ],
+                      },
+                      {
+                        name: "caption",
+                        type: "text",
+                        label: "Legenda / crédito (opcional)",
+                        admin: { description: 'Ex.: "Foto: Divulgação / FIFA". Aparece embaixo da imagem.' },
+                      },
+                    ],
+                  },
+                },
+              }),
+              // Blocos reutilizáveis inseríveis pelo menu "+" / "/": vídeo, colunas, destaque.
+              BlocksFeature({
+                blocks: [
+                  {
+                    slug: "video",
+                    labels: { singular: "Vídeo (YouTube/Vimeo)", plural: "Vídeos" },
+                    fields: [
+                      {
+                        name: "url",
+                        type: "text",
+                        required: true,
+                        label: "URL do vídeo",
+                        admin: { description: "Cole o link do YouTube ou Vimeo" },
+                      },
+                      { name: "caption", type: "text", label: "Legenda (opcional)" },
+                    ],
+                  },
+                  {
+                    slug: "instagram",
+                    labels: { singular: "Post do Instagram", plural: "Posts do Instagram" },
+                    fields: [
+                      {
+                        name: "url",
+                        type: "text",
+                        required: true,
+                        label: "Link do post do Instagram",
+                        admin: {
+                          description:
+                            "Cole o link do post ou reel (ex.: https://www.instagram.com/p/XXXXXXX/). O card mostra a foto e a legenda completa, igual ao do ge.",
+                        },
+                      },
+                      {
+                        name: "caption",
+                        type: "textarea",
+                        label: "Legenda de reserva (opcional)",
+                        admin: {
+                          description:
+                            "Texto exibido só se o Instagram não carregar (rede/bloqueio). Opcional — o normal é o próprio card do Instagram trazer a legenda.",
+                        },
+                      },
+                    ],
+                  },
+                  {
+                    slug: "tweet",
+                    labels: { singular: "Post do X (Twitter)", plural: "Posts do X (Twitter)" },
+                    fields: [
+                      {
+                        name: "url",
+                        type: "text",
+                        required: true,
+                        label: "Link do post do X",
+                        admin: {
+                          description:
+                            "Cole o link do post do X/Twitter (ex.: https://x.com/usuario/status/123456789). O card mostra o post oficial, igual ao do ge.",
+                        },
+                      },
+                      {
+                        name: "caption",
+                        type: "textarea",
+                        label: "Texto de reserva (opcional)",
+                        admin: {
+                          description:
+                            "Exibido só se o X não carregar (rede/bloqueio). Opcional — o normal é o próprio card do X trazer o conteúdo do post.",
+                        },
+                      },
+                    ],
+                  },
+                  {
+                    slug: "lineup",
+                    labels: { singular: "Escalação no campo", plural: "Escalações no campo" },
+                    fields: [
+                      {
+                        name: "team",
+                        type: "text",
+                        required: true,
+                        label: "Time",
+                        admin: {
+                          components: {
+                            Field: "@/components/cms/lineup-team-field#LineupTeamField",
+                          },
+                        },
+                      },
+                      {
+                        name: "formation",
+                        type: "text",
+                        required: true,
+                        label: "Formação",
+                        admin: { description: "Ex.: 4-3-3, 4-2-3-1, 3-5-2. Define como os jogadores se posicionam no campo." },
+                      },
+                      {
+                        name: "label",
+                        type: "text",
+                        label: "Rótulo",
+                        defaultValue: "Provável",
+                        admin: { description: 'Ex.: "Provável" ou "Confirmada". Aparece ao lado da formação.' },
+                      },
+                      {
+                        name: "players",
+                        type: "array",
+                        label: "Jogadores (do goleiro para o ataque)",
+                        minRows: 1,
+                        maxRows: 11,
+                        admin: { description: "Liste os 11 titulares NA ORDEM: goleiro primeiro, depois defensores, meias e atacantes. É essa ordem que posiciona no campo." },
+                        fields: [
+                          { name: "name", type: "text", required: true, label: "Nome" },
+                          { name: "number", type: "text", label: "Número (opcional)" },
+                          {
+                            name: "playerId",
+                            type: "text",
+                            label: "ID do jogador (foto, opcional)",
+                            admin: { description: "ID na API esportiva (Sofascore). Preenchido → mostra a FOTO do jogador no campo. Vazio → mostra só o número." },
+                          },
+                        ],
+                      },
+                    ],
+                  },
+                  {
+                    slug: "columns",
+                    labels: { singular: "Colunas", plural: "Colunas" },
+                    fields: [
+                      {
+                        name: "count",
+                        type: "select",
+                        label: "Quantidade",
+                        defaultValue: "2",
+                        options: [
+                          { label: "2 colunas", value: "2" },
+                          { label: "3 colunas", value: "3" },
+                        ],
+                      },
+                      { name: "col1", type: "richText", label: "Coluna 1", editor: lexicalEditor() },
+                      { name: "col2", type: "richText", label: "Coluna 2", editor: lexicalEditor() },
+                      {
+                        name: "col3",
+                        type: "richText",
+                        label: "Coluna 3",
+                        editor: lexicalEditor(),
+                        admin: { condition: (_, s) => s?.count === "3" },
+                      },
+                    ],
+                  },
+                  {
+                    slug: "callout",
+                    labels: { singular: "Destaque / Aviso", plural: "Destaques" },
+                    fields: [
+                      {
+                        name: "style",
+                        type: "select",
+                        label: "Estilo",
+                        defaultValue: "info",
+                        options: [
+                          { label: "Informação (azul)", value: "info" },
+                          { label: "Atenção (amarelo)", value: "warning" },
+                          { label: "Sucesso (verde)", value: "success" },
+                          { label: "Destaque (verde PdB)", value: "highlight" },
+                          // Mesmas cores do "Comentário da Redação" do lance a lance:
+                          { label: "Comentário (verde, com selo 💬)", value: "comment" },
+                          { label: "Informação (verde, sem selo)", value: "comment-plain" },
+                        ],
+                      },
+                      { name: "content", type: "richText", label: "Conteúdo", editor: lexicalEditor() },
+                    ],
+                  },
+                  {
+                    slug: "sponsorCard",
+                    labels: { singular: "Patrocinador (card)", plural: "Patrocinadores (cards)" },
+                    fields: [
+                      {
+                        name: "sponsor",
+                        type: "relationship",
+                        relationTo: "sponsors",
+                        required: true,
+                        label: "Empresa",
+                        admin: { description: "Escolha um patrocinador cadastrado. O card sai clicável (link rastreado)." },
+                      },
+                    ],
+                  },
+                  // Card de palpite/previsão (ex.: "Previsão de placar: Espanha 1 x 0 Bélgica — Odd 7,50 na Betano").
+                  {
+                    slug: "prediction",
+                    labels: { singular: "Previsão / Palpite (card)", plural: "Previsões / Palpites" },
+                    fields: [
+                      { name: "label", type: "text", label: "Rótulo", defaultValue: "Previsão de placar" },
+                      { name: "text", type: "text", required: true, label: "Palpite", admin: { description: 'Ex.: "Espanha 1 x 0 Bélgica" ou "Menos de 2.5 gols"' } },
+                      { name: "odd", type: "text", label: "Odd", admin: { description: 'Ex.: "7,50"' } },
+                      { name: "house", type: "text", label: "Casa de aposta", admin: { description: 'Ex.: "Betano"' } },
+                      { name: "url", type: "text", label: "Link de afiliado (opcional)" },
+                      { name: "note", type: "textarea", label: "Análise (opcional)" },
+                      { name: "cor", type: "select", label: "Cor do card", defaultValue: "verde", options: [{ label: "Verde (padrão)", value: "verde" }, { label: "Azul", value: "azul" }, { label: "Vermelho", value: "vermelho" }, { label: "Dourado", value: "dourado" }, { label: "Roxo", value: "roxo" }, { label: "Escuro", value: "escuro" }] },
+                    ],
+                  },
+                  // Card de destaque com estatísticas (ex.: "Destaque da Espanha: Oyarzabal + dados").
+                  {
+                    slug: "statCard",
+                    labels: { singular: "Destaque com dados (card)", plural: "Destaques com dados" },
+                    fields: [
+                      { name: "title", type: "text", required: true, label: "Título", admin: { description: 'Ex.: "Destaque da Espanha"' } },
+                      { name: "subtitle", type: "text", label: "Subtítulo", admin: { description: 'Ex.: nome do jogador, "Mikel Oyarzabal"' } },
+                      { name: "imageUrl", type: "text", label: "Imagem (URL, opcional)", admin: { description: "Cole a URL de uma foto ou escudo (opcional)." } },
+                      {
+                        name: "rows",
+                        type: "array",
+                        label: "Dados (rótulo + valor)",
+                        fields: [
+                          { name: "label", type: "text", label: "Rótulo" },
+                          { name: "value", type: "text", label: "Valor" },
+                        ],
+                      },
+                      { name: "cor", type: "select", label: "Cor do card", defaultValue: "verde", options: [{ label: "Verde (padrão)", value: "verde" }, { label: "Azul", value: "azul" }, { label: "Vermelho", value: "vermelho" }, { label: "Dourado", value: "dourado" }, { label: "Roxo", value: "roxo" }, { label: "Escuro", value: "escuro" }] },
+                    ],
+                  },
+                  // Botão call-to-action (ex.: "Apostar na Betano"). rel=sponsored nofollow.
+                  {
+                    slug: "ctaButton",
+                    labels: { singular: "Botão (call-to-action)", plural: "Botões" },
+                    fields: [
+                      { name: "label", type: "text", required: true, label: "Texto do botão" },
+                      { name: "url", type: "text", required: true, label: "Link" },
+                      {
+                        name: "style",
+                        type: "select",
+                        label: "Estilo",
+                        defaultValue: "primary",
+                        options: [
+                          { label: "Preenchido", value: "primary" },
+                          { label: "Contorno", value: "outline" },
+                        ],
+                      },
+                      { name: "cor", type: "select", label: "Cor do botão", defaultValue: "verde", options: [{ label: "Verde (padrão)", value: "verde" }, { label: "Azul", value: "azul" }, { label: "Vermelho", value: "vermelho" }, { label: "Dourado", value: "dourado" }, { label: "Roxo", value: "roxo" }, { label: "Escuro", value: "escuro" }] },
+                    ],
+                  },
+                  // Box de prós e contras (✅ / ❌) em duas colunas.
+                  {
+                    slug: "prosCons",
+                    labels: { singular: "Prós e Contras", plural: "Prós e Contras" },
+                    fields: [
+                      { name: "prosTitle", type: "text", label: "Título dos prós", defaultValue: "Vantagens" },
+                      { name: "pros", type: "array", label: "Prós", fields: [{ name: "item", type: "text" }] },
+                      { name: "consTitle", type: "text", label: "Título dos contras", defaultValue: "Desvantagens" },
+                      { name: "cons", type: "array", label: "Contras", fields: [{ name: "item", type: "text" }] },
+                      { name: "cor", type: "select", label: "Cor do card", defaultValue: "verde", options: [{ label: "Verde (padrão)", value: "verde" }, { label: "Azul", value: "azul" }, { label: "Vermelho", value: "vermelho" }, { label: "Dourado", value: "dourado" }, { label: "Roxo", value: "roxo" }, { label: "Escuro", value: "escuro" }] },
+                    ],
+                  },
+                ],
+              }),
+            ],
+          });
+
 export default buildConfig({
   secret: process.env.PAYLOAD_SECRET || "",
   editor: lexicalEditor(),
@@ -142,7 +423,7 @@ export default buildConfig({
             {
               slug: "richText",
               labels: { singular: "Texto", plural: "Textos" },
-              fields: [{ name: "content", type: "richText" }],
+              fields: [{ name: "content", type: "richText", editor: richTextEditor }],
             },
             {
               slug: "heading",
@@ -501,284 +782,7 @@ export default buildConfig({
         {
           name: "content",
           type: "richText",
-          editor: lexicalEditor({
-            features: ({ defaultFeatures }) => [
-              ...defaultFeatures,
-              // Tabelas nativas no editor (botão + menu "/").
-              EXPERIMENTAL_TableFeature(),
-              // Imagem com campo de Alinhamento (Centro/Esquerda/Direita) na inserção.
-              UploadFeature({
-                collections: {
-                  media: {
-                    fields: [
-                      {
-                        name: "alignment",
-                        type: "select",
-                        label: "Alinhamento",
-                        defaultValue: "center",
-                        options: [
-                          { label: "Centro", value: "center" },
-                          { label: "Esquerda", value: "left" },
-                          { label: "Direita", value: "right" },
-                        ],
-                      },
-                      {
-                        name: "caption",
-                        type: "text",
-                        label: "Legenda / crédito (opcional)",
-                        admin: { description: 'Ex.: "Foto: Divulgação / FIFA". Aparece embaixo da imagem.' },
-                      },
-                    ],
-                  },
-                },
-              }),
-              // Blocos reutilizáveis inseríveis pelo menu "+" / "/": vídeo, colunas, destaque.
-              BlocksFeature({
-                blocks: [
-                  {
-                    slug: "video",
-                    labels: { singular: "Vídeo (YouTube/Vimeo)", plural: "Vídeos" },
-                    fields: [
-                      {
-                        name: "url",
-                        type: "text",
-                        required: true,
-                        label: "URL do vídeo",
-                        admin: { description: "Cole o link do YouTube ou Vimeo" },
-                      },
-                      { name: "caption", type: "text", label: "Legenda (opcional)" },
-                    ],
-                  },
-                  {
-                    slug: "instagram",
-                    labels: { singular: "Post do Instagram", plural: "Posts do Instagram" },
-                    fields: [
-                      {
-                        name: "url",
-                        type: "text",
-                        required: true,
-                        label: "Link do post do Instagram",
-                        admin: {
-                          description:
-                            "Cole o link do post ou reel (ex.: https://www.instagram.com/p/XXXXXXX/). O card mostra a foto e a legenda completa, igual ao do ge.",
-                        },
-                      },
-                      {
-                        name: "caption",
-                        type: "textarea",
-                        label: "Legenda de reserva (opcional)",
-                        admin: {
-                          description:
-                            "Texto exibido só se o Instagram não carregar (rede/bloqueio). Opcional — o normal é o próprio card do Instagram trazer a legenda.",
-                        },
-                      },
-                    ],
-                  },
-                  {
-                    slug: "tweet",
-                    labels: { singular: "Post do X (Twitter)", plural: "Posts do X (Twitter)" },
-                    fields: [
-                      {
-                        name: "url",
-                        type: "text",
-                        required: true,
-                        label: "Link do post do X",
-                        admin: {
-                          description:
-                            "Cole o link do post do X/Twitter (ex.: https://x.com/usuario/status/123456789). O card mostra o post oficial, igual ao do ge.",
-                        },
-                      },
-                      {
-                        name: "caption",
-                        type: "textarea",
-                        label: "Texto de reserva (opcional)",
-                        admin: {
-                          description:
-                            "Exibido só se o X não carregar (rede/bloqueio). Opcional — o normal é o próprio card do X trazer o conteúdo do post.",
-                        },
-                      },
-                    ],
-                  },
-                  {
-                    slug: "lineup",
-                    labels: { singular: "Escalação no campo", plural: "Escalações no campo" },
-                    fields: [
-                      {
-                        name: "team",
-                        type: "text",
-                        required: true,
-                        label: "Time",
-                        admin: {
-                          components: {
-                            Field: "@/components/cms/lineup-team-field#LineupTeamField",
-                          },
-                        },
-                      },
-                      {
-                        name: "formation",
-                        type: "text",
-                        required: true,
-                        label: "Formação",
-                        admin: { description: "Ex.: 4-3-3, 4-2-3-1, 3-5-2. Define como os jogadores se posicionam no campo." },
-                      },
-                      {
-                        name: "label",
-                        type: "text",
-                        label: "Rótulo",
-                        defaultValue: "Provável",
-                        admin: { description: 'Ex.: "Provável" ou "Confirmada". Aparece ao lado da formação.' },
-                      },
-                      {
-                        name: "players",
-                        type: "array",
-                        label: "Jogadores (do goleiro para o ataque)",
-                        minRows: 1,
-                        maxRows: 11,
-                        admin: { description: "Liste os 11 titulares NA ORDEM: goleiro primeiro, depois defensores, meias e atacantes. É essa ordem que posiciona no campo." },
-                        fields: [
-                          { name: "name", type: "text", required: true, label: "Nome" },
-                          { name: "number", type: "text", label: "Número (opcional)" },
-                          {
-                            name: "playerId",
-                            type: "text",
-                            label: "ID do jogador (foto, opcional)",
-                            admin: { description: "ID na API esportiva (Sofascore). Preenchido → mostra a FOTO do jogador no campo. Vazio → mostra só o número." },
-                          },
-                        ],
-                      },
-                    ],
-                  },
-                  {
-                    slug: "columns",
-                    labels: { singular: "Colunas", plural: "Colunas" },
-                    fields: [
-                      {
-                        name: "count",
-                        type: "select",
-                        label: "Quantidade",
-                        defaultValue: "2",
-                        options: [
-                          { label: "2 colunas", value: "2" },
-                          { label: "3 colunas", value: "3" },
-                        ],
-                      },
-                      { name: "col1", type: "richText", label: "Coluna 1", editor: lexicalEditor() },
-                      { name: "col2", type: "richText", label: "Coluna 2", editor: lexicalEditor() },
-                      {
-                        name: "col3",
-                        type: "richText",
-                        label: "Coluna 3",
-                        editor: lexicalEditor(),
-                        admin: { condition: (_, s) => s?.count === "3" },
-                      },
-                    ],
-                  },
-                  {
-                    slug: "callout",
-                    labels: { singular: "Destaque / Aviso", plural: "Destaques" },
-                    fields: [
-                      {
-                        name: "style",
-                        type: "select",
-                        label: "Estilo",
-                        defaultValue: "info",
-                        options: [
-                          { label: "Informação (azul)", value: "info" },
-                          { label: "Atenção (amarelo)", value: "warning" },
-                          { label: "Sucesso (verde)", value: "success" },
-                          { label: "Destaque (verde PdB)", value: "highlight" },
-                          // Mesmas cores do "Comentário da Redação" do lance a lance:
-                          { label: "Comentário (verde, com selo 💬)", value: "comment" },
-                          { label: "Informação (verde, sem selo)", value: "comment-plain" },
-                        ],
-                      },
-                      { name: "content", type: "richText", label: "Conteúdo", editor: lexicalEditor() },
-                    ],
-                  },
-                  {
-                    slug: "sponsorCard",
-                    labels: { singular: "Patrocinador (card)", plural: "Patrocinadores (cards)" },
-                    fields: [
-                      {
-                        name: "sponsor",
-                        type: "relationship",
-                        relationTo: "sponsors",
-                        required: true,
-                        label: "Empresa",
-                        admin: { description: "Escolha um patrocinador cadastrado. O card sai clicável (link rastreado)." },
-                      },
-                    ],
-                  },
-                  // Card de palpite/previsão (ex.: "Previsão de placar: Espanha 1 x 0 Bélgica — Odd 7,50 na Betano").
-                  {
-                    slug: "prediction",
-                    labels: { singular: "Previsão / Palpite (card)", plural: "Previsões / Palpites" },
-                    fields: [
-                      { name: "label", type: "text", label: "Rótulo", defaultValue: "Previsão de placar" },
-                      { name: "text", type: "text", required: true, label: "Palpite", admin: { description: 'Ex.: "Espanha 1 x 0 Bélgica" ou "Menos de 2.5 gols"' } },
-                      { name: "odd", type: "text", label: "Odd", admin: { description: 'Ex.: "7,50"' } },
-                      { name: "house", type: "text", label: "Casa de aposta", admin: { description: 'Ex.: "Betano"' } },
-                      { name: "url", type: "text", label: "Link de afiliado (opcional)" },
-                      { name: "note", type: "textarea", label: "Análise (opcional)" },
-                      { name: "cor", type: "select", label: "Cor do card", defaultValue: "verde", options: [{ label: "Verde (padrão)", value: "verde" }, { label: "Azul", value: "azul" }, { label: "Vermelho", value: "vermelho" }, { label: "Dourado", value: "dourado" }, { label: "Roxo", value: "roxo" }, { label: "Escuro", value: "escuro" }] },
-                    ],
-                  },
-                  // Card de destaque com estatísticas (ex.: "Destaque da Espanha: Oyarzabal + dados").
-                  {
-                    slug: "statCard",
-                    labels: { singular: "Destaque com dados (card)", plural: "Destaques com dados" },
-                    fields: [
-                      { name: "title", type: "text", required: true, label: "Título", admin: { description: 'Ex.: "Destaque da Espanha"' } },
-                      { name: "subtitle", type: "text", label: "Subtítulo", admin: { description: 'Ex.: nome do jogador, "Mikel Oyarzabal"' } },
-                      { name: "imageUrl", type: "text", label: "Imagem (URL, opcional)", admin: { description: "Cole a URL de uma foto ou escudo (opcional)." } },
-                      {
-                        name: "rows",
-                        type: "array",
-                        label: "Dados (rótulo + valor)",
-                        fields: [
-                          { name: "label", type: "text", label: "Rótulo" },
-                          { name: "value", type: "text", label: "Valor" },
-                        ],
-                      },
-                      { name: "cor", type: "select", label: "Cor do card", defaultValue: "verde", options: [{ label: "Verde (padrão)", value: "verde" }, { label: "Azul", value: "azul" }, { label: "Vermelho", value: "vermelho" }, { label: "Dourado", value: "dourado" }, { label: "Roxo", value: "roxo" }, { label: "Escuro", value: "escuro" }] },
-                    ],
-                  },
-                  // Botão call-to-action (ex.: "Apostar na Betano"). rel=sponsored nofollow.
-                  {
-                    slug: "ctaButton",
-                    labels: { singular: "Botão (call-to-action)", plural: "Botões" },
-                    fields: [
-                      { name: "label", type: "text", required: true, label: "Texto do botão" },
-                      { name: "url", type: "text", required: true, label: "Link" },
-                      {
-                        name: "style",
-                        type: "select",
-                        label: "Estilo",
-                        defaultValue: "primary",
-                        options: [
-                          { label: "Preenchido", value: "primary" },
-                          { label: "Contorno", value: "outline" },
-                        ],
-                      },
-                      { name: "cor", type: "select", label: "Cor do botão", defaultValue: "verde", options: [{ label: "Verde (padrão)", value: "verde" }, { label: "Azul", value: "azul" }, { label: "Vermelho", value: "vermelho" }, { label: "Dourado", value: "dourado" }, { label: "Roxo", value: "roxo" }, { label: "Escuro", value: "escuro" }] },
-                    ],
-                  },
-                  // Box de prós e contras (✅ / ❌) em duas colunas.
-                  {
-                    slug: "prosCons",
-                    labels: { singular: "Prós e Contras", plural: "Prós e Contras" },
-                    fields: [
-                      { name: "prosTitle", type: "text", label: "Título dos prós", defaultValue: "Vantagens" },
-                      { name: "pros", type: "array", label: "Prós", fields: [{ name: "item", type: "text" }] },
-                      { name: "consTitle", type: "text", label: "Título dos contras", defaultValue: "Desvantagens" },
-                      { name: "cons", type: "array", label: "Contras", fields: [{ name: "item", type: "text" }] },
-                      { name: "cor", type: "select", label: "Cor do card", defaultValue: "verde", options: [{ label: "Verde (padrão)", value: "verde" }, { label: "Azul", value: "azul" }, { label: "Vermelho", value: "vermelho" }, { label: "Dourado", value: "dourado" }, { label: "Roxo", value: "roxo" }, { label: "Escuro", value: "escuro" }] },
-                    ],
-                  },
-                ],
-              }),
-            ],
-          }),
+          editor: richTextEditor,
           admin: { description: "Corpo do post (editor visual). Quando preenchido, substitui o HTML." },
         },
         // HTML legado (fallback durante a migração). Some do editor quando `content` existir.

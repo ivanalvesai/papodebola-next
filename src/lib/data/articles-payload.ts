@@ -230,6 +230,18 @@ function postBodyHtml(p: any): string {
   return p.body || "";
 }
 
+// Converte um campo richText (Lexical do editor completo) em HTML, com os MESMOS
+// conversores dos posts (vídeo, Instagram, X, escalação, colunas, destaque). Usado pelas
+// PÁGINAS do CMS (PageBlock) para renderizar os cards igual aos posts. Ver [[ProseBody]].
+export function lexicalToHtml(content: any): string {
+  if (!content || typeof content !== "object" || !content.root?.children?.length) return "";
+  try {
+    return convertLexicalToHTML({ data: content, converters: lexicalConverters });
+  } catch {
+    return "";
+  }
+}
+
 function mapPost(p: any): Article {
   const tags = (p.tags || []).map((x: any) => cleanTag(x.tag)).filter(Boolean);
   const bodyHtml = postBodyHtml(p);

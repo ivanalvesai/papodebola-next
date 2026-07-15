@@ -1,5 +1,7 @@
 import { RichText } from "@payloadcms/richtext-lexical/react";
 import type { PayloadPage } from "@/lib/data/payload-pages";
+import { lexicalToHtml } from "@/lib/data/articles-payload";
+import { ProseBody } from "@/components/article/prose-body";
 
 // Renderiza uma "Página" do Payload (hero + blocos) com o visual do site.
 /* eslint-disable @typescript-eslint/no-explicit-any, @next/next/no-img-element */
@@ -20,12 +22,12 @@ export function PageBlock({ block }: { block: any }) {
       const size = block.level === "h3" ? "text-base" : "text-lg";
       return <Tag className={`pt-2 ${size} font-bold text-text-primary`}>{block.text}</Tag>;
     }
-    case "richText":
-      return block.content ? (
-        <div className="[&_a]:text-green [&_a:hover]:underline [&>p]:m-0">
-          <RichText data={block.content} />
-        </div>
-      ) : null;
+    case "richText": {
+      // Editor completo (mesmos cards dos posts) → converte pra HTML e renderiza com o
+      // corpo "prose-article" (estilos + loaders de Instagram/X). Ver ProseBody.
+      const html = lexicalToHtml(block.content);
+      return html ? <ProseBody html={html} /> : null;
+    }
     case "image": {
       const url = block.image?.url;
       if (!url) return null;
