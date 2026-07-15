@@ -128,6 +128,7 @@ const nextConfig: NextConfig = {
       { source: "/futebolnarede/:path*", destination: "/noticias", permanent: true },
       { source: "/especiais/:path*", destination: "/noticias", permanent: true },
       { source: "/premiobrasileirao2006/:path*", destination: "/noticias", permanent: true },
+      { source: "/naturmadoamendoim/:path*", destination: "/noticias", permanent: true },
       { source: "/index.htm", destination: "/", permanent: true },
     ];
   },
