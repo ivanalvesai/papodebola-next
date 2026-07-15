@@ -144,13 +144,21 @@ export async function getKnockoutFixtures(
     const m = slot.match(/Vencedor do Jogo\s+(\d+)/i);
     return m ? winnerByGame.get(parseInt(m[1], 10)) || null : null;
   };
+  // Perdedores por nº de jogo → resolve os slots "Perdedor do Jogo N" da DISPUTA DE 3º
+  // LUGAR (Perdedor da semi 101 x Perdedor da semi 102). Sem isso, o 3º lugar ficava em
+  // placeholder mesmo com as semis já encerradas.
+  const loserByGame = new Map<number, { id: number; name: string }>();
+  const resolveLoserSlot = (slot: string): { id: number; name: string } | null => {
+    const m = slot.match(/Perdedor do Jogo\s+(\d+)/i);
+    return m ? loserByGame.get(parseInt(m[1], 10)) || null : null;
+  };
   // Cascata: processa os jogos em ORDEM crescente pra cada fase resolver usando os
   // vencedores da anterior (16-avos → oitavas → quartas → semis). Antes só cobria os
   // 16-avos, então as QUARTAS (slots "Vencedor do Jogo 89-96" = oitavas) nunca resolviam
   // e ficavam todas em placeholder mesmo com o chaveamento já definido.
   for (const s of [...KNOCKOUT_SCHEDULE].sort((a, b) => a.game - b.game)) {
-    const sh = resolveSlot(s.homeSlot, standings) || resolveWinnerSlot(s.homeSlot);
-    const sa = resolveSlot(s.awaySlot, standings) || resolveWinnerSlot(s.awaySlot);
+    const sh = resolveSlot(s.homeSlot, standings) || resolveWinnerSlot(s.homeSlot) || resolveLoserSlot(s.homeSlot);
+    const sa = resolveSlot(s.awaySlot, standings) || resolveWinnerSlot(s.awaySlot) || resolveLoserSlot(s.awaySlot);
     let fx = sh && sa ? fxByPair.get(pairKey(sh.id, sa.id)) : undefined;
     if (!fx && (sh || sa)) fx = fxByTeam.get(`${PHASE_ROUND[s.phase]}-${(sh || sa)!.id}`);
     if (fx?.winnerId) {
@@ -158,12 +166,17 @@ export async function getKnockoutFixtures(
         id: fx.winnerId,
         name: fx.winnerId === fx.homeId ? fx.home : fx.away,
       });
+      // Perdedor = o outro lado (alimenta o "Perdedor do Jogo N" do 3º lugar).
+      loserByGame.set(s.game, {
+        id: fx.winnerId === fx.homeId ? fx.awayId : fx.homeId,
+        name: fx.winnerId === fx.homeId ? fx.away : fx.home,
+      });
     }
   }
 
   return KNOCKOUT_SCHEDULE.filter((s) => s.phase === phaseSlug).map((sched): KnockoutItem => {
-    const h = resolveSlot(sched.homeSlot, standings) || resolveWinnerSlot(sched.homeSlot);
-    const a = resolveSlot(sched.awaySlot, standings) || resolveWinnerSlot(sched.awaySlot);
+    const h = resolveSlot(sched.homeSlot, standings) || resolveWinnerSlot(sched.homeSlot) || resolveLoserSlot(sched.homeSlot);
+    const a = resolveSlot(sched.awaySlot, standings) || resolveWinnerSlot(sched.awaySlot) || resolveLoserSlot(sched.awaySlot);
     // Confronto real do cuptrees: por par (2 slots resolvidos) OU pelo único slot resolvido
     // (o outro é "3º (Grupos ...)" / "Vencedor do Jogo N", que não vem da classificação) —
     // o jogo daquele time já traz o adversário real definido no chaveamento.
