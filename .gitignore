@@ -84,3 +84,10 @@ Dockerfile.migrate
 /audit-vps.txt
 /disavow-toxico.txt
 /sportsapi.txt
+
+# arquivos de trabalho locais (não versionar)
+backlinks-resumo.txt
+casas-de-apostas.docx
+~$*.docx
+jogos-de-hoje-futebol/
+sponsors/
