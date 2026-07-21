@@ -14,7 +14,7 @@ import { NextMatchWidget } from "@/components/sidebar/next-match-widget";
 import { RecentResultsWidget } from "@/components/sidebar/recent-results-widget";
 import { MyTeamWidget } from "@/components/sidebar/my-team-widget";
 
-import { getTodayMatches, getWorldCupBarMatches, getBrazilianBarMatches, freshMatches, relevantBarMatches } from "@/lib/data/matches";
+import { getTodayMatches, getWorldCupBarMatches, getBrazilianBarMatches, freshMatches, relevantBarMatches, mergeBarMatches } from "@/lib/data/matches";
 import { getTransfers } from "@/lib/data/home"; // getHighlights desativado (ver Destaques)
 import { getLatestArticles, getArticles } from "@/lib/data/articles";
 import { getBrasileiraoStandings, getWorldCupStandings } from "@/lib/data/standings";
@@ -70,7 +70,7 @@ export default async function HomePage() {
   ] = await Promise.all([
     getTodayMatches().catch(() => []),
     getWorldCupBarMatches().catch(() => []),
-    getBrazilianBarMatches().catch(() => []),
+    getBrazilianBarMatches().catch(() => ({ today: [], upcoming: [] })),
     // getHighlights().catch(() => []),  // Destaques desativado temporariamente
     getTransfers().catch(() => []),
     getLatestArticles(20).catch(() => []),
@@ -111,17 +111,21 @@ export default async function HomePage() {
   // dias (com link pra página do jogo ao vivo), ordenados por horario real e com
   // a data no card. Sem jogos da Copa, cai pros jogos gerais de hoje.
   const copaToday = copaBar;
-  // Sem Copa, a barra cai pros jogos gerais de hoje — tira encerrados há +1h pra
-  // sempre destacar ao vivo/próximos (Copa já vem filtrado de getWorldCupBarMatches).
-  // Com jogo da Copa → só a Copa. Sem Copa (ou hiccup da API) → ligas RELEVANTES de hoje
-  // (nunca o feed global do mundo, que era o "todos os jogos" que vazava na barra).
-  const barMatches = copaToday.length ? copaToday : relevantBarMatches(freshMatches(todayMatches));
+  // Aba "Hoje": com Copa → só a Copa. Sem Copa → jogos de HOJE das ligas BR (Série A/B/C
+  // + Copa do Brasil, via CBF confiável + ao vivo) MESCLADOS com as demais ligas relevantes
+  // de hoje que porventura estejam ao vivo (Libertadores, Champions, etc.). O feed por data
+  // da API anda quebrado (devolve 0), então os agendados de hoje vêm do calendário CBF —
+  // por isso a aba "Hoje" agora mostra os jogos do dia mesmo antes de começarem.
+  // Aba "Próximos": só os jogos dos próximos dias (brazilBar.upcoming).
+  const barMatches = copaToday.length
+    ? copaToday
+    : mergeBarMatches(relevantBarMatches(freshMatches(todayMatches)), brazilBar.today);
 
   // Placar ao vivo do bar SEM bater na API: faz polling dos endpoints de ao vivo que JÁ
   // existem (cacheados+gateados, compartilhados com as páginas das ligas). Só liga o
   // polling quando há jogo ao vivo ou prestes a começar (≤90min) — senão o bar fica estático.
   const nowSec = Date.now() / 1000;
-  const leagueLiveSoon = brazilBar.some(
+  const leagueLiveSoon = brazilBar.today.some(
     (m) =>
       m.status === "live" ||
       m.status === "halftime" ||
@@ -146,7 +150,7 @@ export default async function HomePage() {
           (mesmo polling de 15s da tabela da Copa, endpoint cacheado: N clientes
           = 1 chamada à API). Sem jogo da Copa, barra normal sem polling. */}
       <LiveScoreProvider endpoints={liveEndpoints}>
-        <MatchBar todayMatches={barMatches} upcomingMatches={brazilBar} />
+        <MatchBar todayMatches={barMatches} upcomingMatches={brazilBar.upcoming} />
       </LiveScoreProvider>
 
       <div className="mx-auto max-w-[1240px] px-4 py-6">

@@ -173,17 +173,28 @@ async function fetchChampionshipDataLive(
   // Fetch standings (pode ter N grupos — Série D tem 16)
   const standings = await getStandings(id, seasonId, 21600);
 
+  // Rodada corrente REAL: alguns feeds devolvem currentRound.round DEFASADO — ex.: Série A
+  // 2026 voltou currentRound=4 com a tabela já em J=18, e só as rodadas 1..5 carregavam
+  // (o resto sumia do seletor). A classificação é a fonte confiável de quantas rodadas já
+  // rolaram (maior "matches" disputado), então corrigimos a rodada corrente por ela. Só
+  // pra liga sequencial: no mata-mata a "current" é um slug/chaveamento, não número.
+  const maxPlayed = standings.reduce(
+    (mx, g) => g.rows.reduce((m, r) => Math.max(m, r.matches || 0), mx),
+    0
+  );
+  const effectiveCurrent = hasKnockout ? currentRound : Math.max(currentRound, maxPlayed);
+
   // Quais rounds buscar:
   // - Torneio com mata-mata (Série D): busca TODOS os rounds de grupo (fase curta, ~10) +
   //   todos os do mata-mata. A "current" aponta pro KO, então o antigo "currentRound+1"
   //   não serve.
-  // - Liga sequencial (Série A/B/C): mantém a otimização — só até currentRound+1 (evita
+  // - Liga sequencial (Série A/B/C): mantém a otimização — só até effectiveCurrent+1 (evita
   //   38 requests). Rounds futuros continuam no seletor, só sem jogos carregados ainda.
   const groupRefs = roundRefs.filter((r) => !r.knockout);
   const koRefs = roundRefs.filter((r) => r.knockout);
   const groupToFetch = hasKnockout
     ? groupRefs
-    : groupRefs.filter((r) => r.round <= Math.min(groupRefs.length || 38, currentRound + 1));
+    : groupRefs.filter((r) => r.round <= Math.min(groupRefs.length || 38, effectiveCurrent + 1));
   const toFetch = [...groupToFetch, ...koRefs];
 
   // Em PARALELO (o semáforo do fetchAllSports limita a 2 simultâneas + retry em 429).
@@ -192,7 +203,7 @@ async function fetchChampionshipDataLive(
     toFetch.map((ref) =>
       fetchAllSports<any>(
         roundMatchesPath(id, seasonId, ref),
-        !ref.knockout && ref.round < currentRound ? 86400 : 21600
+        !ref.knockout && ref.round < effectiveCurrent ? 86400 : 21600
       ).then((data) => ({ ref, data }))
     )
   );
@@ -207,12 +218,17 @@ async function fetchChampionshipDataLive(
   // Rounds de grupo ficam no seletor mesmo sem jogos carregados (ligas sequenciais).
   const roundList = roundRefs.filter((r) => !r.knockout || matchesByRound[r.key]?.length);
 
+  // Se a classificação corrigiu a rodada corrente (currentRound da API defasado), reflete
+  // isso no que a página abre por padrão e no que o polling ao vivo mira. Só liga sequencial.
+  const outCurrentRound = effectiveCurrent;
+  const outCurrentRoundKey = hasKnockout ? currentRoundKey : String(effectiveCurrent);
+
   return {
     tournament: { id, seasonId, name },
     rounds: groupRounds.length ? groupRounds : roundRefs.filter((r) => !r.knockout).map((r) => r.round),
     roundList,
-    currentRound,
-    currentRoundKey,
+    currentRound: outCurrentRound,
+    currentRoundKey: outCurrentRoundKey,
     standings,
     matchesByRound,
     updatedAt: new Date().toISOString(),

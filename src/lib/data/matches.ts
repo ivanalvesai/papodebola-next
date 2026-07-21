@@ -12,7 +12,7 @@ import {
   type WorldCupLiveScore,
 } from "./match-detail";
 import { withSnapshot } from "./snapshot-store";
-import type { NormalizedMatch } from "@/types/match";
+import type { NormalizedMatch, CBFMatch } from "@/types/match";
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
@@ -346,54 +346,89 @@ function leagueMatchHref(m: NormalizedMatch): string | undefined {
   )}`;
 }
 
-export async function getBrazilianBarMatches(): Promise<NormalizedMatch[]> {
-  const [todayRaw, cbf] = await Promise.all([
-    getTodayMatches().catch(() => []),
-    getCBFUpcomingMatches().catch(() => []),
-  ]);
+// Barra da home com as ligas BR separada em duas abas:
+// - `today`:    jogos de HOJE (Brasília) — ao vivo/recém-encerrados (matches/live) +
+//               agendados de hoje vindos do calendário CBF (fonte confiável; o feed
+//               por data da API anda quebrado devolvendo 0). Estes recebem o polling
+//               de placar ao vivo (LiveScoreProvider) na home.
+// - `upcoming`: jogos dos PRÓXIMOS DIAS (a partir de amanhã, Brasília), só CBF.
+// Antes tudo caía numa lista só que virava a aba "Próximos" — os jogos de hoje que
+// ainda não tinham começado ficavam em "Próximos" em vez de "Hoje".
+export interface BrazilianBarMatches {
+  today: NormalizedMatch[];
+  upcoming: NormalizedMatch[];
+}
 
-  // 1) Ao vivo / recém-encerrados das ligas BR (matches/live é real-time), com link.
-  const live = freshMatches(todayRaw)
-    .filter((m) => m.leagueId != null && BR_BAR_LEAGUE_IDS.has(m.leagueId))
-    .map((m) => ({ ...m, href: m.href ?? leagueMatchHref(m) }));
+function cbfToNormalized(c: CBFMatch): NormalizedMatch {
+  return {
+    id: `cbf_${c.id}`,
+    apiId: 0,
+    league: c.championship || "",
+    leagueId: undefined as unknown as number,
+    country: "Brasil",
+    homeTeam: c.home,
+    awayTeam: c.away,
+    homeScore: null,
+    awayScore: null,
+    homeLogo: c.homeId ? `/api/team-img/${c.homeId}` : null,
+    awayLogo: c.awayId ? `/api/team-img/${c.awayId}` : null,
+    time: c.time,
+    date: c.date,
+    timestamp: c.timestamp,
+    status: "scheduled" as const,
+    statusText: c.date,
+    minute: "",
+    category: "brasil",
+    homeId: c.homeId ?? undefined,
+    awayId: c.awayId ?? undefined,
+    href: c.href,
+  };
+}
 
-  // 2) Próximos agendados (calendário CBF) → formato NormalizedMatch (status agendado).
-  const upcoming: NormalizedMatch[] = cbf
-    .filter((c) => c.homeId && c.awayId)
-    .map((c) => ({
-      id: `cbf_${c.id}`,
-      apiId: 0,
-      league: c.championship || "",
-      leagueId: undefined as unknown as number,
-      country: "Brasil",
-      homeTeam: c.home,
-      awayTeam: c.away,
-      homeScore: null,
-      awayScore: null,
-      homeLogo: c.homeId ? `/api/team-img/${c.homeId}` : null,
-      awayLogo: c.awayId ? `/api/team-img/${c.awayId}` : null,
-      time: c.time,
-      date: c.date,
-      timestamp: c.timestamp,
-      status: "scheduled" as const,
-      statusText: c.date,
-      minute: "",
-      category: "brasil",
-      homeId: c.homeId ?? undefined,
-      awayId: c.awayId ?? undefined,
-      href: c.href,
-    }));
-
-  // Dedupe (um jogo ao vivo não reaparece como "próximo") e ordena ao-vivo-primeiro.
+// Junta listas da barra, deduplicando pelo PAR de times. Cards ao vivo/encerrados
+// (id `api_*`, com placar e status reais) vencem os agendados do CBF (`cbf_*`) do
+// mesmo confronto. Ordena ao-vivo-primeiro (sortForBar).
+export function mergeBarMatches(...lists: NormalizedMatch[][]): NormalizedMatch[] {
+  const all = lists
+    .flat()
+    .sort((a, b) => (a.id.startsWith("cbf_") ? 1 : 0) - (b.id.startsWith("cbf_") ? 1 : 0));
   const seen = new Set<number>();
   const out: NormalizedMatch[] = [];
-  for (const m of [...live, ...upcoming]) {
+  for (const m of all) {
     const key = m.homeId && m.awayId ? m.homeId * 1e6 + m.awayId : 0;
     if (key && seen.has(key)) continue;
     if (key) seen.add(key);
     out.push(m);
   }
   return out.sort(sortForBar);
+}
+
+export async function getBrazilianBarMatches(): Promise<BrazilianBarMatches> {
+  const [todayRaw, cbf] = await Promise.all([
+    getTodayMatches().catch(() => []),
+    getCBFUpcomingMatches().catch(() => []),
+  ]);
+
+  const todayStart = brasiliaDayStartSec(0);
+  const todayEnd = brasiliaDayStartSec(1);
+
+  // 1) Ao vivo / recém-encerrados das ligas BR (matches/live é real-time), com link.
+  //    São sempre de hoje.
+  const live = freshMatches(todayRaw)
+    .filter((m) => m.leagueId != null && BR_BAR_LEAGUE_IDS.has(m.leagueId))
+    .map((m) => ({ ...m, href: m.href ?? leagueMatchHref(m) }));
+
+  // 2) Agendados (calendário CBF) → NormalizedMatch, separados por dia (Brasília).
+  const scheduled = cbf.filter((c) => c.homeId && c.awayId).map(cbfToNormalized);
+  const scheduledToday = scheduled.filter(
+    (m) => m.timestamp >= todayStart && m.timestamp < todayEnd
+  );
+  const scheduledFuture = scheduled.filter((m) => m.timestamp >= todayEnd);
+
+  return {
+    today: mergeBarMatches(live, scheduledToday),
+    upcoming: mergeBarMatches(scheduledFuture),
+  };
 }
 
 // Campeonatos principais, na ordem que devem aparecer em /futebol. Os que não
