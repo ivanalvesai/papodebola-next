@@ -3,7 +3,7 @@ import { notFound } from "next/navigation";
 import { PageBreadcrumb } from "@/components/seo/page-breadcrumb";
 import { LiveMatch } from "@/components/world-cup/live-match";
 import { SportsEventSchema } from "@/components/seo/sports-event-schema";
-import { resolveChampionshipMatch, getMatchDetail } from "@/lib/data/match-detail";
+import { resolveChampionshipMatch, resolveFixtureByEventId, getMatchDetail } from "@/lib/data/match-detail";
 
 // Lance a lance de QUALQUER campeonato (Série B, Série A, Libertadores...), no mesmo
 // padrão da Copa: /futebol/{campeonato}/jogo/{data}/{confronto}. A Copa do Mundo tem rota
@@ -12,13 +12,31 @@ export const revalidate = 30;
 
 type Params = { slug: string; data: string; match: string };
 
+// Resolve o confronto SEM depender de query string (mantém a rota ISR):
+// 1) pela tabela do campeonato (+ feeds ao vivo), com o slug limpo;
+// 2) fallback: se o slug termina em "-{id}" (ligas sem página própria, ex.: qualifiers da
+//    Champions), usa esse id no getMatchDetail — validando data + confronto.
+async function resolveFixture(slug: string, data: string, match: string) {
+  const byChamp = await resolveChampionshipMatch(slug, data, match);
+  if (byChamp) return byChamp;
+  // id do jogo anexado ao fim do slug pela barra (…-{apiId}); só ids longos (>=6 dígitos)
+  // pra não confundir com um número que faça parte do nome do time.
+  const m = match.match(/^(.*)-(\d{6,})$/);
+  if (m) {
+    const pairSlug = m[1];
+    const eventId = Number(m[2]);
+    return resolveFixtureByEventId(slug, data, pairSlug, eventId);
+  }
+  return null;
+}
+
 export async function generateMetadata({
   params,
 }: {
   params: Promise<Params>;
 }): Promise<Metadata> {
   const { slug, data, match } = await params;
-  const fixture = await resolveChampionshipMatch(slug, data, match);
+  const fixture = await resolveFixture(slug, data, match);
   if (!fixture) notFound();
   const title = `${fixture.home} x ${fixture.away} ao vivo - ${fixture.tournamentName}`;
   return {
@@ -34,7 +52,7 @@ export default async function JogoCampeonatoPage({
   params: Promise<Params>;
 }) {
   const { slug, data, match } = await params;
-  const fixture = await resolveChampionshipMatch(slug, data, match);
+  const fixture = await resolveFixture(slug, data, match);
   if (!fixture) notFound();
 
   const detail = await getMatchDetail(fixture.id);
@@ -65,7 +83,8 @@ export default async function JogoCampeonatoPage({
       <h1 className="mb-4 text-lg font-bold text-text-primary">
         {fixture.home} x {fixture.away}
         <span className="ml-2 text-sm font-normal text-text-muted">
-          · {fixture.round}ª rodada · {fixture.tournamentName}
+          {fixture.round > 0 ? `· ${fixture.round}ª rodada ` : "· "}
+          {fixture.tournamentName}
         </span>
       </h1>
 

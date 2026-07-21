@@ -335,15 +335,21 @@ async function fetchWorldCupBarMatchesLive(): Promise<NormalizedMatch[]> {
 // ~1h após o fim, e ao vivo vem primeiro. Cada card é clicável pro lance a lance.
 const BR_BAR_LEAGUE_IDS = new Set([325, 390, 1281, 373]); // Série A, B, C, Copa do Brasil
 
+// Ligas com página de campeonato própria (getChampionshipData tem os jogos): a URL do
+// lance a lance fica LIMPA (…/jogo/{data}/{casa}-{fora}) — é a que os posts/SEO usam.
+// Série A/B/C + Copa do Brasil. (Copa do Mundo tem rota própria, não passa por aqui.)
+const CLEAN_MATCH_SLUG_LEAGUES = new Set([325, 390, 1281, 373]);
+
 function leagueMatchHref(m: NormalizedMatch): string | undefined {
   const t = m.leagueId != null ? TOURNAMENT_BY_ID[m.leagueId] : undefined;
   if (!t || !m.homeId || !m.awayId || !m.timestamp) return undefined;
-  return `/futebol/${t.slug}/jogo/${matchDateSlug(m.timestamp)}/${matchPairSlug(
-    m.homeId,
-    m.awayId,
-    m.homeTeam,
-    m.awayTeam
-  )}`;
+  const pair = matchPairSlug(m.homeId, m.awayId, m.homeTeam, m.awayTeam);
+  // Ligas SEM página de tabela (qualifiers da Champions/Libertadores, etc.): o confronto
+  // não está no getChampionshipData, então anexamos o id do jogo ao slug
+  // (…-{apiId}) pra a página resolver via getMatchDetail(id) — sem query string, então a
+  // rota continua ISR (nada de force-dynamic). Ligas com página própria mantêm slug limpo.
+  const suffix = !CLEAN_MATCH_SLUG_LEAGUES.has(m.leagueId as number) && m.apiId ? `-${m.apiId}` : "";
+  return `/futebol/${t.slug}/jogo/${matchDateSlug(m.timestamp)}/${pair}${suffix}`;
 }
 
 // Barra da home com as ligas BR separada em duas abas:
