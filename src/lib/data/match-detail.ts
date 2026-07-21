@@ -339,9 +339,9 @@ export async function resolveChampionshipMatch(
   const tournament = TOURNAMENT_BY_SLUG[champSlug];
   if (!tournament) return null;
   const data = await getChampionshipData(champSlug);
-  if (!data) return null;
 
-  for (const matches of Object.values(data.matchesByRound)) {
+  const tournament2 = tournament; // narrow p/ o fallback abaixo
+  for (const matches of Object.values(data?.matchesByRound || {})) {
     for (const m of matches) {
       if (
         matchDateSlug(m.timestamp) === dateSlug &&
@@ -358,6 +358,77 @@ export async function resolveChampionshipMatch(
           tournamentName: tournament.name,
         };
       }
+    }
+  }
+
+  // Fallback: jogo fora da tabela do getChampionshipData (ex.: fases de qualificação da
+  // Champions/Libertadores, que a season da fase de liga não traz). O card da barra da
+  // home linka pra cá com base no feed ao vivo, então resolvemos o confronto direto pela
+  // API (ao vivo + feed da data), casando data + slug do par, escopado ao torneio.
+  return resolveFixtureFromFeeds(tournament2.id, tournament2.name, dateSlug, pairSlug);
+}
+
+// Extrai os campos mínimos de um event cru da AllSportsApi pra casar o confronto.
+function eventToFixtureLite(e: any): {
+  id: number;
+  homeId: number;
+  awayId: number;
+  home: string;
+  away: string;
+  timestamp: number;
+  leagueId: number | undefined;
+} | null {
+  const id = e?.id;
+  const homeId = e?.homeTeam?.id;
+  const awayId = e?.awayTeam?.id;
+  if (!id || !homeId || !awayId) return null;
+  return {
+    id,
+    homeId,
+    awayId,
+    home: e?.homeTeam?.name || "",
+    away: e?.awayTeam?.name || "",
+    timestamp: e?.startTimestamp || 0,
+    leagueId: e?.tournament?.uniqueTournament?.id,
+  };
+}
+
+// Procura um confronto (data + slug do par) nos feeds da API quando ele não está na
+// tabela do campeonato. Fonte: matches/live (jogos rolando agora) + o feed da data.
+// Escopado ao torneio (leagueId) pra não casar um confronto homônimo de outra liga.
+async function resolveFixtureFromFeeds(
+  leagueId: number,
+  tournamentName: string,
+  dateSlug: string,
+  pairSlug: string
+): Promise<ChampionshipFixture | null> {
+  const [dd, mm, yyyy] = dateSlug.split("-").map(Number);
+  const feeds = await Promise.all([
+    fetchAllSports<any>("matches/live", 30).catch(() => null),
+    dd && mm && yyyy
+      ? fetchAllSports<any>(`matches/${dd}/${mm}/${yyyy}`, 300).catch(() => null)
+      : Promise.resolve(null),
+  ]);
+
+  const seen = new Set<number>();
+  for (const feed of feeds) {
+    for (const e of (feed as any)?.events || []) {
+      const f = eventToFixtureLite(e);
+      if (!f || seen.has(f.id)) continue;
+      seen.add(f.id);
+      if (f.leagueId !== leagueId) continue;
+      if (matchDateSlug(f.timestamp) !== dateSlug) continue;
+      if (matchPairSlug(f.homeId, f.awayId, f.home, f.away) !== pairSlug) continue;
+      return {
+        id: f.id,
+        homeId: f.homeId,
+        awayId: f.awayId,
+        home: f.home,
+        away: f.away,
+        timestamp: f.timestamp,
+        round: 0, // fase de qualificação: sem número de rodada da tabela
+        tournamentName,
+      };
     }
   }
   return null;

@@ -65,7 +65,8 @@ export default async function JogoCampeonatoPage({
       <h1 className="mb-4 text-lg font-bold text-text-primary">
         {fixture.home} x {fixture.away}
         <span className="ml-2 text-sm font-normal text-text-muted">
-          · {fixture.round}ª rodada · {fixture.tournamentName}
+          {fixture.round > 0 ? `· ${fixture.round}ª rodada ` : "· "}
+          {fixture.tournamentName}
         </span>
       </h1>
 
