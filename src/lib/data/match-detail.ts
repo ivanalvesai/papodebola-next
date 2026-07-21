@@ -368,6 +368,36 @@ export async function resolveChampionshipMatch(
   return resolveFixtureFromFeeds(tournament2.id, tournament2.name, dateSlug, pairSlug);
 }
 
+// Resolve o confronto pelo ID do jogo (vindo do ?e= do link da barra). Fallback pra
+// quando o slug não bate em nenhum campeonato cadastrado (jogo encerrado que saiu do
+// feed ao vivo, ou fase de qualificação fora da season da tabela). Valida que o jogo do
+// id corresponde à DATA e ao CONFRONTO da URL — assim um id arbitrário não renderiza um
+// jogo qualquer sob uma URL que não é dele.
+export async function resolveFixtureByEventId(
+  champSlug: string,
+  dateSlug: string,
+  pairSlug: string,
+  eventId: number
+): Promise<ChampionshipFixture | null> {
+  const tournament = TOURNAMENT_BY_SLUG[champSlug];
+  if (!tournament || !eventId) return null;
+  const detail = await getMatchDetail(eventId).catch(() => null);
+  const ev = detail?.event;
+  if (!ev) return null;
+  if (matchDateSlug(ev.startTimestamp) !== dateSlug) return null;
+  if (matchPairSlug(ev.homeId, ev.awayId, ev.home, ev.away) !== pairSlug) return null;
+  return {
+    id: ev.id,
+    homeId: ev.homeId,
+    awayId: ev.awayId,
+    home: ev.home,
+    away: ev.away,
+    timestamp: ev.startTimestamp,
+    round: 0,
+    tournamentName: tournament.name,
+  };
+}
+
 // Extrai os campos mínimos de um event cru da AllSportsApi pra casar o confronto.
 function eventToFixtureLite(e: any): {
   id: number;
