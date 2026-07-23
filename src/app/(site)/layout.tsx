@@ -4,7 +4,6 @@ import { Open_Sans } from "next/font/google";
 import "./globals.css";
 import { Header } from "@/components/layout/header";
 import { MainNav } from "@/components/layout/main-nav";
-import { currentKnockoutPhase } from "@/lib/world-cup-phases";
 import { SidePanelLoader } from "@/components/layout/side-panel-loader";
 import { Footer } from "@/components/layout/footer";
 import { CookieConsent } from "@/components/layout/cookie-consent";
@@ -67,9 +66,6 @@ export default function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  // Botão dourado "Copa do Mundo" no nav segue a FASE ATUAL (grupos → oitavas → ...),
-  // igual ao banner e ao card lateral. Hoje cai nas oitavas.
-  const copaHref = currentKnockoutPhase().href;
   return (
     <html lang="pt-BR" className={`${openSans.variable} antialiased`}>
       <head>
@@ -95,7 +91,7 @@ export default function RootLayout({
         <MyTeamProvider>
           <SidePanelProvider>
             <Header />
-            <MainNav copaHref={copaHref} />
+            <MainNav />
             <SidePanelLoader />
             <main className="flex-1">{children}</main>
             <Footer />
