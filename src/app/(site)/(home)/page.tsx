@@ -1,5 +1,4 @@
 import type { Metadata } from "next";
-import { WorldCupBanner } from "@/components/world-cup-banner";
 import { MatchBar } from "@/components/match-bar/match-bar";
 import { LiveScoreProvider } from "@/components/world-cup/copa-live-provider";
 // Destaques e Melhores Momentos desativado temporariamente (reativar depois).
@@ -8,18 +7,15 @@ import { NewsSection } from "@/components/home/news-section";
 import { CasasApostasSection } from "@/components/home/casas-apostas-section";
 import { TransfersSection } from "@/components/home/transfers-section";
 import { StandingsWidget } from "@/components/sidebar/standings-widget";
-import { WorldCupGroupsWidget } from "@/components/sidebar/world-cup-groups-widget";
 import { ScorersWidget } from "@/components/sidebar/scorers-widget";
 import { NextMatchWidget } from "@/components/sidebar/next-match-widget";
 import { RecentResultsWidget } from "@/components/sidebar/recent-results-widget";
 import { MyTeamWidget } from "@/components/sidebar/my-team-widget";
 
-import { getTodayMatches, getWorldCupBarMatches, getBrazilianBarMatches, freshMatches, relevantBarMatches, mergeBarMatches } from "@/lib/data/matches";
+import { getTodayMatches, getBrazilianBarMatches, freshMatches, relevantBarMatches, mergeBarMatches } from "@/lib/data/matches";
 import { getTransfers } from "@/lib/data/home"; // getHighlights desativado (ver Destaques)
 import { getLatestArticles, getArticles } from "@/lib/data/articles";
-import { getBrasileiraoStandings, getWorldCupStandings } from "@/lib/data/standings";
-import { getKnockoutFixtures } from "@/lib/data/world-cup";
-import { currentKnockoutPhase } from "@/lib/world-cup-phases";
+import { getBrasileiraoStandings } from "@/lib/data/standings";
 import { getTopScorers } from "@/lib/data/scorers";
 import { getChampionshipData } from "@/lib/data/championship";
 import { enrichStandingsWithForm } from "@/lib/standings-utils";
@@ -51,25 +47,18 @@ export async function generateMetadata(): Promise<Metadata> {
 }
 
 export default async function HomePage() {
-  // Fase atual da Copa (por data) → o card lateral acompanha o mata-mata em vez de
-  // ficar preso nos grupos. Grupos só até os 16-avos começarem.
-  const wcPhase = currentKnockoutPhase();
   const [
     todayMatches,
-    copaBar,
     brazilBar,
     // highlights,  // Destaques desativado temporariamente
     transfers,
     articles,
     casasArticles,
     rawStandings,
-    worldCupGroups,
-    worldCupKnockout,
     scorers,
     champData,
   ] = await Promise.all([
     getTodayMatches().catch(() => []),
-    getWorldCupBarMatches().catch(() => []),
     getBrazilianBarMatches().catch(() => ({ today: [], upcoming: [] })),
     // getHighlights().catch(() => []),  // Destaques desativado temporariamente
     getTransfers().catch(() => []),
@@ -78,10 +67,6 @@ export default async function HomePage() {
       .then((r) => r.articles)
       .catch(() => []),
     getBrasileiraoStandings().catch(() => []),
-    getWorldCupStandings().catch(() => []),
-    wcPhase.slug === "grupos"
-      ? Promise.resolve([])
-      : getKnockoutFixtures(wcPhase.slug, wcPhase.round).catch(() => []),
     getTopScorers().catch(() => []),
     getChampionshipData("brasileirao-serie-a").catch(() => null as ChampionshipData | null),
   ]);
@@ -107,19 +92,15 @@ export default async function HomePage() {
     }
   }
 
-  // Durante a Copa, a barra de cima mostra os jogos da Copa de hoje + proximos 2
-  // dias (com link pra página do jogo ao vivo), ordenados por horario real e com
-  // a data no card. Sem jogos da Copa, cai pros jogos gerais de hoje.
-  const copaToday = copaBar;
-  // Aba "Hoje": com Copa → só a Copa. Sem Copa → jogos de HOJE das ligas BR (Série A/B/C
-  // + Copa do Brasil, via CBF confiável + ao vivo) MESCLADOS com as demais ligas relevantes
-  // de hoje que porventura estejam ao vivo (Libertadores, Champions, etc.). O feed por data
-  // da API anda quebrado (devolve 0), então os agendados de hoje vêm do calendário CBF —
-  // por isso a aba "Hoje" agora mostra os jogos do dia mesmo antes de começarem.
-  // Aba "Próximos": só os jogos dos próximos dias (brazilBar.upcoming).
-  const barMatches = copaToday.length
-    ? copaToday
-    : mergeBarMatches(relevantBarMatches(freshMatches(todayMatches)), brazilBar.today);
+  // Aba "Hoje": jogos de HOJE das ligas BR (Série A/B/C + Copa do Brasil, via CBF confiável
+  // + ao vivo) MESCLADOS com as demais ligas relevantes de hoje que porventura estejam ao
+  // vivo (Libertadores, Champions, etc.). O feed por data da API anda quebrado (devolve 0),
+  // então os agendados de hoje vêm do calendário CBF — por isso a aba "Hoje" mostra os jogos
+  // do dia mesmo antes de começarem. Aba "Próximos": só os próximos dias (brazilBar.upcoming).
+  const barMatches = mergeBarMatches(
+    relevantBarMatches(freshMatches(todayMatches)),
+    brazilBar.today
+  );
 
   // Placar ao vivo do bar SEM bater na API: faz polling dos endpoints de ao vivo que JÁ
   // existem (cacheados+gateados, compartilhados com as páginas das ligas). Só liga o
@@ -131,24 +112,19 @@ export default async function HomePage() {
       m.status === "halftime" ||
       (m.status === "scheduled" && m.timestamp - nowSec < 90 * 60)
   );
-  const liveEndpoints = [
-    ...(copaToday.length ? ["/api/copa/ao-vivo"] : []),
-    ...(leagueLiveSoon
-      ? [
-          "/api/championship/brasileirao-serie-a/ao-vivo",
-          "/api/championship/brasileirao-serie-b/ao-vivo",
-        ]
-      : []),
-  ];
+  const liveEndpoints = leagueLiveSoon
+    ? [
+        "/api/championship/brasileirao-serie-a/ao-vivo",
+        "/api/championship/brasileirao-serie-b/ao-vivo",
+      ]
+    : [];
 
   return (
     <>
       {/* H1 da home (acessível, sem alterar o layout) — sinal de tópico principal. */}
       <Editable id="home.h1" as="h1" className="sr-only" />
-      <WorldCupBanner />
-      {/* Com jogo da Copa hoje, embrulha a barra no provider de placar ao vivo
-          (mesmo polling de 15s da tabela da Copa, endpoint cacheado: N clientes
-          = 1 chamada à API). Sem jogo da Copa, barra normal sem polling. */}
+      {/* Provider de placar ao vivo pra barra: só faz polling quando há jogo BR ao vivo
+          ou prestes a começar (endpoint cacheado: N clientes = 1 chamada à API). */}
       <LiveScoreProvider endpoints={liveEndpoints}>
         <MatchBar todayMatches={barMatches} upcomingMatches={brazilBar.upcoming} />
       </LiveScoreProvider>
@@ -166,7 +142,6 @@ export default async function HomePage() {
             {/* Tabelas no celular: logo apos as noticias, antes do Mercado da Bola.
                 So aparece no mobile (no desktop ficam no sidebar). */}
             <div className="space-y-6 lg:hidden">
-              <WorldCupGroupsWidget groups={worldCupGroups} phase={wcPhase} knockout={worldCupKnockout} />
               <StandingsWidget standings={standings} />
             </div>
             <TransfersSection transfers={transfers} />
@@ -174,11 +149,9 @@ export default async function HomePage() {
 
           {/* Sidebar */}
           <aside className="space-y-6">
-            {/* Tabelas no topo do sidebar (desktop): Copa do Mundo 2026 alinhada com
-                as Ultimas Noticias + Brasileirao logo abaixo. So no desktop; no mobile
-                sobem pra logo apos as noticias (ver bloco lg:hidden no main). */}
+            {/* Tabela do Brasileirão no topo do sidebar (desktop), alinhada com as Ultimas
+                Noticias. So no desktop; no mobile sobe pra logo apos as noticias. */}
             <div className="hidden lg:block space-y-6">
-              <WorldCupGroupsWidget groups={worldCupGroups} phase={wcPhase} knockout={worldCupKnockout} />
               <StandingsWidget standings={standings} />
             </div>
             <MyTeamWidget />
