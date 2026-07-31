@@ -95,6 +95,9 @@ function formatParagraphs(text: string): string {
     .join("");
 }
 
+// Posts que renderizam em largura cheia, sem sidebar (guias/rankings long-form).
+const WIDE_ARTICLE_SLUGS = new Set(["casas-de-apostas"]);
+
 /**
  * Renderização completa de um artigo. Compartilhada entre /artigos/[slug] (fallback
  * de categorias reservadas) e /[categoria]/[slug] (URL canônica por categoria).
@@ -134,6 +137,12 @@ export function ArticleView({
   const catSlug = slugifyCategory(article.category);
   const catHref = WP_CATEGORY_BY_SLUG[catSlug] ? `/noticias/${catSlug}` : "/noticias";
 
+  // Guias long-form (money pages): coluna larga e SEM a sidebar "Continue no Papo de
+  // Bola" — a tabela comparativa e os cards precisam da largura, e o texto respira mais.
+  // Notícia comum mantém a sidebar. Lista explícita: é decisão editorial, não automática.
+  const wide = WIDE_ARTICLE_SLUGS.has(article.slug);
+  const colWidth = wide ? "max-w-[940px]" : "max-w-[680px]";
+
   return (
     <>
       <ArticleSchema article={article} />
@@ -146,7 +155,7 @@ export function ArticleView({
 
       {/* Hero */}
       <section className="bg-surface border-b border-border-custom">
-        <div className="mx-auto max-w-[800px] px-4 pt-6 pb-8">
+        <div className={`mx-auto ${wide ? "max-w-[940px]" : "max-w-[800px]"} px-4 pt-6 pb-8`}>
           <PageBreadcrumb
             className="mb-4"
             items={[
@@ -200,8 +209,20 @@ export function ArticleView({
       </section>
 
       {/* Content + sidebar de engajamento (sidebar só no desktop) */}
-      <div className="mx-auto max-w-[1040px] px-4 py-12 lg:grid lg:grid-cols-[minmax(0,1fr)_300px] lg:gap-10 lg:items-start">
-        <div className="mx-auto w-full max-w-[680px] min-w-0 lg:mx-0 lg:max-w-none">
+      <div
+        className={
+          wide
+            ? "mx-auto max-w-[940px] px-4 py-12"
+            : "mx-auto max-w-[1040px] px-4 py-12 lg:grid lg:grid-cols-[minmax(0,1fr)_300px] lg:gap-10 lg:items-start"
+        }
+      >
+        <div
+          className={
+            wide
+              ? "w-full min-w-0"
+              : "mx-auto w-full max-w-[680px] min-w-0 lg:mx-0 lg:max-w-none"
+          }
+        >
           {article.category === "Casas de Apostas" && <BettingDisclaimer className="mb-6" />}
           <article className="prose-article" dangerouslySetInnerHTML={{ __html: bodyHtml }} />
           {bodyHtml.includes("instagram-media") && <InstagramEmbedLoader />}
@@ -239,13 +260,15 @@ export function ArticleView({
           </div>
         </div>
 
-        <aside className="mt-10 hidden lg:mt-0 lg:block lg:sticky lg:top-4">
-          <ArticleSidebar standings={standings} />
-        </aside>
+        {!wide && (
+          <aside className="mt-10 hidden lg:mt-0 lg:block lg:sticky lg:top-4">
+            <ArticleSidebar standings={standings} />
+          </aside>
+        )}
       </div>
 
       {/* CTAs de engajamento no mobile (a sidebar é só desktop) */}
-      <div className="mx-auto max-w-[680px] px-4 pb-2 lg:hidden">
+      <div className={`mx-auto ${colWidth} px-4 pb-2 lg:hidden`}>
         <div className="flex flex-wrap gap-2">
           {[
             { href: "/jogos-de-hoje", label: "Jogos de hoje" },
@@ -265,7 +288,7 @@ export function ArticleView({
 
       {/* Related */}
       {related.length > 0 && (
-        <div className="mx-auto max-w-[680px] px-4 py-8 border-t-2 border-border-custom">
+        <div className={`mx-auto ${colWidth} px-4 py-8 border-t-2 border-border-custom`}>
           <h2 className="text-base font-bold uppercase text-text-primary mb-5">
             Leia Também
           </h2>
