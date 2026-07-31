@@ -12,6 +12,7 @@ import { ArticleSchema } from "@/components/seo/article-schema";
 import { PageBreadcrumb } from "@/components/seo/page-breadcrumb";
 import { StandingsWidget } from "@/components/sidebar/standings-widget";
 import { BettingDisclaimer } from "@/components/apostas/betting-disclaimer";
+import { FaqSchema, RankingSchema } from "@/components/seo/faq-schema";
 
 type Standings = Awaited<ReturnType<typeof getBrasileiraoStandings>>;
 
@@ -136,6 +137,12 @@ export function ArticleView({
   return (
     <>
       <ArticleSchema article={article} />
+      {/* Blocos do editor viram dados estruturados: FAQ (accordion) → FAQPage;
+          tabela/cards de casas de apostas → ItemList do ranking. */}
+      {article.faq?.length ? <FaqSchema items={article.faq} /> : null}
+      {article.ranking?.length ? (
+        <RankingSchema items={article.ranking} name={article.rewrittenTitle} />
+      ) : null}
 
       {/* Hero */}
       <section className="bg-surface border-b border-border-custom">

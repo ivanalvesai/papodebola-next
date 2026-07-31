@@ -33,6 +33,43 @@ function themeClass(cor: string): string {
   return "pdb-theme-" + (CARD_COLORS.includes(cor) ? cor : "verde");
 }
 
+// URL de um upload populado (depth>=1). `size` usa a versão redimensionada quando existe.
+function mediaUrl(doc: any, size?: string): string {
+  if (!doc || typeof doc !== "object") return "";
+  const u = (size && doc.sizes?.[size]?.url) || doc.url || "";
+  if (!u) return "";
+  return String(u).startsWith("http") ? u : `${SITE_URL}${u}`;
+}
+
+// Âncora estável a partir do texto do título (usada pelo índice "Nesta página").
+export function anchorSlug(s: string): string {
+  return String(s || "")
+    .normalize("NFD")
+    .replace(/[̀-ͯ]/g, "")
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "")
+    .slice(0, 60);
+}
+
+// Link externo sai como afiliado (sponsored nofollow, nova aba); interno sai normal.
+function linkAttrs(href: string): string {
+  return /^https?:\/\//i.test(href)
+    ? ` target="_blank" rel="sponsored nofollow noopener"`
+    : "";
+}
+
+// Converte o richText de um campo DENTRO de um bloco (análise, resposta do FAQ, bio do
+// autor) — usa os conversores padrão (evita recursão infinita nos blocos customizados).
+function innerHtml(x: any): string {
+  if (!x || typeof x !== "object" || !x.root?.children?.length) return "";
+  try {
+    return convertLexicalToHTML({ data: x });
+  } catch {
+    return "";
+  }
+}
+
 // Corpo do post em HTML: prefere o editor visual (Lexical, campo `content`); cai pro
 // HTML legado (`body`) enquanto o post não foi migrado. Garante que nada some na
 // transição e que o HTML renderizado (logo, o SEO) continue equivalente.
@@ -200,6 +237,160 @@ const lexicalConverters: any = ({ defaultConverters }: any) => ({
       if (!pros && !cons) return "";
       return `<div class="pdb-proscons ${themeClass(f.cor)}"><div class="pdb-pros"><div class="pdb-pc-title">${escHtml(f.prosTitle || "Vantagens")}</div><ul>${pros}</ul></div><div class="pdb-cons"><div class="pdb-pc-title">${escHtml(f.consTitle || "Desvantagens")}</div><ul>${cons}</ul></div></div>`;
     },
+    // ── Vertical de apostas ──
+    // Tabela comparativa: # / Casa (logo + nome) / Nota / Licença / Pagamento / Diferencial.
+    // Linha sem nota mostra "Em avaliação" — nunca inventa nota (regra editorial do brief).
+    bettingTable: ({ node }: any) => {
+      const f = node?.fields || {};
+      const rows = (f.rows || []).filter((r: any) => r?.name);
+      if (!rows.length) return "";
+      const empty = escHtml(f.emptyScoreLabel || "Em avaliação");
+      const cap = f.title ? `<caption>${escHtml(f.title)}</caption>` : "";
+      const body = rows
+        .map((r: any, i: number) => {
+          const logo = mediaUrl(r.logo);
+          const img = logo
+            ? `<img class="pdb-bt-logo" src="${escAttr(logo)}" alt="${escAttr(r.name)}" width="18" height="18" loading="lazy" />`
+            : "";
+          const href = String(r.href || "").trim();
+          const name = href
+            ? `<a href="${escAttr(href)}"${linkAttrs(href)}>${escHtml(r.name)}</a>`
+            : escHtml(r.name);
+          const score = String(r.score || "").trim();
+          const scoreCell = score
+            ? `<span class="pdb-bt-score">${escHtml(score)}</span>`
+            : `<span class="pdb-bt-pending">${empty}</span>`;
+          return `<tr><td class="pdb-bt-rank">${i + 1}</td><td class="pdb-bt-name">${img}${name}</td><td>${scoreCell}</td><td>${escHtml(r.license || "")}</td><td>${escHtml(r.payment || "")}</td><td>${escHtml(r.highlight || "")}</td></tr>`;
+        })
+        .join("");
+      return `<div class="pdb-bt-wrap"><table class="pdb-bt">${cap}<thead><tr><th>#</th><th>Casa</th><th>Nota</th><th>Licença</th><th>Pagamento</th><th>Diferencial</th></tr></thead><tbody>${body}</tbody></table></div>`;
+    },
+    // Card de casa: com nota = review completo; sem nota = card "em avaliação".
+    bettingReview: ({ node }: any) => {
+      const f = node?.fields || {};
+      if (!f.name) return "";
+      const score = String(f.score || "").trim();
+      const rank = String(f.rank || "").trim();
+      const logo = mediaUrl(f.logo);
+      const head = [
+        rank ? `<span class="pdb-br-rank">${escHtml(rank)}</span>` : "",
+        logo ? `<img class="pdb-br-logo" src="${escAttr(logo)}" alt="${escAttr(f.name)}" width="32" height="32" loading="lazy" />` : "",
+        `<span class="pdb-br-name">${escHtml(f.name)}</span>`,
+        score
+          ? `<span class="pdb-br-score">${escHtml(score)}</span>`
+          : `<span class="pdb-br-pending">Em avaliação</span>`,
+      ]
+        .filter(Boolean)
+        .join("");
+      const meta = [
+        f.license ? `<li><span>Licença</span><strong>${escHtml(f.license)}</strong></li>` : "",
+        f.ra
+          ? `<li><span>Reclame Aqui</span><strong>${
+              f.raUrl
+                ? `<a href="${escAttr(f.raUrl)}" target="_blank" rel="nofollow noopener">${escHtml(f.ra)}</a>`
+                : escHtml(f.ra)
+            }</strong></li>`
+          : "",
+      ]
+        .filter(Boolean)
+        .join("");
+      const metaList = meta ? `<ul class="pdb-br-meta">${meta}</ul>` : "";
+      const shots = [
+        ...(mediaUrl(f.raProof) ? [{ url: mediaUrl(f.raProof), caption: "Reclame Aqui" }] : []),
+        ...(f.images || [])
+          .map((im: any) => ({ url: mediaUrl(im?.image), caption: im?.caption || "" }))
+          .filter((im: any) => im.url),
+      ];
+      const gallery = shots.length
+        ? `<div class="pdb-br-shots">${shots
+            .map(
+              (im: any) =>
+                `<figure><img src="${escAttr(im.url)}" alt="${escAttr(
+                  `${f.name} — ${im.caption || "captura de tela"}`
+                )}" loading="lazy" />${im.caption ? `<figcaption>${escHtml(im.caption)}</figcaption>` : ""}</figure>`
+            )
+            .join("")}</div>`
+        : "";
+      const summary = innerHtml(f.summary);
+      const pros = (f.pros || []).filter((p: any) => p?.item).map((p: any) => `<li>${escHtml(p.item)}</li>`).join("");
+      const cons = (f.cons || []).filter((c: any) => c?.item).map((c: any) => `<li>${escHtml(c.item)}</li>`).join("");
+      const pc =
+        pros || cons
+          ? `<div class="pdb-proscons ${themeClass(f.cor)}"><div class="pdb-pros"><div class="pdb-pc-title">${escHtml(
+              f.prosTitle || "Prós"
+            )}</div><ul>${pros}</ul></div><div class="pdb-cons"><div class="pdb-pc-title">${escHtml(
+              f.consTitle || "Contras"
+            )}</div><ul>${cons}</ul></div></div>`
+          : "";
+      // CTA de afiliado só sai com link real — placeholder nunca vai pro ar (regra do brief).
+      const ctaUrl = String(f.ctaUrl || "").trim();
+      const cta = ctaUrl
+        ? `<a class="pdb-cta pdb-cta-primary ${themeClass(f.cor)}" href="${escAttr(ctaUrl)}" target="_blank" rel="sponsored nofollow noopener">${escHtml(
+            f.ctaLabel || "Abrir conta"
+          )}</a>`
+        : "";
+      const linkHref = String(f.linkHref || "").trim();
+      const link = linkHref
+        ? `<a class="pdb-cta pdb-cta-outline ${themeClass(f.cor)}" href="${escAttr(linkHref)}"${linkAttrs(linkHref)}>${escHtml(
+            f.linkLabel || "Ver análise completa"
+          )}</a>`
+        : "";
+      const ctas = cta || link ? `<div class="pdb-br-ctas">${link}${cta}</div>` : "";
+      return `<div class="pdb-br ${themeClass(f.cor)}" id="casa-${escAttr(anchorSlug(f.name))}"><div class="pdb-br-head">${head}</div>${metaList}${summary}${gallery}${pc}${ctas}</div>`;
+    },
+    // FAQ em accordion (<details>). Vira schema FAQPage em article-view (ver extractFaq).
+    faq: ({ node }: any) => {
+      const f = node?.fields || {};
+      const items = (f.items || []).filter((i: any) => i?.question);
+      if (!items.length) return "";
+      const title = f.title ? `<h2 id="${escAttr(anchorSlug(f.title))}">${escHtml(f.title)}</h2>` : "";
+      const list = items
+        .map(
+          (it: any, i: number) =>
+            `<details class="pdb-faq-item"${i === 0 && f.firstOpen ? " open" : ""}><summary>${escHtml(
+              it.question
+            )}</summary><div class="pdb-faq-answer">${innerHtml(it.answer)}</div></details>`
+        )
+        .join("");
+      return `${title}<div class="pdb-faq">${list}</div>`;
+    },
+    // Índice "Nesta página". Com auto=true sai um marcador que o postBodyHtml preenche
+    // com os H2 do texto (assim o editor não precisa manter âncoras na mão).
+    toc: ({ node }: any) => {
+      const f = node?.fields || {};
+      const title = escHtml(f.title || "Nesta página");
+      if (f.auto !== false) {
+        return `<nav class="pdb-toc" data-pdb-toc="auto" data-toc-title="${escAttr(title)}" aria-label="${escAttr(title)}"></nav>`;
+      }
+      const items = (f.items || []).filter((i: any) => i?.label);
+      if (!items.length) return "";
+      const lis = items
+        .map((i: any) => {
+          const href = String(i.anchor || "").trim() || `#${anchorSlug(i.label)}`;
+          return `<li><a href="${escAttr(href)}">${escHtml(i.label)}</a></li>`;
+        })
+        .join("");
+      return `<nav class="pdb-toc" aria-label="${escAttr(title)}"><div class="pdb-toc-title">${title}</div><ul>${lis}</ul></nav>`;
+    },
+    // "Sobre o Autor" (E-E-A-T): foto + bio da collection Autores. Precisa de depth>=2
+    // pra foto vir populada (ver getArticleBySlugPayload).
+    authorBox: ({ node }: any) => {
+      const a = node?.fields?.author;
+      if (!a || typeof a !== "object" || !a.name) return "";
+      const f = node?.fields || {};
+      const photo = mediaUrl(a.photo, "card");
+      const img = photo
+        ? `<img class="pdb-author-photo" src="${escAttr(photo)}" alt="${escAttr(a.name)}" width="72" height="72" loading="lazy" />`
+        : "";
+      const href = a.slug ? `/autor/${encodeURIComponent(a.slug)}` : "";
+      const name = href ? `<a href="${escAttr(href)}">${escHtml(a.name)}</a>` : escHtml(a.name);
+      const intro = f.intro ? `<div class="pdb-author-intro">${escHtml(f.intro)}</div>` : "";
+      const role = a.role ? `<div class="pdb-author-role">${escHtml(a.role)}</div>` : "";
+      const bio = innerHtml(a.bio);
+      return `<aside class="pdb-author">${intro}<div class="pdb-author-head">${img}<div><div class="pdb-author-label">${escHtml(
+        f.title || "Sobre o Autor"
+      )}</div><div class="pdb-author-name">${name}</div>${role}</div></div><div class="pdb-author-bio">${bio}</div></aside>`;
+    },
   },
   // Imagem inserida no editor (upload node) com alinhamento (campo do UploadFeature).
   upload: ({ node }: any) => {
@@ -218,16 +409,98 @@ const lexicalConverters: any = ({ defaultConverters }: any) => ({
   },
 });
 
+// Dá `id` aos títulos (H2/H3) que ainda não têm — é o que faz o índice "Nesta página"
+// e os links âncora funcionarem sem o editor precisar cuidar disso na mão.
+function withHeadingAnchors(html: string): string {
+  const used = new Set<string>();
+  return html.replace(/<(h[23])(\s[^>]*)?>([\s\S]*?)<\/\1>/gi, (full, tag, attrs = "", inner) => {
+    if (/\sid=/i.test(attrs || "")) {
+      const m = String(attrs).match(/\sid="([^"]*)"/i);
+      if (m) used.add(m[1]);
+      return full;
+    }
+    const base = anchorSlug(stripHtml(inner));
+    if (!base) return full;
+    let id = base;
+    let n = 2;
+    while (used.has(id)) id = `${base}-${n++}`;
+    used.add(id);
+    return `<${tag}${attrs || ""} id="${id}">${inner}</${tag}>`;
+  });
+}
+
+// Preenche o marcador do bloco "Nesta página" (auto) com os H2 do texto já ancorados.
+function fillAutoToc(html: string): string {
+  if (!html.includes('data-pdb-toc="auto"')) return html;
+  const items: { id: string; label: string }[] = [];
+  const re = /<h2[^>]*\sid="([^"]+)"[^>]*>([\s\S]*?)<\/h2>/gi;
+  let m: RegExpExecArray | null;
+  while ((m = re.exec(html))) {
+    const label = stripHtml(m[2]);
+    if (label) items.push({ id: m[1], label });
+  }
+  return html.replace(
+    /<nav class="pdb-toc" data-pdb-toc="auto" data-toc-title="([^"]*)"([^>]*)><\/nav>/gi,
+    (full, title, rest) => {
+      if (!items.length) return "";
+      const lis = items.map((i) => `<li><a href="#${escAttr(i.id)}">${escHtml(i.label)}</a></li>`).join("");
+      return `<nav class="pdb-toc"${rest}><div class="pdb-toc-title">${title}</div><ul>${lis}</ul></nav>`;
+    }
+  );
+}
+
 function postBodyHtml(p: any): string {
   const c = p.content;
   if (c && typeof c === "object" && c.root && Array.isArray(c.root.children) && c.root.children.length) {
     try {
-      return convertLexicalToHTML({ data: c, converters: lexicalConverters });
+      return fillAutoToc(withHeadingAnchors(convertLexicalToHTML({ data: c, converters: lexicalConverters })));
     } catch {
       return p.body || "";
     }
   }
   return p.body || "";
+}
+
+// ── Dados estruturados extraídos do corpo (blocos do editor) ──
+// Percorre a árvore Lexical atrás dos blocos `faq` (→ schema FAQPage) e
+// `bettingTable`/`bettingReview` (→ schema ItemList do ranking).
+function walkBlocks(node: any, out: any[]): void {
+  if (!node || typeof node !== "object") return;
+  if (node.type === "block" && node.fields?.blockType) out.push(node.fields);
+  for (const child of node.children || []) walkBlocks(child, out);
+}
+
+export function extractStructured(content: any): {
+  faq: { question: string; answer: string }[];
+  ranking: { name: string; href?: string }[];
+} {
+  const faq: { question: string; answer: string }[] = [];
+  const ranking: { name: string; href?: string }[] = [];
+  if (!content || typeof content !== "object" || !content.root) return { faq, ranking };
+  const blocks: any[] = [];
+  walkBlocks(content.root, blocks);
+  for (const b of blocks) {
+    if (b.blockType === "faq") {
+      for (const it of b.items || []) {
+        const answer = stripHtml(innerHtml(it?.answer));
+        if (it?.question && answer) faq.push({ question: String(it.question), answer });
+      }
+    }
+    if (b.blockType === "bettingTable" && !ranking.length) {
+      for (const r of b.rows || []) {
+        if (r?.name) ranking.push({ name: String(r.name), href: String(r.href || "") || undefined });
+      }
+    }
+  }
+  // Sem tabela, o ranking vem dos cards (mesma ordem do texto).
+  if (!ranking.length) {
+    for (const b of blocks) {
+      if (b.blockType === "bettingReview" && b.name) {
+        ranking.push({ name: String(b.name), href: String(b.linkHref || "") || undefined });
+      }
+    }
+  }
+  return { faq, ranking };
 }
 
 // Converte um campo richText (Lexical do editor completo) em HTML, com os MESMOS
@@ -236,7 +509,8 @@ function postBodyHtml(p: any): string {
 export function lexicalToHtml(content: any): string {
   if (!content || typeof content !== "object" || !content.root?.children?.length) return "";
   try {
-    return convertLexicalToHTML({ data: content, converters: lexicalConverters });
+    // Mesmo pós-processamento do corpo do post: âncoras nos títulos + índice automático.
+    return fillAutoToc(withHeadingAnchors(convertLexicalToHTML({ data: content, converters: lexicalConverters })));
   } catch {
     return "";
   }
@@ -254,7 +528,11 @@ function mapPost(p: any): Article {
   const image = coverUrl ? `${SITE_URL}${coverUrl}` : "";
   const category = p.category || "Futebol brasileiro";
   const pubDate = p.publishedDate || p.createdAt || new Date().toISOString();
+  // FAQ e ranking dos blocos do editor → JSON-LD (FAQPage / ItemList) na página do artigo.
+  const structured = extractStructured(p.content);
   return {
+    faq: structured.faq.length ? structured.faq : undefined,
+    ranking: structured.ranking.length ? structured.ranking : undefined,
     imageCaption: cover?.alt || "",
     originalTitle: p.title || "",
     rewrittenTitle: p.title || "",
@@ -335,7 +613,9 @@ export async function getArticleBySlugPayload(
       draft,
       overrideAccess: true,
       limit: 1,
-      depth: 1,
+      // depth 2: popula relações DENTRO dos blocos do corpo (ex.: a foto do autor no
+      // bloco "Sobre o autor", que é upload dentro da relação `authors`).
+      depth: 2,
     });
     return res.docs[0] ? mapPost(res.docs[0]) : null;
   } catch {

@@ -22,6 +22,10 @@ export interface Article {
   url: string;
   updatedAt?: string;
   wpId?: number;
+  /** Perguntas do bloco "Perguntas frequentes" do editor → JSON-LD FAQPage. */
+  faq?: { question: string; answer: string }[];
+  /** Itens do ranking (tabela/cards de casas de apostas) → JSON-LD ItemList. */
+  ranking?: { name: string; href?: string }[];
 }
 
 export interface ArticleListResponse {

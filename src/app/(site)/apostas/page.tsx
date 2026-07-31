@@ -17,7 +17,9 @@ import { BettingDisclaimer } from "@/components/apostas/betting-disclaimer";
 export const revalidate = 1800;
 
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || "https://www.papodebola.com.br";
-const GUIDE_SLUG = "melhores-casas-apostas-brasil";
+// Money page da vertical: o ranking das casas licenciadas (/apostas/casas-de-apostas).
+// Ela é destacada no banner e sai do grid de notícias pra não aparecer duas vezes.
+const GUIDE_SLUG = "casas-de-apostas";
 
 const DEFAULT_TITLE = "Casas de Apostas: Notícias, Bônus e Guia das Bets | Papo de Bola";
 const DEFAULT_DESC =

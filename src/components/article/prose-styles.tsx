@@ -327,9 +327,112 @@ export function ProseStyles() {
         .prose-article .pdb-statcard { border-left: 4px solid var(--pdb-accent, #00965E); }
         .prose-article .pdb-statcard-title { color: var(--pdb-accent, #00965E); }
         .prose-article .pdb-proscons .pdb-pros { border-top: 3px solid var(--pdb-accent, #00965E); }
+        /* --- Vertical de apostas: tabela comparativa, card de casa, FAQ, índice, autor --- */
+        /* A tabela rola sozinha no mobile (o corpo do post NUNCA rola na horizontal). */
+        .prose-article .pdb-bt-wrap { overflow-x: auto; margin: 0 0 32px; -webkit-overflow-scrolling: touch; }
+        .prose-article table.pdb-bt {
+          width: 100%; min-width: 640px; border-collapse: collapse; font-size: 15px; background: #fff;
+          border: 1px solid #e2e5e9; border-radius: 10px; overflow: hidden; margin: 0;
+        }
+        .prose-article table.pdb-bt caption {
+          caption-side: top; text-align: left; font-weight: 700; color: #1A1D23; padding: 0 0 10px; font-size: 17px;
+        }
+        .prose-article table.pdb-bt thead th {
+          background: #1A1D23; color: #fff; font-size: 13px; text-transform: uppercase;
+          letter-spacing: 0.03em; text-align: left; padding: 10px 12px; white-space: nowrap;
+        }
+        .prose-article table.pdb-bt td { padding: 10px 12px; border-top: 1px solid #eef0f2; color: #333; vertical-align: middle; }
+        .prose-article table.pdb-bt tbody tr:nth-child(even) { background: #fafbfc; }
+        .prose-article .pdb-bt-rank { font-weight: 700; color: #6b7280; width: 40px; }
+        .prose-article .pdb-bt-name { font-weight: 600; color: #1A1D23; white-space: nowrap; }
+        .prose-article .pdb-bt-name img.pdb-bt-logo {
+          width: 18px; height: 18px; border-radius: 4px; object-fit: contain;
+          display: inline-block; vertical-align: -3px; margin: 0 8px 0 0;
+        }
+        .prose-article .pdb-bt-score {
+          display: inline-block; font-weight: 700; color: #00965E;
+          background: rgba(0,150,94,0.09); border-radius: 999px; padding: 2px 10px;
+        }
+        .prose-article .pdb-bt-pending { color: #6b7280; font-size: 14px; }
+        .prose-article .pdb-br {
+          border: 1px solid #e2e5e9; border-left: 4px solid var(--pdb-accent, #00965E);
+          border-radius: 12px; padding: 18px 20px; margin: 0 0 32px; background: #fff; scroll-margin-top: 80px;
+        }
+        .prose-article .pdb-br-head { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+        .prose-article .pdb-br-rank {
+          font-size: 13px; font-weight: 700; color: #fff; background: var(--pdb-accent, #00965E);
+          border-radius: 999px; min-width: 24px; height: 24px; display: inline-flex;
+          align-items: center; justify-content: center; padding: 0 7px;
+        }
+        .prose-article .pdb-br-logo { width: 32px; height: 32px; border-radius: 6px; object-fit: contain; margin: 0; }
+        .prose-article .pdb-br-name { font-size: 20px; font-weight: 700; color: #1A1D23; }
+        .prose-article .pdb-br-score {
+          margin-left: auto; font-size: 18px; font-weight: 700; color: #fff;
+          background: var(--pdb-accent, #00965E); border-radius: 8px; padding: 3px 12px;
+        }
+        .prose-article .pdb-br-pending {
+          margin-left: auto; font-size: 13px; font-weight: 600; color: #6b7280;
+          background: #f2f3f5; border-radius: 999px; padding: 4px 12px;
+        }
+        .prose-article .pdb-br-meta { list-style: none; margin: 14px 0 0; padding: 0; }
+        .prose-article .pdb-br-meta li {
+          display: flex; justify-content: space-between; gap: 12px; font-size: 15px;
+          padding: 6px 0; border-bottom: 1px solid #f0f2f4; margin: 0; color: #444;
+        }
+        .prose-article .pdb-br-meta li:last-child { border-bottom: 0; }
+        .prose-article .pdb-br-meta strong { color: #1A1D23; }
+        .prose-article .pdb-br-shots {
+          display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 12px; margin: 16px 0 0;
+        }
+        .prose-article .pdb-br-shots figure { margin: 0; }
+        .prose-article .pdb-br-shots img { width: 100%; height: auto; border-radius: 8px; border: 1px solid #e2e5e9; margin: 0; }
+        .prose-article .pdb-br-shots figcaption { font-size: 13px; color: #6b7280; margin-top: 4px; }
+        .prose-article .pdb-br .pdb-proscons { margin: 16px 0 0; }
+        .prose-article .pdb-br-ctas { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 4px; }
+        .prose-article .pdb-faq { margin: 0 0 32px; border: 1px solid #e2e5e9; border-radius: 12px; background: #fff; overflow: hidden; }
+        .prose-article .pdb-faq-item { border-bottom: 1px solid #eef0f2; }
+        .prose-article .pdb-faq-item:last-child { border-bottom: 0; }
+        .prose-article .pdb-faq-item > summary {
+          cursor: pointer; list-style: none; padding: 14px 18px; font-weight: 600;
+          font-size: 16px; color: #1A1D23; display: flex; justify-content: space-between; gap: 12px; align-items: center;
+        }
+        .prose-article .pdb-faq-item > summary::-webkit-details-marker { display: none; }
+        .prose-article .pdb-faq-item > summary::after { content: "+"; color: #00965E; font-size: 20px; font-weight: 700; line-height: 1; }
+        .prose-article .pdb-faq-item[open] > summary::after { content: "−"; }
+        .prose-article .pdb-faq-answer { padding: 0 18px 16px; color: #444; font-size: 15px; line-height: 1.65; }
+        .prose-article .pdb-faq-answer p:last-child { margin-bottom: 0; }
+        .prose-article .pdb-toc {
+          border: 1px solid #e2e5e9; border-radius: 12px; background: #fafbfc; padding: 14px 18px; margin: 0 0 32px;
+        }
+        .prose-article .pdb-toc-title {
+          font-size: 13px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.03em;
+          color: #6b7280; margin-bottom: 8px;
+        }
+        .prose-article .pdb-toc ul { list-style: none; margin: 0; padding: 0; }
+        .prose-article .pdb-toc li { margin: 0 0 6px; padding-left: 16px; position: relative; font-size: 15px; }
+        .prose-article .pdb-toc li::before { content: "›"; position: absolute; left: 0; color: #00965E; font-weight: 700; }
+        .prose-article .pdb-toc a { color: #1A1D23; text-decoration: none; }
+        .prose-article .pdb-toc a:hover { color: #00965E; text-decoration: underline; }
+        .prose-article .pdb-author {
+          border: 1px solid #e2e5e9; border-radius: 12px; background: #fff; padding: 18px 20px; margin: 32px 0;
+        }
+        .prose-article .pdb-author-intro { font-size: 13px; color: #6b7280; margin-bottom: 10px; }
+        .prose-article .pdb-author-head { display: flex; gap: 14px; align-items: center; }
+        .prose-article .pdb-author-photo { width: 72px; height: 72px; border-radius: 50%; object-fit: cover; flex-shrink: 0; margin: 0; }
+        .prose-article .pdb-author-label {
+          font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.03em; color: #00965E;
+        }
+        .prose-article .pdb-author-name { font-size: 18px; font-weight: 700; color: #1A1D23; }
+        .prose-article .pdb-author-name a { color: inherit; text-decoration: none; }
+        .prose-article .pdb-author-name a:hover { color: #00965E; }
+        .prose-article .pdb-author-role { font-size: 14px; color: #6b7280; }
+        .prose-article .pdb-author-bio { margin-top: 12px; font-size: 15px; line-height: 1.65; color: #444; }
+        .prose-article .pdb-author-bio p:last-child { margin-bottom: 0; }
         @media (max-width: 768px) {
           .prose-article .pdb-columns { grid-template-columns: 1fr; }
           .prose-article .pdb-proscons { grid-template-columns: 1fr; }
+          .prose-article .pdb-br-score, .prose-article .pdb-br-pending { margin-left: 0; }
+          .prose-article .pdb-br-ctas a.pdb-cta { flex: 1 1 100%; }
         }
       `}</style>
   );
