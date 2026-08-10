@@ -103,8 +103,10 @@ export default async function CopaFemininaHubPage() {
         {/* Conteúdo editável no /cms → Páginas → "Copa do Mundo Feminina 2027".
             É aqui que entram as tabelas (classificados, grupos, artilharia), os textos
             de guia e o que mais o editorial quiser, sem mexer em código. */}
+        {/* Sem card em volta: os blocos (tabela de seleções, tabelas simples) já vêm
+            com moldura própria — aninhar em outro card criaria borda dupla. */}
         {blocks.length > 0 && (
-          <div className="space-y-4 rounded-lg border border-border-custom bg-card-bg p-5 leading-relaxed text-text-secondary sm:p-6">
+          <div className="space-y-4 leading-relaxed text-text-secondary">
             {blocks.map((block: unknown, i: number) => (
               <PageBlock key={i} block={block} />
             ))}
