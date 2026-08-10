@@ -334,6 +334,203 @@ const richTextEditor = lexicalEditor({
                       { name: "cor", type: "select", label: "Cor do botão", defaultValue: "verde", options: [{ label: "Verde (padrão)", value: "verde" }, { label: "Azul", value: "azul" }, { label: "Vermelho", value: "vermelho" }, { label: "Dourado", value: "dourado" }, { label: "Roxo", value: "roxo" }, { label: "Escuro", value: "escuro" }] },
                     ],
                   },
+                  // Tabela de seleções/times no visual da Copa (barra verde + escudo por
+                  // linha). Feita pra listas que CRESCEM (ex.: classificados pra Copa
+                  // Feminina 2027, até fechar as 32): o editor só adiciona linhas no /cms.
+                  // Escudo: id do time na API esportiva (mesmo /api/team-img dos escudos).
+                  {
+                    slug: "teamsTable",
+                    labels: { singular: "Tabela de seleções/times", plural: "Tabelas de seleções/times" },
+                    fields: [
+                      {
+                        name: "title",
+                        type: "text",
+                        label: "Título (barra verde)",
+                        admin: { description: 'Ex.: "Seleções classificadas (18 de 32)". Vazio = tabela sem barra.' },
+                      },
+                      { name: "col1Label", type: "text", label: "Rótulo da 1ª coluna", defaultValue: "Seleção" },
+                      { name: "col2Label", type: "text", label: "Rótulo da 2ª coluna", defaultValue: "Confederação" },
+                      {
+                        name: "col3Label",
+                        type: "text",
+                        label: "Rótulo da 3ª coluna",
+                        admin: { description: "Vazio = tabela com só duas colunas." },
+                      },
+                      {
+                        name: "numbered",
+                        type: "checkbox",
+                        label: "Numerar as linhas (#)",
+                        defaultValue: true,
+                      },
+                      {
+                        name: "rows",
+                        type: "array",
+                        label: "Linhas",
+                        admin: { description: "Arraste para reordenar. Adicione uma linha a cada nova seleção." },
+                        fields: [
+                          { name: "name", type: "text", required: true, label: "Seleção / time" },
+                          {
+                            name: "teamId",
+                            type: "text",
+                            label: "ID do escudo (opcional)",
+                            admin: {
+                              description:
+                                "ID do time na API esportiva — serve o escudo de /api/team-img/{id}. Ex.: 7411 = Brasil (feminino). Vazio = linha sem escudo.",
+                            },
+                          },
+                          { name: "col2", type: "text", label: "2ª coluna" },
+                          { name: "col3", type: "text", label: "3ª coluna" },
+                          {
+                            name: "highlight",
+                            type: "checkbox",
+                            label: "Destacar a linha (faixa verde)",
+                          },
+                        ],
+                      },
+                      { name: "note", type: "text", label: "Nota abaixo da tabela (opcional)" },
+                    ],
+                  },
+                  // ── Blocos da vertical de APOSTAS (guia /apostas/casas-de-apostas) ──
+                  // Tabela comparativa de casas: a ORDEM do array é a posição (#) na tabela.
+                  // Linha sem nota sai como "Em avaliação" (nunca inventar nota — regra do brief).
+                  {
+                    slug: "bettingTable",
+                    labels: { singular: "Tabela de casas de apostas", plural: "Tabelas de casas de apostas" },
+                    fields: [
+                      { name: "title", type: "text", label: "Título acima da tabela (opcional)" },
+                      {
+                        name: "emptyScoreLabel",
+                        type: "text",
+                        label: "Texto quando não há nota",
+                        defaultValue: "Em avaliação",
+                      },
+                      {
+                        name: "rows",
+                        type: "array",
+                        label: "Casas",
+                        admin: { description: "Arraste para reordenar — a ordem define o número (#) da linha." },
+                        fields: [
+                          { name: "name", type: "text", required: true, label: "Casa" },
+                          { name: "logo", type: "upload", relationTo: "media", label: "Logo (opcional)" },
+                          {
+                            name: "score",
+                            type: "text",
+                            label: "Nota",
+                            admin: { description: 'Ex.: "9.2". Vazio = mostra "Em avaliação".' },
+                          },
+                          { name: "license", type: "text", label: "Licença", admin: { description: 'Ex.: "SPA — Portaria 249/2025"' } },
+                          { name: "payment", type: "text", label: "Pagamento", admin: { description: 'Ex.: "Pix"' } },
+                          { name: "highlight", type: "text", label: "Diferencial" },
+                          {
+                            name: "href",
+                            type: "text",
+                            label: "Link (opcional)",
+                            admin: {
+                              description:
+                                "Interno (/apostas/betano) sai normal; externo (https://...) sai como afiliado (sponsored nofollow).",
+                            },
+                          },
+                        ],
+                      },
+                    ],
+                  },
+                  // Card de casa de apostas: serve pro review completo (com nota, prints,
+                  // prós/contras e 2 CTAs) e pro card "em avaliação" (sem nota, 1 CTA).
+                  {
+                    slug: "bettingReview",
+                    labels: { singular: "Casa de apostas (card)", plural: "Casas de apostas (cards)" },
+                    fields: [
+                      { name: "name", type: "text", required: true, label: "Nome da casa" },
+                      { name: "rank", type: "text", label: "Posição (opcional)", admin: { description: 'Ex.: "1"' } },
+                      { name: "logo", type: "upload", relationTo: "media", label: "Logo" },
+                      {
+                        name: "score",
+                        type: "text",
+                        label: "Nota",
+                        admin: { description: 'Ex.: "9.2". Vazio = card sai como "Em avaliação" (sem badge de nota).' },
+                      },
+                      { name: "license", type: "text", label: "Licença (SPA)" },
+                      { name: "ra", type: "text", label: "Reclame Aqui", admin: { description: 'Ex.: "Nota 7.4/10 — 89% de resposta"' } },
+                      { name: "raUrl", type: "text", label: "Link do Reclame Aqui" },
+                      { name: "raProof", type: "upload", relationTo: "media", label: "Print do Reclame Aqui" },
+                      {
+                        name: "images",
+                        type: "array",
+                        label: "Imagens (print do app, mercados, saque…)",
+                        fields: [
+                          { name: "image", type: "upload", relationTo: "media" },
+                          { name: "caption", type: "text", label: "Legenda" },
+                        ],
+                      },
+                      { name: "summary", type: "richText", label: "Análise", editor: lexicalEditor() },
+                      { name: "prosTitle", type: "text", label: "Título dos prós", defaultValue: "Prós" },
+                      { name: "pros", type: "array", label: "Prós", fields: [{ name: "item", type: "text" }] },
+                      { name: "consTitle", type: "text", label: "Título dos contras", defaultValue: "Contras" },
+                      { name: "cons", type: "array", label: "Contras", fields: [{ name: "item", type: "text" }] },
+                      { name: "ctaLabel", type: "text", label: "CTA de afiliado (texto)", defaultValue: "Abrir conta" },
+                      {
+                        name: "ctaUrl",
+                        type: "text",
+                        label: "CTA de afiliado (link)",
+                        admin: { description: "Link de tracking real. Sem link, o botão NÃO é renderizado (nada de placeholder no ar)." },
+                      },
+                      { name: "linkLabel", type: "text", label: "Link interno (texto)", defaultValue: "Ver análise completa" },
+                      { name: "linkHref", type: "text", label: "Link interno (URL)", admin: { description: "Ex.: /apostas/betano" } },
+                      { name: "cor", type: "select", label: "Cor do card", defaultValue: "verde", options: [{ label: "Verde (padrão)", value: "verde" }, { label: "Azul", value: "azul" }, { label: "Vermelho", value: "vermelho" }, { label: "Dourado", value: "dourado" }, { label: "Roxo", value: "roxo" }, { label: "Escuro", value: "escuro" }] },
+                    ],
+                  },
+                  // Perguntas frequentes (accordion <details>). Também vira schema FAQPage.
+                  {
+                    slug: "faq",
+                    labels: { singular: "Perguntas frequentes", plural: "Perguntas frequentes" },
+                    fields: [
+                      { name: "title", type: "text", label: "Título", defaultValue: "Perguntas Frequentes" },
+                      { name: "firstOpen", type: "checkbox", label: "Primeira pergunta já aberta", defaultValue: true },
+                      {
+                        name: "items",
+                        type: "array",
+                        label: "Perguntas",
+                        fields: [
+                          { name: "question", type: "text", required: true, label: "Pergunta" },
+                          { name: "answer", type: "richText", label: "Resposta", editor: lexicalEditor() },
+                        ],
+                      },
+                    ],
+                  },
+                  // Mini-índice com âncoras. Por padrão se monta sozinho a partir dos H2 do texto.
+                  {
+                    slug: "toc",
+                    labels: { singular: "Nesta página (índice)", plural: "Índices" },
+                    fields: [
+                      { name: "title", type: "text", label: "Título", defaultValue: "Nesta página" },
+                      {
+                        name: "auto",
+                        type: "checkbox",
+                        label: "Montar automaticamente com os títulos (H2) do texto",
+                        defaultValue: true,
+                      },
+                      {
+                        name: "items",
+                        type: "array",
+                        label: "Itens (manual)",
+                        admin: { condition: (_, s) => !s?.auto },
+                        fields: [
+                          { name: "label", type: "text", required: true, label: "Texto" },
+                          { name: "anchor", type: "text", label: "Âncora ou URL", admin: { description: 'Ex.: "#ranking-completo"' } },
+                        ],
+                      },
+                    ],
+                  },
+                  // Bloco "Sobre o Autor" (E-E-A-T): foto + bio da collection Autores.
+                  {
+                    slug: "authorBox",
+                    labels: { singular: "Sobre o autor", plural: "Sobre o autor" },
+                    fields: [
+                      { name: "author", type: "relationship", relationTo: "authors", required: true, label: "Autor" },
+                      { name: "intro", type: "text", label: "Linha acima (opcional)", admin: { description: 'Ex.: "Conteúdo criado por"' } },
+                      { name: "title", type: "text", label: "Título do box", defaultValue: "Sobre o Autor" },
+                    ],
+                  },
                   // Box de prós e contras (✅ / ❌) em duas colunas.
                   {
                     slug: "prosCons",

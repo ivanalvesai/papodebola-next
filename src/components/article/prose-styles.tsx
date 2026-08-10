@@ -273,10 +273,10 @@ export function ProseStyles() {
           border: 1px solid rgba(0,150,94,0.4); border-radius: 999px; padding: 3px 12px;
         }
         .prose-article .pdb-pred-text { font-size: 20px; font-weight: 700; color: #1A1D23; line-height: 1.3; margin: 0; }
-        .prose-article .pdb-pred-note { font-size: 15px; color: #444; margin: 10px 0 0; line-height: 1.6; }
+        .prose-article .pdb-pred-note { font-size: 17px; color: #3a3f47; margin: 12px 0 0; line-height: 1.7; }
         .prose-article a.pdb-cta {
           display: inline-block; margin-top: 14px; padding: 11px 22px; border-radius: 8px;
-          font-weight: 700; font-size: 15px; text-decoration: none; text-align: center;
+          font-weight: 700; font-size: 16px; text-decoration: none; text-align: center;
         }
         .prose-article a.pdb-cta-primary { background: #00965E; color: #fff !important; }
         .prose-article a.pdb-cta-primary:hover { background: #007a4d; }
@@ -295,7 +295,7 @@ export function ProseStyles() {
         .prose-article .pdb-statcard-list { list-style: none; margin: 12px 0 0; padding: 0; }
         .prose-article .pdb-statcard-list li {
           display: flex; justify-content: space-between; gap: 12px;
-          font-size: 15px; padding: 6px 0; border-bottom: 1px solid #f0f2f4; margin: 0; color: #444;
+          font-size: 17px; padding: 8px 0; border-bottom: 1px solid #f0f2f4; margin: 0; color: #3a3f47;
         }
         .prose-article .pdb-statcard-list li:last-child { border-bottom: 0; }
         .prose-article .pdb-statcard-list strong { color: #1A1D23; }
@@ -303,10 +303,10 @@ export function ProseStyles() {
         .prose-article .pdb-pros, .prose-article .pdb-cons {
           border: 1px solid #e2e5e9; border-radius: 12px; padding: 14px 16px; background: #fff;
         }
-        .prose-article .pdb-pc-title { font-weight: 700; color: #1A1D23; margin-bottom: 8px; font-size: 15px; }
+        .prose-article .pdb-pc-title { font-weight: 700; color: #1A1D23; margin-bottom: 10px; font-size: 17px; }
         .prose-article .pdb-pros ul, .prose-article .pdb-cons ul { list-style: none; margin: 0; padding: 0; }
         .prose-article .pdb-pros li, .prose-article .pdb-cons li {
-          position: relative; padding-left: 26px; margin: 0 0 8px; font-size: 15px; line-height: 1.5; color: #333;
+          position: relative; padding-left: 28px; margin: 0 0 10px; font-size: 17px; line-height: 1.6; color: #333;
         }
         .prose-article .pdb-pros li::before { content: "✅"; position: absolute; left: 0; }
         .prose-article .pdb-cons li::before { content: "❌"; position: absolute; left: 0; }
@@ -327,9 +327,156 @@ export function ProseStyles() {
         .prose-article .pdb-statcard { border-left: 4px solid var(--pdb-accent, #00965E); }
         .prose-article .pdb-statcard-title { color: var(--pdb-accent, #00965E); }
         .prose-article .pdb-proscons .pdb-pros { border-top: 3px solid var(--pdb-accent, #00965E); }
+        /* --- Tabela de seleções/times (bloco teamsTable) --- */
+        /* Mesmo visual das tabelas da Copa: card com barra verde no topo, escudo por
+           linha e zebra discreta. Rola sozinha no mobile. */
+        .prose-article .pdb-tt {
+          border: 1px solid #e2e5e9; border-radius: 10px; overflow: hidden;
+          background: #fff; margin: 0 0 32px;
+        }
+        .prose-article .pdb-tt-head {
+          background: var(--pdb-accent, #00965E); color: #fff; font-weight: 700;
+          font-size: 16px; padding: 0 16px; height: 48px; display: flex; align-items: center;
+        }
+        .prose-article .pdb-tt-wrap { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+        .prose-article table.pdb-tt-table {
+          width: 100%; min-width: 520px; border-collapse: collapse; font-size: 15px; margin: 0;
+        }
+        /* O corpo do post tem regras genéricas de tabela (th verde e 1ª coluna verde,
+           pro editor não precisar marcar header). Esta tabela é o outro padrão — o das
+           tabelas da Copa: verde SÓ na barra do título. Daí os overrides explícitos. */
+        .prose-article table.pdb-tt-table thead th {
+          text-align: left; font-size: 13px; font-weight: 600; color: #5b6470;
+          background: #fafbfc; padding: 10px 12px; border-bottom: 1px solid #e9ecef;
+          white-space: nowrap;
+        }
+        .prose-article table.pdb-tt-table td {
+          padding: 10px 12px; border-bottom: 1px solid #eef0f2; color: #333;
+          background: #fff; vertical-align: middle;
+        }
+        .prose-article table.pdb-tt-table tbody tr:nth-child(even) td { background: #fafbfc; }
+        .prose-article table.pdb-tt-table tbody tr:last-child td { border-bottom: 0; }
+        .prose-article table.pdb-tt-table tbody tr.is-hl td:first-child { box-shadow: inset 4px 0 0 var(--pdb-accent, #00965E); }
+        .prose-article table.pdb-tt-table tbody tr td.pdb-tt-num {
+          width: 34px; text-align: center; color: #6b7280; font-weight: 700; font-size: 13px;
+        }
+        .prose-article td.pdb-tt-team { white-space: nowrap; }
+        .prose-article td.pdb-tt-team span { font-weight: 600; color: #1A1D23; }
+        .prose-article img.pdb-tt-crest {
+          width: 26px; height: 26px; object-fit: contain; border-radius: 3px;
+          display: inline-block; vertical-align: -8px; margin: 0 10px 0 0;
+        }
+        .prose-article .pdb-tt-crest-empty { display: inline-block; width: 26px; height: 26px; margin: 0 10px 0 0; }
+        .prose-article .pdb-tt-note {
+          padding: 10px 14px; font-size: 14px; color: #5b6470; background: #fafbfc;
+          border-top: 1px solid #eef0f2;
+        }
+        /* --- Vertical de apostas: tabela comparativa, card de casa, FAQ, índice, autor --- */
+        /* A tabela rola sozinha no mobile (o corpo do post NUNCA rola na horizontal). */
+        .prose-article .pdb-bt-wrap { overflow-x: auto; margin: 0 0 32px; -webkit-overflow-scrolling: touch; }
+        .prose-article table.pdb-bt {
+          width: 100%; min-width: 680px; border-collapse: collapse; font-size: 17px; background: #fff;
+          border: 1px solid #e2e5e9; border-radius: 10px; overflow: hidden; margin: 0;
+        }
+        .prose-article table.pdb-bt caption {
+          caption-side: top; text-align: left; font-weight: 700; color: #1A1D23; padding: 0 0 12px; font-size: 20px;
+        }
+        .prose-article table.pdb-bt thead th {
+          background: #1A1D23; color: #fff; font-size: 14px; text-transform: uppercase;
+          letter-spacing: 0.03em; text-align: left; padding: 12px 14px; white-space: nowrap;
+        }
+        .prose-article table.pdb-bt td { padding: 12px 14px; border-top: 1px solid #eef0f2; color: #333; vertical-align: middle; }
+        .prose-article table.pdb-bt tbody tr:nth-child(even) { background: #fafbfc; }
+        .prose-article .pdb-bt-rank { font-weight: 700; color: #6b7280; width: 40px; }
+        .prose-article .pdb-bt-name { font-weight: 600; color: #1A1D23; white-space: nowrap; }
+        .prose-article .pdb-bt-name img.pdb-bt-logo {
+          width: 18px; height: 18px; border-radius: 4px; object-fit: contain;
+          display: inline-block; vertical-align: -3px; margin: 0 8px 0 0;
+        }
+        .prose-article .pdb-bt-score {
+          display: inline-block; font-weight: 700; color: #00965E;
+          background: rgba(0,150,94,0.09); border-radius: 999px; padding: 2px 10px;
+        }
+        .prose-article .pdb-bt-pending { color: #5b6470; font-size: 16px; }
+        .prose-article .pdb-br {
+          border: 1px solid #e2e5e9; border-left: 4px solid var(--pdb-accent, #00965E);
+          border-radius: 12px; padding: 18px 20px; margin: 0 0 32px; background: #fff; scroll-margin-top: 80px;
+        }
+        .prose-article .pdb-br-head { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+        .prose-article .pdb-br-rank {
+          font-size: 13px; font-weight: 700; color: #fff; background: var(--pdb-accent, #00965E);
+          border-radius: 999px; min-width: 24px; height: 24px; display: inline-flex;
+          align-items: center; justify-content: center; padding: 0 7px;
+        }
+        .prose-article .pdb-br-logo { width: 32px; height: 32px; border-radius: 6px; object-fit: contain; margin: 0; }
+        .prose-article .pdb-br-name { font-size: 24px; font-weight: 700; color: #1A1D23; }
+        .prose-article .pdb-br-score {
+          margin-left: auto; font-size: 20px; font-weight: 700; color: #fff;
+          background: var(--pdb-accent, #00965E); border-radius: 8px; padding: 3px 12px;
+        }
+        .prose-article .pdb-br-pending {
+          margin-left: auto; font-size: 15px; font-weight: 600; color: #5b6470;
+          background: #f2f3f5; border-radius: 999px; padding: 4px 12px;
+        }
+        .prose-article .pdb-br-meta { list-style: none; margin: 14px 0 0; padding: 0; }
+        .prose-article .pdb-br-meta li {
+          display: flex; justify-content: space-between; gap: 12px; font-size: 17px;
+          padding: 8px 0; border-bottom: 1px solid #f0f2f4; margin: 0; color: #3a3f47;
+        }
+        .prose-article .pdb-br-meta li:last-child { border-bottom: 0; }
+        .prose-article .pdb-br-meta strong { color: #1A1D23; }
+        .prose-article .pdb-br-shots {
+          display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 12px; margin: 16px 0 0;
+        }
+        .prose-article .pdb-br-shots figure { margin: 0; }
+        .prose-article .pdb-br-shots img { width: 100%; height: auto; border-radius: 8px; border: 1px solid #e2e5e9; margin: 0; }
+        .prose-article .pdb-br-shots figcaption { font-size: 15px; color: #5b6470; margin-top: 6px; }
+        .prose-article .pdb-br .pdb-proscons { margin: 16px 0 0; }
+        .prose-article .pdb-br-ctas { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 4px; }
+        .prose-article .pdb-faq { margin: 0 0 32px; border: 1px solid #e2e5e9; border-radius: 12px; background: #fff; overflow: hidden; }
+        .prose-article .pdb-faq-item { border-bottom: 1px solid #eef0f2; }
+        .prose-article .pdb-faq-item:last-child { border-bottom: 0; }
+        .prose-article .pdb-faq-item > summary {
+          cursor: pointer; list-style: none; padding: 16px 20px; font-weight: 700;
+          font-size: 19px; color: #1A1D23; display: flex; justify-content: space-between; gap: 12px; align-items: center;
+        }
+        .prose-article .pdb-faq-item > summary::-webkit-details-marker { display: none; }
+        .prose-article .pdb-faq-item > summary::after { content: "+"; color: #00965E; font-size: 20px; font-weight: 700; line-height: 1; }
+        .prose-article .pdb-faq-item[open] > summary::after { content: "−"; }
+        .prose-article .pdb-faq-answer { padding: 0 20px 18px; color: #333; font-size: 18px; line-height: 1.8; }
+        .prose-article .pdb-faq-answer p:last-child { margin-bottom: 0; }
+        .prose-article .pdb-toc {
+          border: 1px solid #e2e5e9; border-radius: 12px; background: #fafbfc; padding: 14px 18px; margin: 0 0 32px;
+        }
+        .prose-article .pdb-toc-title {
+          font-size: 14px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.03em;
+          color: #5b6470; margin-bottom: 10px;
+        }
+        .prose-article .pdb-toc ul { list-style: none; margin: 0; padding: 0; }
+        .prose-article .pdb-toc li { margin: 0 0 8px; padding-left: 18px; position: relative; font-size: 17px; }
+        .prose-article .pdb-toc li::before { content: "›"; position: absolute; left: 0; color: #00965E; font-weight: 700; }
+        .prose-article .pdb-toc a { color: #1A1D23; text-decoration: none; }
+        .prose-article .pdb-toc a:hover { color: #00965E; text-decoration: underline; }
+        .prose-article .pdb-author {
+          border: 1px solid #e2e5e9; border-radius: 12px; background: #fff; padding: 18px 20px; margin: 32px 0;
+        }
+        .prose-article .pdb-author-intro { font-size: 15px; color: #5b6470; margin-bottom: 10px; }
+        .prose-article .pdb-author-head { display: flex; gap: 14px; align-items: center; }
+        .prose-article .pdb-author-photo { width: 72px; height: 72px; border-radius: 50%; object-fit: cover; flex-shrink: 0; margin: 0; }
+        .prose-article .pdb-author-label {
+          font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.03em; color: #00965E;
+        }
+        .prose-article .pdb-author-name { font-size: 21px; font-weight: 700; color: #1A1D23; }
+        .prose-article .pdb-author-name a { color: inherit; text-decoration: none; }
+        .prose-article .pdb-author-name a:hover { color: #00965E; }
+        .prose-article .pdb-author-role { font-size: 16px; color: #5b6470; }
+        .prose-article .pdb-author-bio { margin-top: 14px; font-size: 18px; line-height: 1.8; color: #333; }
+        .prose-article .pdb-author-bio p:last-child { margin-bottom: 0; }
         @media (max-width: 768px) {
           .prose-article .pdb-columns { grid-template-columns: 1fr; }
           .prose-article .pdb-proscons { grid-template-columns: 1fr; }
+          .prose-article .pdb-br-score, .prose-article .pdb-br-pending { margin-left: 0; }
+          .prose-article .pdb-br-ctas a.pdb-cta { flex: 1 1 100%; }
         }
       `}</style>
   );
