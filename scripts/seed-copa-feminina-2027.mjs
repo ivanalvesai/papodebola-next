@@ -76,31 +76,39 @@ const UL = (...items) => ({
 const RT = (...nodes) => ({
   root: { type: "root", children: nodes, direction: "ltr", format: "", indent: 0, version: 1 },
 });
+const BLOCK = (blockType, fields) => ({
+  type: "block",
+  version: 2,
+  format: "",
+  fields: { blockType, ...fields },
+});
 const B = 1; // bitmask de negrito no Lexical
 
 const HUB = "/futebol/copa-do-mundo-feminina";
 
 // ── dados ────────────────────────────────────────────────────────────────────
-// [seleção, confederação, como se classificou]
+// [seleção, confederação, como se classificou, id do escudo]
+// Os ids são os das seleções FEMININAS na API esportiva (search/{país} → gender F,
+// national true) — servem o escudo por /api/team-img/{id}, igual às tabelas da Copa.
 const QUALIFIED = [
-  ["Brasil", "Conmebol", "País-sede"],
-  ["Colômbia", "Conmebol", "Campeã da Liga das Nações (jun/2026)"],
-  ["Argentina", "Conmebol", "Vice da Liga das Nações (jun/2026)"],
-  ["Austrália", "AFC (Ásia)", "Quartas da Copa da Ásia (13/03/2026)"],
-  ["China", "AFC (Ásia)", "Quartas da Copa da Ásia (14/03/2026)"],
-  ["Coreia do Sul", "AFC (Ásia)", "Quartas da Copa da Ásia (14/03/2026)"],
-  ["Japão", "AFC (Ásia)", "Quartas da Copa da Ásia (15/03/2026)"],
-  ["Filipinas", "AFC (Ásia)", "Repescagem asiática (19/03/2026)"],
-  ["Coreia do Norte", "AFC (Ásia)", "Repescagem asiática (19/03/2026)"],
-  ["Marrocos", "CAF (África)", "Quartas da CAN feminina (08/08/2026)"],
-  ["Argélia", "CAF (África)", "Quartas da CAN feminina (08/08/2026)"],
-  ["Camarões", "CAF (África)", "Quartas da CAN feminina (09/08/2026)"],
-  ["Malawi", "CAF (África)", "Quartas da CAN feminina (09/08/2026)"],
-  ["Espanha", "Uefa (Europa)", "1ª do Grupo A3 da Liga A"],
-  ["Alemanha", "Uefa (Europa)", "1ª do Grupo A4 da Liga A"],
-  ["França", "Uefa (Europa)", "1ª do Grupo A2 da Liga A"],
-  ["Dinamarca", "Uefa (Europa)", "1ª do Grupo A1 da Liga A"],
-  ["Nova Zelândia", "OFC (Oceania)", "Campeã da Copa das Nações (15/04/2026)"],
+  ["Brasil", "Conmebol", "País-sede", "7411"],
+  ["Colômbia", "Conmebol", "Campeã da Liga das Nações (jun/2026)", "46631"],
+  ["Argentina", "Conmebol", "Vice da Liga das Nações (jun/2026)", "7409"],
+  ["Austrália", "AFC (Ásia)", "Quartas da Copa da Ásia (13/03/2026)", "7410"],
+  ["China", "AFC (Ásia)", "Quartas da Copa da Ásia (14/03/2026)", "7413"],
+  ["Coreia do Sul", "AFC (Ásia)", "Quartas da Copa da Ásia (14/03/2026)", "21922"],
+  ["Japão", "AFC (Ásia)", "Quartas da Copa da Ásia (15/03/2026)", "7418"],
+  ["Filipinas", "AFC (Ásia)", "Repescagem asiática (19/03/2026)", "195588"],
+  ["Coreia do Norte", "AFC (Ásia)", "Repescagem asiática (19/03/2026)", "7421"],
+  ["Marrocos", "CAF (África)", "Quartas da CAN feminina (08/08/2026)", "261908"],
+  ["Argélia", "CAF (África)", "Quartas da CAN feminina (08/08/2026)", "180004"],
+  ["Camarões", "CAF (África)", "Quartas da CAN feminina (09/08/2026)", "69218"],
+  ["Malawi", "CAF (África)", "Quartas da CAN feminina (09/08/2026)", "298498"],
+  ["Espanha", "Uefa (Europa)", "1ª do Grupo A3 da Liga A", "37371"],
+  ["Alemanha", "Uefa (Europa)", "1ª do Grupo A4 da Liga A", "23992"],
+  ["França", "Uefa (Europa)", "1ª do Grupo A2 da Liga A", "32485"],
+  ["Dinamarca", "Uefa (Europa)", "1ª do Grupo A1 da Liga A", "7414"],
+  ["Nova Zelândia", "OFC (Oceania)", "Campeã da Copa das Nações (15/04/2026)", "7419"],
 ];
 
 const REMAINING = [
@@ -141,11 +149,28 @@ const pageLayout = [
       )
     ),
   },
-  { blockType: "heading", level: "h2", text: "Seleções já classificadas (18 de 32)" },
-  tableBlock(["Seleção", "Confederação", "Como se classificou"], QUALIFIED),
+  // Tabela das classificadas no visual das tabelas da Copa (barra verde + escudos).
+  // Vai crescendo até as 32: cada nova classificada é uma linha nova no /cms
+  // (bloco "Tabela de seleções/times" dentro deste bloco de Texto).
   {
-    blockType: "note",
-    text: "Ásia, África, América do Sul e Oceania já preencheram todas as suas vagas. A Concacaf ainda não definiu nenhuma das quatro.",
+    blockType: "richText",
+    content: RT(
+      BLOCK("teamsTable", {
+        title: `Seleções classificadas (${QUALIFIED.length} de 32)`,
+        col1Label: "Seleção",
+        col2Label: "Confederação",
+        col3Label: "Como se classificou",
+        numbered: true,
+        note: "Ásia, África, América do Sul e Oceania já preencheram todas as suas vagas. A Concacaf ainda não definiu nenhuma das quatro.",
+        rows: QUALIFIED.map(([name, conf, how, teamId]) => ({
+          name,
+          teamId,
+          col2: conf,
+          col3: how,
+          highlight: name === "Brasil",
+        })),
+      })
+    ),
   },
   { blockType: "heading", level: "h2", text: "As 14 vagas ainda em disputa" },
   tableBlock(["Confederação", "Vagas", "Quando se define"], REMAINING),

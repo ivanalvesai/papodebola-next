@@ -334,6 +334,62 @@ const richTextEditor = lexicalEditor({
                       { name: "cor", type: "select", label: "Cor do botão", defaultValue: "verde", options: [{ label: "Verde (padrão)", value: "verde" }, { label: "Azul", value: "azul" }, { label: "Vermelho", value: "vermelho" }, { label: "Dourado", value: "dourado" }, { label: "Roxo", value: "roxo" }, { label: "Escuro", value: "escuro" }] },
                     ],
                   },
+                  // Tabela de seleções/times no visual da Copa (barra verde + escudo por
+                  // linha). Feita pra listas que CRESCEM (ex.: classificados pra Copa
+                  // Feminina 2027, até fechar as 32): o editor só adiciona linhas no /cms.
+                  // Escudo: id do time na API esportiva (mesmo /api/team-img dos escudos).
+                  {
+                    slug: "teamsTable",
+                    labels: { singular: "Tabela de seleções/times", plural: "Tabelas de seleções/times" },
+                    fields: [
+                      {
+                        name: "title",
+                        type: "text",
+                        label: "Título (barra verde)",
+                        admin: { description: 'Ex.: "Seleções classificadas (18 de 32)". Vazio = tabela sem barra.' },
+                      },
+                      { name: "col1Label", type: "text", label: "Rótulo da 1ª coluna", defaultValue: "Seleção" },
+                      { name: "col2Label", type: "text", label: "Rótulo da 2ª coluna", defaultValue: "Confederação" },
+                      {
+                        name: "col3Label",
+                        type: "text",
+                        label: "Rótulo da 3ª coluna",
+                        admin: { description: "Vazio = tabela com só duas colunas." },
+                      },
+                      {
+                        name: "numbered",
+                        type: "checkbox",
+                        label: "Numerar as linhas (#)",
+                        defaultValue: true,
+                      },
+                      {
+                        name: "rows",
+                        type: "array",
+                        label: "Linhas",
+                        admin: { description: "Arraste para reordenar. Adicione uma linha a cada nova seleção." },
+                        fields: [
+                          { name: "name", type: "text", required: true, label: "Seleção / time" },
+                          {
+                            name: "teamId",
+                            type: "text",
+                            label: "ID do escudo (opcional)",
+                            admin: {
+                              description:
+                                "ID do time na API esportiva — serve o escudo de /api/team-img/{id}. Ex.: 7411 = Brasil (feminino). Vazio = linha sem escudo.",
+                            },
+                          },
+                          { name: "col2", type: "text", label: "2ª coluna" },
+                          { name: "col3", type: "text", label: "3ª coluna" },
+                          {
+                            name: "highlight",
+                            type: "checkbox",
+                            label: "Destacar a linha (faixa verde)",
+                          },
+                        ],
+                      },
+                      { name: "note", type: "text", label: "Nota abaixo da tabela (opcional)" },
+                    ],
+                  },
                   // ── Blocos da vertical de APOSTAS (guia /apostas/casas-de-apostas) ──
                   // Tabela comparativa de casas: a ORDEM do array é a posição (#) na tabela.
                   // Linha sem nota sai como "Em avaliação" (nunca inventar nota — regra do brief).

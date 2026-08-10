@@ -237,6 +237,40 @@ const lexicalConverters: any = ({ defaultConverters }: any) => ({
       if (!pros && !cons) return "";
       return `<div class="pdb-proscons ${themeClass(f.cor)}"><div class="pdb-pros"><div class="pdb-pc-title">${escHtml(f.prosTitle || "Vantagens")}</div><ul>${pros}</ul></div><div class="pdb-cons"><div class="pdb-pc-title">${escHtml(f.consTitle || "Desvantagens")}</div><ul>${cons}</ul></div></div>`;
     },
+    // Tabela de seleções/times no visual das tabelas da Copa: barra verde com o título,
+    // card arredondado, escudo por linha (/api/team-img/{id}) e linhas destacáveis.
+    // Pensada pra listas que crescem (classificados pra Copa Feminina 2027).
+    teamsTable: ({ node }: any) => {
+      const f = node?.fields || {};
+      const rows = (f.rows || []).filter((r: any) => r?.name);
+      if (!rows.length) return "";
+      const numbered = f.numbered !== false;
+      const hasCol3 = rows.some((r: any) => r?.col3) || !!f.col3Label;
+      const head = f.title
+        ? `<div class="pdb-tt-head">${escHtml(String(f.title))}</div>`
+        : "";
+      const ths = [
+        numbered ? `<th class="pdb-tt-num">#</th>` : "",
+        `<th>${escHtml(String(f.col1Label || "Seleção"))}</th>`,
+        `<th>${escHtml(String(f.col2Label || ""))}</th>`,
+        hasCol3 ? `<th>${escHtml(String(f.col3Label || ""))}</th>` : "",
+      ].join("");
+      const body = rows
+        .map((r: any, i: number) => {
+          const id = String(r.teamId || "").trim();
+          const crest = id
+            ? `<img class="pdb-tt-crest" src="/api/team-img/${encodeURIComponent(id)}" alt="${escAttr(r.name)}" loading="lazy" width="26" height="26" />`
+            : `<span class="pdb-tt-crest pdb-tt-crest-empty"></span>`;
+          return `<tr class="${r.highlight ? "is-hl" : ""}">${
+            numbered ? `<td class="pdb-tt-num">${i + 1}</td>` : ""
+          }<td class="pdb-tt-team">${crest}<span>${escHtml(r.name)}</span></td><td>${escHtml(
+            r.col2 || ""
+          )}</td>${hasCol3 ? `<td>${escHtml(r.col3 || "")}</td>` : ""}</tr>`;
+        })
+        .join("");
+      const note = f.note ? `<div class="pdb-tt-note">${escHtml(String(f.note))}</div>` : "";
+      return `<div class="pdb-tt">${head}<div class="pdb-tt-wrap"><table class="pdb-tt-table"><thead><tr>${ths}</tr></thead><tbody>${body}</tbody></table></div>${note}</div>`;
+    },
     // ── Vertical de apostas ──
     // Tabela comparativa: # / Casa (logo + nome) / Nota / Licença / Pagamento / Diferencial.
     // Linha sem nota mostra "Em avaliação" — nunca inventa nota (regra editorial do brief).

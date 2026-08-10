@@ -327,6 +327,42 @@ export function ProseStyles() {
         .prose-article .pdb-statcard { border-left: 4px solid var(--pdb-accent, #00965E); }
         .prose-article .pdb-statcard-title { color: var(--pdb-accent, #00965E); }
         .prose-article .pdb-proscons .pdb-pros { border-top: 3px solid var(--pdb-accent, #00965E); }
+        /* --- Tabela de seleções/times (bloco teamsTable) --- */
+        /* Mesmo visual das tabelas da Copa: card com barra verde no topo, escudo por
+           linha e zebra discreta. Rola sozinha no mobile. */
+        .prose-article .pdb-tt {
+          border: 1px solid #e2e5e9; border-radius: 10px; overflow: hidden;
+          background: #fff; margin: 0 0 32px;
+        }
+        .prose-article .pdb-tt-head {
+          background: var(--pdb-accent, #00965E); color: #fff; font-weight: 700;
+          font-size: 16px; padding: 0 16px; height: 48px; display: flex; align-items: center;
+        }
+        .prose-article .pdb-tt-wrap { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+        .prose-article table.pdb-tt-table {
+          width: 100%; min-width: 520px; border-collapse: collapse; font-size: 15px; margin: 0;
+        }
+        .prose-article table.pdb-tt-table thead th {
+          text-align: left; font-size: 13px; font-weight: 600; color: #5b6470;
+          padding: 10px 12px; border-bottom: 1px solid #e9ecef; white-space: nowrap;
+        }
+        .prose-article table.pdb-tt-table td {
+          padding: 10px 12px; border-bottom: 1px solid #eef0f2; color: #333; vertical-align: middle;
+        }
+        .prose-article table.pdb-tt-table tbody tr:last-child td { border-bottom: 0; }
+        .prose-article table.pdb-tt-table tbody tr.is-hl td:first-child { box-shadow: inset 4px 0 0 var(--pdb-accent, #00965E); }
+        .prose-article .pdb-tt-num { width: 34px; text-align: center; color: #6b7280; font-weight: 700; font-size: 13px; }
+        .prose-article td.pdb-tt-team { white-space: nowrap; }
+        .prose-article td.pdb-tt-team span { font-weight: 600; color: #1A1D23; }
+        .prose-article img.pdb-tt-crest {
+          width: 26px; height: 26px; object-fit: contain; border-radius: 3px;
+          display: inline-block; vertical-align: -8px; margin: 0 10px 0 0;
+        }
+        .prose-article .pdb-tt-crest-empty { display: inline-block; width: 26px; height: 26px; margin: 0 10px 0 0; }
+        .prose-article .pdb-tt-note {
+          padding: 10px 14px; font-size: 14px; color: #5b6470; background: #fafbfc;
+          border-top: 1px solid #eef0f2;
+        }
         /* --- Vertical de apostas: tabela comparativa, card de casa, FAQ, índice, autor --- */
         /* A tabela rola sozinha no mobile (o corpo do post NUNCA rola na horizontal). */
         .prose-article .pdb-bt-wrap { overflow-x: auto; margin: 0 0 32px; -webkit-overflow-scrolling: touch; }
