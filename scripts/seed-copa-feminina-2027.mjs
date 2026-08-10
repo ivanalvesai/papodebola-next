@@ -330,7 +330,11 @@ const pageData = {
     metaDescription:
       "Copa do Mundo Feminina de 2027 no Brasil: as 18 seleções já classificadas, as 14 vagas ainda em disputa, as oito cidades-sede, datas e as últimas notícias.",
   },
-  _status: "draft",
+  // A PÁGINA vai publicada (o Ivan aprovou em 10/08 e pediu pra mandar pra prod).
+  // GOTCHA: `update` com draft:true num doc que já é rascunho grava SÓ em _pages_v —
+  // a linha principal (que o site lê) fica na versão antiga. Publicar é o que faz a
+  // edição aparecer. O POST continua rascunho.
+  _status: "published",
 };
 
 const foundPage = await client.find({
@@ -343,13 +347,13 @@ if (foundPage.docs[0]) {
   const r = await client.update({
     collection: "pages",
     id: foundPage.docs[0].id,
-    draft: true,
+    draft: false,
     data: pageData,
   });
-  log(`OK: página ${r.id} (${PAGE_SLUG}) atualizada como rascunho.`);
+  log(`OK: página ${r.id} (${PAGE_SLUG}) atualizada e publicada.`);
 } else {
-  const r = await client.create({ collection: "pages", draft: true, data: pageData });
-  log(`OK: página ${r.id} (${PAGE_SLUG}) criada como rascunho.`);
+  const r = await client.create({ collection: "pages", draft: false, data: pageData });
+  log(`OK: página ${r.id} (${PAGE_SLUG}) criada e publicada.`);
 }
 
 // 2) Post
