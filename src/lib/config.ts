@@ -153,6 +153,7 @@ export const WP_CATEGORIES = [
   'Brasileirão',
   'Copa do Brasil',
   'Copa do Mundo',
+  'Copa do Mundo Feminina',
   'Seleção Brasileira',
   'Copa Libertadores',
   'Champions League',
@@ -217,6 +218,9 @@ export const CATEGORY_HUB: Record<string, string> = {
   // /futebol/[slug]/[article] (genérica) + /futebol/copa-do-mundo/[slug] e
   // /futebol/selecao-brasileira/[slug] (essas colidem com pasta estática).
   "Copa do Mundo": "/futebol/copa-do-mundo",
+  // Mundial feminino de 2027 (Brasil): hub próprio, editável no /cms (collection "pages",
+  // slug "copa-do-mundo-feminina"). Rota: /futebol/copa-do-mundo-feminina/[slug].
+  "Copa do Mundo Feminina": "/futebol/copa-do-mundo-feminina",
   "Seleção Brasileira": "/futebol/selecao-brasileira",
   "Brasileirão": "/futebol/brasileirao",
   "Brasileirão Série A": "/futebol/brasileirao",
