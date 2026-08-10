@@ -342,16 +342,24 @@ export function ProseStyles() {
         .prose-article table.pdb-tt-table {
           width: 100%; min-width: 520px; border-collapse: collapse; font-size: 15px; margin: 0;
         }
+        /* O corpo do post tem regras genéricas de tabela (th verde e 1ª coluna verde,
+           pro editor não precisar marcar header). Esta tabela é o outro padrão — o das
+           tabelas da Copa: verde SÓ na barra do título. Daí os overrides explícitos. */
         .prose-article table.pdb-tt-table thead th {
           text-align: left; font-size: 13px; font-weight: 600; color: #5b6470;
-          padding: 10px 12px; border-bottom: 1px solid #e9ecef; white-space: nowrap;
+          background: #fafbfc; padding: 10px 12px; border-bottom: 1px solid #e9ecef;
+          white-space: nowrap;
         }
         .prose-article table.pdb-tt-table td {
-          padding: 10px 12px; border-bottom: 1px solid #eef0f2; color: #333; vertical-align: middle;
+          padding: 10px 12px; border-bottom: 1px solid #eef0f2; color: #333;
+          background: #fff; vertical-align: middle;
         }
+        .prose-article table.pdb-tt-table tbody tr:nth-child(even) td { background: #fafbfc; }
         .prose-article table.pdb-tt-table tbody tr:last-child td { border-bottom: 0; }
         .prose-article table.pdb-tt-table tbody tr.is-hl td:first-child { box-shadow: inset 4px 0 0 var(--pdb-accent, #00965E); }
-        .prose-article .pdb-tt-num { width: 34px; text-align: center; color: #6b7280; font-weight: 700; font-size: 13px; }
+        .prose-article table.pdb-tt-table tbody tr td.pdb-tt-num {
+          width: 34px; text-align: center; color: #6b7280; font-weight: 700; font-size: 13px;
+        }
         .prose-article td.pdb-tt-team { white-space: nowrap; }
         .prose-article td.pdb-tt-team span { font-weight: 600; color: #1A1D23; }
         .prose-article img.pdb-tt-crest {
