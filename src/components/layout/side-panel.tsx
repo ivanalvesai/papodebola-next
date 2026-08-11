@@ -112,6 +112,9 @@ export function SidePanel() {
           <Link href="/futebol/selecao-brasileira" onClick={close} className="block px-5 py-2.5 text-sm font-semibold text-text-primary hover:bg-green-light hover:text-green transition-colors">
             Seleção Brasileira
           </Link>
+          <Link href="/futebol/copa-do-mundo-feminina" onClick={close} className="block px-5 py-2.5 text-sm font-semibold text-text-primary hover:bg-green-light hover:text-green transition-colors">
+            Copa do Mundo Feminina 2027
+          </Link>
         </div>
 
         {/* Futebol — campeonatos detalhados (invertido do main-nav em abr/2026) */}

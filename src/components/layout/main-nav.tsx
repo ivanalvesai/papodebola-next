@@ -136,6 +136,7 @@ export function MainNav() {
                   {[
                     { label: "Seleção Brasileira", href: "/futebol/selecao-brasileira" },
                     { label: "Copa do Mundo 2026", href: "/futebol/copa-do-mundo" },
+                    { label: "Copa do Mundo Feminina 2027", href: "/futebol/copa-do-mundo-feminina" },
                   ].map((l) => (
                     <li key={l.href}>
                       <Link href={l.href} prefetch={false} onClick={() => setOpenDropdown(null)} className="block py-1.5 px-2 text-sm text-text-secondary hover:text-green hover:bg-green-light rounded transition-colors">
