@@ -6,6 +6,7 @@ const T = TOURNAMENTS;
 // Campeonatos em destaque no rodapé (links internos pros silos).
 const FOOTER_CHAMPS = [
   { label: "Copa do Mundo 2026", href: "/futebol/copa-do-mundo" },
+  { label: "Copa do Mundo Feminina 2027", href: "/futebol/copa-do-mundo-feminina" },
   { label: T.BRASILEIRAO_A.name, href: `/futebol/${T.BRASILEIRAO_A.slug}` },
   { label: T.BRASILEIRAO_B.name, href: `/futebol/${T.BRASILEIRAO_B.slug}` },
   { label: T.COPA_DO_BRASIL.name, href: `/futebol/${T.COPA_DO_BRASIL.slug}` },
