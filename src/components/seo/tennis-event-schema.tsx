@@ -36,6 +36,10 @@ export function TennisEventSchema({
     "@type": "SportsEvent",
     name: `${home} x ${away}`,
     sport: "Tennis",
+    // image: campo recomendado do rich result de Event. O Google renderiza UMA imagem
+    // por evento (não as fotos dos 2 atletas) — usamos o OG do site pra satisfazer o
+    // "Missing field image".
+    image: [`${SITE_URL}/og-image.jpg`],
     description: `${home} x ${away} — ${tournamentName}: placar ao vivo, sets, games e estatísticas em tempo real.`,
     url: `${SITE_URL}${url}`,
     ...(startTimestamp ? { startDate: new Date(startTimestamp * 1000).toISOString() } : {}),
