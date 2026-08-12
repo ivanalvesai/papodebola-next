@@ -75,6 +75,11 @@ export default async function CopaFemininaHubPage() {
     "@type": "SportsEvent",
     name: "Copa do Mundo Feminina da FIFA 2027",
     sport: "Futebol",
+    // image/description: campos recomendados do rich result de Event (o GSC acusa
+    // "Missing field image/description" sem eles).
+    image: [`${SITE_URL}/og-image.jpg`],
+    description:
+      "Copa do Mundo Feminina da FIFA 2027 no Brasil: seleções classificadas, grupos, tabela de jogos, datas, sedes e onde assistir.",
     startDate: "2027-06-24",
     endDate: "2027-07-25",
     eventStatus: "https://schema.org/EventScheduled",

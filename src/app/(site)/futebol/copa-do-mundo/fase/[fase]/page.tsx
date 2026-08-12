@@ -13,6 +13,7 @@ import { KNOCKOUT_PHASES, PHASE_BY_SLUG } from "@/lib/world-cup-phases";
 import { knockoutVenueLabel } from "@/lib/world-cup-knockout-schedule";
 
 const COPA_CATEGORY = "Copa do Mundo";
+const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || "https://www.papodebola.com.br";
 
 export const revalidate = 1800;
 
@@ -64,6 +65,11 @@ export default async function CopaFasePage({
             "@type": "SportsEvent",
             name: `${phase.longLabel}: ${s.homeSlot} x ${s.awaySlot} — Copa do Mundo 2026`,
             sport: "Soccer",
+            // image/description são campos recomendados do rich result de Event — sem eles
+            // o GSC acusa "Missing field image/description" em toda a fase.
+            image: [`${SITE_URL}/og-image.jpg`],
+            description: `${phase.longLabel} da Copa do Mundo 2026: ${s.homeSlot} x ${s.awaySlot} em ${knockoutVenueLabel(s)}. Data, horário, chaveamento e onde assistir.`,
+            url: `${SITE_URL}${phase.href}`,
             startDate: s.date,
             eventStatus: "https://schema.org/EventScheduled",
             location: {
@@ -72,7 +78,8 @@ export default async function CopaFasePage({
               address: { "@type": "PostalAddress", addressLocality: s.city, addressCountry: s.country },
             },
             organizer: { "@type": "Organization", name: "FIFA", url: "https://www.fifa.com" },
-            superEvent: { "@type": "SportsEvent", name: "Copa do Mundo FIFA 2026" },
+            // Sem superEvent: o Google o valida como um 2º Event (o torneio) e acusa
+            // "Missing field" nele em toda página. O vínculo fica no name + organizer.
           })),
         }
       : null;
