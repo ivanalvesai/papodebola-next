@@ -34,9 +34,14 @@ export function StandingsWidget({ standings }: StandingsWidgetProps) {
 
   return (
     <div className="bg-card-bg rounded-lg border border-border-custom">
-      <h3 className="text-sm font-bold text-text-primary px-4 py-3 border-b border-border-custom flex items-center gap-2">
-        <ListOrdered className="h-4 w-4 text-green" />
-        Classificação - Brasileirão
+      <h3 className="border-b border-border-custom">
+        <Link
+          href="/futebol/brasileirao-serie-a"
+          className="text-sm font-bold text-green px-4 py-3 flex items-center gap-2 hover:bg-card-hover transition-colors"
+        >
+          <ListOrdered className="h-4 w-4 text-green" />
+          Classificação - Brasileirão
+        </Link>
       </h3>
 
       {rows.length === 0 ? (
