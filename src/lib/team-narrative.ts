@@ -72,8 +72,8 @@ function tally(w: number, e: number, l: number): string {
   return listPt(parts);
 }
 
-// "21:30" -> "21h30"
-const hour = (t: string) => t.replace(":", "h");
+// "21:30" -> "21h30", "16:00" -> "16h"
+const hour = (t: string) => t.replace(/:00$/, "h").replace(":", "h");
 
 const finished = (m: TeamMatch) => m.status === "finished" && m.homeScore !== null && m.awayScore !== null;
 
