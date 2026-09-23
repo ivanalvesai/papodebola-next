@@ -7,6 +7,8 @@ import { TeamCmsView, teamRouteStaticParams } from "@/components/payload/team-cm
 import { notFound } from "next/navigation";
 import { Tv } from "lucide-react";
 import { TeamLogo } from "@/components/ui/team-logo";
+import { buildTeamNarrative } from "@/lib/team-narrative";
+import { TeamNarrativeSection, BroadcastChannels } from "@/components/team/team-narrative";
 
 export const revalidate = 86400;
 
@@ -20,8 +22,8 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
   const name = doc?.name || TEAM_BY_SLUG[slug]?.name;
   if (!name) return {};
   return {
-    title: doc?.seo?.metaTitle || `Onde Assistir ${name} Hoje - Transmissao Ao Vivo`,
-    description: doc?.seo?.metaDescription || `Saiba onde assistir ao jogo do ${name} hoje ao vivo. TV, streaming e opcoes de transmissao.`,
+    title: doc?.seo?.metaTitle || `Onde Assistir ${name} Hoje - Transmissão Ao Vivo`,
+    description: doc?.seo?.metaDescription || `Saiba onde assistir ao jogo do ${name} hoje ao vivo. TV, streaming e opções de transmissão.`,
     alternates: { canonical: `/futebol/times/${slug}/onde-assistir` },
   };
 }
@@ -70,38 +72,18 @@ export default async function OndeAssistirPage({ params }: { params: Promise<{ s
           <div className="border-t border-border-custom pt-4">
             <h3 className="text-sm font-bold text-text-primary mb-3 flex items-center gap-2">
               <Tv className="h-4 w-4 text-green" />
-              Opcoes de Transmissao
+              Canais com os direitos
             </h3>
-            <div className="space-y-2">
-              <div className="flex items-center gap-3 p-3 bg-body rounded-lg">
-                <div className="w-10 h-10 rounded bg-green/10 flex items-center justify-center">
-                  <Tv className="h-5 w-5 text-green" />
-                </div>
-                <div>
-                  <div className="text-sm font-semibold text-text-primary">Premiere</div>
-                  <div className="text-xs text-text-muted">Pay-per-view - Brasileirão</div>
-                </div>
-              </div>
-              <div className="flex items-center gap-3 p-3 bg-body rounded-lg">
-                <div className="w-10 h-10 rounded bg-blue/10 flex items-center justify-center">
-                  <Tv className="h-5 w-5 text-blue" />
-                </div>
-                <div>
-                  <div className="text-sm font-semibold text-text-primary">Globoplay</div>
-                  <div className="text-xs text-text-muted">Streaming</div>
-                </div>
-              </div>
-              <p className="text-[11px] text-text-muted text-center mt-3">
-                As informacoes de transmissao podem variar. Consulte o site oficial do campeonato para confirmacao.
-              </p>
-            </div>
+            <BroadcastChannels league={match.league} />
           </div>
         </div>
       ) : (
         <div className="bg-card-bg rounded-lg border border-border-custom p-8 text-center">
-          <p className="text-text-muted text-sm">Nenhum jogo proximo encontrado para o {team.name}.</p>
+          <p className="text-text-muted text-sm">Nenhum jogo próximo encontrado para o {team.name}.</p>
         </div>
       )}
+
+      <TeamNarrativeSection narrative={buildTeamNarrative(data, "ondeAssistir")} />
 
       <div className="text-center">
         <Link href={`/futebol/times/${slug}`} className="text-sm text-green font-semibold hover:text-green-hover">

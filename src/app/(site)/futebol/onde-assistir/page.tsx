@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { getTodayMatches, freshMatches } from "@/lib/data/matches";
 import { PageBreadcrumb } from "@/components/seo/page-breadcrumb";
 import { Tv } from "lucide-react";
+import { getBroadcasters } from "@/lib/broadcasters";
 import { TeamLogo } from "@/components/ui/team-logo";
 import type { NormalizedMatch } from "@/types/match";
 
@@ -13,26 +14,6 @@ export const metadata: Metadata = {
   description:
     "Onde assistir aos jogos de futebol de hoje. TV aberta, pay-per-view e streaming. Brasileirão, Libertadores, Champions League e mais.",
 };
-
-// Mapeamento aproximado de transmissão por campeonato. Atualizar conforme acordos contratuais.
-function getBroadcasters(league: string): string[] {
-  const l = league.toLowerCase();
-  if (l.includes("brasileir") && l.includes("série a")) return ["Premiere", "Globoplay", "Record", "SporTV"];
-  if (l.includes("brasileir") && l.includes("série b")) return ["Premiere", "ESPN", "Disney+"];
-  if (l.includes("copa do brasil")) return ["Globo", "SporTV", "Premiere", "Amazon Prime Video"];
-  if (l.includes("libertadores")) return ["SBT", "Paramount+", "ESPN", "Disney+"];
-  if (l.includes("sudamericana")) return ["ESPN", "Disney+", "Paramount+"];
-  if (l.includes("champions")) return ["TNT Sports", "HBO Max", "SBT"];
-  if (l.includes("europa league") || l.includes("conference")) return ["ESPN", "Disney+"];
-  if (l.includes("premier")) return ["ESPN", "Disney+"];
-  if (l.includes("la liga")) return ["ESPN", "Disney+"];
-  if (l.includes("serie a") && l.includes("itáli")) return ["ESPN", "Disney+"];
-  if (l.includes("bundesliga")) return ["OneFootball", "CazéTV"];
-  if (l.includes("ligue 1")) return ["CazéTV"];
-  if (l.includes("copa do mundo") || l.includes("mundial")) return ["Globo", "SporTV", "FIFA+"];
-  if (l.includes("eliminat") || l.includes("sul-americ")) return ["SporTV", "Globoplay"];
-  return [];
-}
 
 function groupByLeague(matches: NormalizedMatch[]) {
   const groups: Record<string, NormalizedMatch[]> = {};

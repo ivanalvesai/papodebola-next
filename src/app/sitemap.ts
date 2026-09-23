@@ -43,13 +43,13 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     { url: `${BASE}/jogos-de-hoje`, lastModified: now, changeFrequency: "daily", priority: 0.7 },
     { url: `${BASE}/jogos-de-hoje/futebol`, lastModified: now, changeFrequency: "daily", priority: 0.7 },
     { url: `${BASE}/ao-vivo`, lastModified: now, changeFrequency: "hourly", priority: 0.8 },
-    { url: `${BASE}/apostas`, lastModified: now, changeFrequency: "daily", priority: 0.7 },
+    { url: `${BASE}/apostas`, changeFrequency: "daily", priority: 0.7 },
     { url: `${BASE}/futebol/onde-assistir`, lastModified: now, changeFrequency: "hourly", priority: 0.8 },
-    { url: `${BASE}/futebol/selecao-brasileira`, lastModified: now, changeFrequency: "daily", priority: 0.8 },
-    { url: `${BASE}/futebol/copa-do-mundo-feminina`, lastModified: now, changeFrequency: "daily", priority: 0.8 },
-    { url: `${BASE}/sp`, lastModified: now, changeFrequency: "weekly", priority: 0.5 },
-    { url: `${BASE}/sp/santana-de-parnaiba`, lastModified: now, changeFrequency: "weekly", priority: 0.5 },
-    { url: `${BASE}/sp/santana-de-parnaiba/municipal`, lastModified: now, changeFrequency: "daily", priority: 0.5 },
+    { url: `${BASE}/futebol/selecao-brasileira`, changeFrequency: "daily", priority: 0.8 },
+    { url: `${BASE}/futebol/copa-do-mundo-feminina`, changeFrequency: "daily", priority: 0.8 },
+    { url: `${BASE}/sp`, changeFrequency: "weekly", priority: 0.5 },
+    { url: `${BASE}/sp/santana-de-parnaiba`, changeFrequency: "weekly", priority: 0.5 },
+    { url: `${BASE}/sp/santana-de-parnaiba/municipal`, changeFrequency: "daily", priority: 0.5 },
     { url: `${BASE}/sobre`, changeFrequency: "monthly", priority: 0.3 },
     { url: `${BASE}/contato`, changeFrequency: "monthly", priority: 0.3 },
     { url: `${BASE}/politica-de-privacidade`, changeFrequency: "monthly", priority: 0.2 },
@@ -61,12 +61,12 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const payloadTeamSlugs = await getPayloadTeamSlugs().catch(() => []);
   const teamSlugs = Array.from(new Set([...TEAMS.map((t) => t.slug), ...payloadTeamSlugs]));
   const teamPages: MetadataRoute.Sitemap = teamSlugs.flatMap((slug) => [
-    { url: `${BASE}/futebol/times/${slug}`, lastModified: now, changeFrequency: "daily" as const, priority: 0.8 },
-    { url: `${BASE}/futebol/times/${slug}/jogo-hoje`, lastModified: now, changeFrequency: "daily" as const, priority: 0.7 },
-    { url: `${BASE}/futebol/times/${slug}/onde-assistir`, lastModified: now, changeFrequency: "daily" as const, priority: 0.6 },
-    { url: `${BASE}/futebol/times/${slug}/escalacao`, lastModified: now, changeFrequency: "daily" as const, priority: 0.6 },
-    { url: `${BASE}/futebol/times/${slug}/proximos-jogos`, lastModified: now, changeFrequency: "daily" as const, priority: 0.7 },
-    { url: `${BASE}/futebol/times/${slug}/estatisticas`, lastModified: now, changeFrequency: "weekly" as const, priority: 0.6 },
+    { url: `${BASE}/futebol/times/${slug}`, changeFrequency: "daily" as const, priority: 0.8 },
+    { url: `${BASE}/futebol/times/${slug}/jogo-hoje`, changeFrequency: "daily" as const, priority: 0.7 },
+    { url: `${BASE}/futebol/times/${slug}/onde-assistir`, changeFrequency: "daily" as const, priority: 0.6 },
+    { url: `${BASE}/futebol/times/${slug}/escalacao`, changeFrequency: "daily" as const, priority: 0.6 },
+    { url: `${BASE}/futebol/times/${slug}/proximos-jogos`, changeFrequency: "daily" as const, priority: 0.7 },
+    { url: `${BASE}/futebol/times/${slug}/estatisticas`, changeFrequency: "weekly" as const, priority: 0.6 },
   ]);
 
   // Championship pages
@@ -74,7 +74,6 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     .filter((t) => t.seasonId)
     .map((t) => ({
       url: `${BASE}/futebol/${t.slug}`,
-      lastModified: now,
       changeFrequency: "daily" as const,
       priority: 0.8,
     }));
@@ -84,14 +83,12 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const sportPages: MetadataRoute.Sitemap = SPORTS.filter((s) => s.slug !== "basquete").map(
     (s) => ({
       url: `${BASE}${s.href}`,
-      lastModified: now,
       changeFrequency: "daily" as const,
       priority: 0.6,
     })
   );
   sportPages.push({
     url: `${BASE}/nba`,
-    lastModified: now,
     changeFrequency: "daily" as const,
     priority: 0.6,
   });
@@ -99,7 +96,6 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   // Tênis: torneio com chaveamento próprio (ATP de Halle)
   sportPages.push({
     url: `${BASE}/tenis/halle-2026`,
-    lastModified: now,
     changeFrequency: "daily" as const,
     priority: 0.6,
   });
@@ -113,7 +109,6 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const newsCategoryPages: MetadataRoute.Sitemap = Object.keys(WP_CATEGORY_BY_SLUG).map(
     (slug) => ({
       url: `${BASE}/noticias/${slug}`,
-      lastModified: now,
       changeFrequency: "daily" as const,
       priority: 0.7,
     })
@@ -123,13 +118,11 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const copaPages: MetadataRoute.Sitemap = [
     {
       url: `${BASE}/futebol/copa-do-mundo`,
-      lastModified: now,
       changeFrequency: "hourly" as const,
       priority: 0.9,
     },
     ...KNOCKOUT_PHASES.map((p) => ({
       url: `${BASE}${p.href}`,
-      lastModified: now,
       changeFrequency: "daily" as const,
       priority: 0.7,
     })),
@@ -148,7 +141,9 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
         f.home,
         f.away
       )}`,
-      lastModified: now,
+      // Jogo encerrado não muda mais: lastmod = fim do jogo (não "agora", que o Google
+      // trata como data falsa). Jogo futuro fica sem lastmod.
+      ...(aindaNaoAcabou ? {} : { lastModified: new Date((f.timestamp + 3 * 3600) * 1000) }),
       changeFrequency: aindaNaoAcabou ? ("hourly" as const) : ("weekly" as const),
       priority: aindaNaoAcabou ? 0.8 : 0.5,
     };
@@ -177,7 +172,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
           const naoAcabou = m.timestamp >= nowSec - 4 * 3600;
           out.push({
             url,
-            lastModified: now,
+            ...(naoAcabou ? {} : { lastModified: new Date((m.timestamp + 3 * 3600) * 1000) }),
             changeFrequency: naoAcabou ? ("hourly" as const) : ("weekly" as const),
             priority: naoAcabou ? 0.7 : 0.5,
           });
@@ -192,7 +187,6 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     (s) => s.id !== BRAZIL_ID
   ).map((s) => ({
     url: `${BASE}/futebol/selecoes/${s.slug}`,
-    lastModified: now,
     changeFrequency: "daily" as const,
     priority: 0.6,
   }));
@@ -250,7 +244,6 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
             if (!m.eventId || !m.home?.name || !m.away?.name) continue;
             out.push({
               url: `${BASE}${tennisMatchHref(draw.slug, m.home.name, m.away.name)}`,
-              lastModified: now,
               changeFrequency: "daily" as const,
               priority: 0.6,
             });
@@ -265,7 +258,6 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const payloadPageSlugs = await getPayloadPageSlugs().catch(() => []);
   const payloadPages: MetadataRoute.Sitemap = payloadPageSlugs.map((slug) => ({
     url: `${BASE}/paginas/${slug}`,
-    lastModified: now,
     changeFrequency: "weekly" as const,
     priority: 0.4,
   }));
@@ -274,7 +266,6 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const authorSlugs = await getAuthorSlugs().catch(() => []);
   const authorPages: MetadataRoute.Sitemap = authorSlugs.map((slug) => ({
     url: `${BASE}/autor/${slug}`,
-    lastModified: now,
     changeFrequency: "weekly" as const,
     priority: 0.4,
   }));
@@ -287,7 +278,6 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   ]);
   const municipalMatchPages: MetadataRoute.Sitemap = [...municipalKeys].map((key) => ({
     url: `${BASE}/sp/santana-de-parnaiba/municipal/jogo/${key}`,
-    lastModified: now,
     changeFrequency: "monthly",
     priority: 0.4,
   }));

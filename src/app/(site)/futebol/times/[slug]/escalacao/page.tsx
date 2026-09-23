@@ -2,11 +2,13 @@ import type { Metadata } from "next";
 import Image from "next/image";
 import Link from "next/link";
 import { TEAM_BY_SLUG } from "@/lib/config";
-import { getTeamPageData } from "@/lib/data/team";
+import { getTeamPageData, getTeamLastLineup } from "@/lib/data/team";
 import { getTeam } from "@/lib/data/payload-teams";
 import { TeamCmsView, teamRouteStaticParams } from "@/components/payload/team-cms-page";
 import { notFound } from "next/navigation";
 import { Users } from "lucide-react";
+import { buildTeamNarrative } from "@/lib/team-narrative";
+import { TeamNarrativeSection, ProbableLineup } from "@/components/team/team-narrative";
 
 export const revalidate = 43200;
 
@@ -20,8 +22,8 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
   const name = doc?.name || TEAM_BY_SLUG[slug]?.name;
   if (!name) return {};
   return {
-    title: doc?.seo?.metaTitle || `Escalacao do ${name} Hoje - Provavel Escalacao`,
-    description: doc?.seo?.metaDescription || `Confira a escalacao provavel do ${name} para o proximo jogo. Titulares, reservas e desfalques.`,
+    title: doc?.seo?.metaTitle || `Escalação do ${name} Hoje - Provável Escalação`,
+    description: doc?.seo?.metaDescription || `Provável escalação do ${name} para o próximo jogo, com base no time que começou a última partida, formação e destaques da temporada.`,
     alternates: { canonical: `/futebol/times/${slug}/escalacao` },
   };
 }
@@ -39,12 +41,14 @@ export default async function EscalacaoPage({ params }: { params: Promise<{ slug
   if (!data) notFound();
 
   const { todayMatch, upcomingMatches, topPlayers } = data;
+  // XI do último jogo (base da provável). Poucas tentativas pra não pendurar o render.
+  const lineup = await getTeamLastLineup(team.id, 3).catch(() => null);
   const match = todayMatch || upcomingMatches[0] || null;
 
   return (
     <div className="mx-auto max-w-[800px] px-4 py-6 space-y-6">
       <h2 className="text-lg font-bold text-text-primary">
-        Escalacao do {team.name}
+        Escalação do {team.name}
       </h2>
 
       {match && (
@@ -59,12 +63,16 @@ export default async function EscalacaoPage({ params }: { params: Promise<{ slug
         </div>
       )}
 
+      <TeamNarrativeSection narrative={buildTeamNarrative(data, "escalacao", { lineup })} />
+
+      <ProbableLineup lineup={lineup} />
+
       {/* Top players from statistics */}
       {topPlayers.length > 0 ? (
         <div className="bg-card-bg rounded-lg border border-border-custom p-6">
           <h3 className="text-sm font-bold text-text-primary mb-4 flex items-center gap-2">
             <Users className="h-4 w-4 text-green" />
-            Principais Jogadores - {team.name}
+            Artilheiros {data.tournament ? `no ${data.tournament.name}` : "da temporada"}
           </h3>
           <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
             {topPlayers.map((p) => (
@@ -90,14 +98,13 @@ export default async function EscalacaoPage({ params }: { params: Promise<{ slug
             ))}
           </div>
           <p className="text-[11px] text-text-muted text-center mt-4">
-            A escalacao confirmada sera divulgada proximo ao horario do jogo.
-            Os jogadores acima sao os destaques da temporada 2026.
+            A escalação oficial sai cerca de uma hora antes do jogo.
           </p>
         </div>
       ) : (
         <div className="bg-card-bg rounded-lg border border-border-custom p-8 text-center">
           <p className="text-text-muted text-sm">
-            Escalacao do {team.name} ainda nao disponivel para esta temporada.
+            Ainda sem artilharia do {team.name} nesta temporada.
           </p>
         </div>
       )}

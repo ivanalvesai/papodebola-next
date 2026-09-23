@@ -16,6 +16,9 @@ export interface TeamPageData {
   slug: string;
   tournament: { name: string; slug: string } | null;
   standingPosition: StandingRow | null;
+  // Tabela completa do campeonato do time (mesma chamada em cache da posição) — usada
+  // pelo texto de contexto (distância pro líder / pra zona de rebaixamento).
+  standingsTable: StandingRow[];
   news: Article[];
   todayMatch: TeamMatch | null;
   upcomingMatches: TeamMatch[];
@@ -94,11 +97,15 @@ export async function getTeamTopPlayers(team: TeamInfo): Promise<Scorer[]> {
   }));
 }
 
-export async function getTeamStandingPosition(team: TeamInfo): Promise<StandingRow | null> {
+export async function getTeamStandingsTable(team: TeamInfo): Promise<StandingRow[]> {
   const t = teamTournament(team);
-  if (!t?.seasonId) return null;
+  if (!t?.seasonId) return [];
   const standings = await getStandings(t.id, t.seasonId);
-  const rows = standings[0]?.rows || [];
+  return standings[0]?.rows || [];
+}
+
+export async function getTeamStandingPosition(team: TeamInfo): Promise<StandingRow | null> {
+  const rows = await getTeamStandingsTable(team);
   return rows.find((r) => r.teamId === team.id) || null;
 }
 
@@ -111,11 +118,11 @@ export async function getTeamPageData(slug: string): Promise<TeamPageData | null
 // Core: monta os dados da página a partir de uma identidade de time (do config OU de
 // um doc do Payload — collection `teams` da Série B). Preserva o ao vivo (mesmas funções).
 export async function getTeamPageDataFor(team: TeamInfo): Promise<TeamPageData> {
-  const [nextEvents, prevEvents, topPlayers, position, newsResult] = await Promise.all([
+  const [nextEvents, prevEvents, topPlayers, table, newsResult] = await Promise.all([
     getTeamNextEvents(team.id).catch(() => []),
     getTeamPreviousEvents(team.id).catch(() => []),
     getTeamTopPlayers(team).catch(() => []),
-    getTeamStandingPosition(team).catch(() => null),
+    getTeamStandingsTable(team).catch(() => [] as StandingRow[]),
     getArticles({ tag: team.name, perPage: 10 }).catch(() => ({ articles: [], total: 0 })),
   ]);
 
@@ -123,6 +130,7 @@ export async function getTeamPageDataFor(team: TeamInfo): Promise<TeamPageData> 
   const today = new Date().toLocaleDateString("pt-BR", { day: "2-digit", month: "2-digit", year: "numeric" });
   const todayMatch = nextEvents.find((m) => m.date === today) || prevEvents.find((m) => m.date === today) || null;
 
+  const position = table.find((r) => r.teamId === team.id) || null;
   const trn = teamTournament(team);
   return {
     name: team.name,
@@ -130,10 +138,63 @@ export async function getTeamPageDataFor(team: TeamInfo): Promise<TeamPageData> 
     slug: team.slug,
     tournament: trn ? { name: trn.name, slug: trn.slug } : null,
     standingPosition: position,
+    standingsTable: table,
     news: newsResult.articles,
     todayMatch,
     upcomingMatches: nextEvents.slice(0, 10),
     recentMatches: prevEvents.slice(0, 10),
     topPlayers,
   };
+}
+
+export type SuggestPlayer = { name: string; number: string; playerId: string };
+
+// Titulares de um lado do lineup (não-substitutos), na ordem da API (goleiro -> ataque).
+function starters(side: any): SuggestPlayer[] {
+  const players: any[] = Array.isArray(side?.players) ? side.players : [];
+  return players
+    .filter((p) => !p?.substitute)
+    .map((p) => ({
+      name: p?.player?.name || "",
+      number: String(p?.shirtNumber ?? p?.player?.jerseyNumber ?? ""),
+      playerId: p?.player?.id ? String(p.player.id) : "",
+    }))
+    .filter((p) => p.name);
+}
+
+export interface TeamLastLineup {
+  teamName: string;
+  formation: string;
+  players: SuggestPlayer[];
+  fromMatch: number;
+  opponent: string;
+  date: string;
+  league: string;
+}
+
+// Pega o XI provável = escalação do jogo anterior mais recente que TENHA lineup.
+// maxGames limita as chamadas (render de página usa poucas; o editor pode ir mais longe).
+export async function getTeamLastLineup(teamId: number, maxGames = 6): Promise<TeamLastLineup | null> {
+  const prev = await getTeamPreviousEvents(teamId);
+  // mais recentes primeiro
+  const games = [...prev].sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0));
+  for (const g of games.slice(0, maxGames)) {
+    const raw = await fetchAllSports<any>(`match/${g.id}/lineups`, 86400);
+    if (!raw) continue;
+    const isHome = g.homeId === teamId;
+    const side = isHome ? raw.home : raw.away;
+    const list = starters(side);
+    if (list.length >= 7) {
+      return {
+        teamName: isHome ? g.home : g.away,
+        formation: side?.formation || "",
+        players: list.slice(0, 11),
+        fromMatch: g.id,
+        opponent: isHome ? g.away : g.home,
+        date: g.date,
+        league: g.league,
+      };
+    }
+  }
+  return null;
 }

@@ -42,7 +42,11 @@ export interface MunicipalMatch {
 async function readMatches(): Promise<Record<string, MunicipalMatch>> {
   try {
     const raw = await readFile(join(process.cwd(), "data", "sisgel-matches.json"), "utf-8");
-    return JSON.parse(raw);
+    const all: Record<string, MunicipalMatch> = JSON.parse(raw);
+    // O cache tem registros de uma versão antiga do scraper, com chave sem a data
+    // ("slug-token"). Eles não têm página (a rota é /jogo/{data}/{par}) e iam pro
+    // sitemap como 404. Só vale a chave "data/par".
+    return Object.fromEntries(Object.entries(all).filter(([k]) => k.includes("/")));
   } catch {
     return {};
   }
