@@ -4,6 +4,7 @@ import { RichText } from "@payloadcms/richtext-lexical/react";
 import { ArrowRight, Calendar, Trophy, BarChart3, Tv, Users } from "lucide-react";
 import { TeamLogo } from "@/components/ui/team-logo";
 import type { TeamPageData } from "@/lib/data/team";
+import { BroadcastChannels } from "@/components/team/team-narrative";
 
 // Renderer dos blocos da collection `teams` (Payload). Cada bloco DINÂMICO lê os dados
 // ao vivo já buscados (TeamPageData, via getTeamPageDataFor) — mesmos cards do cluster
@@ -165,7 +166,7 @@ function Scorers({ data, title, limit }: { data: TeamPageData; title?: string; l
     <div className={`${card} p-6`}>
       <h3 className="text-sm font-bold text-text-primary mb-4 flex items-center gap-2">
         <Users className="h-4 w-4 text-green" />
-        {title || `Principais Jogadores - ${data.name}`}
+        {title || `Artilheiros ${data.tournament ? `no ${data.tournament.name}` : "da temporada"}`}
       </h3>
       <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
         {list.map((p) => (
@@ -201,20 +202,12 @@ function WhereToWatch({ data, title }: { data: TeamPageData; title?: string }) {
             </div>
             <div className="text-xs text-text-muted mt-2">{m.date}</div>
           </div>
-          <div className="space-y-2 border-t border-border-custom pt-4">
-            <div className="flex items-center gap-3 p-3 bg-body rounded-lg">
-              <div className="w-10 h-10 rounded bg-green/10 flex items-center justify-center"><Tv className="h-5 w-5 text-green" /></div>
-              <div><div className="text-sm font-semibold text-text-primary">Premiere</div><div className="text-xs text-text-muted">Pay-per-view - Brasileirão</div></div>
-            </div>
-            <div className="flex items-center gap-3 p-3 bg-body rounded-lg">
-              <div className="w-10 h-10 rounded bg-blue/10 flex items-center justify-center"><Tv className="h-5 w-5 text-blue" /></div>
-              <div><div className="text-sm font-semibold text-text-primary">Globoplay</div><div className="text-xs text-text-muted">Streaming</div></div>
-            </div>
-            <p className="text-[11px] text-text-muted text-center mt-3">As informacoes de transmissao podem variar. Consulte o site oficial do campeonato para confirmacao.</p>
+          <div className="border-t border-border-custom pt-4">
+            <BroadcastChannels league={m.league} />
           </div>
         </>
       ) : (
-        <p className="text-text-muted text-sm text-center py-4">Nenhum jogo proximo encontrado.</p>
+        <p className="text-text-muted text-sm text-center py-4">Nenhum jogo próximo encontrado.</p>
       )}
     </div>
   );
@@ -239,7 +232,7 @@ function Lineup({ data, title }: { data: TeamPageData; title?: string }) {
         <div className={`${card} p-6`}>
           <h3 className="text-sm font-bold text-text-primary mb-4 flex items-center gap-2">
             <Users className="h-4 w-4 text-green" />
-            {title || `Principais Jogadores - ${data.name}`}
+            {title || `Artilheiros ${data.tournament ? `no ${data.tournament.name}` : "da temporada"}`}
           </h3>
           <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
             {data.topPlayers.map((p) => (
@@ -252,11 +245,11 @@ function Lineup({ data, title }: { data: TeamPageData; title?: string }) {
               </div>
             ))}
           </div>
-          <p className="text-[11px] text-text-muted text-center mt-4">A escalacao confirmada sera divulgada proximo ao horario do jogo. Os jogadores acima sao os destaques da temporada 2026.</p>
+          <p className="text-xs text-text-muted text-center mt-4">A escalação oficial sai cerca de uma hora antes do jogo.</p>
         </div>
       ) : (
         <div className={`${card} p-8 text-center`}>
-          <p className="text-text-muted text-sm">Escalacao do {data.name} ainda nao disponivel para esta temporada.</p>
+          <p className="text-text-muted text-sm">Ainda sem artilharia do {data.name} nesta temporada.</p>
         </div>
       )}
     </div>
@@ -266,7 +259,7 @@ function Lineup({ data, title }: { data: TeamPageData; title?: string }) {
 function ClusterLinks({ data }: { data: TeamPageData }) {
   const slug = data.slug;
   const links = [
-    { href: `/futebol/times/${slug}/jogo-hoje`, label: "Jogo de Hoje", desc: `Veja se o ${data.name} joga hoje, horario e detalhes`, icon: Calendar },
+    { href: `/futebol/times/${slug}/jogo-hoje`, label: "Jogo de Hoje", desc: `Veja se o ${data.name} joga hoje, horário e detalhes`, icon: Calendar },
     { href: `/futebol/times/${slug}/onde-assistir`, label: "Onde Assistir", desc: `Saiba onde assistir ao jogo do ${data.name} ao vivo`, icon: Tv },
     { href: `/futebol/times/${slug}/escalacao`, label: "Escalação", desc: `Escalação provável do ${data.name} para o próximo jogo`, icon: Users },
     { href: `/futebol/times/${slug}/proximos-jogos`, label: "Próximos Jogos", desc: `Calendário completo dos próximos jogos do ${data.name}`, icon: Calendar },

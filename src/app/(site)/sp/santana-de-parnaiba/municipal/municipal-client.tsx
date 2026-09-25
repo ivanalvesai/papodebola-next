@@ -118,7 +118,7 @@ export default function MunicipalPage({ videoGameSlugs = [] }: { videoGameSlugs?
       <div className="mx-auto max-w-[1240px] px-4 py-8 text-center">
         <Trophy className="h-12 w-12 text-text-muted mx-auto mb-3" />
         <h1 className="text-xl font-bold text-text-primary mb-2">Campeonatos Municipais</h1>
-        <p className="text-text-muted">Dados ainda nao disponiveis. O scraper roda 2x por dia.</p>
+        <p className="text-text-muted">Dados ainda não disponíveis. A tabela é atualizada duas vezes por dia.</p>
       </div>
     );
   }

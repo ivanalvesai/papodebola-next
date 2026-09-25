@@ -7,6 +7,8 @@ import { TeamCmsView, teamRouteStaticParams } from "@/components/payload/team-cm
 import { notFound } from "next/navigation";
 import { ArrowRight, Calendar, Trophy, BarChart3, Tv, Users } from "lucide-react";
 import { TeamLogo } from "@/components/ui/team-logo";
+import { buildTeamNarrative } from "@/lib/team-narrative";
+import { TeamNarrativeSection } from "@/components/team/team-narrative";
 
 export const revalidate = 21600;
 
@@ -57,7 +59,7 @@ export default async function TeamHubPage({
   if (!data) notFound();
 
   const clusterLinks = [
-    { href: `/futebol/times/${slug}/jogo-hoje`, label: "Jogo de Hoje", desc: `Veja se o ${team.name} joga hoje, horario e detalhes`, icon: Calendar },
+    { href: `/futebol/times/${slug}/jogo-hoje`, label: "Jogo de Hoje", desc: `Veja se o ${team.name} joga hoje, horário e detalhes`, icon: Calendar },
     { href: `/futebol/times/${slug}/onde-assistir`, label: "Onde Assistir", desc: `Saiba onde assistir ao jogo do ${team.name} ao vivo`, icon: Tv },
     { href: `/futebol/times/${slug}/escalacao`, label: "Escalação", desc: `Escalação provável do ${team.name} para o próximo jogo`, icon: Users },
     { href: `/futebol/times/${slug}/proximos-jogos`, label: "Próximos Jogos", desc: `Calendário completo dos próximos jogos do ${team.name}`, icon: Calendar },
@@ -118,6 +120,8 @@ export default async function TeamHubPage({
             </div>
           )}
 
+          <TeamNarrativeSection narrative={buildTeamNarrative(data, "hub")} />
+
           {/* News */}
           <div className="bg-card-bg rounded-lg border border-border-custom p-6">
             <h2 className="text-base font-bold text-text-primary mb-4">
@@ -175,7 +179,7 @@ export default async function TeamHubPage({
           {/* Upcoming matches */}
           <div className="bg-card-bg rounded-lg border border-border-custom">
             <h3 className="text-sm font-bold text-text-primary px-4 py-3 border-b border-border-custom">
-              Proximos Jogos
+              Próximos Jogos
             </h3>
             {data.upcomingMatches.length === 0 ? (
               <p className="text-text-muted text-sm text-center py-4">Sem jogos agendados</p>

@@ -7,6 +7,8 @@ import { getTeam } from "@/lib/data/payload-teams";
 import { TeamCmsView, teamRouteStaticParams } from "@/components/payload/team-cms-page";
 import { notFound } from "next/navigation";
 import { BarChart3, Trophy, Goal } from "lucide-react";
+import { buildTeamNarrative } from "@/lib/team-narrative";
+import { TeamNarrativeSection } from "@/components/team/team-narrative";
 
 export const revalidate = 86400;
 
@@ -20,8 +22,8 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
   const name = doc?.name || TEAM_BY_SLUG[slug]?.name;
   if (!name) return {};
   return {
-    title: doc?.seo?.metaTitle || `Estatisticas do ${name} 2026 - Numeros e Desempenho`,
-    description: doc?.seo?.metaDescription || `Estatisticas completas do ${name} na temporada 2026. Artilheiros, desempenho, classificacao e mais.`,
+    title: doc?.seo?.metaTitle || `Estatísticas do ${name} 2026 - Números e Desempenho`,
+    description: doc?.seo?.metaDescription || `Estatísticas do ${name} na temporada 2026: posição, aproveitamento, gols, artilheiros e sequência recente.`,
     alternates: { canonical: `/futebol/times/${slug}/estatisticas` },
   };
 }
@@ -57,13 +59,13 @@ export default async function EstatisticasPage({ params }: { params: Promise<{ s
     <div className="mx-auto max-w-[800px] px-4 py-6 space-y-6">
       <h2 className="text-lg font-bold text-text-primary flex items-center gap-2">
         <BarChart3 className="h-5 w-5 text-green" />
-        Estatisticas do {team.name} - 2026
+        Estatísticas do {team.name} - 2026
       </h2>
 
       {/* Overview cards */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
         <div className="bg-card-bg rounded-lg border border-border-custom p-4 text-center">
-          <div className="text-2xl font-bold text-green">{standingPosition?.pos || "-"}o</div>
+          <div className="text-2xl font-bold text-green">{standingPosition ? `${standingPosition.pos}º` : "-"}</div>
           <div className="text-xs text-text-muted">Posição</div>
         </div>
         <div className="bg-card-bg rounded-lg border border-border-custom p-4 text-center">
@@ -87,7 +89,7 @@ export default async function EstatisticasPage({ params }: { params: Promise<{ s
         <div className="bg-card-bg rounded-lg border border-border-custom p-6">
           <h3 className="text-sm font-bold text-text-primary mb-4 flex items-center gap-2">
             <Trophy className="h-4 w-4 text-green" />
-            Desempenho no Brasileirao 2026
+            Desempenho {data.tournament ? `no ${data.tournament.name}` : "em 2026"}
           </h3>
           <div className="grid grid-cols-3 sm:grid-cols-6 gap-4 text-center">
             <div>
@@ -131,6 +133,8 @@ export default async function EstatisticasPage({ params }: { params: Promise<{ s
           </div>
         </div>
       )}
+
+      <TeamNarrativeSection narrative={buildTeamNarrative(data, "estatisticas")} />
 
       {/* Top scorers */}
       {topPlayers.length > 0 && (

@@ -8,6 +8,8 @@ import { notFound } from "next/navigation";
 import { TeamLogo } from "@/components/ui/team-logo";
 import { QuickAnswer } from "@/components/seo/quick-answer";
 import { SportsEventSchema } from "@/components/seo/sports-event-schema";
+import { buildTeamNarrative } from "@/lib/team-narrative";
+import { TeamNarrativeSection } from "@/components/team/team-narrative";
 
 export const revalidate = 1800;
 
@@ -21,8 +23,8 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
   const name = doc?.name || TEAM_BY_SLUG[slug]?.name;
   if (!name) return {};
   return {
-    title: doc?.seo?.metaTitle || `Jogo do ${name} Hoje - Horario e Placar`,
-    description: doc?.seo?.metaDescription || `Veja se o ${name} joga hoje, horario do jogo, placar ao vivo e detalhes da partida.`,
+    title: doc?.seo?.metaTitle || `Jogo do ${name} Hoje - Horário e Placar`,
+    description: doc?.seo?.metaDescription || `Veja se o ${name} joga hoje, horário do jogo, placar ao vivo e detalhes da partida.`,
     alternates: { canonical: `/futebol/times/${slug}/jogo-hoje` },
   };
 }
@@ -102,7 +104,7 @@ export default async function JogoHojePage({ params }: { params: Promise<{ slug:
         </div>
       ) : (
         <div className="bg-card-bg rounded-lg border border-border-custom p-8 text-center">
-          <p className="text-text-muted text-sm mb-4">O {team.name} nao joga hoje.</p>
+          <p className="text-text-muted text-sm mb-4">Sem jogo hoje.</p>
           {nextMatch && (
             <div>
               <p className="text-sm text-text-secondary mb-2">Próximo jogo:</p>
@@ -111,11 +113,13 @@ export default async function JogoHojePage({ params }: { params: Promise<{ slug:
                 <span className="text-text-muted">vs</span>
                 <span className="text-sm font-semibold">{nextMatch.away}</span>
               </div>
-              <p className="text-xs text-text-muted mt-1">{nextMatch.date} as {nextMatch.time} - {nextMatch.league}</p>
+              <p className="text-xs text-text-muted mt-1">{nextMatch.date} às {nextMatch.time} - {nextMatch.league}</p>
             </div>
           )}
         </div>
       )}
+
+      <TeamNarrativeSection narrative={buildTeamNarrative(data, "jogoHoje")} />
 
       <div className="text-center">
         <Link href={`/futebol/times/${slug}`} className="text-sm text-green font-semibold hover:text-green-hover">

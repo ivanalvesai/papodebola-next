@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { TEAM_BY_SLUG } from "@/lib/config";
-import { getTeamNextEvents } from "@/lib/data/team";
+import { getTeamNextEvents, getTeamPageData } from "@/lib/data/team";
 import { getTeam } from "@/lib/data/payload-teams";
 import { TeamCmsView, teamRouteStaticParams } from "@/components/payload/team-cms-page";
 import { notFound } from "next/navigation";
@@ -9,6 +9,8 @@ import { Calendar } from "lucide-react";
 import { TeamLogo } from "@/components/ui/team-logo";
 import { QuickAnswer } from "@/components/seo/quick-answer";
 import { SportsEventSchema } from "@/components/seo/sports-event-schema";
+import { buildTeamNarrative } from "@/lib/team-narrative";
+import { TeamNarrativeSection } from "@/components/team/team-narrative";
 
 export const revalidate = 43200;
 
@@ -22,8 +24,8 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
   const name = doc?.name || TEAM_BY_SLUG[slug]?.name;
   if (!name) return {};
   return {
-    title: doc?.seo?.metaTitle || `Proximos Jogos do ${name} - Calendario 2026`,
-    description: doc?.seo?.metaDescription || `Calendario completo dos proximos jogos do ${name} em 2026. Datas, horarios, adversarios e campeonatos.`,
+    title: doc?.seo?.metaTitle || `Próximos Jogos do ${name} - Calendário 2026`,
+    description: doc?.seo?.metaDescription || `Calendário completo dos próximos jogos do ${name} em 2026. Datas, horários, adversários e campeonatos.`,
     alternates: { canonical: `/futebol/times/${slug}/proximos-jogos` },
   };
 }
@@ -37,7 +39,7 @@ export default async function ProximosJogosPage({ params }: { params: Promise<{ 
   const team = TEAM_BY_SLUG[slug];
   if (!team) notFound();
 
-  const matches = await getTeamNextEvents(team.id);
+  const [matches, data] = await Promise.all([getTeamNextEvents(team.id), getTeamPageData(slug)]);
   const next = matches[0] || null;
 
   // Resposta direta pra "próximo jogo do {time}" (featured snippet + AI Overview).
@@ -63,7 +65,7 @@ export default async function ProximosJogosPage({ params }: { params: Promise<{ 
 
       <h2 className="text-lg font-bold text-text-primary flex items-center gap-2">
         <Calendar className="h-5 w-5 text-green" />
-        Proximos Jogos do {team.name}
+        Próximos Jogos do {team.name}
       </h2>
 
       <QuickAnswer>{answer}</QuickAnswer>
@@ -105,6 +107,8 @@ export default async function ProximosJogosPage({ params }: { params: Promise<{ 
           ))}
         </div>
       )}
+
+      {data && <TeamNarrativeSection narrative={buildTeamNarrative(data, "proximos")} />}
 
       <div className="text-center">
         <Link href={`/futebol/times/${slug}`} className="text-sm text-green font-semibold hover:text-green-hover">
