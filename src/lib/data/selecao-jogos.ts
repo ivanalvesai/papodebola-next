@@ -3,6 +3,8 @@ import { translateCountry } from "@/lib/i18n/countries";
 import { BRAZIL_ID, SELECAO_BY_ID } from "@/lib/selecoes";
 import { matchDateSlug, matchPairSlug } from "@/lib/world-cup-match-url";
 import { readSnapshot, saveSnapshot } from "./snapshot-store";
+import { getMatchDetail, injectByMinute, type MatchDetail } from "./match-detail";
+import { getMatchComments } from "./match-comments";
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
@@ -156,4 +158,19 @@ export async function updateSelecaoFixtureScore(
   if (f.homeScore === patch.homeScore && f.awayScore === patch.awayScore && f.status === patch.status) return;
   Object.assign(f, patch);
   await saveSnapshot(INDEX_CAT, INDEX_KEY, list);
+}
+
+// Depois deste tempo desde o apito inicial, um jogo ENCERRADO fica congelado: a página
+// serve só o snapshot salvo no volume e não consulta mais a API. As 6h dão folga pro
+// provedor fechar estatísticas/notas e pra captura agendada gravar o estado final.
+const FREEZE_AFTER_SECS = 6 * 3600;
+
+export async function getSelecaoMatchDetail(f: Pick<SelecaoFixture, "id" | "timestamp">): Promise<MatchDetail | null> {
+  const snap = await readSnapshot<MatchDetail>("matches", f.id);
+  if (snap?.event?.statusType === "finished" && Date.now() / 1000 - f.timestamp > FREEZE_AFTER_SECS) {
+    // Comentários editoriais do /cms continuam entrando (vêm do banco, não da API).
+    snap.commentary = injectByMinute(snap.commentary, await getMatchComments(f.id).catch(() => []));
+    return snap;
+  }
+  return getMatchDetail(f.id, f.timestamp);
 }

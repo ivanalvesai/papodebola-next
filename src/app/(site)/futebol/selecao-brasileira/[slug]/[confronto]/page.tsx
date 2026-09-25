@@ -3,9 +3,10 @@ import { notFound } from "next/navigation";
 import { PageBreadcrumb } from "@/components/seo/page-breadcrumb";
 import { LiveMatch } from "@/components/world-cup/live-match";
 import { SportsEventSchema } from "@/components/seo/sports-event-schema";
-import { getMatchDetail, type MatchDetail } from "@/lib/data/match-detail";
+import type { MatchDetail } from "@/lib/data/match-detail";
 import {
   resolveSelecaoMatch,
+  getSelecaoMatchDetail,
   updateSelecaoFixtureScore,
   SELECAO_PREFIX,
   type SelecaoFixture,
@@ -81,7 +82,8 @@ export default async function SelecaoJogoPage({ params }: { params: Promise<Para
   if (!fixture) notFound();
   const url = `${SELECAO_PREFIX}/${slug}/${confronto}`;
 
-  const detail = await getMatchDetail(fixture.id, fixture.timestamp).catch(() => null);
+  // Encerrado há mais de 6h: serve só o arquivo salvo, sem tocar na API.
+  const detail = await getSelecaoMatchDetail(fixture).catch(() => null);
   if (detail?.event) {
     // Mantém o placar/status do índice (usado no hub) em dia com o detalhe fresco.
     await updateSelecaoFixtureScore(fixture.id, {
