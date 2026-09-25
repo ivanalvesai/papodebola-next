@@ -13,6 +13,8 @@ import { getAuthorSlugs } from "@/lib/data/authors";
 import { getMunicipalMatchKeys } from "@/lib/data/municipal";
 import { getMunicipalGameKeys } from "@/lib/data/municipal-game";
 import { getChampionshipData } from "@/lib/data/championship";
+import { readSnapshot } from "@/lib/data/snapshot-store";
+import { selecaoMatchHref, type SelecaoFixture } from "@/lib/data/selecao-jogos";
 import { getTennisDraw, TENNIS_TOURNAMENTS, tennisMatchHref, type TennisTournamentSlug } from "@/lib/data/tennis";
 
 // Ligas cujas páginas de jogo (lance a lance) entram no sitemap. A Copa tem bloco
@@ -191,6 +193,16 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     priority: 0.6,
   }));
 
+  // Jogos da Seleção Brasileira (amistosos/Eliminatórias) — só o índice arquivado no
+  // volume, sem chamar a API (a página do hub é quem alimenta o índice).
+  const selecaoGames = (await readSnapshot<SelecaoFixture[]>("selecao", "jogos").catch(() => null)) || [];
+  const selecaoMatchPages: MetadataRoute.Sitemap = selecaoGames.map((f) => ({
+    url: `${BASE}${selecaoMatchHref(f)}`,
+    lastModified: new Date(f.timestamp * 1000),
+    changeFrequency: (f.status === "finished" ? "monthly" : "hourly") as "monthly" | "hourly",
+    priority: 0.6,
+  }));
+
   // Artigos do WordPress (cauda longa). Limite de 100 do WP REST; se houver mais,
   // paginar futuramente. Falha de rede não derruba o sitemap (catch → []).
   const { articles } = await getArticles({ perPage: 100 }).catch(() => ({ articles: [] }));
@@ -297,6 +309,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     ...copaMatchPages,
     ...champMatchPages,
     ...selecaoPages,
+    ...selecaoMatchPages,
     ...articlePages,
     ...betPages,
     ...craquePages,
