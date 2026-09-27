@@ -3,7 +3,8 @@
 import { useEffect, useState, useCallback, useRef, useMemo } from "react";
 import Link from "next/link";
 import { Trophy, ChevronLeft, ChevronRight } from "lucide-react";
-import { tennisMatchSlug, type TennisDraw, type TennisMatch, type TennisPlayer, type TennisRound } from "@/lib/data/tennis";
+import { tennisMatchSlug } from "@/lib/tennis-url";
+import type { TennisDraw, TennisMatch, TennisPlayer, TennisRound } from "@/lib/data/tennis";
 
 // ---- foto do atleta (com fallback pra bandeira do país e, por fim, iniciais) ----
 function PlayerPhoto({ player, size = 36 }: { player: TennisPlayer; size?: number }) {

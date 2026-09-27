@@ -1,0 +1,99 @@
+import Link from "next/link";
+import { TeamLogo } from "@/components/ui/team-logo";
+import { QuickAnswer } from "@/components/seo/quick-answer";
+import { SportsEventSchema } from "@/components/seo/sports-event-schema";
+import type { TeamPageData } from "@/lib/data/team";
+import { buildTeamNarrative } from "@/lib/team-narrative";
+import { TeamNarrativeSection } from "@/components/team/team-narrative";
+
+// Página clássica "Jogo de hoje" do time. Usada pelos times do config e pelos times do
+// CMS com a aba vazia.
+export function ClassicTeamJogoHoje({ data }: { data: TeamPageData }) {
+  const { todayMatch, upcomingMatches } = data;
+  const nextMatch = upcomingMatches[0] || null;
+
+  // Frase de resposta direta (featured snippet + AI Overview) pra "{time} joga hoje?".
+  const hasScore = todayMatch && todayMatch.homeScore !== null;
+  const answer = todayMatch
+    ? `Sim, o ${data.name} joga hoje: ${todayMatch.home} x ${todayMatch.away}${
+        hasScore ? ` (${todayMatch.homeScore}-${todayMatch.awayScore})` : ""
+      }, às ${todayMatch.time}${todayMatch.venue ? `, em ${todayMatch.venue}` : ""}, pela ${todayMatch.league}.`
+    : nextMatch
+      ? `Não, o ${data.name} não joga hoje. O próximo jogo é ${nextMatch.home} x ${nextMatch.away}, em ${nextMatch.date} às ${nextMatch.time}, pela ${nextMatch.league}.`
+      : `O ${data.name} não tem jogo nos próximos dias confirmado.`;
+  const schemaMatch = todayMatch || nextMatch;
+
+  return (
+    <div className="mx-auto max-w-[800px] px-4 py-6 space-y-6">
+      {schemaMatch && (
+        <SportsEventSchema
+          home={schemaMatch.home}
+          away={schemaMatch.away}
+          homeId={schemaMatch.homeId}
+          awayId={schemaMatch.awayId}
+          startTimestamp={schemaMatch.timestamp}
+          statusType={schemaMatch.status}
+          url={`/futebol/times/${data.slug}/jogo-hoje`}
+        />
+      )}
+
+      <h2 className="text-lg font-bold text-text-primary">
+        Jogo do {data.name} Hoje
+      </h2>
+
+      <QuickAnswer>{answer}</QuickAnswer>
+
+      {todayMatch ? (
+        <div className="bg-card-bg rounded-lg border border-green p-6">
+          <div className="text-center">
+            <div className="text-xs font-bold text-green uppercase mb-4">{todayMatch.league}</div>
+            <div className="flex items-center justify-center gap-8">
+              <div className="flex flex-col items-center gap-2">
+                <TeamLogo teamId={todayMatch.homeId} size={56} />
+                <span className="text-sm font-bold">{todayMatch.home}</span>
+              </div>
+              <div className="text-center">
+                {todayMatch.homeScore !== null ? (
+                  <div className="text-4xl font-bold">{todayMatch.homeScore} - {todayMatch.awayScore}</div>
+                ) : (
+                  <div className="text-2xl font-bold text-text-muted">{todayMatch.time}</div>
+                )}
+                <div className="text-sm text-text-muted mt-1">{todayMatch.statusText}</div>
+              </div>
+              <div className="flex flex-col items-center gap-2">
+                <TeamLogo teamId={todayMatch.awayId} size={56} />
+                <span className="text-sm font-bold">{todayMatch.away}</span>
+              </div>
+            </div>
+            {todayMatch.venue && (
+              <div className="text-xs text-text-muted mt-4">{todayMatch.venue}</div>
+            )}
+          </div>
+        </div>
+      ) : (
+        <div className="bg-card-bg rounded-lg border border-border-custom p-8 text-center">
+          <p className="text-text-muted text-sm mb-4">Sem jogo hoje.</p>
+          {nextMatch && (
+            <div>
+              <p className="text-sm text-text-secondary mb-2">Próximo jogo:</p>
+              <div className="flex items-center justify-center gap-4">
+                <span className="text-sm font-semibold">{nextMatch.home}</span>
+                <span className="text-text-muted">vs</span>
+                <span className="text-sm font-semibold">{nextMatch.away}</span>
+              </div>
+              <p className="text-xs text-text-muted mt-1">{nextMatch.date} às {nextMatch.time} - {nextMatch.league}</p>
+            </div>
+          )}
+        </div>
+      )}
+
+      <TeamNarrativeSection narrative={buildTeamNarrative(data, "jogoHoje")} />
+
+      <div className="text-center">
+        <Link href={`/futebol/times/${data.slug}`} className="text-sm text-green font-semibold hover:text-green-hover">
+          &larr; Voltar para {data.name}
+        </Link>
+      </div>
+    </div>
+  );
+}

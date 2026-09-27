@@ -1,14 +1,11 @@
 import type { Metadata } from "next";
-import Link from "next/link";
 import { TEAM_BY_SLUG } from "@/lib/config";
 import { getTeamPageData } from "@/lib/data/team";
 import { getTeam } from "@/lib/data/payload-teams";
 import { TeamCmsView, teamRouteStaticParams } from "@/components/payload/team-cms-page";
+import { ClassicTeamOndeAssistir } from "@/components/team/classic/onde-assistir";
 import { notFound } from "next/navigation";
-import { Tv } from "lucide-react";
-import { TeamLogo } from "@/components/ui/team-logo";
-import { buildTeamNarrative } from "@/lib/team-narrative";
-import { TeamNarrativeSection, BroadcastChannels } from "@/components/team/team-narrative";
+import { teamSeo, TEAM_PAGE_PATH } from "@/lib/team-seo";
 
 export const revalidate = 86400;
 
@@ -21,75 +18,15 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
   const doc = await getTeam(slug);
   const name = doc?.name || TEAM_BY_SLUG[slug]?.name;
   if (!name) return {};
-  return {
-    title: doc?.seo?.metaTitle || `Onde Assistir ${name} Hoje - Transmissão Ao Vivo`,
-    description: doc?.seo?.metaDescription || `Saiba onde assistir ao jogo do ${name} hoje ao vivo. TV, streaming e opções de transmissão.`,
-    alternates: { canonical: `/futebol/times/${slug}/onde-assistir` },
-  };
+  const { title, description } = teamSeo(doc, "ondeAssistir", name);
+  return { title, description, alternates: { canonical: `/futebol/times/${slug}${TEAM_PAGE_PATH.ondeAssistir}` } };
 }
 
 export default async function OndeAssistirPage({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;
-
   const doc = await getTeam(slug);
   if (doc) return <TeamCmsView doc={doc} page="ondeAssistir" />;
-
-  const team = TEAM_BY_SLUG[slug];
-  if (!team) notFound();
-
   const data = await getTeamPageData(slug);
   if (!data) notFound();
-
-  const { todayMatch, upcomingMatches } = data;
-  const match = todayMatch || upcomingMatches[0] || null;
-
-  return (
-    <div className="mx-auto max-w-[800px] px-4 py-6 space-y-6">
-      <h2 className="text-lg font-bold text-text-primary">
-        Onde Assistir {team.name} Hoje
-      </h2>
-
-      {match ? (
-        <div className="bg-card-bg rounded-lg border border-border-custom p-6">
-          <div className="text-center mb-6">
-            <div className="text-xs font-bold text-green uppercase mb-3">{match.league}</div>
-            <div className="flex items-center justify-center gap-6">
-              <div className="flex flex-col items-center gap-1.5">
-                <TeamLogo teamId={match.homeId} size={44} />
-                <span className="text-sm font-semibold">{match.home}</span>
-              </div>
-              <div className="text-lg font-bold text-text-muted">
-                {match.homeScore !== null ? `${match.homeScore} - ${match.awayScore}` : match.time}
-              </div>
-              <div className="flex flex-col items-center gap-1.5">
-                <TeamLogo teamId={match.awayId} size={44} />
-                <span className="text-sm font-semibold">{match.away}</span>
-              </div>
-            </div>
-            <div className="text-xs text-text-muted mt-2">{match.date}</div>
-          </div>
-
-          <div className="border-t border-border-custom pt-4">
-            <h3 className="text-sm font-bold text-text-primary mb-3 flex items-center gap-2">
-              <Tv className="h-4 w-4 text-green" />
-              Canais com os direitos
-            </h3>
-            <BroadcastChannels league={match.league} />
-          </div>
-        </div>
-      ) : (
-        <div className="bg-card-bg rounded-lg border border-border-custom p-8 text-center">
-          <p className="text-text-muted text-sm">Nenhum jogo próximo encontrado para o {team.name}.</p>
-        </div>
-      )}
-
-      <TeamNarrativeSection narrative={buildTeamNarrative(data, "ondeAssistir")} />
-
-      <div className="text-center">
-        <Link href={`/futebol/times/${slug}`} className="text-sm text-green font-semibold hover:text-green-hover">
-          &larr; Voltar para {team.name}
-        </Link>
-      </div>
-    </div>
-  );
+  return <ClassicTeamOndeAssistir data={data} />;
 }

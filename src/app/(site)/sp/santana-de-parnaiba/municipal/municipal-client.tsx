@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { Trophy, Loader2, ChevronLeft, ChevronRight, MapPin } from "lucide-react";
+import { deriveChampion } from "@/lib/data/municipal-archive";
 
 function Breadcrumb() {
   return (
@@ -130,6 +131,9 @@ export default function MunicipalPage({ videoGameSlugs = [] }: { videoGameSlugs?
   const meta = champ.roundMeta?.[String(selectedRound)] || {};
   const roundPhase = meta.phase || roundMatches[0]?.phase || "";
   const roundLabel = meta.label || roundMatches[0]?.roundLabel || `${selectedRound}ª Rodada`;
+  // Campeão só quando derivável dos dados: todos os jogos encerrados e final decidida.
+  const champion = deriveChampion(champ);
+  const champShort = champ.name.replace(/\s*futebol\s*20\d\d/i, "").trim();
 
   return (
     <div className="mx-auto max-w-[1240px] px-4 py-8">
@@ -152,6 +156,7 @@ export default function MunicipalPage({ videoGameSlugs = [] }: { videoGameSlugs?
           {data.map((c, i) => {
             const teamCount = c.groups.reduce((s, g) => s + g.teams.length, 0);
             const leader = c.groups[0]?.teams?.[0]?.name || "";
+            const winner = deriveChampion(c);
             const short = c.name.replace(/\s*futebol\s*20\d\d/i, "").trim();
             const active = selectedChamp === i;
             return (
@@ -176,14 +181,34 @@ export default function MunicipalPage({ videoGameSlugs = [] }: { videoGameSlugs?
               >
                 <div className={`text-sm font-bold ${active ? "text-green" : "text-text-primary"}`}>{short}</div>
                 <div className="mt-0.5 text-xs text-text-muted">{teamCount} times</div>
-                {leader && (
+                {winner ? (
+                  <div className="mt-1 truncate text-xs text-text-secondary">
+                    Campeão: <span className="font-semibold">{winner.team}</span>
+                  </div>
+                ) : leader ? (
                   <div className="mt-1 truncate text-xs text-text-secondary">
                     Líder: <span className="font-semibold">{leader}</span>
                   </div>
-                )}
+                ) : null}
               </button>
             );
           })}
+        </div>
+      )}
+
+      {champion && (
+        <div className="mb-6 flex items-center gap-3 rounded-lg border border-green bg-green/5 px-4 py-3">
+          {champion.badge && (
+            <Image src={champion.badge} alt="" width={40} height={40} className="shrink-0 rounded-full" unoptimized />
+          )}
+          <div className="min-w-0">
+            <div className="text-lg font-bold text-text-primary">
+              Campeão {champ.year}: <span className="text-green">{champion.team}</span>
+            </div>
+            <div className="text-sm text-text-muted">
+              {champShort} · Final: {champion.score}
+            </div>
+          </div>
         </div>
       )}
 

@@ -7,6 +7,7 @@ import type { StandingRow } from "@/types/standings";
 import type { Article } from "@/types/article";
 import type { Scorer } from "@/types/team";
 import { translateStatus } from "@/lib/translations";
+import { dropStaleUpcoming } from "@/lib/team-match-filters";
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
@@ -126,9 +127,11 @@ export async function getTeamPageDataFor(team: TeamInfo): Promise<TeamPageData> 
     getArticles({ tag: team.name, perPage: 10 }).catch(() => ({ articles: [], total: 0 })),
   ]);
 
+  const upcoming = dropStaleUpcoming(nextEvents, Date.now() / 1000);
+
   // Find today's match
   const today = new Date().toLocaleDateString("pt-BR", { day: "2-digit", month: "2-digit", year: "numeric" });
-  const todayMatch = nextEvents.find((m) => m.date === today) || prevEvents.find((m) => m.date === today) || null;
+  const todayMatch = upcoming.find((m) => m.date === today) || prevEvents.find((m) => m.date === today) || null;
 
   const position = table.find((r) => r.teamId === team.id) || null;
   const trn = teamTournament(team);
@@ -141,7 +144,7 @@ export async function getTeamPageDataFor(team: TeamInfo): Promise<TeamPageData> 
     standingsTable: table,
     news: newsResult.articles,
     todayMatch,
-    upcomingMatches: nextEvents.slice(0, 10),
+    upcomingMatches: upcoming.slice(0, 10),
     recentMatches: prevEvents.slice(0, 10),
     topPlayers,
   };

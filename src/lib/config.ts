@@ -44,7 +44,7 @@ export interface TeamInfo {
   slug: string;
   // Torneio nacional do time (resolve classificação/artilharia certas). Ausente = europeu
   // (sem tabela do Brasileirão). Default de leitura: 'serie-a' (ver teamTournamentSlug).
-  tournament?: "serie-a" | "serie-b";
+  tournament?: "serie-a" | "serie-b" | "europa";
 }
 
 export const TEAMS: TeamInfo[] = [
@@ -134,10 +134,11 @@ export const CBF_IDS = {
   COPA_NORDESTE: 1260624,
 } as const;
 
-// Sports — cada esporte tem URL top-level. Basquete tem landing + /basquete/nba;
+// Sports — cada esporte tem URL top-level. Basquete = /nba (a landing /basquete e
+// /basquete/nba viraram 308 pra /nba — linkar direto, sem passar pelo redirect);
 // os outros são single-page diretos. Boxe e Futsal adicionados em 17/04/2026.
 export const SPORTS = [
-  { slug: 'basquete',           name: 'Basquete',          icon: 'basketball', href: '/basquete' },
+  { slug: 'basquete',           name: 'Basquete',          icon: 'basketball', href: '/nba' },
   { slug: 'tenis',              name: 'Tênis',             icon: 'tennis',     href: '/tenis' },
   { slug: 'formula-1',          name: 'Fórmula 1',         icon: 'flag',       href: '/formula-1' },
   { slug: 'combate',            name: 'Combate',           icon: 'swords',     href: '/combate' },
@@ -291,6 +292,7 @@ export const ALL_CLUSTER_TEAMS: TeamInfo[] = [...PANEL_TEAMS_BR, ...PANEL_TEAMS_
 // Serve tanto p/ times do config quanto p/ TeamInfo montado a partir de um doc do Payload.
 export function teamTournament(team: TeamInfo): Tournament | null {
   if (team.tournament === 'serie-b') return TOURNAMENTS.BRASILEIRAO_B;
+  if (team.tournament === 'europa') return null;
   if (EU_SLUGS.includes(team.slug)) return null;
   return TOURNAMENTS.BRASILEIRAO_A; // default p/ times BR (Série A)
 }

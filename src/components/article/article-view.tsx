@@ -98,6 +98,14 @@ function formatParagraphs(text: string): string {
 // Posts que renderizam em largura cheia, sem sidebar (guias/rankings long-form).
 const WIDE_ARTICLE_SLUGS = new Set(["casas-de-apostas"]);
 
+// Chip de tag: se a tag é uma categoria, linka direto a URL limpa /noticias/{slug} — a
+// mesma regra do 308 do ?cat= no middleware (slugifyCategory + WP_CATEGORY_BY_SLUG),
+// sem passar pelo redirect. Tag que não é categoria segue em /noticias?cat= (sem redirect).
+function tagHref(tag: string): string {
+  const slug = slugifyCategory(tag);
+  return WP_CATEGORY_BY_SLUG[slug] ? `/noticias/${slug}` : `/noticias?cat=${encodeURIComponent(tag)}`;
+}
+
 /**
  * Renderização completa de um artigo. Compartilhada entre /artigos/[slug] (fallback
  * de categorias reservadas) e /[categoria]/[slug] (URL canônica por categoria).
@@ -234,7 +242,7 @@ export function ArticleView({
               {article.tags.map((tag) => (
                 <Link
                   key={tag}
-                  href={`/noticias?cat=${encodeURIComponent(tag)}`}
+                  href={tagHref(tag)}
                   className="inline-flex items-center gap-1 px-3.5 py-1.5 bg-body border border-border-custom rounded-full text-xs font-semibold text-text-secondary hover:bg-green hover:text-white hover:border-green transition-colors"
                 >
                   <Tag className="h-3 w-3" />

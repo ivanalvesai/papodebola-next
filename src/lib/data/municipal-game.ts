@@ -3,8 +3,7 @@ import config from "@payload-config";
 import { convertLexicalToHTML } from "@payloadcms/richtext-lexical/html";
 import { normalizeSponsor, sponsorCardHtml, type Sponsor } from "./sponsor";
 import { getMunicipalRosterByPair, getMunicipalMatch, type MunicipalGoal, type MunicipalPlayer } from "./municipal";
-import { readFile } from "fs/promises";
-import { join } from "path";
+import { getMunicipalChampionships } from "./sisgel";
 
 // Jogo do municipal com VÍDEO + comentários editáveis (collection municipalGames no /cms).
 // Sem lance a lance da API — a "página de jogo" é montada com o vídeo + textos do CMS.
@@ -53,12 +52,11 @@ export function toDateSlug(date: string): string {
   return d ? `${d[1]}-${d[2]}-${d[3]}` : "";
 }
 
-// Escudos: o municipalGames não guarda badge; puxamos do sisgel.json (a partida com o
+// Escudos: o municipalGames não guarda badge; puxamos do sisgel.json + arquivo (a partida com o
 // mesmo par + data tem homeBadgeLocal/awayBadgeLocal). Reaproveita os escudos já baixados.
 async function sisgelBadges(pairSlug: string, dateSlug: string): Promise<{ home: string; away: string }> {
   try {
-    const raw = await readFile(join(process.cwd(), "data", "sisgel.json"), "utf-8");
-    const champs = JSON.parse(raw);
+    const champs = await getMunicipalChampionships();
     for (const c of champs || []) {
       for (const m of c.matches || []) {
         if (m.slug === pairSlug && (!dateSlug || m.dateSlug === dateSlug)) {

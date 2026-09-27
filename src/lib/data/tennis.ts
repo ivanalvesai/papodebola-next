@@ -1,4 +1,9 @@
 import { fetchAllSports } from "@/lib/api/allsports";
+import { tennisMatchSlug } from "@/lib/tennis-url";
+
+// Re-exportado pra manter os importers de servidor existentes funcionando sem mudar
+// import path. Definição real (client-safe, sem node:*) mora em @/lib/tennis-url.
+export { tennisMatchSlug } from "@/lib/tennis-url";
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
@@ -68,21 +73,6 @@ export interface TennisDraw {
   name: string;
   rounds: TennisRound[];
   updated: string;
-}
-
-// Slug a partir do nome do atleta (acentos fora, espaços->-). PURO (client+server).
-export function slugifyName(name: string): string {
-  return name
-    .toLowerCase()
-    .normalize("NFD")
-    .replace(/[̀-ͯ]/g, "")
-    .replace(/[^a-z0-9]+/g, "-")
-    .replace(/^-|-$/g, "");
-}
-
-// slug do confronto pela API: "{casa}-{fora}" (ex: "ben-shelton-ethan-quinn").
-export function tennisMatchSlug(homeName: string, awayName: string): string {
-  return `${slugifyName(homeName)}-${slugifyName(awayName)}`;
 }
 
 // href da página do jogo: /tenis/{torneio}/{confronto}

@@ -1,8 +1,8 @@
 import type { Metadata } from "next";
-import { notFound } from "next/navigation";
+import { notFound, permanentRedirect } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
-import { getMunicipalMatch } from "@/lib/data/municipal";
+import { findFixedMunicipalMatchKey, getMunicipalMatch } from "@/lib/data/municipal";
 import { getMunicipalGame } from "@/lib/data/municipal-game";
 import { MunicipalGameView } from "@/components/municipal/municipal-game-view";
 
@@ -73,7 +73,12 @@ export default async function MunicipalMatchPage({
   if (game) return <MunicipalGameView game={game} />;
 
   const m = await getMunicipalMatch(data, slug);
-  if (!m) notFound();
+  if (!m) {
+    // URL antiga do mata-mata sem o visitante ("/jogo/19-09-2026/santana-") → 308 pra certa.
+    const fixed = await findFixedMunicipalMatchKey(data, slug);
+    if (fixed) permanentRedirect(`/sp/santana-de-parnaiba/municipal/jogo/${fixed}`);
+    notFound();
+  }
 
   const hasScore = m.homeScore !== null && m.awayScore !== null;
   const homeGoals = m.goals.filter((g) => g.isHome);
@@ -121,6 +126,11 @@ export default async function MunicipalMatchPage({
           {m.venue && <div>{m.venue}</div>}
           {m.referee && <div>Arbitragem: {m.referee}</div>}
         </div>
+        {m.comment && (
+          <p className="mt-4 border-t border-border-custom pt-3 text-center text-sm font-semibold text-text-primary">
+            {m.comment}
+          </p>
+        )}
       </div>
 
       {/* Gols */}
