@@ -3,6 +3,7 @@ import Image from "next/image";
 import { RichText } from "@payloadcms/richtext-lexical/react";
 import { ArrowRight, Calendar, Trophy, BarChart3, Tv, Users } from "lucide-react";
 import { TeamLogo } from "@/components/ui/team-logo";
+import { MatchHero } from "@/components/team/match-hero";
 import type { TeamPageData, TeamLastLineup } from "@/lib/data/team";
 import { buildTeamNarrative, type TeamNarrativePage } from "@/lib/team-narrative";
 import { BroadcastChannels, ProbableLineup, TeamNarrativeSection } from "@/components/team/team-narrative";
@@ -26,29 +27,7 @@ function Section({ title, children }: { title?: string; children: React.ReactNod
 function TodayMatch({ data, title }: { data: TeamPageData; title?: string }) {
   const m = data.todayMatch;
   if (!m) return null;
-  return (
-    <div className={`${card} border-green p-4`}>
-      <h2 className="text-sm font-bold text-green uppercase mb-3">{title || "Jogo de Hoje"}</h2>
-      <div className="flex items-center justify-center gap-6">
-        <div className="flex flex-col items-center gap-1">
-          <TeamLogo teamId={m.homeId} size={40} />
-          <span className="text-xs font-semibold">{m.home}</span>
-        </div>
-        <div className="text-center">
-          {m.homeScore !== null ? (
-            <span className="text-2xl font-bold">{m.homeScore} - {m.awayScore}</span>
-          ) : (
-            <span className="text-lg font-bold text-text-muted">{m.time}</span>
-          )}
-          <div className="text-[10px] text-text-muted mt-1">{m.league}</div>
-        </div>
-        <div className="flex flex-col items-center gap-1">
-          <TeamLogo teamId={m.awayId} size={40} />
-          <span className="text-xs font-semibold">{m.away}</span>
-        </div>
-      </div>
-    </div>
-  );
+  return <MatchHero match={m} label={title || "Jogo de hoje"} />;
 }
 
 function Upcoming({ data, title, limit }: { data: TeamPageData; title?: string; limit?: number }) {

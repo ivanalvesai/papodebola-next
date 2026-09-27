@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { TeamLogo } from "@/components/ui/team-logo";
+import { MatchHero } from "@/components/team/match-hero";
 import { QuickAnswer } from "@/components/seo/quick-answer";
 import { SportsEventSchema } from "@/components/seo/sports-event-schema";
 import type { TeamPageData } from "@/lib/data/team";
@@ -44,46 +44,20 @@ export function ClassicTeamJogoHoje({ data }: { data: TeamPageData }) {
       <QuickAnswer>{answer}</QuickAnswer>
 
       {todayMatch ? (
-        <div className="bg-card-bg rounded-lg border border-green p-6">
-          <div className="text-center">
-            <div className="text-xs font-bold text-green uppercase mb-4">{todayMatch.league}</div>
-            <div className="flex items-center justify-center gap-8">
-              <div className="flex flex-col items-center gap-2">
-                <TeamLogo teamId={todayMatch.homeId} size={56} />
-                <span className="text-sm font-bold">{todayMatch.home}</span>
-              </div>
-              <div className="text-center">
-                {todayMatch.homeScore !== null ? (
-                  <div className="text-4xl font-bold">{todayMatch.homeScore} - {todayMatch.awayScore}</div>
-                ) : (
-                  <div className="text-2xl font-bold text-text-muted">{todayMatch.time}</div>
-                )}
-                <div className="text-sm text-text-muted mt-1">{todayMatch.statusText}</div>
-              </div>
-              <div className="flex flex-col items-center gap-2">
-                <TeamLogo teamId={todayMatch.awayId} size={56} />
-                <span className="text-sm font-bold">{todayMatch.away}</span>
-              </div>
-            </div>
-            {todayMatch.venue && (
-              <div className="text-xs text-text-muted mt-4">{todayMatch.venue}</div>
-            )}
-          </div>
+        <MatchHero
+          match={todayMatch}
+          label={todayMatch.status === "inprogress" ? "Jogo de hoje · ao vivo" : "Jogo de hoje"}
+        />
+      ) : nextMatch ? (
+        <div className="space-y-3">
+          <p className="text-sm text-text-secondary">
+            O {data.name} não joga hoje. Confira o próximo compromisso:
+          </p>
+          <MatchHero match={nextMatch} label="Próximo jogo" />
         </div>
       ) : (
         <div className="bg-card-bg rounded-lg border border-border-custom p-8 text-center">
-          <p className="text-text-muted text-sm mb-4">Sem jogo hoje.</p>
-          {nextMatch && (
-            <div>
-              <p className="text-sm text-text-secondary mb-2">Próximo jogo:</p>
-              <div className="flex items-center justify-center gap-4">
-                <span className="text-sm font-semibold">{nextMatch.home}</span>
-                <span className="text-text-muted">vs</span>
-                <span className="text-sm font-semibold">{nextMatch.away}</span>
-              </div>
-              <p className="text-xs text-text-muted mt-1">{nextMatch.date} às {nextMatch.time} - {nextMatch.league}</p>
-            </div>
-          )}
+          <p className="text-text-muted text-sm">Sem jogo hoje e nenhum próximo jogo confirmado.</p>
         </div>
       )}
 
