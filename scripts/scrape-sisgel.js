@@ -204,11 +204,22 @@ function parseMatchDetail(html) {
       else if (idx === 1) away.push(p);
     });
   }
-  const referee = dec(sectionOf(html, ">Arbitragem<", "Comentário").replace(/<[^>]+>/g, " "))
-    .replace(/^Arbitragem\s*/i, "").trim();
-  const venue = dec(sectionOf(html, ">Local<", "Arbitragem").replace(/<[^>]+>/g, " "))
-    .replace(/^Local\s*/i, "").trim();
-  return { goals, lineups: { home, away }, referee, venue };
+  // Local / Arbitragem: <td><strong>Local</strong></td><td><span>CAMPO X</span><br/><span>RUA...</span></td>.
+  // Antes pegava o trecho cru (">Local \r\n   CAMPO...\r\n RUA...") e a arbitragem virava
+  // ">Arbitragem" em todo jogo. Agora lê só os <span> da célula ao lado do rótulo.
+  const venue = infoCell(html, "Local")[0] || "";
+  const referee = infoCell(html, "Arbitragem").join(", ");
+  // "Comentário da Partida" (ex.: "S.C. SANTANA = CAMPEÃO" na final).
+  const cseg = sectionOf(html, "Comentário da Partida", "Informações sobre o jogo");
+  const comment = [...cseg.matchAll(/<span>([^<]*)<\/span>/g)].map((x) => dec(x[1])).filter(Boolean).join(" ");
+  return { goals, lineups: { home, away }, referee, venue, comment };
+}
+
+// Textos (<span>) da célula que segue <strong>{label}</strong> no quadro "Informações sobre o jogo".
+function infoCell(html, label) {
+  const m = html.match(new RegExp(`<strong>${label}</strong>\\s*</td>\\s*<td[^>]*>([\\s\\S]*?)</td>`));
+  if (!m) return [];
+  return [...m[1].matchAll(/<span[^>]*>([^<]*)<\/span>/g)].map((x) => dec(x[1])).filter(Boolean);
 }
 
 function parseClassification(html) {
@@ -297,8 +308,8 @@ function parseGameBlock(gb, round, meta) {
   const dateM = gb.match(/(\d{2}\/\d{2}\/\d{4})/);
   // Time: "19h30" or "19:30" or standalone after date
   const timeM = gb.match(/(\d{1,2}h\d{2}|\d{2}:\d{2})/);
-  // Venue
-  const venueM = gb.match(/(?:EST[AÁ]DIO|CAMPO|QUADRA)[^<]*/i);
+  // Venue (no HTML vem com entidade: "EST&#193;DIO" — casa no texto já decodificado)
+  const venueM = dec(gb.replace(/<[^>]+>/g, "\n")).match(/(?:EST[AÁ]DIO|CAMPO|QUADRA)[^\n]*/i);
 
   // Home team: text BEFORE first avatar in first partida-item
   const homeM = gb.match(/partida-item">\s*\n?\s*([A-ZÀ-Ü][^\n<]{2,40}?)\s*<div class="time-partida-avatar"/);
@@ -358,7 +369,11 @@ function parseMatches(html, roundMeta) {
 
     const blocks = seg.split(/href="\/SisGel-PUB\/jogo\//);
     for (let j = 1; j < blocks.length; j++) {
-      const match = parseGameBlock(blocks[j].substring(0, 3000), round, meta);
+      // O bloco do jogo vai até o </a>. Antes cortava em 3000 chars fixos, e no mata-mata
+      // (layout de chave, mais indentado) o visitante e o status ficavam depois do corte:
+      // quartas/semi/final saíam como "SANTANA x ?", sem status, com URL "/santana-".
+      const end = blocks[j].indexOf("</a>");
+      const match = parseGameBlock(end > 0 ? blocks[j].substring(0, end) : blocks[j].substring(0, 6000), round, meta);
       if (match) matches.push(match);
     }
   }
@@ -455,6 +470,8 @@ async function scrapeMatchDetails(results) {
       const finished = m.homeScore !== null && m.awayScore !== null;
       const key = m.dateSlug && m.slug ? `${m.dateSlug}/${m.slug}` : "";
       if (!finished || !m.token || !key) continue;
+      // Time não identificado ("?") gera URL quebrada ("/santana-"): não grava.
+      if (m.home === "?" || m.away === "?") continue;
       if (cache[key]) { cached++; continue; }
       if (fetched >= MAX) continue;
       try {
@@ -467,7 +484,7 @@ async function scrapeMatchDetails(results) {
           home: m.home, away: m.away, homeScore: m.homeScore, awayScore: m.awayScore,
           date: m.date, time: m.time, venue: detail.venue || m.venue, status: m.status,
           homeBadge: m.homeBadgeLocal, awayBadge: m.awayBadgeLocal,
-          goals: detail.goals, lineups: detail.lineups, referee: detail.referee,
+          goals: detail.goals, lineups: detail.lineups, referee: detail.referee, comment: detail.comment,
           scrapedAt: new Date().toISOString(),
         };
         fetched++;
