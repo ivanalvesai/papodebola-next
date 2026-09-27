@@ -653,3 +653,41 @@ docker run -d --name pdb-apioff --network pdb-net -p 127.0.0.1:3099:3000 \
 - [ ] **Step 4:** recrawl na prod das URLs do levantamento e das 342 rotas de time (1 req/s): todas 200 (ou o 301/404 decidido).
 - [ ] **Step 5: `agent-browser`** (desktop 1440 e celular 390): `/`, `/futebol/times/palmeiras` (+ `/estatisticas`), `/futebol/times/real-madrid`, `/futebol/times/criciuma`, `/futebol/selecao-brasileira/25-09-2026/australia-brasil`, `/cms` → Times → Palmeiras → aba "Onde assistir" mostra "SEO desta página" preenchido. Screenshots salvos no scratchpad; sem erro no console.
 - [ ] **Step 6:** documentar em `docs/knowledge/2026-09-27-times-cms-resiliencia.md` (o que mudou, como editar SEO por aba, o fallback do `data/api-cache`, como reverter), atualizar `CLAUDE.md` (seção de times e da arquitetura de API) e a memória; apagar scripts do scratchpad, `/tmp/pdb-audit` e containers temporários no servidor; commit e promover a doc.
+
+---
+
+## Adendo (27/09, pedido do Ivan durante a execução)
+
+Pedido: (a) abas de time já com cards pra personalizar depois; (b) campeonato que acaba fica salvo pra sempre por padrão (tabela, jogos com lance a lance, artilheiros); (c) municipal de Santana de Parnaíba 2026 (campeão: Sport Club Santana) salvo inteiro, com auditoria das páginas de partida/rodada.
+
+### Task 4b: Cards prontos nas abas de time (bloco "Página padrão")
+
+**Files:** `src/payload.config.ts` (`teamLayoutBlocks`), `src/components/payload/team-blocks.tsx`, `src/components/payload/team-cms-page.tsx`, `src/components/team/classic/*` (só se precisar de prop), `src/lib/team-layout.ts` + teste.
+
+- Novo bloco `teamClassic` (label "Página padrão do time (cards automáticos)", sem campos). Renderiza o componente clássico da aba (hub/jogoHoje/…; escalação com `lineup`).
+- `TeamCmsView`: se o layout contém `teamClassic`, renderiza todos os blocos numa coluna de largura `max-w-[1240px]` (mesma do clássico), com o clássico no lugar do bloco e os blocos de texto/título antes/depois dele (cada bloco de texto dentro de um card com o mesmo padding do clássico). Sem `teamClassic`, comportamento da Task 4 (blocos granulares, 860px, auto-text anexado se faltar). Layout vazio continua = clássico.
+- `hasClassicBlock(blocks)` em `src/lib/team-layout.ts`, com teste (`[]`→false, `[{blockType:"teamClassic"}]`→true).
+- `needsAutoTextAppend` passa a devolver `false` também quando há `teamClassic` (o clássico já tem o texto automático) — ajustar o teste.
+- DDL (controlador aplica): tabelas `teams_blocks_team_classic` e `_teams_v_blocks_team_classic`, mesma estrutura das `*_team_auto_text`.
+- Seed (Task 6) passa a preencher as 6 abas de cada um dos 57 times com `[{ blockType: "teamClassic" }, { blockType: "richText" }]` (o bloco de texto vazio é o card pronto pra escrever; `StaticText` não renderiza nada vazio). Série B: só se a aba estiver vazia.
+- Validação: HTML de um time com `[teamClassic, richText vazio]` = HTML do clássico (comparação da Task 6).
+
+### Task 10: Arquivamento permanente de campeonato encerrado
+
+**Files:** Create `src/lib/data/tournament-archive.ts`, `src/app/api/archive/run/route.ts`; Modify nada mais se possível.
+
+- `archiveFinishedMatches({ maxMatches })`: para cada torneio em `TOURNAMENTS` (config) com `seasonId`, carrega `getChampionshipData(slug)` (já em snapshot) e, para cada jogo com status encerrado cujo snapshot `data/snapshots/matches/{id}.json` não existe ou não está `finished`, chama `getMatchDetail(id, timestamp)` (que grava o snapshot). Espaça 4 s entre jogos (rate limit 6 req/s; cada detalhe = 5 chamadas). Para no `maxMatches` por execução (padrão 60) e devolve `{ archived, skipped, remaining }`. Copa do Mundo: usar `getWorldCupFixtures` + `getWorldCupKnockoutFixtures` da mesma forma.
+- Artilharia/tabela: já ficam em `data/snapshots` (championship/standings) e no `data/api-cache` (Task 1); a rotina chama `getChampionshipData` e a função de artilharia de cada torneio uma vez por execução para renovar.
+- Rota `GET /api/archive/run?secret=<REVALIDATION_SECRET>&max=60` (só executa se `process.env.SPORTS_PROXY_URL` estiver vazio = container do dev, que é quem consulta a API; na prod responde 204 sem fazer nada). Resposta JSON com o resumo.
+- Cron no servidor (controlador instala): `20 3 * * * curl -fsS "http://127.0.0.1:3001/api/archive/run?secret=...&max=120" >/dev/null 2>&1 # pdb-archive` (madrugada, fora do horário de jogos).
+- Validação: rodar uma vez com `max=5`, conferir 5 snapshots novos `finished` e o tempo total (~20 s).
+
+### Task 11: Municipal 2026 congelado + páginas de partida/rodada
+
+**Files:** `scripts/update-sisgel.sh`, `scripts/scrape-sisgel.js` (se necessário), `src/lib/data/sisgel.ts`, `src/lib/data/municipal.ts`, `src/lib/data/municipal-game.ts`, rotas em `src/app/(site)/sp/santana-de-parnaiba/municipal/`.
+
+- **Bug achado:** `scripts/update-sisgel.sh` faz `docker cp` só do `data/sisgel.json`; o `data/sisgel-matches.json` (detalhes das partidas) do container está parado desde 06/07 (o log diz "599 total"). Corrigir o script para copiar os dois arquivos (atômico: copiar para nome temporário e `mv` dentro do container, ou `docker cp` direto — conferir que o volume é o compartilhado `papodebola-next_pdb-data`, então o dev também vê).
+- **Congelamento:** gravar `data/archive/municipal/2026/sisgel.json` e `sisgel-matches.json` (cópia do estado final). As funções de leitura (`getMunicipalChampionships`, leitura do `sisgel-matches.json`) passam a mesclar: dado vivo primeiro; campeonato/jogo que existe no arquivo e sumiu do vivo (a prefeitura trocar de temporada ou tirar do ar) continua servido do arquivo. Nunca sobrescrever o arquivo congelado automaticamente.
+- **Campeão:** conferir na tabela final da 1ª Divisão 2026 que o Sport Club Santana aparece como campeão (dado da prefeitura). Se a página não indica o campeão, adicionar um destaque simples "Campeão 2026: {time}" no topo da página do campeonato quando todos os jogos estiverem encerrados (fase final decidida) — derivado dos dados, não fixo no código.
+- **Auditoria de partidas/rodadas:** para cada jogo de `getMunicipalMatchKeys()` + `getMunicipalGameKeys()`, requisitar a página no dev (1 req/s) e registrar status e se há placar/escalação; toda rodada da página do campeonato precisa listar todos os jogos da prefeitura (comparar contagem por rodada com o `sisgel.json`). Corrigir as causas encontradas (cada correção com teste de antes/depois por `curl`).
+- Validação: 0 páginas de jogo do municipal com 404 ou sem placar para jogo encerrado; rodadas com a mesma contagem de jogos da prefeitura.
