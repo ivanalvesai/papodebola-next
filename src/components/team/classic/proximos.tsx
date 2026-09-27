@@ -4,6 +4,7 @@ import { TeamLogo } from "@/components/ui/team-logo";
 import { QuickAnswer } from "@/components/seo/quick-answer";
 import { SportsEventSchema } from "@/components/seo/sports-event-schema";
 import { getTeamNextEvents, type TeamPageData } from "@/lib/data/team";
+import { dropStaleUpcoming } from "@/lib/team-match-filters";
 import { buildTeamNarrative } from "@/lib/team-narrative";
 import { TeamNarrativeSection } from "@/components/team/team-narrative";
 
@@ -11,7 +12,7 @@ import { TeamNarrativeSection } from "@/components/team/team-narrative";
 // (mesma chamada em cache usada por getTeamPageData). Usada pelos times do config e
 // pelos times do CMS com a aba vazia.
 export async function ClassicTeamProximos({ data }: { data: TeamPageData }) {
-  const matches = await getTeamNextEvents(data.id);
+  const matches = dropStaleUpcoming(await getTeamNextEvents(data.id), Date.now() / 1000);
   const next = matches[0] || null;
 
   // Resposta direta pra "próximo jogo do {time}" (featured snippet + AI Overview).
@@ -80,7 +81,7 @@ export async function ClassicTeamProximos({ data }: { data: TeamPageData }) {
         </div>
       )}
 
-      {data && <TeamNarrativeSection narrative={buildTeamNarrative(data, "proximos")} />}
+      <TeamNarrativeSection narrative={buildTeamNarrative(data, "proximos")} />
 
       <div className="text-center">
         <Link href={`/futebol/times/${data.slug}`} className="text-sm text-green font-semibold hover:text-green-hover">
