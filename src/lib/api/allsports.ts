@@ -1,4 +1,5 @@
-import { breakerOpen, readLastGood, recordResult, saveLastGood, shouldFallback } from "./api-cache";
+import { breakerOpen, readLastGood, recordResult, saveLastGood } from "./api-cache";
+import { isSavableResponse, shouldDiskCache, shouldFallback } from "./cache-policy";
 
 // Suporta as DUAS APIs, detectado pelo host (env ALLSPORTS_API_HOST):
 //  - SportApi7 (Sofascore nativo): base /api/v1 + tradutor toSofascore.
@@ -88,7 +89,8 @@ function logBreakerOpen(label: string): void {
 // reason: distingue "proxy respondeu erro (http)" de "proxy inacessível (unreachable)"
 // de "disjuntor abriu enquanto esperava vaga no semáforo (breaker)".
 // Só no caso "unreachable" o prod cai pro fetch direto — senão dobraria o hang num 429.
-// status: código HTTP quando o servidor respondeu (usado só pra classificar outage).
+// status: código HTTP quando o servidor respondeu (classifica outage; no ok, um 404
+// com corpo é renderizado mas não vira a última cópia boa no disco).
 type FetchResult<T> = {
   ok: boolean;
   data: T | null;
@@ -170,7 +172,7 @@ async function fetchWithRetry<T>(
       }
 
       if (res.status === 204) {
-        return { ok: true, data: null };
+        return { ok: true, data: null, status: 204 };
       }
 
       const ct = res.headers.get("content-type") || "";
@@ -197,7 +199,7 @@ async function fetchWithRetry<T>(
         return { ok: false, data: null, reason: "http", status: res.status };
       }
 
-      return { ok: true, data: data as T };
+      return { ok: true, data: data as T, status: res.status };
     } catch (error) {
       const code = (error as { cause?: { code?: string }; code?: string })?.cause?.code
         ?? (error as { code?: string })?.code;
@@ -217,7 +219,7 @@ async function fetchWithRetry<T>(
 async function fetchAllSportsResult<T>(
   endpoint: string,
   revalidate: number = 1800
-): Promise<{ ok: boolean; data: T | null; outage: boolean; skipped: boolean }> {
+): Promise<{ ok: boolean; data: T | null; outage: boolean; skipped: boolean; status?: number }> {
   const proxyUrl = process.env.SPORTS_PROXY_URL;
   const proxyToken = process.env.SPORTS_PROXY_TOKEN;
   const isBuildPhase = process.env.NEXT_PHASE === "phase-production-build";
@@ -233,7 +235,7 @@ async function fetchAllSportsResult<T>(
       revalidate,
       `SportsProxy[${sofa}]`
     );
-    if (result.ok) return { ok: true, data: result.data, outage: false, skipped: false };
+    if (result.ok) return { ok: true, data: result.data, outage: false, skipped: false, status: result.status };
 
     // Disjuntor abriu enquanto essa chamada esperava vaga no semáforo: não é uma
     // falha nova (não recontar) e NÃO tenta o fetch direto — bater lá também
@@ -273,13 +275,28 @@ async function fetchAllSportsResult<T>(
     `SportApi7[${sofa}]`
   );
   if (result.reason === "breaker") return { ok: false, data: null, outage: false, skipped: true };
-  return { ok: result.ok, data: result.data, outage: isOutage(result), skipped: false };
+  return { ok: result.ok, data: result.data, outage: isOutage(result), skipped: false, status: result.status };
+}
+
+// Resultado com metadado: stale = o dado NÃO veio da API agora (cópia do disco no
+// fallback, ou caminho do disjuntor aberto). Quem grava snapshot permanente (ex.:
+// fetchMatchDetailLive) usa isso pra não congelar dado velho por cima de um bom.
+export interface AllSportsMeta<T> {
+  data: T | null;
+  stale: boolean;
 }
 
 export async function fetchAllSports<T>(
   endpoint: string,
   revalidate: number = 1800
 ): Promise<T | null> {
+  return (await fetchAllSportsMeta<T>(endpoint, revalidate)).data;
+}
+
+export async function fetchAllSportsMeta<T>(
+  endpoint: string,
+  revalidate: number = 1800
+): Promise<AllSportsMeta<T>> {
   const now = Date.now();
   const isBuildPhase = process.env.NEXT_PHASE === "phase-production-build";
 
@@ -290,7 +307,8 @@ export async function fetchAllSports<T>(
   // semáforo quando o disjuntor abriu no meio da leva.)
   if (breakerOpen(now)) {
     logBreakerOpen(endpoint);
-    return shouldFallback(false, revalidate) ? await readLastGood<T>(endpoint) : null;
+    const data = shouldFallback(false, revalidate, endpoint) ? await readLastGood<T>(endpoint) : null;
+    return { data, stale: true };
   }
 
   const res = await fetchAllSportsResult<T>(endpoint, revalidate);
@@ -299,13 +317,18 @@ export async function fetchAllSports<T>(
   if (!isBuildPhase && !res.skipped) recordResult(!res.outage, now);
 
   if (res.ok) {
-    if (res.data != null) void saveLastGood(endpoint, res.data);
-    return res.data;
+    // Fora do disco: feeds /live, sub-endpoints de jogo (o snapshot do jogo cobre),
+    // o "404 com corpo" do provedor e corpo com `error` (renderizam, mas não substituem
+    // a última cópia boa).
+    if (shouldDiskCache(endpoint) && isSavableResponse(res.status, res.data)) {
+      void saveLastGood(endpoint, res.data);
+    }
+    return { data: res.data, stale: false };
   }
-  if (!shouldFallback(res.ok, revalidate)) return null;
+  if (!shouldFallback(res.ok, revalidate, endpoint)) return { data: null, stale: false };
   const stale = await readLastGood<T>(endpoint);
   if (stale != null) console.warn(`API_FALLBACK_DISK ${endpoint}`);
-  return stale;
+  return { data: stale, stale: stale != null };
 }
 
 export async function fetchSport<T>(

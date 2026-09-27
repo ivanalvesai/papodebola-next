@@ -2,8 +2,9 @@ import { test } from "node:test";
 import assert from "node:assert/strict";
 import {
   cacheKey,
-  shouldFallback,
+  shouldSerialize,
   shouldWrite,
+  parseCachedEndpoint,
   __resetWrites,
   recordResult,
   breakerOpen,
@@ -17,21 +18,34 @@ test("cacheKey é estável e seguro pra nome de arquivo", () => {
   assert.notEqual(a, cacheKey("team/1963/matches/previous/0"));
 });
 
-test("fallback só quando a API falhou e o endpoint não é ao vivo", () => {
-  assert.equal(shouldFallback(true, 1800), false);  // sucesso (inclui 204 com null)
-  assert.equal(shouldFallback(false, 1800), true);
-  assert.equal(shouldFallback(false, 60), true);
-  assert.equal(shouldFallback(false, 59), false);   // ao vivo: nunca dado velho
-  assert.equal(shouldFallback(false, 10), false);
-});
-
-test("escrita limitada a 1 por endpoint a cada 10 min e até 5 MB", () => {
+test("serialização: no máximo 1 checagem por endpoint a cada 60s", () => {
   __resetWrites();
   const t0 = 1_000_000;
-  assert.equal(shouldWrite("k", t0, 100), true);
-  assert.equal(shouldWrite("k", t0 + 60_000, 100), false);
-  assert.equal(shouldWrite("k", t0 + 600_001, 100), true);
-  assert.equal(shouldWrite("big", t0, 5 * 1024 * 1024 + 1), false);
+  assert.equal(shouldSerialize("k", t0), true);
+  assert.equal(shouldSerialize("k", t0 + 59_999), false);
+  assert.equal(shouldSerialize("outro", t0 + 1), true);
+  assert.equal(shouldSerialize("k", t0 + 60_000), true);
+});
+
+test("escrita: conteúdo mudou grava na hora; igual pula (regrava 1x/dia); até 5 MB", () => {
+  __resetWrites();
+  const t0 = 1_000_000;
+  assert.equal(shouldWrite("k", 100, "h1", t0), true);
+  assert.equal(shouldWrite("k", 100, "h1", t0 + 60_000), false); // igual: pula
+  assert.equal(shouldWrite("k", 100, "h2", t0 + 61_000), true); // mudou: grava mesmo < 10 min
+  assert.equal(shouldWrite("k", 100, "h2", t0 + 61_000 + 23 * 3600_000), false);
+  assert.equal(shouldWrite("k", 100, "h2", t0 + 61_000 + 24 * 3600_000), true); // refresh do mtime
+  assert.equal(shouldWrite("big", 5 * 1024 * 1024 + 1, "h", t0), false);
+  assert.equal(shouldWrite("big", 100, "h", t0), true); // o grande não marcou o hash
+});
+
+test("parseCachedEndpoint lê o endpoint do começo do arquivo", () => {
+  const body = JSON.stringify({ endpoint: "match/1/incidents", savedAt: "x", data: { a: 1 } });
+  assert.equal(parseCachedEndpoint(body.slice(0, 40)), "match/1/incidents");
+  assert.equal(parseCachedEndpoint('{"endpoint":"a\\"b/c","data":1}'), 'a"b/c');
+  assert.equal(parseCachedEndpoint('{"data":1,"endpoint":"x"}'), null);
+  assert.equal(parseCachedEndpoint('{"endpoint":"trunca'), null);
+  assert.equal(parseCachedEndpoint(""), null);
 });
 
 test("disjuntor: abre após 5 falhas consecutivas, half-open aos 60s, fecha com sucesso", () => {

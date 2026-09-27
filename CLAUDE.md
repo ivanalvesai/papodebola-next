@@ -222,7 +222,7 @@ Protegido por JWT (mesmo do painel) + SSH com forced command + token no header.
 
 Resiliência contra caprichos da API (implementada nessa ordem):
 
-> **Desde 27/09:** toda resposta boa fica em `data/api-cache/` e é servida quando a API falha (exceto endpoints ao vivo, `revalidate < 60`); disjuntor de 60 s após 5 falhas de apagão seguidas (logs `API_FALLBACK_DISK` / `API_BREAKER_OPEN`). Ver `src/lib/api/api-cache.ts`.
+> **Desde 27/09:** toda resposta boa fica em `data/api-cache/` e é servida quando a API falha (exceto feeds ao vivo (`/live`) e `revalidate < 60`); disjuntor de 60 s após 5 falhas de apagão seguidas (logs `API_FALLBACK_DISK` / `API_BREAKER_OPEN`). Ver `src/lib/api/api-cache.ts`.
 
 1. **Semaphore in-memory** limita 2 requests simultâneas (`ALLSPORTS_MAX_CONCURRENT`)
 2. Se `SPORTS_PROXY_URL` + `SPORTS_PROXY_TOKEN` setados → tenta proxy primeiro
