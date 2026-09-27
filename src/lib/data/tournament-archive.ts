@@ -40,7 +40,6 @@ export interface ArchiveResult {
   ms: number;
 }
 
-
 async function isArchivedFinished(id: number): Promise<boolean> {
   // Encerrado E com feed: "finished" oco (falha parcial da API) é refeito na próxima execução.
   const snap = await readSnapshot<MatchSnapshotLike>("matches", id);
