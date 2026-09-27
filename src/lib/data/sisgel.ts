@@ -1,5 +1,6 @@
-import { readFile } from "fs/promises";
+import { readFile, readdir } from "fs/promises";
 import { join } from "path";
+import { mergeChampionships } from "./municipal-archive";
 
 // Dados dos campeonatos municipais de Santana de Parnaíba (raspados do SisGel
 // 2x/dia pelo scripts/scrape-sisgel.js → data/sisgel.json, volume Docker).
@@ -37,10 +38,13 @@ export interface MunicipalMatch {
   status: string;
   homeBadgeLocal: string;
   awayBadgeLocal: string;
+  slug?: string;
+  dateSlug?: string;
 }
 
 export interface MunicipalChampionship {
   name: string;
+  slug?: string;
   city: string;
   state: string;
   year: string;
@@ -52,14 +56,34 @@ export interface MunicipalChampionship {
   updatedAt: string;
 }
 
-export async function getMunicipalChampionships(): Promise<MunicipalChampionship[]> {
+async function readJson<T>(path: string, fallback: T): Promise<T> {
   try {
-    const raw = await readFile(join(process.cwd(), "data", "sisgel.json"), "utf-8");
-    const data = JSON.parse(raw);
-    return Array.isArray(data) ? data : [];
+    return JSON.parse(await readFile(path, "utf-8")) as T;
+  } catch {
+    return fallback;
+  }
+}
+
+// Arquivo congelado por temporada: data/archive/municipal/{ano}/{sisgel.json,sisgel-matches.json}
+// (cópia do estado final, gravada 1x à mão — o código nunca escreve aí). Devolve o conteúdo
+// de cada ano, do mais novo pro mais antigo.
+export async function readMunicipalArchive<T>(file: string, fallback: T): Promise<T[]> {
+  const dir = join(process.cwd(), "data", "archive", "municipal");
+  let years: string[] = [];
+  try {
+    years = (await readdir(dir)).filter((y) => /^\d{4}$/.test(y)).sort().reverse();
   } catch {
     return [];
   }
+  return Promise.all(years.map((y) => readJson<T>(join(dir, y, file), fallback)));
+}
+
+// Vivo (data/sisgel.json, reescrito pelo scraper) + arquivo congelado. Vivo vence;
+// campeonato que sumiu do vivo segue servido do arquivo (ver mergeChampionships).
+export async function getMunicipalChampionships(): Promise<MunicipalChampionship[]> {
+  const live = await readJson<unknown>(join(process.cwd(), "data", "sisgel.json"), []);
+  const archived = (await readMunicipalArchive<unknown>("sisgel.json", [])).flatMap((a) => (Array.isArray(a) ? a : []));
+  return mergeChampionships(Array.isArray(live) ? (live as MunicipalChampionship[]) : [], archived as MunicipalChampionship[]);
 }
 
 // 1ª Divisão (campeonato cujo nome começa com "1ª Divisão"); fallback no 1º item.

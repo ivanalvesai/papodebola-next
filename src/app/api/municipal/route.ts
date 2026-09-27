@@ -1,12 +1,7 @@
 import { NextResponse } from "next/server";
-import { readFile } from "fs/promises";
-import { join } from "path";
+import { getMunicipalChampionships } from "@/lib/data/sisgel";
 
+// Campeonatos municipais: dado vivo do scraper + arquivo congelado das temporadas passadas.
 export async function GET() {
-  try {
-    const data = await readFile(join(process.cwd(), "data", "sisgel.json"), "utf-8");
-    return NextResponse.json(JSON.parse(data));
-  } catch {
-    return NextResponse.json([]);
-  }
+  return NextResponse.json(await getMunicipalChampionships());
 }

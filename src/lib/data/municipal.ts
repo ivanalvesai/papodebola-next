@@ -1,5 +1,7 @@
 import { readFile } from "fs/promises";
 import { join } from "path";
+import { readMunicipalArchive } from "./sisgel";
+import { cleanReferee, cleanVenue, fixBrokenMatchKey, isValidMatchKey, mergeMatchRecords } from "./municipal-archive";
 
 // Detalhe estático de um jogo municipal (SisGel), lido do arquivo raspado no volume
 // (data/sisgel-matches.json). Gols, escalação, local, arbitragem — sem tempo real.
@@ -36,20 +38,46 @@ export interface MunicipalMatch {
   goals: MunicipalGoal[];
   lineups: { home: MunicipalPlayer[]; away: MunicipalPlayer[] };
   referee: string;
+  comment?: string; // "Comentário da Partida" do SisGel (ex.: "S.C. SANTANA = CAMPEÃO")
   scrapedAt: string;
 }
 
-async function readMatches(): Promise<Record<string, MunicipalMatch>> {
+async function readRaw(): Promise<Record<string, MunicipalMatch>> {
+  let live: Record<string, MunicipalMatch> = {};
   try {
-    const raw = await readFile(join(process.cwd(), "data", "sisgel-matches.json"), "utf-8");
-    const all: Record<string, MunicipalMatch> = JSON.parse(raw);
-    // O cache tem registros de uma versão antiga do scraper, com chave sem a data
-    // ("slug-token"). Eles não têm página (a rota é /jogo/{data}/{par}) e iam pro
-    // sitemap como 404. Só vale a chave "data/par".
-    return Object.fromEntries(Object.entries(all).filter(([k]) => k.includes("/")));
+    live = JSON.parse(await readFile(join(process.cwd(), "data", "sisgel-matches.json"), "utf-8"));
   } catch {
-    return {};
+    live = {};
   }
+  // Arquivo congelado das temporadas (data/archive/municipal/{ano}/): vivo vence, jogo que
+  // só está no arquivo continua com página.
+  const archived = await readMunicipalArchive<Record<string, MunicipalMatch>>("sisgel-matches.json", {});
+  let all: Record<string, MunicipalMatch> = {};
+  for (const a of [...archived].reverse()) all = mergeMatchRecords(a || {}, all);
+  return mergeMatchRecords(live || {}, all);
+}
+
+// vivo + arquivo somam ~8 MB de JSON: memoriza por 60s (o scraper roda 1x/dia).
+let memo: { at: number; data: Record<string, MunicipalMatch> } | null = null;
+
+async function readMatches(): Promise<Record<string, MunicipalMatch>> {
+  if (memo && Date.now() - memo.at < 60_000) return memo.data;
+  const all = await readRaw();
+  // Fica de fora: registro de versão antiga do scraper com chave sem data ("slug-token",
+  // sem página — ia pro sitemap como 404) e par quebrado do mata-mata ("santana-", o
+  // visitante não era lido). Local/arbitragem das fichas antigas vinham com lixo.
+  const out: Record<string, MunicipalMatch> = {};
+  for (const [k, m] of Object.entries(all)) {
+    if (!isValidMatchKey(k) || m.home === "?" || m.away === "?") continue;
+    out[k] = { ...m, venue: cleanVenue(m.venue), referee: cleanReferee(m.referee) };
+  }
+  memo = { at: Date.now(), data: out };
+  return out;
+}
+
+// URL antiga do mata-mata sem o visitante ("/jogo/19-09-2026/santana-") → chave certa.
+export async function findFixedMunicipalMatchKey(dateSlug: string, pairSlug: string): Promise<string | null> {
+  return fixBrokenMatchKey(dateSlug, pairSlug, Object.keys(await readMatches()));
 }
 
 const teamKey = (name: string) => (name || "").trim().toUpperCase();
