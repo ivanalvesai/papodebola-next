@@ -22,7 +22,9 @@ type Params = { slug: string; data: string; match: string };
 //    getMatchDetail — validando data + confronto. É 1 chamada (e o detalhe é reaproveitado
 //    pela página), contra a tabela inteira do campeonato + feeds (primeira carga de até ~28 s);
 // 2) senão (ou se o id não bater), pela tabela do campeonato (+ feeds ao vivo).
-// Usado tanto no generateMetadata quanto na página — mesmo helper nos dois.
+// Usado no generateMetadata (só a resolução exata: se falhar devolve {} — sem
+// redirect nem notFound, senão a URL remarcada viraria 404 antes da página
+// redirecionar) e, via resolveOrRedirect, na página.
 async function resolveFixture(slug: string, data: string, match: string) {
   // id do jogo anexado ao fim do slug pela barra (…-{apiId}); só ids longos (>=6 dígitos)
   // pra não confundir com um número que faça parte do nome do time.
@@ -38,7 +40,7 @@ async function resolveFixture(slug: string, data: string, match: string) {
 
 // Resolve o jogo; se a URL não bate exatamente (jogo remarcado pela API ou time
 // renomeado, mudando o slug do par), faz 308 pra URL canônica do jogo compatível;
-// senão 404. Mesmo helper no generateMetadata e na página.
+// senão 404. Só no corpo da página (redirect não acontece no generateMetadata).
 async function resolveOrRedirect(slug: string, data: string, match: string) {
   const fixture = await resolveFixture(slug, data, match);
   if (fixture) return fixture;
@@ -54,7 +56,8 @@ export async function generateMetadata({
   params: Promise<Params>;
 }): Promise<Metadata> {
   const { slug, data, match } = await params;
-  const fixture = await resolveOrRedirect(slug, data, match);
+  const fixture = await resolveFixture(slug, data, match);
+  if (!fixture) return {}; // a página decide: 308 (remarcado/renomeado) ou 404
   const title = `${fixture.home} x ${fixture.away} ao vivo - ${fixture.tournamentName}`;
   return {
     title,
