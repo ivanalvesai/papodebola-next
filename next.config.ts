@@ -104,6 +104,29 @@ const nextConfig: NextConfig = {
       { source: "/paginas", destination: "/", permanent: true },
       { source: "/autor", destination: "/sobre", permanent: true },
 
+      // Times: slugs antigos (URLs do GSC com impressões). `:sub*` também casa o hub
+      // (path sem subpágina). Destino tem slug diferente => não casa a própria regra.
+      { source: "/futebol/times/sport/:sub*", destination: "/futebol/times/sport-recife/:sub*", permanent: true },
+      { source: "/futebol/times/atletico-go/:sub*", destination: "/futebol/times/atletico-goianiense/:sub*", permanent: true },
+      { source: "/futebol/times/athletic-club-mg/:sub*", destination: "/futebol/times/athletic-club/:sub*", permanent: true },
+      // /futebol/times/proximos-jogos (sem time) — exata, antes das variações por time.
+      { source: "/futebol/times/proximos-jogos", destination: "/jogos-de-hoje/futebol", permanent: true },
+      // Variações de "próximos jogos" que o Google conhece. A lista NÃO inclui
+      // "proximos-jogos" (o destino) e "proximos-jogos-do-*" exige o "-do-" => sem loop.
+      {
+        source:
+          "/futebol/times/:slug/:sub(proximos-jos|proximos-jogo|proximas-jogos|proximos-jogos-2026|proximos-calendario-2026|proximos-jogos-calendario-2026|calendario|proximos-jogos-do-[^/]+)",
+        destination: "/futebol/times/:slug/proximos-jogos",
+        permanent: true,
+      },
+      { source: "/futebol/times/:slug/estatisticas-2026", destination: "/futebol/times/:slug/estatisticas", permanent: true },
+      // Jogos de futebol: URLs antigas/inventadas -> página de jogos de hoje do futebol.
+      { source: "/proximos-jogos", destination: "/jogos-de-hoje/futebol", permanent: true },
+      { source: "/jogos-de-futebol/:path*", destination: "/jogos-de-hoje/futebol", permanent: true },
+      { source: "/jogos-de-jogos-de-hoje/:path*", destination: "/jogos-de-hoje/futebol", permanent: true },
+      // Copa com underscore (link antigo) -> slug com hífen, preservando o resto do path.
+      { source: "/futebol/copa_do_mundo/:path*", destination: "/futebol/copa-do-mundo/:path*", permanent: true },
+
       // Artigos do portal anterior: a URL era /artigos/{slug}.html; hoje o mesmo artigo
       // vive em /{categoria}/{slug}. Tirando o .html cai em /artigos/{slug}, que já faz
       // 308 pra URL canônica por categoria → recupera o SEO das 260 URLs que ainda
