@@ -64,16 +64,7 @@ const nextConfig: NextConfig = {
       // genérica na camada de roteamento (308 real, antes do streaming do RSC, que
       // senão devolveria 200 e o crawler não veria o redirect). Manter em sincronia
       // com CRAQUE_SLUGS em src/lib/data/craques.ts.
-      ...[
-        "socrates",
-        "nilton-santos",
-        "rivellino",
-        "hugo-gatti",
-        "aymore-moreira",
-        "julinho-botelho",
-        "dirceu-lopes",
-        "edgardo-andrada",
-      ].map((s) => ({
+      ...["socrates"].map((s) => ({
         source: `/artigos/${s}`,
         destination: `/futebol/craque/${s}`,
         permanent: true,

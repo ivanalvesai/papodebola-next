@@ -6,16 +6,10 @@ import type { Article } from "@/types/article";
 // slugs que são craques (whitelist), pra a rota /futebol/craque/[slug] e o
 // generateStaticParams. Adicionar um craque = criar o post no WP com o slug + incluir
 // o slug aqui (+ o 301 da URL .htm antiga no next.config).
-export const CRAQUE_SLUGS = [
-  "socrates",
-  "nilton-santos",
-  "rivellino",
-  "hugo-gatti",
-  "aymore-moreira",
-  "julinho-botelho",
-  "dirceu-lopes",
-  "edgardo-andrada",
-];
+// Só craques com post PUBLICADO. (27/09: nilton-santos, rivellino, hugo-gatti,
+// aymore-moreira, julinho-botelho, dirceu-lopes e edgardo-andrada saíram — não há post
+// publicado com esses slugs e as páginas davam 404. Voltam quando o post for publicado.)
+export const CRAQUE_SLUGS = ["socrates"];
 
 export async function getCraques(): Promise<Article[]> {
   const list = await Promise.all(
