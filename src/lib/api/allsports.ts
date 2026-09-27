@@ -74,10 +74,27 @@ function releaseSlot(): void {
   if (next) next();
 }
 
-// reason: distingue "proxy respondeu erro (http)" de "proxy inacessível (unreachable)".
-// Só no segundo caso o prod cai pro fetch direto — senão dobraria o hang num 429.
+// Throttle do log do disjuntor aberto (evita inundar os logs quando ~40 endpoints
+// de uma página caem nele ao mesmo tempo — seja no corte de entrada, seja na fila
+// do semáforo).
+let lastBreakerLogAt = 0;
+function logBreakerOpen(label: string): void {
+  const now = Date.now();
+  if (now - lastBreakerLogAt < 10_000) return;
+  lastBreakerLogAt = now;
+  console.warn(`API_BREAKER_OPEN ${label}`);
+}
+
+// reason: distingue "proxy respondeu erro (http)" de "proxy inacessível (unreachable)"
+// de "disjuntor abriu enquanto esperava vaga no semáforo (breaker)".
+// Só no caso "unreachable" o prod cai pro fetch direto — senão dobraria o hang num 429.
 // status: código HTTP quando o servidor respondeu (usado só pra classificar outage).
-type FetchResult<T> = { ok: boolean; data: T | null; reason?: "http" | "unreachable"; status?: number };
+type FetchResult<T> = {
+  ok: boolean;
+  data: T | null;
+  reason?: "http" | "unreachable" | "breaker";
+  status?: number;
+};
 
 // Outage = falha que indica a API/proxy fora do ar (deve contar pro disjuntor):
 // inacessível (DNS/conexão/timeout/abort) ou HTTP 401/403/429/5xx. Erros semânticos
@@ -87,6 +104,7 @@ type FetchResult<T> = { ok: boolean; data: T | null; reason?: "http" | "unreacha
 function isOutage(result: FetchResult<unknown>): boolean {
   if (result.ok) return false;
   if (result.reason === "unreachable") return true;
+  if (result.reason === "breaker") return false; // corte nosso, não resposta da API
   const s = result.status;
   return s === 401 || s === 403 || s === 429 || (s !== undefined && s >= 500);
 }
@@ -105,6 +123,17 @@ async function fetchFromUrl<T>(
 ): Promise<FetchResult<T>> {
   await acquireSlot();
   try {
+    // Re-checa o disjuntor DEPOIS de pegar a vaga: com ~40 endpoints disparados
+    // juntos (Promise.all) e só 2 vagas no semáforo, todos passam pelo check de
+    // entrada (fetchAllSports) antes de qualquer falha ser registrada — só as
+    // primeiras chamadas de fato batem na rede e abrem o disjuntor; sem este
+    // re-check, as ~35 que ficaram esperando vaga bateriam na rede uma a uma
+    // mesmo depois de aberto (medido: 39.7s na 1ª leva vs 0.14s já com o disjuntor
+    // quente). Não conta como falha nova — é um corte nosso, não resposta da API.
+    if (breakerOpen(Date.now())) {
+      logBreakerOpen(label);
+      return { ok: false, data: null, reason: "breaker" };
+    }
     return await fetchWithRetry<T>(url, headers, revalidate, label, maxRetries);
   } finally {
     releaseSlot();
@@ -188,7 +217,7 @@ async function fetchWithRetry<T>(
 async function fetchAllSportsResult<T>(
   endpoint: string,
   revalidate: number = 1800
-): Promise<{ ok: boolean; data: T | null; outage: boolean }> {
+): Promise<{ ok: boolean; data: T | null; outage: boolean; skipped: boolean }> {
   const proxyUrl = process.env.SPORTS_PROXY_URL;
   const proxyToken = process.env.SPORTS_PROXY_TOKEN;
   const isBuildPhase = process.env.NEXT_PHASE === "phase-production-build";
@@ -204,17 +233,22 @@ async function fetchAllSportsResult<T>(
       revalidate,
       `SportsProxy[${sofa}]`
     );
-    if (result.ok) return { ok: true, data: result.data, outage: false };
+    if (result.ok) return { ok: true, data: result.data, outage: false, skipped: false };
+
+    // Disjuntor abriu enquanto essa chamada esperava vaga no semáforo: não é uma
+    // falha nova (não recontar) e NÃO tenta o fetch direto — bater lá também
+    // anularia o propósito do corte.
+    if (result.reason === "breaker") return { ok: false, data: null, outage: false, skipped: true };
 
     if (isBuildPhase) {
       console.warn(`Build: proxy indisponivel (host.docker.internal nao resolve no builder), skip direct: ${endpoint}`);
-      return { ok: false, data: null, outage: false };
+      return { ok: false, data: null, outage: false, skipped: false };
     }
     // Só cai pro fetch DIRETO se o proxy (dev) estiver INACESSÍVEL. Se o proxy
     // respondeu erro (429/5xx), NÃO re-consulta direto: dobraria o hang e violaria
     // "só o dev consulta a API" (prod re-bateria no rapidapi e tomaria 429 também).
     // O cliente faz polling — a página renderiza com o que tiver.
-    if (result.reason !== "unreachable") return { ok: false, data: null, outage: isOutage(result) };
+    if (result.reason !== "unreachable") return { ok: false, data: null, outage: isOutage(result), skipped: false };
     console.warn(`SportsProxy unreachable, falling back to direct API: ${endpoint}`);
   }
 
@@ -224,7 +258,7 @@ async function fetchAllSportsResult<T>(
   // (Prod ja pula porque o proxy nao resolve no builder — ver acima.)
   if (isBuildPhase) {
     console.warn(`Build: skip direct AllSports (dev), ISR popula em runtime: ${endpoint}`);
-    return { ok: false, data: null, outage: false };
+    return { ok: false, data: null, outage: false, skipped: false };
   }
 
   // Contador pra medir uso real (grep SPORTAPI_HIT nos logs por janela de tempo).
@@ -238,16 +272,8 @@ async function fetchAllSportsResult<T>(
     revalidate,
     `SportApi7[${sofa}]`
   );
-  return { ok: result.ok, data: result.data, outage: isOutage(result) };
-}
-
-// Throttle do log do disjuntor aberto (evita inundar os logs quando ~40 endpoints
-// de uma página caem nele ao mesmo tempo).
-let lastBreakerLogAt = 0;
-function logBreakerOpen(endpoint: string, now: number): void {
-  if (now - lastBreakerLogAt < 10_000) return;
-  lastBreakerLogAt = now;
-  console.warn(`API_BREAKER_OPEN ${endpoint}`);
+  if (result.reason === "breaker") return { ok: false, data: null, outage: false, skipped: true };
+  return { ok: result.ok, data: result.data, outage: isOutage(result), skipped: false };
 }
 
 export async function fetchAllSports<T>(
@@ -259,15 +285,18 @@ export async function fetchAllSports<T>(
 
   // Disjuntor aberto: nem tenta a rede, vai direto pro fallback em disco (se o
   // endpoint aceitar dado velho) ou null. Sem isso, ~40 endpoints numa página
-  // penduram um a um até cada timeout enquanto a API está fora.
+  // penduram um a um até cada timeout enquanto a API está fora. (Cobre a entrada;
+  // o re-check dentro de fetchFromUrl cobre quem já estava esperando vaga no
+  // semáforo quando o disjuntor abriu no meio da leva.)
   if (breakerOpen(now)) {
-    logBreakerOpen(endpoint, now);
+    logBreakerOpen(endpoint);
     return shouldFallback(false, revalidate) ? await readLastGood<T>(endpoint) : null;
   }
 
   const res = await fetchAllSportsResult<T>(endpoint, revalidate);
-  // Build-phase skips não são falha real da API — não contam pro disjuntor.
-  if (!isBuildPhase) recordResult(!res.outage, now);
+  // Build-phase skips e corte do disjuntor (skipped) não são falha nem sucesso
+  // real da API — não contam pro disjuntor.
+  if (!isBuildPhase && !res.skipped) recordResult(!res.outage, now);
 
   if (res.ok) {
     if (res.data != null) void saveLastGood(endpoint, res.data);
