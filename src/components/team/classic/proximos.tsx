@@ -57,7 +57,7 @@ export async function ClassicTeamProximos({ data }: { data: TeamPageData }) {
               <div className="space-y-2">
           {matches.slice(1).map((m) => (
             <div key={m.id} className="bg-card-bg rounded-lg border border-border-custom p-4 hover:border-green transition-colors">
-              <div className="flex items-center gap-4">
+              <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
                 {/* Date */}
                 <div className="w-16 text-center shrink-0">
                   <div className="text-xs text-text-muted">{m.date}</div>
@@ -77,7 +77,7 @@ export async function ClassicTeamProximos({ data }: { data: TeamPageData }) {
                 </div>
 
                 {/* League */}
-                <div className="text-right shrink-0">
+                <div className="w-full pl-20 text-left sm:w-auto sm:pl-0 sm:text-right sm:shrink-0">
                   <div className="text-xs font-semibold text-green uppercase">{m.league}</div>
                   {m.venue && <div className="text-xs text-text-muted mt-0.5">{m.venue}</div>}
                 </div>
