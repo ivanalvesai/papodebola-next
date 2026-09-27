@@ -222,6 +222,8 @@ Protegido por JWT (mesmo do painel) + SSH com forced command + token no header.
 
 Resiliência contra caprichos da API (implementada nessa ordem):
 
+> **Desde 27/09:** toda resposta boa fica em `data/api-cache/` e é servida quando a API falha (exceto endpoints ao vivo, `revalidate < 60`); disjuntor de 60 s após 5 falhas de apagão seguidas (logs `API_FALLBACK_DISK` / `API_BREAKER_OPEN`). Ver `src/lib/api/api-cache.ts`.
+
 1. **Semaphore in-memory** limita 2 requests simultâneas (`ALLSPORTS_MAX_CONCURRENT`)
 2. Se `SPORTS_PROXY_URL` + `SPORTS_PROXY_TOKEN` setados → tenta proxy primeiro
 3. **Fast-fail em ENOTFOUND/ECONNREFUSED** (sem retry — erro de DNS/rede é permanente)
@@ -567,6 +569,8 @@ Doc completo: `docs/deploys/2026-06-15/04-web-push.md`.
 
 **57 times × 6 páginas = 342 URLs** — 37 no código (Série A + Europa) + 20 da Série B no Payload.
 
+> **Desde 27/09 os 57 times estão no CMS** (`/cms` → Times): SEO por aba, cards prontos (bloco "Página padrão do time" + Texto), visual igual ao antigo (componentes em `src/components/team/classic/`). O dev lê rascunhos (`TEAMS_CMS_DRAFTS=1` só no dev) pra pré-visualizar. O `config.ts` segue como rede de segurança se o Postgres cair. Doc: `docs/knowledge/2026-09-27-times-cms-resiliencia.md`.
+
 > **Duas fontes de identidade:** Série A/Europa vêm do `config.ts` (`TEAMS`) e renderizam o layout
 > em código. A **Série B vem da collection `teams` do Payload** (editável no `/cms`) — ver
 > `docs/knowledge/2026-06-26-times-serie-b-payload.md`. As 6 rotas e o `layout.tsx` do `[slug]`
@@ -598,6 +602,8 @@ URLs antigas (`/times/*` e `/campeonato/*`) têm 301 redirect em `next.config.ts
 ---
 
 ## Arquivamento de dados (snapshots) — não perder dado quando a API parar
+
+> **Campeonato encerrado:** cron `# pdb-archive` (03:20, dev) chama `/api/archive/run` e grava o lance a lance completo de todo jogo encerrado ainda sem snapshot; snapshot bom nunca é sobrescrito por resposta sem lances. Municipal 2026 congelado em `data/archive/municipal/2026/`.
 
 Desde 27/06, os dados esportivos são **arquivados em disco** (volume `data/snapshots/{categoria}/{chave}.json`)
 e servidos como **fallback** quando a API para de servir o torneio (ex.: torneio acabou e a API derrubou
