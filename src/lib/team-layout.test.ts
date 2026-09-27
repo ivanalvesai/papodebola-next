@@ -21,8 +21,25 @@ test("hasClassicBlock detecta o bloco da página padrão", () => {
 test("isEmptyStaticBlock: texto/título vazios não renderizam nada", () => {
   assert.equal(isEmptyStaticBlock({ blockType: "richText" }), true);
   assert.equal(isEmptyStaticBlock({ blockType: "richText", content: null }), true);
-  assert.equal(isEmptyStaticBlock({ blockType: "richText", content: { root: {} } }), false);
+  assert.equal(isEmptyStaticBlock({ blockType: "richText", content: { root: {} } }), true);
   assert.equal(isEmptyStaticBlock({ blockType: "heading" }), true);
   assert.equal(isEmptyStaticBlock({ blockType: "heading", text: "Título" }), false);
   assert.equal(isEmptyStaticBlock({ blockType: "teamNews" }), false);
+});
+
+const lex = (...children: unknown[]) => ({ root: { type: "root", children } });
+const p = (...children: unknown[]) => ({ type: "paragraph", children });
+const t = (text: string) => ({ type: "text", text });
+
+test("isEmptyStaticBlock: Lexical sem texto (parágrafo vazio) é vazio; com texto ou mídia, não", () => {
+  assert.equal(isEmptyStaticBlock({ blockType: "richText", content: lex(p()) }), true);
+  assert.equal(isEmptyStaticBlock({ blockType: "richText", content: lex(p(t("   ")), p({ type: "linebreak" })) }), true);
+  assert.equal(isEmptyStaticBlock({ blockType: "richText", content: lex() }), true);
+  assert.equal(isEmptyStaticBlock({ blockType: "richText", content: lex(p(), p(t("Olá"))) }), false);
+  assert.equal(
+    isEmptyStaticBlock({ blockType: "richText", content: lex(p({ type: "link", children: [t("site")] })) }),
+    false
+  );
+  assert.equal(isEmptyStaticBlock({ blockType: "richText", content: lex({ type: "upload", value: 1 }) }), false);
+  assert.equal(isEmptyStaticBlock({ blockType: "richText", content: lex({ type: "horizontalrule" }) }), false);
 });
