@@ -44,6 +44,9 @@ const teamLayoutBlocks: Block[] = [
   { slug: "teamLineup", labels: { singular: "Escalação provável", plural: "Escalação" }, fields: [blockTitle] },
   { slug: "teamClusterLinks", labels: { singular: "Links do cluster (hub)", plural: "Links do cluster" }, fields: [] },
   { slug: "teamAutoText", labels: { singular: "Texto automático do time", plural: "Textos automáticos" }, fields: [] },
+  // Página padrão da aba inteira (os mesmos cards dos times do config). Textos/títulos do
+  // editor entram antes/depois dela.
+  { slug: "teamClassic", labels: { singular: "Página padrão do time (cards automáticos)", plural: "Páginas padrão do time" }, fields: [] },
   // — Estáticos (texto autoral) —
   {
     slug: "richText",

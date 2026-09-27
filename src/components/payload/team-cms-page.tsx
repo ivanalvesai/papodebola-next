@@ -3,8 +3,8 @@ import { buildTeamNarrative, type TeamNarrativePage } from "@/lib/team-narrative
 import { TeamNarrativeSection, ProbableLineup } from "@/components/team/team-narrative";
 import { getPayloadTeamSlugs, teamInfoFromDoc, type PayloadTeam } from "@/lib/data/payload-teams";
 import { ALL_CLUSTER_TEAMS } from "@/lib/config";
-import { needsAutoTextAppend } from "@/lib/team-layout";
-import { TeamBlockRenderer } from "./team-blocks";
+import { needsAutoTextAppend, hasClassicBlock, isEmptyStaticBlock } from "@/lib/team-layout";
+import { TeamBlockRenderer, TeamBlock } from "./team-blocks";
 import { ClassicTeamHub } from "@/components/team/classic/hub";
 import { ClassicTeamJogoHoje } from "@/components/team/classic/jogo-hoje";
 import { ClassicTeamOndeAssistir } from "@/components/team/classic/onde-assistir";
@@ -48,6 +48,32 @@ export async function TeamCmsView({ doc, page }: { doc: PayloadTeam; page: TeamN
     if (page === "escalacao") return <ClassicTeamEscalacao data={data} lineup={lineup} />;
     const Classic = CLASSIC[page];
     return <Classic data={data} />;
+  }
+  // Página padrão (bloco teamClassic) + blocos do editor antes/depois dela, na mesma
+  // largura do clássico (1240px). O clássico já traz o próprio container e o texto
+  // automático. Bloco de texto/título vazio não renderiza nada (nem o wrapper), então
+  // [teamClassic, richText vazio] gera o mesmo HTML da aba vazia.
+  if (hasClassicBlock(layout)) {
+    const classicAt = layout.findIndex((b) => b?.blockType === "teamClassic");
+    return (
+      <>
+        {layout.map((b, i) => {
+          if (b?.blockType === "teamClassic") {
+            if (page === "escalacao") return <ClassicTeamEscalacao key={i} data={data} lineup={lineup} />;
+            const Classic = CLASSIC[page];
+            return <Classic key={i} data={data} />;
+          }
+          if (isEmptyStaticBlock(b)) return null;
+          // Antes do clássico: respiro em cima (o py-6 do clássico dá o de baixo).
+          // Depois dele: respiro embaixo (o py-6 do clássico dá o de cima).
+          return (
+            <div key={i} className={`mx-auto max-w-[1240px] px-4 ${i < classicAt ? "pt-6" : "pb-6"}`}>
+              <TeamBlock block={b} data={data} page={page} lineup={lineup} />
+            </div>
+          );
+        })}
+      </>
+    );
   }
   // O H1 vem do layout do cluster (cabeçalho do time) — não duplicar aqui. O texto de
   // contexto (gerado dos dados) entra onde o editor pôs o bloco "Texto automático" ou,

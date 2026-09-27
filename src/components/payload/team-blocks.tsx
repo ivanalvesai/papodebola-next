@@ -297,7 +297,9 @@ function StaticText({ block }: { block: any }) {
   );
 }
 
-function Block({
+// Um bloco de layout do time. Exportado pro TeamCmsView renderizar os blocos em volta da
+// página padrão (teamClassic). teamClassic em si é tratado no TeamCmsView (default: null).
+export function TeamBlock({
   block,
   data,
   page,
@@ -349,7 +351,7 @@ export function TeamBlockRenderer({
     <div className="mx-auto max-w-[860px] px-4 py-6 space-y-5">
       {heading && <h1 className="text-xl font-bold text-text-primary">{heading}</h1>}
       {(blocks || []).map((b, i) => (
-        <Block key={i} block={b} data={data} page={page} lineup={lineup} />
+        <TeamBlock key={i} block={b} data={data} page={page} lineup={lineup} />
       ))}
     </div>
   );
