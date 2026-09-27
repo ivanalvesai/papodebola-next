@@ -9,6 +9,7 @@ import { notFound } from "next/navigation";
 import { BarChart3, Trophy, Goal } from "lucide-react";
 import { buildTeamNarrative } from "@/lib/team-narrative";
 import { TeamNarrativeSection } from "@/components/team/team-narrative";
+import { teamSeo, TEAM_PAGE_PATH } from "@/lib/team-seo";
 
 export const revalidate = 86400;
 
@@ -21,11 +22,8 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
   const doc = await getTeam(slug);
   const name = doc?.name || TEAM_BY_SLUG[slug]?.name;
   if (!name) return {};
-  return {
-    title: doc?.seo?.metaTitle || `Estatísticas do ${name} 2026 - Números e Desempenho`,
-    description: doc?.seo?.metaDescription || `Estatísticas do ${name} na temporada 2026: posição, aproveitamento, gols, artilheiros e sequência recente.`,
-    alternates: { canonical: `/futebol/times/${slug}/estatisticas` },
-  };
+  const { title, description } = teamSeo(doc, "estatisticas", name);
+  return { title, description, alternates: { canonical: `/futebol/times/${slug}${TEAM_PAGE_PATH.estatisticas}` } };
 }
 
 export default async function EstatisticasPage({ params }: { params: Promise<{ slug: string }> }) {

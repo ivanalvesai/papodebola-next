@@ -9,6 +9,7 @@ import { ArrowRight, Calendar, Trophy, BarChart3, Tv, Users } from "lucide-react
 import { TeamLogo } from "@/components/ui/team-logo";
 import { buildTeamNarrative } from "@/lib/team-narrative";
 import { TeamNarrativeSection } from "@/components/team/team-narrative";
+import { teamSeo, TEAM_PAGE_PATH } from "@/lib/team-seo";
 
 export const revalidate = 21600;
 
@@ -23,22 +24,10 @@ export async function generateMetadata({
 }): Promise<Metadata> {
   const { slug } = await params;
   const doc = await getTeam(slug);
-  if (doc) {
-    return {
-      title: doc.seo?.metaTitle || `${doc.name} - Notícias, Jogos e Classificação`,
-      description:
-        doc.seo?.metaDescription ||
-        `Tudo sobre o ${doc.name}: notícias, jogos de hoje, próximos jogos, escalação, estatísticas e onde assistir ao vivo.`,
-      alternates: { canonical: `/futebol/times/${slug}` },
-    };
-  }
-  const team = TEAM_BY_SLUG[slug];
-  if (!team) return {};
-  return {
-    title: `${team.name} - Notícias, Jogos e Classificação`,
-    description: `Tudo sobre o ${team.name}: notícias, jogos de hoje, próximos jogos, escalação, estatísticas e onde assistir ao vivo.`,
-    alternates: { canonical: `/futebol/times/${slug}` },
-  };
+  const name = doc?.name || TEAM_BY_SLUG[slug]?.name;
+  if (!name) return {};
+  const { title, description } = teamSeo(doc, "hub", name);
+  return { title, description, alternates: { canonical: `/futebol/times/${slug}${TEAM_PAGE_PATH.hub}` } };
 }
 
 export default async function TeamHubPage({

@@ -10,6 +10,7 @@ import { QuickAnswer } from "@/components/seo/quick-answer";
 import { SportsEventSchema } from "@/components/seo/sports-event-schema";
 import { buildTeamNarrative } from "@/lib/team-narrative";
 import { TeamNarrativeSection } from "@/components/team/team-narrative";
+import { teamSeo, TEAM_PAGE_PATH } from "@/lib/team-seo";
 
 export const revalidate = 1800;
 
@@ -22,11 +23,8 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
   const doc = await getTeam(slug);
   const name = doc?.name || TEAM_BY_SLUG[slug]?.name;
   if (!name) return {};
-  return {
-    title: doc?.seo?.metaTitle || `Jogo do ${name} Hoje - Horário e Placar`,
-    description: doc?.seo?.metaDescription || `Veja se o ${name} joga hoje, horário do jogo, placar ao vivo e detalhes da partida.`,
-    alternates: { canonical: `/futebol/times/${slug}/jogo-hoje` },
-  };
+  const { title, description } = teamSeo(doc, "jogoHoje", name);
+  return { title, description, alternates: { canonical: `/futebol/times/${slug}${TEAM_PAGE_PATH.jogoHoje}` } };
 }
 
 export default async function JogoHojePage({ params }: { params: Promise<{ slug: string }> }) {

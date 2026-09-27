@@ -11,6 +11,7 @@ import { QuickAnswer } from "@/components/seo/quick-answer";
 import { SportsEventSchema } from "@/components/seo/sports-event-schema";
 import { buildTeamNarrative } from "@/lib/team-narrative";
 import { TeamNarrativeSection } from "@/components/team/team-narrative";
+import { teamSeo, TEAM_PAGE_PATH } from "@/lib/team-seo";
 
 export const revalidate = 43200;
 
@@ -23,11 +24,8 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
   const doc = await getTeam(slug);
   const name = doc?.name || TEAM_BY_SLUG[slug]?.name;
   if (!name) return {};
-  return {
-    title: doc?.seo?.metaTitle || `Próximos Jogos do ${name} - Calendário 2026`,
-    description: doc?.seo?.metaDescription || `Calendário completo dos próximos jogos do ${name} em 2026. Datas, horários, adversários e campeonatos.`,
-    alternates: { canonical: `/futebol/times/${slug}/proximos-jogos` },
-  };
+  const { title, description } = teamSeo(doc, "proximos", name);
+  return { title, description, alternates: { canonical: `/futebol/times/${slug}${TEAM_PAGE_PATH.proximos}` } };
 }
 
 export default async function ProximosJogosPage({ params }: { params: Promise<{ slug: string }> }) {

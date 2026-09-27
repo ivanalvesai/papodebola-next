@@ -2,21 +2,21 @@ import { cache } from "react";
 import { getPayload } from "payload";
 import config from "@payload-config";
 import type { TeamInfo } from "@/lib/config";
+import type { TeamSeoDoc } from "@/lib/team-seo";
 
 // Doc da collection `teams` (Série B no piloto). Identidade + SEO + 6 layouts (blocos).
 /* eslint-disable @typescript-eslint/no-explicit-any */
-export interface PayloadTeam {
+export interface PayloadTeam extends TeamSeoDoc {
   name: string;
   slug: string;
   sofascoreId: number;
-  tournament: "serie-a" | "serie-b";
+  tournament: "serie-a" | "serie-b" | "europa";
   layoutHub?: any[];
   layoutJogoHoje?: any[];
   layoutOndeAssistir?: any[];
   layoutEscalacao?: any[];
   layoutProximos?: any[];
   layoutEstatisticas?: any[];
-  seo?: { metaTitle?: string; metaDescription?: string };
 }
 
 // Busca um time publicado por slug. null em QUALQUER erro/ausência (banco fora, sem doc)

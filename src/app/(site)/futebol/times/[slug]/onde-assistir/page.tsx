@@ -9,6 +9,7 @@ import { Tv } from "lucide-react";
 import { TeamLogo } from "@/components/ui/team-logo";
 import { buildTeamNarrative } from "@/lib/team-narrative";
 import { TeamNarrativeSection, BroadcastChannels } from "@/components/team/team-narrative";
+import { teamSeo, TEAM_PAGE_PATH } from "@/lib/team-seo";
 
 export const revalidate = 86400;
 
@@ -21,11 +22,8 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
   const doc = await getTeam(slug);
   const name = doc?.name || TEAM_BY_SLUG[slug]?.name;
   if (!name) return {};
-  return {
-    title: doc?.seo?.metaTitle || `Onde Assistir ${name} Hoje - Transmissão Ao Vivo`,
-    description: doc?.seo?.metaDescription || `Saiba onde assistir ao jogo do ${name} hoje ao vivo. TV, streaming e opções de transmissão.`,
-    alternates: { canonical: `/futebol/times/${slug}/onde-assistir` },
-  };
+  const { title, description } = teamSeo(doc, "ondeAssistir", name);
+  return { title, description, alternates: { canonical: `/futebol/times/${slug}${TEAM_PAGE_PATH.ondeAssistir}` } };
 }
 
 export default async function OndeAssistirPage({ params }: { params: Promise<{ slug: string }> }) {

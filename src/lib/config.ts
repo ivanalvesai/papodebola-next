@@ -44,7 +44,7 @@ export interface TeamInfo {
   slug: string;
   // Torneio nacional do time (resolve classificação/artilharia certas). Ausente = europeu
   // (sem tabela do Brasileirão). Default de leitura: 'serie-a' (ver teamTournamentSlug).
-  tournament?: "serie-a" | "serie-b";
+  tournament?: "serie-a" | "serie-b" | "europa";
 }
 
 export const TEAMS: TeamInfo[] = [

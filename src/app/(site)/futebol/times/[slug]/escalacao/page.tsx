@@ -9,6 +9,7 @@ import { notFound } from "next/navigation";
 import { Users } from "lucide-react";
 import { buildTeamNarrative } from "@/lib/team-narrative";
 import { TeamNarrativeSection, ProbableLineup } from "@/components/team/team-narrative";
+import { teamSeo, TEAM_PAGE_PATH } from "@/lib/team-seo";
 
 export const revalidate = 43200;
 
@@ -21,11 +22,8 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
   const doc = await getTeam(slug);
   const name = doc?.name || TEAM_BY_SLUG[slug]?.name;
   if (!name) return {};
-  return {
-    title: doc?.seo?.metaTitle || `Escalação do ${name} Hoje - Provável Escalação`,
-    description: doc?.seo?.metaDescription || `Provável escalação do ${name} para o próximo jogo, com base no time que começou a última partida, formação e destaques da temporada.`,
-    alternates: { canonical: `/futebol/times/${slug}/escalacao` },
-  };
+  const { title, description } = teamSeo(doc, "escalacao", name);
+  return { title, description, alternates: { canonical: `/futebol/times/${slug}${TEAM_PAGE_PATH.escalacao}` } };
 }
 
 export default async function EscalacaoPage({ params }: { params: Promise<{ slug: string }> }) {
