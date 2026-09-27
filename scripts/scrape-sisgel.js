@@ -163,6 +163,28 @@ function matchDateSlug(m) {
   return d ? `${d[1]}-${d[2]}-${d[3]}` : "";
 }
 
+// Grava JSON via arquivo temporário + rename (atômico): um run que morre no meio não
+// deixa um JSON truncado pro update-sisgel.sh copiar pro volume.
+function writeJsonAtomic(file, data) {
+  const tmp = `${file}.tmp`;
+  fs.writeFileSync(tmp, JSON.stringify(data, null, 2));
+  fs.renameSync(tmp, file);
+}
+
+// Temporada: ano do título ("1ª Divisão Futebol 2026"); senão o ano mais frequente nas
+// datas dos jogos; senão o ano corrente.
+function seasonYear(title, matches) {
+  const t = String(title || "").match(/(20\d\d)/);
+  if (t) return t[1];
+  const count = {};
+  for (const m of matches || []) {
+    const y = String(m.date || "").match(/\d{2}\/\d{2}\/(\d{4})/);
+    if (y) count[y[1]] = (count[y[1]] || 0) + 1;
+  }
+  const best = Object.entries(count).sort((a, b) => b[1] - a[1])[0];
+  return best ? best[0] : String(new Date().getFullYear());
+}
+
 function sectionOf(html, label, end) {
   const i = html.indexOf(label);
   if (i < 0) return "";
@@ -448,7 +470,7 @@ async function scrapeOne(entry) {
 
   return {
     name: pageName, slug: slug(pageName),
-    city: "Santana de Parnaiba", state: "SP", year: "2026",
+    city: "Santana de Parnaiba", state: "SP", year: seasonYear(pageName, matches),
     url: entry.url, groups, matches, matchesByRound: byRound,
     scorers, defense,
     roundMeta: roundMetaByDisplay,
@@ -493,7 +515,7 @@ async function scrapeMatchDetails(results) {
       await new Promise((r) => setTimeout(r, 250));
     }
   }
-  fs.writeFileSync(MATCHES_FILE, JSON.stringify(cache, null, 2));
+  writeJsonAtomic(MATCHES_FILE, cache);
   console.log(`Detalhes de jogo: ${fetched} novos, ${cached} em cache, ${Object.keys(cache).length} total`);
 }
 
@@ -526,7 +548,7 @@ async function main() {
   }).filter(Boolean);
 
   fs.mkdirSync(DATA_DIR, { recursive: true });
-  fs.writeFileSync(OUTPUT_FILE, JSON.stringify(merged, null, 2));
+  writeJsonAtomic(OUTPUT_FILE, merged);
   console.log(`\nSaved ${merged.length} championships (${results.length} novos, ${kept} do cache)`);
 
   await scrapeMatchDetails(results);

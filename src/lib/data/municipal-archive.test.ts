@@ -42,10 +42,18 @@ test("chaves quebradas ficam de fora e redirecionam pra certa", () => {
   assert.equal(isValidMatchKey("19-09-2026/santana-uniao-do-morro"), true);
   assert.equal(isValidMatchKey("19-09-2026/santana-"), false);
   assert.equal(isValidMatchKey("santana-uniao-TOKEN"), false);
-  const keys = ["19-09-2026/santana-", "19-09-2026/santana-uniao-do-morro", "30-08-2026/santana-sao-luiz", "30-08-2026/santana-outro"];
-  assert.equal(fixBrokenMatchKey("19-09-2026", "santana-", keys), "19-09-2026/santana-uniao-do-morro");
-  assert.equal(fixBrokenMatchKey("30-08-2026", "santana-", keys), null); // ambíguo
-  assert.equal(fixBrokenMatchKey("19-09-2026", "santana-uniao-do-morro", keys), null);
+  const rec = (home: string) => ({ home });
+  const records = {
+    "19-09-2026/santana-": rec("SANTANA"),
+    "19-09-2026/santana-uniao-do-morro": rec("SANTANA"),
+    "30-08-2026/santana-sao-luiz": rec("SANTANA"),
+    "30-08-2026/santana-outro": rec("SANTANA"),
+    "05-09-2026/santana-fc-x": rec("SANTANA FC"), // prefixo casa, mas o mandante é outro
+  };
+  assert.equal(fixBrokenMatchKey("19-09-2026", "santana-", records), "19-09-2026/santana-uniao-do-morro");
+  assert.equal(fixBrokenMatchKey("30-08-2026", "santana-", records), null); // ambíguo
+  assert.equal(fixBrokenMatchKey("05-09-2026", "santana-", records), null); // mandante "santana-fc" ≠ "santana"
+  assert.equal(fixBrokenMatchKey("19-09-2026", "santana-uniao-do-morro", records), null);
 });
 
 test("limpa local/arbitragem raspados com lixo", () => {

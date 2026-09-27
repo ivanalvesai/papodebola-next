@@ -77,7 +77,7 @@ async function readMatches(): Promise<Record<string, MunicipalMatch>> {
 
 // URL antiga do mata-mata sem o visitante ("/jogo/19-09-2026/santana-") → chave certa.
 export async function findFixedMunicipalMatchKey(dateSlug: string, pairSlug: string): Promise<string | null> {
-  return fixBrokenMatchKey(dateSlug, pairSlug, Object.keys(await readMatches()));
+  return fixBrokenMatchKey(dateSlug, pairSlug, await readMatches());
 }
 
 const teamKey = (name: string) => (name || "").trim().toUpperCase();

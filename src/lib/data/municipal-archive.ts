@@ -41,12 +41,29 @@ export function isValidMatchKey(key: string): boolean {
   return !!date && !!pair && extra === undefined && !pair.startsWith("-") && !pair.endsWith("-");
 }
 
-// URL antiga quebrada ("/jogo/19-09-2026/santana-") → a chave certa do mesmo dia que
-// começa com o mesmo mandante, se for única.
-export function fixBrokenMatchKey(dateSlug: string, pairSlug: string, keys: string[]): string | null {
+// Mesma slugificação do scraper (scripts/scrape-sisgel.js).
+export const slugifyTeam = (name: string) =>
+  (name || "")
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[̀-ͯ]/g, "")
+    .replace(/[^a-z0-9]/g, "-")
+    .replace(/-+/g, "-")
+    .replace(/^-|-$/g, "");
+
+// URL antiga quebrada ("/jogo/19-09-2026/santana-") → a chave certa do mesmo dia cujo
+// MANDANTE tem exatamente o slug do prefixo ("santana", não "santana-fc"), se for única.
+export function fixBrokenMatchKey(
+  dateSlug: string,
+  pairSlug: string,
+  records: Record<string, { home: string }>
+): string | null {
   if (!pairSlug.endsWith("-")) return null;
+  const home = pairSlug.slice(0, -1);
   const prefix = `${dateSlug}/${pairSlug}`;
-  const hits = keys.filter((k) => k.startsWith(prefix) && isValidMatchKey(k));
+  const hits = Object.keys(records).filter(
+    (k) => k.startsWith(prefix) && isValidMatchKey(k) && slugifyTeam(records[k].home) === home
+  );
   return hits.length === 1 ? hits[0] : null;
 }
 
