@@ -3,6 +3,7 @@ import { TOURNAMENT_BY_SLUG } from "@/lib/config";
 import { translateStatus } from "@/lib/translations";
 import { getStandings } from "./standings";
 import { withSnapshot } from "./snapshot-store";
+import { isChampionshipRegression } from "@/lib/snapshot-guards";
 import type { ChampionshipData, RoundRef } from "@/types/tournament";
 import type { ChampionshipMatch } from "@/types/match";
 
@@ -143,7 +144,10 @@ export async function getChampionshipData(slug: string): Promise<ChampionshipDat
     "championships",
     slug,
     () => fetchChampionshipDataLive(slug),
-    (d) => (d.standings?.[0]?.rows?.length ?? 0) > 0 || Object.keys(d.matchesByRound || {}).length > 0
+    (d) => (d.standings?.[0]?.rows?.length ?? 0) > 0 || Object.keys(d.matchesByRound || {}).length > 0,
+    // Menos jogos encerrados que o snapshot (rodadas velhas vindas do disco numa queda
+    // da API) não sobrescreve: serve o snapshot. Na virada de temporada aceita o novo.
+    isChampionshipRegression
   );
 }
 

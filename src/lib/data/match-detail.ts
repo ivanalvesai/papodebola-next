@@ -1,4 +1,4 @@
-import { fetchAllSports } from "@/lib/api/allsports";
+import { fetchAllSports, fetchAllSportsMeta } from "@/lib/api/allsports";
 import { translateCountry } from "@/lib/i18n/countries";
 import { translateStatus } from "@/lib/translations";
 import { matchDateSlug, matchPairSlug } from "@/lib/world-cup-match-url";
@@ -7,6 +7,7 @@ import { getWorldCupStandings } from "./standings";
 import { getChampionshipData } from "./championship";
 import { withSnapshot } from "./snapshot-store";
 import { isCompleteMatchSnapshot } from "@/lib/archive-select";
+import { isMatchRegression } from "@/lib/snapshot-guards";
 import { getMatchComments } from "./match-comments";
 import { TOURNAMENT_BY_SLUG } from "@/lib/config";
 import { selecaoSlugById } from "@/lib/selecoes";
@@ -606,6 +607,9 @@ export interface MatchDetail {
   lineupsConfirmed: boolean;
   stats: MatchStatItem[];
   shootout: ShootoutKick[]; // disputa de pênaltis (vazio quando não houve)
+  // O match/{id} veio da cópia em disco (API fora), não da API agora: renderiza, mas
+  // nunca vira snapshot permanente (podia ser um "inprogress" velho).
+  stale?: boolean;
 }
 
 // Teto de segurança: nenhum jogo fica "ao vivo" mais que isso depois do apito
@@ -1012,8 +1016,11 @@ export async function getMatchDetail(id: number, startHint?: number): Promise<Ma
     "matches",
     id,
     () => fetchMatchDetailLive(id, startHint),
-    // Encerrado com feed vazio (falha parcial da API) NÃO sobrescreve o snapshot bom.
-    isCompleteMatchSnapshot
+    // Encerrado com feed vazio (falha parcial da API) NÃO sobrescreve o snapshot bom,
+    // nem evento vindo do disco (stale).
+    (d) => !d.stale && isCompleteMatchSnapshot(d),
+    // Snapshot encerrado não volta pra "ao vivo"/"não iniciado".
+    isMatchRegression
   );
   // Comentários editoriais do /cms: injetados FORA do snapshot pra sempre virem frescos
   // (mesmo quando a API cai e serve o snapshot). Encaixados pelo minuto, sem tocar na API.
@@ -1022,7 +1029,7 @@ export async function getMatchDetail(id: number, startHint?: number): Promise<Ma
 }
 
 async function fetchMatchDetailLive(id: number, startHint?: number): Promise<MatchDetail | null> {
-  const eventRaw = await fetchAllSports<any>(`match/${id}`, eventTtl(startHint));
+  const { data: eventRaw, stale } = await fetchAllSportsMeta<any>(`match/${id}`, eventTtl(startHint));
   if (!eventRaw?.event) return null;
   const event = normalizeEvent(eventRaw.event);
   const ttl = liveTtl(event.statusType);
@@ -1043,6 +1050,7 @@ async function fetchMatchDetailLive(id: number, startHint?: number): Promise<Mat
     lineupsConfirmed: !!lineRaw?.confirmed,
     stats: normalizeStats(statRaw),
     shootout: normalizeShootout(incRaw),
+    ...(stale ? { stale: true } : {}),
   };
 }
 
