@@ -9,6 +9,8 @@ import { withSnapshot } from "./snapshot-store";
 import { isCompleteMatchSnapshot } from "@/lib/archive-select";
 import { getMatchComments } from "./match-comments";
 import { TOURNAMENT_BY_SLUG } from "@/lib/config";
+import { selecaoSlugById } from "@/lib/selecoes";
+import { findRescheduled, type RescheduleCandidate } from "@/lib/match-slug-fuzzy";
 import type { StandingsGroup } from "@/types/standings";
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
@@ -480,6 +482,33 @@ export function championshipMatchHref(
     home,
     away
   )}`;
+}
+
+// Jogo remarcado / time renomeado: quando a URL (data + par) não resolve exatamente,
+// procura na tabela do campeonato o jogo compatível (mesmo mando, ≤7 dias, tokens do
+// nome batendo) e devolve o href CANÔNICO dele — que resolve exatamente via
+// resolveChampionshipMatch (mesma fonte), então o 308 não entra em loop. null = 404.
+export async function findRescheduledChampionshipHref(
+  champSlug: string,
+  dateSlug: string,
+  pairSlug: string
+): Promise<string | null> {
+  if (!TOURNAMENT_BY_SLUG[champSlug]) return null;
+  const data = await getChampionshipData(champSlug).catch(() => null);
+  const candidates: RescheduleCandidate[] = [];
+  for (const matches of Object.values(data?.matchesByRound || {})) {
+    for (const m of matches) {
+      if (!m.homeId || !m.awayId || !m.timestamp) continue;
+      candidates.push({
+        dateSlug: matchDateSlug(m.timestamp),
+        timestamp: m.timestamp,
+        homeSlug: selecaoSlugById(m.homeId, m.home),
+        awaySlug: selecaoSlugById(m.awayId, m.away),
+        href: championshipMatchHref(champSlug, m.timestamp, m.homeId, m.awayId, m.home, m.away),
+      });
+    }
+  }
+  return findRescheduled(dateSlug, pairSlug, candidates);
 }
 
 // ---------- Detalhe do jogo (event / incidents / lineups / statistics) ----------

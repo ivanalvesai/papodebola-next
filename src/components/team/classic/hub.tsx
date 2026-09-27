@@ -111,7 +111,7 @@ export function ClassicTeamHub({ data }: { data: TeamPageData }) {
               </h3>
               <div className="flex items-center justify-between">
                 <div>
-                  <div className="text-3xl font-bold text-green">{data.standingPosition.pos}o</div>
+                  <div className="text-3xl font-bold text-green">{data.standingPosition.pos}º</div>
                   <div className="text-xs text-text-muted">posição</div>
                 </div>
                 <div className="text-right space-y-1">
