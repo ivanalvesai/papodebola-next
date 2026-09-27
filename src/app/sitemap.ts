@@ -9,6 +9,7 @@ import { getWorldCupFixtures } from "@/lib/data/match-detail";
 import { matchDateSlug, matchPairSlug } from "@/lib/world-cup-match-url";
 import { getPayloadTeamSlugs } from "@/lib/data/payload-teams";
 import { getPayloadPageSlugs } from "@/lib/data/payload-pages";
+import { dedicatedPageRoute } from "@/lib/dedicated-pages";
 import { getAuthorSlugs } from "@/lib/data/authors";
 import { getMunicipalMatchKeys } from "@/lib/data/municipal";
 import { getMunicipalGameKeys } from "@/lib/data/municipal-game";
@@ -266,13 +267,16 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     )
   ).flat();
 
-  // Páginas autorais do CMS (Payload) em /paginas/{slug} — só as publicadas.
+  // Páginas autorais do CMS (Payload) em /paginas/{slug} — só as publicadas. As que têm
+  // rota dedicada (/sobre, /apostas...) ficam de fora: lá /paginas/{slug} é 308.
   const payloadPageSlugs = await getPayloadPageSlugs().catch(() => []);
-  const payloadPages: MetadataRoute.Sitemap = payloadPageSlugs.map((slug) => ({
-    url: `${BASE}/paginas/${slug}`,
-    changeFrequency: "weekly" as const,
-    priority: 0.4,
-  }));
+  const payloadPages: MetadataRoute.Sitemap = payloadPageSlugs
+    .filter((slug) => !dedicatedPageRoute(slug))
+    .map((slug) => ({
+      url: `${BASE}/paginas/${slug}`,
+      changeFrequency: "weekly" as const,
+      priority: 0.4,
+    }));
 
   // Páginas de autor (/autor/{slug}) — só autores publicados (E-E-A-T).
   const authorSlugs = await getAuthorSlugs().catch(() => []);
