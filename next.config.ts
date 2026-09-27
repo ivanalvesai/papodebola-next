@@ -81,11 +81,13 @@ const nextConfig: NextConfig = {
       { source: "/futebol/mercado-da-bola", destination: "/noticias/mercado-da-bola", permanent: true },
       { source: "/futebol/eliminatorias", destination: "/noticias/eliminatorias", permanent: true },
       { source: "/futebol/brasileiro", destination: "/noticias/futebol-brasileiro", permanent: true },
+      // Específica ANTES da genérica: /futebol/brasileirao redireciona de novo (2 saltos).
+      { source: "/campeonato/brasileirao", destination: "/futebol/brasileirao-serie-a", permanent: true },
       { source: "/campeonato/:slug", destination: "/futebol/:slug", permanent: true },
       { source: "/times/:slug", destination: "/futebol/times/:slug", permanent: true },
       { source: "/times/:slug/:sub*", destination: "/futebol/times/:slug/:sub*", permanent: true },
       // /esporte/* virou URL top-level por esporte (abr/2026)
-      { source: "/esporte/nba", destination: "/basquete/nba", permanent: true },
+      { source: "/esporte/nba", destination: "/nba", permanent: true },
       { source: "/esporte/tenis", destination: "/tenis", permanent: true },
       { source: "/esporte/f1", destination: "/formula-1", permanent: true },
       { source: "/esporte/mma", destination: "/combate", permanent: true },
