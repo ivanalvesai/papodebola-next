@@ -1,7 +1,8 @@
 import { fetchAllSports } from "@/lib/api/allsports";
 import { translateCountry } from "@/lib/i18n/countries";
 import { BRAZIL_ID, SELECAO_BY_ID } from "@/lib/selecoes";
-import { matchDateSlug, matchPairSlug } from "@/lib/world-cup-match-url";
+import { matchDateSlug, matchPairSlug, worldCupMatchHref } from "@/lib/world-cup-match-url";
+import { isWorldCupFixture } from "@/lib/world-cup-fixture";
 import { readSnapshot, saveSnapshot } from "./snapshot-store";
 import { getMatchDetail, injectByMinute, type MatchDetail } from "./match-detail";
 import { getMatchComments } from "./match-comments";
@@ -24,6 +25,9 @@ export interface SelecaoFixture {
   away: string;
   timestamp: number;
   tournamentName: string;
+  // id do uniqueTournament da API (16 = Copa do Mundo). Opcional: registros antigos não
+  // têm; isWorldCupFixture cai pro nome do torneio nesse caso.
+  uniqueTournamentId?: number;
   homeScore: number | null;
   awayScore: number | null;
   status: string; // notstarted | inprogress | finished | ...
@@ -42,6 +46,7 @@ const TOURNAMENT_PT: Record<string, string> = {
   "World Cup Qualification CONMEBOL": "Eliminatórias da Copa",
   "Copa América": "Copa América",
   "World Cup": "Copa do Mundo",
+  "FIFA World Cup": "Copa do Mundo",
 };
 
 function tournamentPt(name: string): string {
@@ -71,6 +76,7 @@ function eventToFixture(e: any): SelecaoFixture | null {
     away,
     timestamp: ts,
     tournamentName: tournamentPt(e?.tournament?.uniqueTournament?.name || e?.tournament?.name || ""),
+    uniqueTournamentId: e?.tournament?.uniqueTournament?.id,
     homeScore: hs.display ?? hs.current ?? null,
     awayScore: as.display ?? as.current ?? null,
     status: e?.status?.type || "",
@@ -79,7 +85,17 @@ function eventToFixture(e: any): SelecaoFixture | null {
   };
 }
 
-export function selecaoMatchHref(f: Pick<SelecaoFixture, "dateSlug" | "pairSlug">): string {
+// Jogo da Copa do Mundo já tem página canônica em /futebol/copa-do-mundo/jogo/{data}/{par}
+// (worldCupMatchHref) — o hub linka pra lá em vez de duplicar em /futebol/selecao-brasileira.
+export function selecaoMatchHref(
+  f: Pick<
+    SelecaoFixture,
+    "dateSlug" | "pairSlug" | "tournamentName" | "uniqueTournamentId" | "timestamp" | "homeId" | "awayId" | "home" | "away"
+  >
+): string {
+  if (isWorldCupFixture(f)) {
+    return worldCupMatchHref(f.timestamp, f.homeId, f.awayId, f.home, f.away);
+  }
   return `${SELECAO_PREFIX}/${f.dateSlug}/${f.pairSlug}`;
 }
 

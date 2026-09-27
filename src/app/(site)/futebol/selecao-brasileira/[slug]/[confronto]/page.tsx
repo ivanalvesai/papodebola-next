@@ -1,9 +1,11 @@
 import type { Metadata } from "next";
-import { notFound } from "next/navigation";
+import { notFound, permanentRedirect } from "next/navigation";
 import { PageBreadcrumb } from "@/components/seo/page-breadcrumb";
 import { LiveMatch } from "@/components/world-cup/live-match";
 import { SportsEventSchema } from "@/components/seo/sports-event-schema";
 import type { MatchDetail } from "@/lib/data/match-detail";
+import { isWorldCupFixture } from "@/lib/world-cup-fixture";
+import { worldCupMatchHref } from "@/lib/world-cup-match-url";
 import {
   resolveSelecaoMatch,
   getSelecaoMatchDetail,
@@ -80,6 +82,13 @@ export default async function SelecaoJogoPage({ params }: { params: Promise<Para
   const { slug, confronto } = await params;
   const fixture = await resolveSelecaoMatch(slug, confronto);
   if (!fixture) notFound();
+  // Jogo da Copa do Mundo: página canônica é /futebol/copa-do-mundo/jogo/{data}/{par} —
+  // redireciona pra lá pra não duplicar conteúdo (ver isWorldCupFixture).
+  if (isWorldCupFixture(fixture)) {
+    permanentRedirect(
+      worldCupMatchHref(fixture.timestamp, fixture.homeId, fixture.awayId, fixture.home, fixture.away)
+    );
+  }
   const url = `${SELECAO_PREFIX}/${slug}/${confronto}`;
 
   // Encerrado há mais de 6h: serve só o arquivo salvo, sem tocar na API.
