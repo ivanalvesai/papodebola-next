@@ -13,21 +13,22 @@ export const revalidate = 30;
 type Params = { slug: string; data: string; match: string };
 
 // Resolve o confronto SEM depender de query string (mantém a rota ISR):
-// 1) pela tabela do campeonato (+ feeds ao vivo), com o slug limpo;
-// 2) fallback: se o slug termina em "-{id}" (ligas sem página própria, ex.: qualifiers da
-//    Champions), usa esse id no getMatchDetail — validando data + confronto.
+// 1) se o slug termina em "-{id}" (id anexado pela barra), usa esse id PRIMEIRO no
+//    getMatchDetail — validando data + confronto. É 1 chamada (e o detalhe é reaproveitado
+//    pela página), contra a tabela inteira do campeonato + feeds (primeira carga de até ~28 s);
+// 2) senão (ou se o id não bater), pela tabela do campeonato (+ feeds ao vivo).
+// Usado tanto no generateMetadata quanto na página — mesmo helper nos dois.
 async function resolveFixture(slug: string, data: string, match: string) {
-  const byChamp = await resolveChampionshipMatch(slug, data, match);
-  if (byChamp) return byChamp;
   // id do jogo anexado ao fim do slug pela barra (…-{apiId}); só ids longos (>=6 dígitos)
   // pra não confundir com um número que faça parte do nome do time.
   const m = match.match(/^(.*)-(\d{6,})$/);
   if (m) {
     const pairSlug = m[1];
     const eventId = Number(m[2]);
-    return resolveFixtureByEventId(slug, data, pairSlug, eventId);
+    const byId = await resolveFixtureByEventId(slug, data, pairSlug, eventId);
+    if (byId) return byId;
   }
-  return null;
+  return resolveChampionshipMatch(slug, data, match);
 }
 
 export async function generateMetadata({
