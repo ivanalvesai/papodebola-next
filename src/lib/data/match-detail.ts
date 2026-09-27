@@ -1,4 +1,4 @@
-import { fetchAllSports } from "@/lib/api/allsports";
+import { fetchAllSports, fetchAllSportsMeta } from "@/lib/api/allsports";
 import { translateCountry } from "@/lib/i18n/countries";
 import { translateStatus } from "@/lib/translations";
 import { matchDateSlug, matchPairSlug } from "@/lib/world-cup-match-url";
@@ -7,8 +7,11 @@ import { getWorldCupStandings } from "./standings";
 import { getChampionshipData } from "./championship";
 import { withSnapshot } from "./snapshot-store";
 import { isCompleteMatchSnapshot } from "@/lib/archive-select";
+import { isMatchRegression } from "@/lib/snapshot-guards";
 import { getMatchComments } from "./match-comments";
 import { TOURNAMENT_BY_SLUG } from "@/lib/config";
+import { selecaoSlugById } from "@/lib/selecoes";
+import { findRescheduled, type RescheduleCandidate } from "@/lib/match-slug-fuzzy";
 import type { StandingsGroup } from "@/types/standings";
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
@@ -482,6 +485,33 @@ export function championshipMatchHref(
   )}`;
 }
 
+// Jogo remarcado / time renomeado: quando a URL (data + par) não resolve exatamente,
+// procura na tabela do campeonato o jogo compatível (mesmo mando, ≤7 dias, tokens do
+// nome batendo) e devolve o href CANÔNICO dele — que resolve exatamente via
+// resolveChampionshipMatch (mesma fonte), então o 308 não entra em loop. null = 404.
+export async function findRescheduledChampionshipHref(
+  champSlug: string,
+  dateSlug: string,
+  pairSlug: string
+): Promise<string | null> {
+  if (!TOURNAMENT_BY_SLUG[champSlug]) return null;
+  const data = await getChampionshipData(champSlug).catch(() => null);
+  const candidates: RescheduleCandidate[] = [];
+  for (const matches of Object.values(data?.matchesByRound || {})) {
+    for (const m of matches) {
+      if (!m.homeId || !m.awayId || !m.timestamp) continue;
+      candidates.push({
+        dateSlug: matchDateSlug(m.timestamp),
+        timestamp: m.timestamp,
+        homeSlug: selecaoSlugById(m.homeId, m.home),
+        awaySlug: selecaoSlugById(m.awayId, m.away),
+        href: championshipMatchHref(champSlug, m.timestamp, m.homeId, m.awayId, m.home, m.away),
+      });
+    }
+  }
+  return findRescheduled(dateSlug, pairSlug, candidates);
+}
+
 // ---------- Detalhe do jogo (event / incidents / lineups / statistics) ----------
 
 export interface MatchEvent {
@@ -577,6 +607,9 @@ export interface MatchDetail {
   lineupsConfirmed: boolean;
   stats: MatchStatItem[];
   shootout: ShootoutKick[]; // disputa de pênaltis (vazio quando não houve)
+  // O match/{id} veio da cópia em disco (API fora), não da API agora: renderiza, mas
+  // nunca vira snapshot permanente (podia ser um "inprogress" velho).
+  stale?: boolean;
 }
 
 // Teto de segurança: nenhum jogo fica "ao vivo" mais que isso depois do apito
@@ -983,8 +1016,11 @@ export async function getMatchDetail(id: number, startHint?: number): Promise<Ma
     "matches",
     id,
     () => fetchMatchDetailLive(id, startHint),
-    // Encerrado com feed vazio (falha parcial da API) NÃO sobrescreve o snapshot bom.
-    isCompleteMatchSnapshot
+    // Encerrado com feed vazio (falha parcial da API) NÃO sobrescreve o snapshot bom,
+    // nem evento vindo do disco (stale).
+    (d) => !d.stale && isCompleteMatchSnapshot(d),
+    // Snapshot encerrado não volta pra "ao vivo"/"não iniciado".
+    isMatchRegression
   );
   // Comentários editoriais do /cms: injetados FORA do snapshot pra sempre virem frescos
   // (mesmo quando a API cai e serve o snapshot). Encaixados pelo minuto, sem tocar na API.
@@ -993,7 +1029,7 @@ export async function getMatchDetail(id: number, startHint?: number): Promise<Ma
 }
 
 async function fetchMatchDetailLive(id: number, startHint?: number): Promise<MatchDetail | null> {
-  const eventRaw = await fetchAllSports<any>(`match/${id}`, eventTtl(startHint));
+  const { data: eventRaw, stale } = await fetchAllSportsMeta<any>(`match/${id}`, eventTtl(startHint));
   if (!eventRaw?.event) return null;
   const event = normalizeEvent(eventRaw.event);
   const ttl = liveTtl(event.statusType);
@@ -1014,6 +1050,7 @@ async function fetchMatchDetailLive(id: number, startHint?: number): Promise<Mat
     lineupsConfirmed: !!lineRaw?.confirmed,
     stats: normalizeStats(statRaw),
     shootout: normalizeShootout(incRaw),
+    ...(stale ? { stale: true } : {}),
   };
 }
 

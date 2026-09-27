@@ -104,9 +104,10 @@ export async function archiveFinishedMatches({ maxMatches = 60 }: { maxMatches?:
     if (i > 0) await sleep(MATCH_GAP_MS);
     // getMatchDetail grava o snapshot quando a API devolve o evento. Só conta como
     // arquivado se o estado devolvido já for o final (API fora → volta o snapshot velho
-    // ou null → "skipped", tenta de novo na próxima execução).
+    // ou null → "skipped", tenta de novo na próxima execução). Evento vindo do disco
+    // (stale) não foi gravado como snapshot → também "skipped".
     const detail = await getMatchDetail(match.id, match.timestamp).catch(() => null);
-    if (detail?.event?.statusType === "finished" && isCompleteMatchSnapshot(detail)) {
+    if (detail?.event?.statusType === "finished" && !detail.stale && isCompleteMatchSnapshot(detail)) {
       archived++;
       archivedBySlug.set(slug, (archivedBySlug.get(slug) || 0) + 1);
     } else {

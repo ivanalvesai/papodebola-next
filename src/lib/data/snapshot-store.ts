@@ -32,11 +32,15 @@ export async function readSnapshot<T>(category: string, key: string | number): P
 // snapshot salvo (ou o próprio resultado se não houver snapshot). É o que mantém a
 // página viva depois que a API parar de servir. O save é fire-and-forget (o server do
 // Next é um processo persistente, então a escrita conclui sem segurar o render).
+// isRegression (opcional): com snapshot existente, se o dado novo for PIOR que ele
+// (ex.: snapshot "finished" e o novo "inprogress" vindo de cópia velha), não grava e
+// serve o snapshot. Ver src/lib/snapshot-guards.ts.
 export async function withSnapshot<T>(
   category: string,
   key: string | number,
   fetcher: () => Promise<T | null>,
-  isReal: (d: T) => boolean
+  isReal: (d: T) => boolean,
+  isRegression?: (prev: T, next: T) => boolean
 ): Promise<T | null> {
   let live: T | null = null;
   try {
@@ -45,6 +49,10 @@ export async function withSnapshot<T>(
     live = null;
   }
   if (live != null && isReal(live)) {
+    if (isRegression) {
+      const snap = await readSnapshot<T>(category, key);
+      if (snap != null && isRegression(snap, live)) return snap;
+    }
     void saveSnapshot(category, key, live);
     return live;
   }

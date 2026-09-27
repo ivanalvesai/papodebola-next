@@ -5,7 +5,8 @@
   "scripts": {
     "dev": "next dev",
     "build": "node scripts/gen-importmap.mjs && next build",
-    "start": "next start"
+    "start": "next start",
+    "test": "node --test --experimental-strip-types src/lib/*.test.ts src/lib/api/*.test.ts"
   },
   "dependencies": {
     "@base-ui/react": "^1.4.0",

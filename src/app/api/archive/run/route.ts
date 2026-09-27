@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { archiveFinishedMatches } from "@/lib/data/tournament-archive";
+import { pruneApiCache } from "@/lib/api/api-cache";
+import { shouldDiskCache } from "@/lib/api/cache-policy";
 
 // Rotina de arquivamento permanente (cron da madrugada no DEV):
 //   GET /api/archive/run?secret=<REVALIDATION_SECRET>&max=60
@@ -27,8 +29,11 @@ export async function GET(request: NextRequest) {
 
   running = true;
   try {
+    // Limpeza do data/api-cache antes de arquivar: arquivos sem uso há 45+ dias e os de
+    // endpoints que saíram do cache (sub-endpoints de jogo, feeds /live).
+    const { pruned } = await pruneApiCache({ isExcluded: (e) => !shouldDiskCache(e) });
     const result = await archiveFinishedMatches({ maxMatches: max });
-    return NextResponse.json(result);
+    return NextResponse.json({ ...result, pruned });
   } catch (err) {
     return NextResponse.json(
       { error: "Falha no arquivamento", detail: err instanceof Error ? err.message : String(err) },

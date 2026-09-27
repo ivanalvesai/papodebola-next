@@ -1,9 +1,14 @@
 import type { Metadata } from "next";
-import { notFound } from "next/navigation";
+import { notFound, permanentRedirect } from "next/navigation";
 import { PageBreadcrumb } from "@/components/seo/page-breadcrumb";
 import { LiveMatch } from "@/components/world-cup/live-match";
 import { SportsEventSchema } from "@/components/seo/sports-event-schema";
-import { resolveChampionshipMatch, resolveFixtureByEventId, getMatchDetail } from "@/lib/data/match-detail";
+import {
+  resolveChampionshipMatch,
+  resolveFixtureByEventId,
+  findRescheduledChampionshipHref,
+  getMatchDetail,
+} from "@/lib/data/match-detail";
 
 // Lance a lance de QUALQUER campeonato (Série B, Série A, Libertadores...), no mesmo
 // padrão da Copa: /futebol/{campeonato}/jogo/{data}/{confronto}. A Copa do Mundo tem rota
@@ -17,7 +22,9 @@ type Params = { slug: string; data: string; match: string };
 //    getMatchDetail — validando data + confronto. É 1 chamada (e o detalhe é reaproveitado
 //    pela página), contra a tabela inteira do campeonato + feeds (primeira carga de até ~28 s);
 // 2) senão (ou se o id não bater), pela tabela do campeonato (+ feeds ao vivo).
-// Usado tanto no generateMetadata quanto na página — mesmo helper nos dois.
+// Usado no generateMetadata (só a resolução exata: se falhar devolve {} — sem
+// redirect nem notFound, senão a URL remarcada viraria 404 antes da página
+// redirecionar) e, via resolveOrRedirect, na página.
 async function resolveFixture(slug: string, data: string, match: string) {
   // id do jogo anexado ao fim do slug pela barra (…-{apiId}); só ids longos (>=6 dígitos)
   // pra não confundir com um número que faça parte do nome do time.
@@ -31,6 +38,18 @@ async function resolveFixture(slug: string, data: string, match: string) {
   return resolveChampionshipMatch(slug, data, match);
 }
 
+// Resolve o jogo; se a URL não bate exatamente (jogo remarcado pela API ou time
+// renomeado, mudando o slug do par), faz 308 pra URL canônica do jogo compatível;
+// senão 404. Só no corpo da página (redirect não acontece no generateMetadata).
+async function resolveOrRedirect(slug: string, data: string, match: string) {
+  const fixture = await resolveFixture(slug, data, match);
+  if (fixture) return fixture;
+  const pairSlug = match.replace(/-\d{6,}$/, "");
+  const href = await findRescheduledChampionshipHref(slug, data, pairSlug);
+  if (href) permanentRedirect(href);
+  notFound();
+}
+
 export async function generateMetadata({
   params,
 }: {
@@ -38,7 +57,7 @@ export async function generateMetadata({
 }): Promise<Metadata> {
   const { slug, data, match } = await params;
   const fixture = await resolveFixture(slug, data, match);
-  if (!fixture) notFound();
+  if (!fixture) return {}; // a página decide: 308 (remarcado/renomeado) ou 404
   const title = `${fixture.home} x ${fixture.away} ao vivo - ${fixture.tournamentName}`;
   return {
     title,
@@ -53,8 +72,7 @@ export default async function JogoCampeonatoPage({
   params: Promise<Params>;
 }) {
   const { slug, data, match } = await params;
-  const fixture = await resolveFixture(slug, data, match);
-  if (!fixture) notFound();
+  const fixture = await resolveOrRedirect(slug, data, match);
 
   const detail = await getMatchDetail(fixture.id);
 

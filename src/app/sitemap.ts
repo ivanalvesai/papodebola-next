@@ -16,6 +16,7 @@ import { getMunicipalGameKeys } from "@/lib/data/municipal-game";
 import { getChampionshipData } from "@/lib/data/championship";
 import { readSnapshot } from "@/lib/data/snapshot-store";
 import { selecaoMatchHref, type SelecaoFixture } from "@/lib/data/selecao-jogos";
+import { isWorldCupFixture } from "@/lib/world-cup-fixture";
 import { getTennisDraw, TENNIS_TOURNAMENTS, tennisMatchHref, type TennisTournamentSlug } from "@/lib/data/tennis";
 
 // Ligas cujas páginas de jogo (lance a lance) entram no sitemap. A Copa tem bloco
@@ -195,8 +196,12 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   }));
 
   // Jogos da Seleção Brasileira (amistosos/Eliminatórias) — só o índice arquivado no
-  // volume, sem chamar a API (a página do hub é quem alimenta o índice).
-  const selecaoGames = (await readSnapshot<SelecaoFixture[]>("selecao", "jogos").catch(() => null)) || [];
+  // volume, sem chamar a API (a página do hub é quem alimenta o índice). Jogos da Copa
+  // do Mundo ficam de fora: já entram em copaMatchPages, e a URL aqui seria a mesma
+  // (selecaoMatchHref redireciona pra lá) — listar os dois seria duplicar a entrada.
+  const selecaoGames = (
+    (await readSnapshot<SelecaoFixture[]>("selecao", "jogos").catch(() => null)) || []
+  ).filter((f) => !isWorldCupFixture(f));
   const selecaoMatchPages: MetadataRoute.Sitemap = selecaoGames.map((f) => ({
     url: `${BASE}${selecaoMatchHref(f)}`,
     lastModified: new Date(f.timestamp * 1000),
