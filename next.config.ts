@@ -126,6 +126,21 @@ const nextConfig: NextConfig = {
       { source: "/jogos-de-jogos-de-hoje/:path*", destination: "/jogos-de-hoje/futebol", permanent: true },
       // Copa com underscore (link antigo) -> slug com hífen, preservando o resto do path.
       { source: "/futebol/copa_do_mundo/:path*", destination: "/futebol/copa-do-mundo/:path*", permanent: true },
+      // Jogos com o slug antigo do CRB ("clube-de-regatas-brasil") -> slug atual "crb",
+      // como mandante ou visitante. O destino não contém "clube-de-regatas-brasil" => sem loop.
+      {
+        source: "/futebol/:champ/jogo/:data/clube-de-regatas-brasil-:rest",
+        destination: "/futebol/:champ/jogo/:data/crb-:rest",
+        permanent: true,
+      },
+      {
+        source: "/futebol/:champ/jogo/:data/:first-clube-de-regatas-brasil",
+        destination: "/futebol/:champ/jogo/:data/:first-crb",
+        permanent: true,
+      },
+      // Municipal: URL antiga de 1 segmento (jogo/{slug}-{hash}, sem data) -> hub. `:old` é um
+      // segmento só, então não casa a rota atual jogo/{data}/{slug} (2 segmentos).
+      { source: "/sp/santana-de-parnaiba/municipal/jogo/:old", destination: "/sp/santana-de-parnaiba/municipal", permanent: true },
 
       // Artigos do portal anterior: a URL era /artigos/{slug}.html; hoje o mesmo artigo
       // vive em /{categoria}/{slug}. Tirando o .html cai em /artigos/{slug}, que já faz
