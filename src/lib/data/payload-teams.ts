@@ -19,17 +19,30 @@ export interface PayloadTeam extends TeamSeoDoc {
   layoutEstatisticas?: any[];
 }
 
-// Busca um time publicado por slug. null em QUALQUER erro/ausência (banco fora, sem doc)
+// TEAMS_CMS_DRAFTS=1 (só no dev): getTeam e getPayloadTeamSlugs enxergam também os
+// rascunhos, pra conferir a migração dos times no dev antes de publicar. Prod não seta.
+const DRAFTS = process.env.TEAMS_CMS_DRAFTS === "1";
+
+// Busca um time publicado por slug (no dev com TEAMS_CMS_DRAFTS=1, também rascunho).
+// null em QUALQUER erro/ausência (banco fora, sem doc)
 // → a rota faz fallback pro time do config (Série A/EU) ou 404. cache() dedup por request.
 export const getTeam = cache(async (slug: string): Promise<PayloadTeam | null> => {
   try {
     const payload = await getPayload({ config });
-    const res = await payload.find({
-      collection: "teams",
-      where: { slug: { equals: slug }, _status: { equals: "published" } },
-      limit: 1,
-      depth: 1,
-    });
+    const res = DRAFTS
+      ? await payload.find({
+          collection: "teams",
+          draft: true,
+          where: { slug: { equals: slug } },
+          limit: 1,
+          depth: 1,
+        })
+      : await payload.find({
+          collection: "teams",
+          where: { slug: { equals: slug }, _status: { equals: "published" } },
+          limit: 1,
+          depth: 1,
+        });
     return (res.docs[0] as unknown as PayloadTeam) || null;
   } catch {
     return null;
@@ -37,16 +50,25 @@ export const getTeam = cache(async (slug: string): Promise<PayloadTeam | null> =
 });
 
 // Slugs de todos os times publicados (pra generateStaticParams das rotas de time).
+// No dev com TEAMS_CMS_DRAFTS=1, inclui os rascunhos.
 export const getPayloadTeamSlugs = cache(async (): Promise<string[]> => {
   try {
     const payload = await getPayload({ config });
-    const res = await payload.find({
-      collection: "teams",
-      where: { _status: { equals: "published" } },
-      limit: 500,
-      depth: 0,
-      pagination: false,
-    });
+    const res = DRAFTS
+      ? await payload.find({
+          collection: "teams",
+          draft: true,
+          limit: 500,
+          depth: 0,
+          pagination: false,
+        })
+      : await payload.find({
+          collection: "teams",
+          where: { _status: { equals: "published" } },
+          limit: 500,
+          depth: 0,
+          pagination: false,
+        });
     return res.docs.map((d: any) => d.slug).filter(Boolean);
   } catch {
     return [];

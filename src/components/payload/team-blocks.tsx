@@ -3,8 +3,9 @@ import Image from "next/image";
 import { RichText } from "@payloadcms/richtext-lexical/react";
 import { ArrowRight, Calendar, Trophy, BarChart3, Tv, Users } from "lucide-react";
 import { TeamLogo } from "@/components/ui/team-logo";
-import type { TeamPageData } from "@/lib/data/team";
-import { BroadcastChannels } from "@/components/team/team-narrative";
+import type { TeamPageData, TeamLastLineup } from "@/lib/data/team";
+import { buildTeamNarrative, type TeamNarrativePage } from "@/lib/team-narrative";
+import { BroadcastChannels, ProbableLineup, TeamNarrativeSection } from "@/components/team/team-narrative";
 
 // Renderer dos blocos da collection `teams` (Payload). Cada bloco DINÂMICO lê os dados
 // ao vivo já buscados (TeamPageData, via getTeamPageDataFor) — mesmos cards do cluster
@@ -296,7 +297,17 @@ function StaticText({ block }: { block: any }) {
   );
 }
 
-function Block({ block, data }: { block: any; data: TeamPageData }) {
+function Block({
+  block,
+  data,
+  page,
+  lineup,
+}: {
+  block: any;
+  data: TeamPageData;
+  page: TeamNarrativePage;
+  lineup: TeamLastLineup | null;
+}) {
   const t = block.title || undefined;
   switch (block.blockType) {
     case "teamTodayMatch": return <TodayMatch data={data} title={t} />;
@@ -310,6 +321,13 @@ function Block({ block, data }: { block: any; data: TeamPageData }) {
     case "teamClusterLinks": return <ClusterLinks data={data} />;
     case "heading": return <Heading block={block} />;
     case "richText": return <StaticText block={block} />;
+    case "teamAutoText":
+      return (
+        <div className="space-y-5">
+          {page === "escalacao" && <ProbableLineup lineup={lineup} />}
+          <TeamNarrativeSection narrative={buildTeamNarrative(data, page, { lineup })} />
+        </div>
+      );
     default: return null;
   }
 }
@@ -317,36 +335,22 @@ function Block({ block, data }: { block: any; data: TeamPageData }) {
 export function TeamBlockRenderer({
   data,
   blocks,
+  page,
+  lineup,
   heading,
 }: {
   data: TeamPageData;
   blocks: any[];
+  page: TeamNarrativePage;
+  lineup: TeamLastLineup | null;
   heading?: string;
 }) {
   return (
     <div className="mx-auto max-w-[860px] px-4 py-6 space-y-5">
       {heading && <h1 className="text-xl font-bold text-text-primary">{heading}</h1>}
       {(blocks || []).map((b, i) => (
-        <Block key={i} block={b} data={data} />
+        <Block key={i} block={b} data={data} page={page} lineup={lineup} />
       ))}
     </div>
   );
 }
-
-// Layouts padrão por página — usados quando a aba do time está vazia no Payload, pra o
-// time semeado já renderizar completo (igual ao cluster Série A) sem composição manual.
-export const DEFAULT_TEAM_LAYOUTS: Record<string, any[]> = {
-  hub: [
-    { blockType: "teamClusterLinks" },
-    { blockType: "teamTodayMatch" },
-    { blockType: "teamStanding" },
-    { blockType: "teamUpcoming", limit: 5 },
-    { blockType: "teamResults", limit: 5 },
-    { blockType: "teamNews", limit: 8 },
-  ],
-  jogoHoje: [{ blockType: "teamTodayMatch" }, { blockType: "teamUpcoming", limit: 5 }],
-  ondeAssistir: [{ blockType: "teamWhereToWatch" }],
-  escalacao: [{ blockType: "teamLineup" }],
-  proximos: [{ blockType: "teamUpcoming", limit: 20 }],
-  estatisticas: [{ blockType: "teamStanding" }, { blockType: "teamScorers", limit: 10 }],
-};

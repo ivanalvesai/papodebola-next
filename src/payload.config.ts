@@ -43,6 +43,7 @@ const teamLayoutBlocks: Block[] = [
   { slug: "teamWhereToWatch", labels: { singular: "Onde assistir", plural: "Onde assistir" }, fields: [blockTitle] },
   { slug: "teamLineup", labels: { singular: "Escalação provável", plural: "Escalação" }, fields: [blockTitle] },
   { slug: "teamClusterLinks", labels: { singular: "Links do cluster (hub)", plural: "Links do cluster" }, fields: [] },
+  { slug: "teamAutoText", labels: { singular: "Texto automático do time", plural: "Textos automáticos" }, fields: [] },
   // — Estáticos (texto autoral) —
   {
     slug: "richText",
@@ -65,7 +66,19 @@ const teamLayoutTab = (name: string, label: string): Field => ({
   label: "Layout",
   type: "blocks",
   blocks: teamLayoutBlocks,
-  admin: { description: `Blocos da página "${label}". Vazio = usa o layout padrão (igual Série A).` },
+  admin: { description: `Blocos da página "${label}". Vazio = página padrão do site.` },
+});
+
+// SEO de uma aba do time (meta title/description). O da aba Hub mantém o name "seo"
+// (mesmas colunas no banco); as outras abas usam seoJogoHoje, seoOndeAssistir etc.
+const teamSeoGroup = (name: string): Field => ({
+  name,
+  type: "group",
+  label: "SEO desta página",
+  fields: [
+    { name: "metaTitle", type: "text", label: "Título (meta title)" },
+    { name: "metaDescription", type: "textarea", label: "Descrição (meta description)" },
+  ],
 });
 
 // Payload (Fase 1 da migração). Admin em /cms e API em /cms-api pra NÃO colidir
@@ -812,7 +825,7 @@ export default buildConfig({
         useAsTitle: "name",
         defaultColumns: ["name", "slug", "tournament", "_status"],
         description:
-          "Páginas de time geridas no CMS (piloto: Série B). Identidade + SEO + layout (blocos) por página. Layout vazio = layout padrão do código (igual Série A).",
+          "Páginas de time geridas no CMS. Aba de layout vazia = página padrão do site. SEO de cada aba fica dentro da aba.",
       },
       versions: { drafts: true, maxPerDoc: 30 },
       access: {
@@ -862,26 +875,19 @@ export default buildConfig({
           options: [
             { label: "Brasileirão Série A", value: "serie-a" },
             { label: "Brasileirão Série B", value: "serie-b" },
+            { label: "Europa (sem tabela do Brasileirão)", value: "europa" },
           ],
           admin: { description: "Define a classificação/artilharia corretas" },
         },
         {
           type: "tabs",
           tabs: [
-            { label: "Hub", fields: [teamLayoutTab("layoutHub", "Hub")] },
-            { label: "Jogo de hoje", fields: [teamLayoutTab("layoutJogoHoje", "Jogo de hoje")] },
-            { label: "Onde assistir", fields: [teamLayoutTab("layoutOndeAssistir", "Onde assistir")] },
-            { label: "Escalação", fields: [teamLayoutTab("layoutEscalacao", "Escalação")] },
-            { label: "Próximos jogos", fields: [teamLayoutTab("layoutProximos", "Próximos jogos")] },
-            { label: "Estatísticas", fields: [teamLayoutTab("layoutEstatisticas", "Estatísticas")] },
-          ],
-        },
-        {
-          name: "seo",
-          type: "group",
-          fields: [
-            { name: "metaTitle", type: "text" },
-            { name: "metaDescription", type: "textarea" },
+            { label: "Hub", fields: [teamLayoutTab("layoutHub", "Hub"), teamSeoGroup("seo")] },
+            { label: "Jogo de hoje", fields: [teamLayoutTab("layoutJogoHoje", "Jogo de hoje"), teamSeoGroup("seoJogoHoje")] },
+            { label: "Onde assistir", fields: [teamLayoutTab("layoutOndeAssistir", "Onde assistir"), teamSeoGroup("seoOndeAssistir")] },
+            { label: "Escalação", fields: [teamLayoutTab("layoutEscalacao", "Escalação"), teamSeoGroup("seoEscalacao")] },
+            { label: "Próximos jogos", fields: [teamLayoutTab("layoutProximos", "Próximos jogos"), teamSeoGroup("seoProximos")] },
+            { label: "Estatísticas", fields: [teamLayoutTab("layoutEstatisticas", "Estatísticas"), teamSeoGroup("seoEstatisticas")] },
           ],
         },
       ],

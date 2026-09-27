@@ -291,6 +291,7 @@ export const ALL_CLUSTER_TEAMS: TeamInfo[] = [...PANEL_TEAMS_BR, ...PANEL_TEAMS_
 // Serve tanto p/ times do config quanto p/ TeamInfo montado a partir de um doc do Payload.
 export function teamTournament(team: TeamInfo): Tournament | null {
   if (team.tournament === 'serie-b') return TOURNAMENTS.BRASILEIRAO_B;
+  if (team.tournament === 'europa') return null;
   if (EU_SLUGS.includes(team.slug)) return null;
   return TOURNAMENTS.BRASILEIRAO_A; // default p/ times BR (Série A)
 }
