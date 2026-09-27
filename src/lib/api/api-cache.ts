@@ -56,3 +56,38 @@ export async function readLastGood<T>(endpoint: string): Promise<T | null> {
     return null;
   }
 }
+
+// Disjuntor (circuit breaker): com a API fora, ~40 endpoints numa página não podem
+// tentar a rede um a um (medido: 35s com 403 rápido, minutos num timeout real de
+// 8s). Depois de falhas consecutivas de OUTAGE (não erro semântico tipo endpoint
+// deprecated), fetchAllSports pula a rede por 60s e serve direto do disco.
+const BREAKER_FAILURE_THRESHOLD = 5;
+const BREAKER_OPEN_MS = 60_000;
+let consecutiveFailures = 0;
+let breakerOpenUntil = 0;
+
+// ok=false conta como falha; qualquer sucesso reseta a contagem (inclusive o
+// "sucesso" do half-open, que fecha o disjuntor de novo).
+export function recordResult(ok: boolean, now: number): void {
+  if (ok) {
+    consecutiveFailures = 0;
+    breakerOpenUntil = 0;
+    return;
+  }
+  consecutiveFailures++;
+  if (consecutiveFailures >= BREAKER_FAILURE_THRESHOLD) {
+    breakerOpenUntil = now + BREAKER_OPEN_MS;
+  }
+}
+
+// Aberto = pula a rede. Passado o breakerOpenUntil, fica "half-open": esta função
+// já devolve false (deixa passar), e o resultado dessa tentativa decide via
+// recordResult se fecha (sucesso) ou reabre por mais 60s (falha).
+export function breakerOpen(now: number): boolean {
+  return now < breakerOpenUntil;
+}
+
+export function __resetBreaker(): void {
+  consecutiveFailures = 0;
+  breakerOpenUntil = 0;
+}
