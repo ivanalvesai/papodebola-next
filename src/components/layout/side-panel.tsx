@@ -215,7 +215,7 @@ export function SidePanel() {
           <div className="px-5 py-2.5 text-xs font-bold text-text-primary uppercase tracking-wider bg-body">
             Esportes
           </div>
-          <Link href="/basquete" onClick={close} className="block px-5 py-2.5 text-sm text-text-secondary hover:bg-green-light hover:text-green transition-colors">
+          <Link href="/nba" onClick={close} className="block px-5 py-2.5 text-sm text-text-secondary hover:bg-green-light hover:text-green transition-colors">
             Basquete
           </Link>
           <Link href="/boxe" onClick={close} className="block px-5 py-2.5 text-sm text-text-secondary hover:bg-green-light hover:text-green transition-colors">

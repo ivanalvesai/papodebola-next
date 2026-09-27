@@ -134,10 +134,11 @@ export const CBF_IDS = {
   COPA_NORDESTE: 1260624,
 } as const;
 
-// Sports — cada esporte tem URL top-level. Basquete tem landing + /basquete/nba;
+// Sports — cada esporte tem URL top-level. Basquete = /nba (a landing /basquete e
+// /basquete/nba viraram 308 pra /nba — linkar direto, sem passar pelo redirect);
 // os outros são single-page diretos. Boxe e Futsal adicionados em 17/04/2026.
 export const SPORTS = [
-  { slug: 'basquete',           name: 'Basquete',          icon: 'basketball', href: '/basquete' },
+  { slug: 'basquete',           name: 'Basquete',          icon: 'basketball', href: '/nba' },
   { slug: 'tenis',              name: 'Tênis',             icon: 'tennis',     href: '/tenis' },
   { slug: 'formula-1',          name: 'Fórmula 1',         icon: 'flag',       href: '/formula-1' },
   { slug: 'combate',            name: 'Combate',           icon: 'swords',     href: '/combate' },
