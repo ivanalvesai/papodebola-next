@@ -71,3 +71,20 @@ export function planArchive(
   }
   return { tournaments, queue, pendingTotal };
 }
+
+// Snapshot de jogo "completo": jogo encerrado só vale com feed (incidents OU commentary)
+// não vazio — senão uma falha parcial da API gravaria um "finished" oco por cima de um
+// snapshot bom, e o arquivamento o daria por arquivado pra sempre. Jogo não encerrado
+// (ao vivo/futuro) continua salvando como antes.
+export interface MatchSnapshotLike {
+  event?: { statusType?: string } | null;
+  incidents?: unknown[] | null;
+  commentary?: unknown[] | null;
+}
+
+export function isCompleteMatchSnapshot(d: MatchSnapshotLike | null | undefined): boolean {
+  return (
+    !!d?.event &&
+    (d.event.statusType !== "finished" || (d.incidents?.length ?? 0) + (d.commentary?.length ?? 0) > 0)
+  );
+}

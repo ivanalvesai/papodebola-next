@@ -1,6 +1,6 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { planArchive, isFinishedMatch } from "./archive-select.ts";
+import { planArchive, isFinishedMatch, isCompleteMatchSnapshot } from "./archive-select.ts";
 
 const NOW = 2_000_000_000;
 
@@ -62,4 +62,14 @@ test("id repetido (grupos + mata-mata da Copa) entra uma vez só", () => {
   assert.equal(plan.queue.length, 1);
   assert.equal(plan.tournaments[0].finishedMatches, 1);
   assert.equal(plan.tournaments[1].finishedMatches, 0);
+});
+
+test("snapshot de jogo encerrado só é completo com feed", () => {
+  const fin = { statusType: "finished" };
+  assert.equal(isCompleteMatchSnapshot({ event: fin, incidents: [], commentary: [] }), false);
+  assert.equal(isCompleteMatchSnapshot({ event: fin, incidents: [{}], commentary: [] }), true);
+  assert.equal(isCompleteMatchSnapshot({ event: fin, incidents: [], commentary: [{}] }), true);
+  assert.equal(isCompleteMatchSnapshot({ event: { statusType: "inprogress" }, incidents: [], commentary: [] }), true);
+  assert.equal(isCompleteMatchSnapshot(null), false);
+  assert.equal(isCompleteMatchSnapshot({ event: null, incidents: [{}] }), false);
 });

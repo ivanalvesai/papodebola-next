@@ -1,5 +1,11 @@
 import { TOURNAMENTS } from "@/lib/config";
-import { planArchive, type ArchiveMatch, type ArchiveTournamentInput } from "@/lib/archive-select";
+import {
+  planArchive,
+  isCompleteMatchSnapshot,
+  type ArchiveMatch,
+  type ArchiveTournamentInput,
+  type MatchSnapshotLike,
+} from "@/lib/archive-select";
 import { getChampionshipData } from "./championship";
 import { getMatchDetail, getWorldCupFixtures, getWorldCupKnockoutFixtures } from "./match-detail";
 import { getTopScorers, getWorldCupScorers } from "./scorers";
@@ -34,11 +40,11 @@ export interface ArchiveResult {
   ms: number;
 }
 
-type SnapMatch = { event?: { statusType?: string } | null };
 
 async function isArchivedFinished(id: number): Promise<boolean> {
-  const snap = await readSnapshot<SnapMatch>("matches", id);
-  return snap?.event?.statusType === "finished";
+  // Encerrado E com feed: "finished" oco (falha parcial da API) é refeito na próxima execução.
+  const snap = await readSnapshot<MatchSnapshotLike>("matches", id);
+  return snap?.event?.statusType === "finished" && isCompleteMatchSnapshot(snap);
 }
 
 async function loadTournaments(): Promise<ArchiveTournamentInput[]> {
@@ -101,7 +107,7 @@ export async function archiveFinishedMatches({ maxMatches = 60 }: { maxMatches?:
     // arquivado se o estado devolvido já for o final (API fora → volta o snapshot velho
     // ou null → "skipped", tenta de novo na próxima execução).
     const detail = await getMatchDetail(match.id, match.timestamp).catch(() => null);
-    if (detail?.event?.statusType === "finished") {
+    if (detail?.event?.statusType === "finished" && isCompleteMatchSnapshot(detail)) {
       archived++;
       archivedBySlug.set(slug, (archivedBySlug.get(slug) || 0) + 1);
     } else {

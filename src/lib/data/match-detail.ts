@@ -6,6 +6,7 @@ import { translateEnPt } from "@/lib/services/translate";
 import { getWorldCupStandings } from "./standings";
 import { getChampionshipData } from "./championship";
 import { withSnapshot } from "./snapshot-store";
+import { isCompleteMatchSnapshot } from "@/lib/archive-select";
 import { getMatchComments } from "./match-comments";
 import { TOURNAMENT_BY_SLUG } from "@/lib/config";
 import type { StandingsGroup } from "@/types/standings";
@@ -982,7 +983,8 @@ export async function getMatchDetail(id: number, startHint?: number): Promise<Ma
     "matches",
     id,
     () => fetchMatchDetailLive(id, startHint),
-    (d) => !!d.event
+    // Encerrado com feed vazio (falha parcial da API) NÃO sobrescreve o snapshot bom.
+    isCompleteMatchSnapshot
   );
   // Comentários editoriais do /cms: injetados FORA do snapshot pra sempre virem frescos
   // (mesmo quando a API cai e serve o snapshot). Encaixados pelo minuto, sem tocar na API.
