@@ -1,3 +1,5 @@
+import { readLastGood, saveLastGood, shouldFallback } from "./api-cache";
+
 // Suporta as DUAS APIs, detectado pelo host (env ALLSPORTS_API_HOST):
 //  - SportApi7 (Sofascore nativo): base /api/v1 + tradutor toSofascore.
 //  - AllSportsApi antiga (allsportsapi2): base /api + caminhos originais (sem tradução).
@@ -170,10 +172,10 @@ async function fetchWithRetry<T>(
   return { ok: false, data: null, reason: "http" };
 }
 
-export async function fetchAllSports<T>(
+async function fetchAllSportsResult<T>(
   endpoint: string,
   revalidate: number = 1800
-): Promise<T | null> {
+): Promise<{ ok: boolean; data: T | null }> {
   const proxyUrl = process.env.SPORTS_PROXY_URL;
   const proxyToken = process.env.SPORTS_PROXY_TOKEN;
   const isBuildPhase = process.env.NEXT_PHASE === "phase-production-build";
@@ -189,17 +191,17 @@ export async function fetchAllSports<T>(
       revalidate,
       `SportsProxy[${sofa}]`
     );
-    if (result.ok) return result.data;
+    if (result.ok) return { ok: true, data: result.data };
 
     if (isBuildPhase) {
       console.warn(`Build: proxy indisponivel (host.docker.internal nao resolve no builder), skip direct: ${endpoint}`);
-      return null;
+      return { ok: false, data: null };
     }
     // Só cai pro fetch DIRETO se o proxy (dev) estiver INACESSÍVEL. Se o proxy
     // respondeu erro (429/5xx), NÃO re-consulta direto: dobraria o hang e violaria
     // "só o dev consulta a API" (prod re-bateria no rapidapi e tomaria 429 também).
     // O cliente faz polling — a página renderiza com o que tiver.
-    if (result.reason !== "unreachable") return null;
+    if (result.reason !== "unreachable") return { ok: false, data: null };
     console.warn(`SportsProxy unreachable, falling back to direct API: ${endpoint}`);
   }
 
@@ -209,7 +211,7 @@ export async function fetchAllSports<T>(
   // (Prod ja pula porque o proxy nao resolve no builder — ver acima.)
   if (isBuildPhase) {
     console.warn(`Build: skip direct AllSports (dev), ISR popula em runtime: ${endpoint}`);
-    return null;
+    return { ok: false, data: null };
   }
 
   // Contador pra medir uso real (grep SPORTAPI_HIT nos logs por janela de tempo).
@@ -223,7 +225,22 @@ export async function fetchAllSports<T>(
     revalidate,
     `SportApi7[${sofa}]`
   );
-  return result.data;
+  return { ok: result.ok, data: result.data };
+}
+
+export async function fetchAllSports<T>(
+  endpoint: string,
+  revalidate: number = 1800
+): Promise<T | null> {
+  const res = await fetchAllSportsResult<T>(endpoint, revalidate);
+  if (res.ok) {
+    if (res.data != null) void saveLastGood(endpoint, res.data);
+    return res.data;
+  }
+  if (!shouldFallback(res.ok, revalidate)) return null;
+  const stale = await readLastGood<T>(endpoint);
+  if (stale != null) console.warn(`API_FALLBACK_DISK ${endpoint}`);
+  return stale;
 }
 
 export async function fetchSport<T>(
