@@ -95,6 +95,15 @@ const nextConfig: NextConfig = {
       { source: "/esporte/esports", destination: "/esports", permanent: true },
       { source: "/esporte/nfl", destination: "/futebol-americano", permanent: true },
 
+      // Raízes de categoria sem hub próprio (27/09): o artigo mora em /{categoria}/{slug}
+      // (200), mas /{categoria} sozinho dava 404. Só o path exato — os artigos continuam.
+      { source: "/futebol-brasileiro", destination: "/noticias/futebol-brasileiro", permanent: true },
+      { source: "/futebol-internacional", destination: "/noticias/futebol-internacional", permanent: true },
+      { source: "/mma", destination: "/combate", permanent: true },
+      { source: "/nfl", destination: "/futebol-americano", permanent: true },
+      { source: "/paginas", destination: "/", permanent: true },
+      { source: "/autor", destination: "/sobre", permanent: true },
+
       // Artigos do portal anterior: a URL era /artigos/{slug}.html; hoje o mesmo artigo
       // vive em /{categoria}/{slug}. Tirando o .html cai em /artigos/{slug}, que já faz
       // 308 pra URL canônica por categoria → recupera o SEO das 260 URLs que ainda
