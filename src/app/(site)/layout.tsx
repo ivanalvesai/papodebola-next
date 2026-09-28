@@ -47,6 +47,23 @@ export async function generateMetadata(): Promise<Metadata> {
     twitter: {
       card: "summary_large_image",
     },
+    // Permite ao Google mostrar a imagem grande, o trecho completo e a prévia de vídeo
+    // (recomendação do Google para aparecer no Discover). Páginas que definem os
+    // próprios robots (preview do CMS, Studio: noindex) substituem esta regra.
+    robots: {
+      index: true,
+      follow: true,
+      "max-image-preview": "large",
+      "max-snippet": -1,
+      "max-video-preview": -1,
+      googleBot: {
+        index: true,
+        follow: true,
+        "max-image-preview": "large",
+        "max-snippet": -1,
+        "max-video-preview": -1,
+      },
+    },
     other: {
       // Verificacao da conta do Google AdSense (renderiza <meta name="google-adsense-account">)
       "google-adsense-account": "ca-pub-5802007717322888",
