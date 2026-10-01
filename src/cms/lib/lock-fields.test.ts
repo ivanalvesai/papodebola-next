@@ -55,3 +55,27 @@ test("aba nomeada fora da allowlist é travada inteira", () => {
   assert.equal(out[0].tabs[0].access.update, fieldEditorOrAdmin);
   assert.equal(out[0].tabs[1].access, undefined);
 });
+
+test("excerpt (meta description dos posts) fica livre; title travado", () => {
+  const out: any[] = lockFieldsExceptSeo([{ name: "title", type: "text" }, { name: "excerpt", type: "textarea" }] as any) as any;
+  assert.equal(out[0].access.update, fieldEditorOrAdmin);
+  assert.equal(out[1].access, undefined);
+});
+
+test("collapsible: desce e trava o texto de dentro", () => {
+  const out: any[] = lockFieldsExceptSeo([{ type: "collapsible", label: "X", fields: [{ name: "a", type: "text" }] }] as any) as any;
+  assert.equal(out[0].access, undefined);
+  assert.equal(out[0].fields[0].access.update, fieldEditorOrAdmin);
+});
+
+test("aba nomeada com grupo seo dentro é travada inteira (não desce)", () => {
+  const out: any[] = lockFieldsExceptSeo([{ type: "tabs", tabs: [{ name: "conteudo", fields: [{ name: "seo", type: "group", fields: [{ name: "metaTitle", type: "text" }] }] }] }] as any) as any;
+  assert.equal(out[0].tabs[0].access.update, fieldEditorOrAdmin);
+  assert.equal(out[0].tabs[0].fields[0].access, undefined);
+});
+
+test("array com blocks dentro é travado inteiro, sem descer", () => {
+  const out: any[] = lockFieldsExceptSeo([{ name: "itens", type: "array", fields: [{ name: "layout", type: "blocks", blocks: [] }] }] as any) as any;
+  assert.equal(out[0].access.update, fieldEditorOrAdmin);
+  assert.equal(out[0].fields[0].access, undefined);
+});

@@ -9,7 +9,7 @@ import { fieldEditorOrAdmin } from "./access.ts";
 
 export const SEO_FIELD_ALLOWLIST: readonly string[] = [
   "seo", "seoJogoHoje", "seoOndeAssistir", "seoEscalacao", "seoProximos", "seoEstatisticas",
-  "metaTitle", "metaDescription", "noindex",
+  "metaTitle", "metaDescription", "noindex", "excerpt",
 ];
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
