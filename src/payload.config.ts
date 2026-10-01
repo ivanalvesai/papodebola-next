@@ -16,6 +16,7 @@ import { pt } from "@payloadcms/translations/languages/pt";
 import { pageBlocks, TEAM_LAYOUT_BLOCKS } from "@/cms/blocks";
 import { pagesCollection } from "@/cms/collections/pages";
 import { pageTemplatesCollection } from "@/cms/collections/page-templates";
+import { isAutosave } from "@/cms/lib/is-autosave";
 import { previewUrl, PREVIEW_BREAKPOINTS } from "@/cms/lib/preview-url";
 
 const filename = fileURLToPath(import.meta.url);
@@ -603,7 +604,8 @@ export default buildConfig({
       hooks: {
         afterChange: [
           /* eslint-disable-next-line @typescript-eslint/no-explicit-any */
-          ({ doc }: any) => {
+          ({ doc, req }: any) => {
+            if (isAutosave(req)) return doc;
             try {
               const base = `/futebol/times/${doc.slug}`;
               for (const p of [base, `${base}/jogo-hoje`, `${base}/onde-assistir`, `${base}/escalacao`, `${base}/proximos-jogos`, `${base}/estatisticas`]) {

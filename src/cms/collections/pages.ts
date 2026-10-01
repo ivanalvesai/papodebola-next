@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { pageBlocks } from "@/cms/blocks";
 import { validatePath, normalizePath } from "@/cms/lib/cms-paths";
 import { previewUrl, PREVIEW_BREAKPOINTS } from "@/cms/lib/preview-url";
+import { isAutosave } from "@/cms/lib/is-autosave";
 import { dedicatedPageRoute } from "@/lib/dedicated-pages";
 
 type RichTextEditor = ReturnType<typeof lexicalEditor>;
@@ -55,7 +56,7 @@ export function pagesCollection(richTextEditor: RichTextEditor): CollectionConfi
     versions: { drafts: { autosave: { interval: 1500 } }, maxPerDoc: 50 },
     access: { read: ({ req: { user } }) => (user ? true : { _status: { equals: "published" } }) },
     hooks: {
-      afterChange: [({ doc }: any) => { revalidatePageDoc(doc); return doc; }],
+      afterChange: [({ doc, req }: any) => { if (isAutosave(req)) return doc; revalidatePageDoc(doc); return doc; }],
       afterDelete: [({ doc }: any) => { revalidatePageDoc(doc); return doc; }],
     },
     fields: [
@@ -63,7 +64,7 @@ export function pagesCollection(richTextEditor: RichTextEditor): CollectionConfi
       {
         name: "path", type: "text", unique: true, index: true, label: "Caminho (URL final)",
         admin: { position: "sidebar", description: "Ex.: /volei/mundial-2026. Vazio = /paginas/{slug}. Rotas que já existem no site são recusadas." },
-        hooks: { beforeValidate: [({ value }: any) => (value ? normalizePath(value) : value)] },
+        hooks: { beforeValidate: [({ value }: any) => (value ? normalizePath(value) || null : null)] },
         validate: (value: any) => validatePath(value),
       },
       { name: "slug", type: "text", required: true, unique: true, index: true, admin: { position: "sidebar", description: "Identificador interno (também usado em /paginas/{slug})" } },

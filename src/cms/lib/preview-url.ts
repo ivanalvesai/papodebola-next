@@ -3,7 +3,7 @@
 export function previewUrl(kind: "pagina" | "time" | "post", key: string | number | undefined, extra?: string): string {
   const secret = process.env.CRON_SECRET || "";
   const base = kind === "pagina" ? `/cms-preview/pagina/${key ?? "novo"}`
-    : kind === "time" ? `/cms-preview/time/${key ?? ""}/${extra || "hub"}`
+    : kind === "time" ? `/cms-preview/time/${key ?? "novo"}/${extra || "hub"}`
     : `/cms-preview/${key ?? ""}`;
   return `${base}?previewSecret=${encodeURIComponent(secret)}`;
 }

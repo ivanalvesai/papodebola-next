@@ -19,7 +19,7 @@ test("formato: começa com /, minúsculas, sem barra final, máx 6 segmentos", (
   assert.match(String(validatePath("/volei/mundial 2026")), /letras minúsculas/);
 });
 test("recusa árvores reservadas ao código", () => {
-  for (const p of ["/api/x", "/cms/x", "/cms-api/x", "/cms-preview/x", "/paginas/x", "/noticias/x", "/artigos/x", "/autor/x", "/sp/x", "/jogos-de-hoje/x", "/ao-vivo", "/studio-pdb/x", "/painel-pdb-9x", "/img/team/1", "/_next/x"]) {
+  for (const p of ["/sobre/x", "/contato/x", "/parceiros/x", "/api/x", "/cms/x", "/cms-api/x", "/cms-preview/x", "/paginas/x", "/noticias/x", "/artigos/x", "/autor/x", "/sp/x", "/jogos-de-hoje/x", "/ao-vivo", "/studio-pdb/x", "/painel-pdb-9x", "/img/team/1", "/_next/x"]) {
     assert.match(String(validatePath(p)), /reservad/i, p);
   }
 });
