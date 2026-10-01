@@ -4,15 +4,18 @@ import { useEffect, useState } from "react";
 import { Bell, X, Loader2 } from "lucide-react";
 import { pushSupported, getSubscription, enablePush } from "@/lib/push-client";
 import { track } from "@/lib/analytics";
+import { useIsCmsPreview } from "@/lib/use-is-cms-preview";
 
 const DISMISS_KEY = "pdb_push_prompt_dismissed";
 const DELAY_MS = 9000; // espera ~9s pra não competir com o banner de cookies
 
 export function PushPromptModal() {
+  const isCmsPreview = useIsCmsPreview();
   const [open, setOpen] = useState(false);
   const [working, setWorking] = useState(false);
 
   useEffect(() => {
+    if (window.location.pathname.startsWith("/cms-preview")) return; // nem agenda/rastreia no preview do CMS
     if (!pushSupported()) return;
     if (Notification.permission !== "default") return; // já permitiu ou bloqueou
     if (localStorage.getItem(DISMISS_KEY)) return; // já fechou antes
@@ -49,7 +52,7 @@ export function PushPromptModal() {
     else if (result === "denied") track("push_blocked", { source: "modal" });
   }
 
-  if (!open) return null;
+  if (!open || isCmsPreview) return null;
 
   return (
     <div className="fixed inset-0 z-[120] flex items-center justify-center p-4">

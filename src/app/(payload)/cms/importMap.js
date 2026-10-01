@@ -1,3 +1,4 @@
+import { TemplateTools as TemplateTools_7615f62101efe9d2e9ebda192462b944 } from '@/cms/components/template-tools'
 import { RscEntryLexicalCell as RscEntryLexicalCell_44fe37237e0ebf4470c9990d8cb7b07e } from '@payloadcms/richtext-lexical/rsc'
 import { RscEntryLexicalField as RscEntryLexicalField_44fe37237e0ebf4470c9990d8cb7b07e } from '@payloadcms/richtext-lexical/rsc'
 import { LexicalDiffComponent as LexicalDiffComponent_44fe37237e0ebf4470c9990d8cb7b07e } from '@payloadcms/richtext-lexical/rsc'
@@ -24,10 +25,14 @@ import { UnderlineFeatureClient as UnderlineFeatureClient_e70f5e05f09f93e00b997e
 import { BoldFeatureClient as BoldFeatureClient_e70f5e05f09f93e00b997edb1ef0c864 } from '@payloadcms/richtext-lexical/client'
 import { ItalicFeatureClient as ItalicFeatureClient_e70f5e05f09f93e00b997edb1ef0c864 } from '@payloadcms/richtext-lexical/client'
 import { TableFeatureClient as TableFeatureClient_e70f5e05f09f93e00b997edb1ef0c864 } from '@payloadcms/richtext-lexical/client'
+import { BlockSummaryLabel as BlockSummaryLabel_107edc80e809ed2f79dec20f493a6c47 } from '@/cms/components/block-summary-label'
+import { PuckView as PuckView_2d06ed7ad265bd5bf6f74be0f5bb2218 } from '@/cms/components/puck-view'
+import { TeamPreviewLink as TeamPreviewLink_71623e3fa86aa7226316dda749a1fcf5 } from '@/cms/components/team-preview-link'
 import { CollectionCards as CollectionCards_f9c02e79a4aed9a3924487c0cd4cafb1 } from '@payloadcms/next/rsc'
 
 /** @type import('payload').ImportMap */
 export const importMap = {
+  "@/cms/components/template-tools#TemplateTools": TemplateTools_7615f62101efe9d2e9ebda192462b944,
   "@payloadcms/richtext-lexical/rsc#RscEntryLexicalCell": RscEntryLexicalCell_44fe37237e0ebf4470c9990d8cb7b07e,
   "@payloadcms/richtext-lexical/rsc#RscEntryLexicalField": RscEntryLexicalField_44fe37237e0ebf4470c9990d8cb7b07e,
   "@payloadcms/richtext-lexical/rsc#LexicalDiffComponent": LexicalDiffComponent_44fe37237e0ebf4470c9990d8cb7b07e,
@@ -54,5 +59,8 @@ export const importMap = {
   "@payloadcms/richtext-lexical/client#BoldFeatureClient": BoldFeatureClient_e70f5e05f09f93e00b997edb1ef0c864,
   "@payloadcms/richtext-lexical/client#ItalicFeatureClient": ItalicFeatureClient_e70f5e05f09f93e00b997edb1ef0c864,
   "@payloadcms/richtext-lexical/client#TableFeatureClient": TableFeatureClient_e70f5e05f09f93e00b997edb1ef0c864,
+  "@/cms/components/block-summary-label#BlockSummaryLabel": BlockSummaryLabel_107edc80e809ed2f79dec20f493a6c47,
+  "@/cms/components/puck-view#PuckView": PuckView_2d06ed7ad265bd5bf6f74be0f5bb2218,
+  "@/cms/components/team-preview-link#TeamPreviewLink": TeamPreviewLink_71623e3fa86aa7226316dda749a1fcf5,
   "@payloadcms/next/rsc#CollectionCards": CollectionCards_f9c02e79a4aed9a3924487c0cd4cafb1
 }

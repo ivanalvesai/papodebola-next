@@ -2,6 +2,8 @@ import { RichText } from "@payloadcms/richtext-lexical/react";
 import type { PayloadPage } from "@/lib/data/payload-pages";
 import { lexicalToHtml } from "@/lib/data/articles-payload";
 import { ProseBody } from "@/components/article/prose-body";
+import { SectionBlock } from "./section-block";
+import { TeamWidgetBlock, StandingsBlock, ScorersBlock, NewsFeedBlock, LiveMatchBlock, TodayGamesDataBlock } from "./data-blocks";
 
 // Renderiza uma "Página" do Payload (hero + blocos) com o visual do site.
 /* eslint-disable @typescript-eslint/no-explicit-any, @next/next/no-img-element */
@@ -15,7 +17,7 @@ function ytId(url: string): string {
   return m ? m[1] : "";
 }
 
-export function PageBlock({ block }: { block: any }) {
+export async function PageBlock({ block, pageWidth = "narrow" }: { block: any; pageWidth?: string }) {
   switch (block.blockType) {
     case "heading": {
       const Tag = block.level === "h3" ? "h3" : "h2";
@@ -189,29 +191,17 @@ export function PageBlock({ block }: { block: any }) {
         </div>
       );
     }
+    case "section":
+      return <SectionBlock block={block} pageWidth={pageWidth} renderBlocks={(bs) => bs.map((b, i) => <PageBlock key={i} block={b} pageWidth="narrow" />)} />;
+    case "teamWidget": return <TeamWidgetBlock block={block} />;
+    case "standings": return <StandingsBlock block={block} />;
+    case "scorers": return <ScorersBlock block={block} />;
+    case "newsFeed": return <NewsFeedBlock block={block} />;
+    case "liveMatch": return <LiveMatchBlock block={block} />;
+    case "todayGames": return <TodayGamesDataBlock block={block} />;
     default:
       return null;
   }
 }
 
-export function PageBlocks({ page }: { page: PayloadPage }) {
-  return (
-    <div className="mx-auto max-w-[720px] px-4 py-12">
-      {(page.hero?.h1 || page.hero?.subtitle) && (
-        <div className="mb-8 text-center">
-          {page.hero?.h1 && (
-            <h1 className="text-2xl font-bold text-text-primary">{page.hero.h1}</h1>
-          )}
-          {page.hero?.subtitle && (
-            <p className="mt-2 text-sm text-text-muted">{page.hero.subtitle}</p>
-          )}
-        </div>
-      )}
-      <div className="space-y-5 rounded-lg border border-border-custom bg-card-bg p-8 leading-relaxed text-text-secondary">
-        {(page.layout || []).map((block: any, i: number) => (
-          <PageBlock key={i} block={block} />
-        ))}
-      </div>
-    </div>
-  );
-}
+export { PageBlocks } from "./page-shell";

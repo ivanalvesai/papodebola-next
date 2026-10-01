@@ -687,6 +687,17 @@ Doc completo: `docs/knowledge/2026-06-20-studio-kanbans.md`. Navegação compart
 - **Exclusão segura**: `useConfirm()` (`src/components/studio/use-confirm.tsx`) — modal próprio com
   "Cancelar" como padrão (Enter não apaga). Usado em todos os deletes dos kanbans.
 
+### CMS: criar páginas (page builder, 30/09–01/10)
+
+- **Onde:** `/cms` → **Páginas**. Qualquer pessoa monta uma página em URL livre (campo **Caminho**; vazio = `/paginas/{slug}`), com Live Preview (Celular/Tablet/Desktop) e autosave.
+- **Blocos:** biblioteca única em `src/cms/blocks/` (13 estáticos + Seção em colunas + dados ao vivo: jogos de hoje, widget de time, classificação, artilharia, feed de notícias, jogo ao vivo). `PAGE_BLOCK_SLUGS` é a fonte única.
+- **Regra dos caminhos:** rota em código sempre ganha do CMS (catch-all `[...path]` + fallthrough); validação em `src/cms/lib/cms-paths.ts`.
+- **Nunca publicar sem ordem:** o banco é compartilhado, publicar no dev vai pra prod. Teste como rascunho e use `/cms-preview/pagina/{id}`.
+- **Modelos + JSON:** painel lateral aplica/salva modelo e importa/exporta `{ hero, layoutStyle, layout }`, o formato que a IA gera.
+- **Construtor (beta):** aba com Puck (canvas drag & drop); publicar continua na aba Editar.
+- **Schema:** DDL aditivo aplicado em 01/10 (`~/pdb-ddl-20260930.sql`); em container efêmero passar sempre `NODE_ENV=production` e `PAYLOAD_DB_PUSH=false`.
+- Doc completo: `docs/knowledge/2026-09-30-cms-page-builder.md`.
+
 ---
 
 ## Analytics e Tags

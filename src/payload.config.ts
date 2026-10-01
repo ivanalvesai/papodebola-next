@@ -1,7 +1,7 @@
 import path from "path";
 import { fileURLToPath } from "url";
 import { buildConfig } from "payload";
-import type { Block, Field } from "payload";
+import type { Field } from "payload";
 import { postgresAdapter } from "@payloadcms/db-postgres";
 import {
   lexicalEditor,
@@ -12,65 +12,33 @@ import {
 import sharp from "sharp";
 import { revalidatePath } from "next/cache";
 import { articleHref } from "@/lib/config";
+import { pt } from "@payloadcms/translations/languages/pt";
+import { pageBlocks, TEAM_LAYOUT_BLOCKS } from "@/cms/blocks";
+import { pagesCollection } from "@/cms/collections/pages";
+import { pageTemplatesCollection } from "@/cms/collections/page-templates";
+import { isAutosave } from "@/cms/lib/is-autosave";
+import { previewUrl, PREVIEW_BREAKPOINTS } from "@/cms/lib/preview-url";
 
 const filename = fileURLToPath(import.meta.url);
 const dirname = path.dirname(filename);
 
-// ── Biblioteca de blocos da collection `teams` (piloto do CMS de blocos de time) ──
-// DINÂMICOS: ao renderizar, buscam dado AO VIVO via getTeamPageDataFor(team) — os mesmos
-// cards de hoje, embrulhados (ver TeamBlockRenderer). O editor só escolhe/ordena e pode
-// dar um título. ESTÁTICOS: texto/título autoral. Os mesmos blocos ficam disponíveis em
-// todas as abas (hub + 5 sub-rotas) → composição livre por página.
-const blockTitle: Field = {
-  name: "title",
-  type: "text",
-  admin: { description: "Título exibido acima do bloco (opcional)" },
-};
-const blockLimit: Field = {
-  name: "limit",
-  type: "number",
-  admin: { description: "Quantos itens mostrar (opcional)" },
-};
-
-const teamLayoutBlocks: Block[] = [
-  // — Dinâmicos (dados ao vivo do time) —
-  { slug: "teamTodayMatch", labels: { singular: "Jogo de hoje", plural: "Jogo de hoje" }, fields: [blockTitle] },
-  { slug: "teamUpcoming", labels: { singular: "Próximos jogos", plural: "Próximos jogos" }, fields: [blockTitle, blockLimit] },
-  { slug: "teamResults", labels: { singular: "Resultados recentes", plural: "Resultados recentes" }, fields: [blockTitle, blockLimit] },
-  { slug: "teamStanding", labels: { singular: "Classificação (posição)", plural: "Classificação" }, fields: [blockTitle] },
-  { slug: "teamNews", labels: { singular: "Notícias do time", plural: "Notícias do time" }, fields: [blockTitle, blockLimit] },
-  { slug: "teamScorers", labels: { singular: "Artilheiros", plural: "Artilheiros" }, fields: [blockTitle, blockLimit] },
-  { slug: "teamWhereToWatch", labels: { singular: "Onde assistir", plural: "Onde assistir" }, fields: [blockTitle] },
-  { slug: "teamLineup", labels: { singular: "Escalação provável", plural: "Escalação" }, fields: [blockTitle] },
-  { slug: "teamClusterLinks", labels: { singular: "Links do cluster (hub)", plural: "Links do cluster" }, fields: [] },
-  { slug: "teamAutoText", labels: { singular: "Texto automático do time", plural: "Textos automáticos" }, fields: [] },
-  // Página padrão da aba inteira (os mesmos cards dos times do config). Textos/títulos do
-  // editor entram antes/depois dela.
-  { slug: "teamClassic", labels: { singular: "Página padrão do time (cards automáticos)", plural: "Páginas padrão do time" }, fields: [] },
-  // — Estáticos (texto autoral) —
-  {
-    slug: "richText",
-    labels: { singular: "Texto", plural: "Textos" },
-    fields: [{ name: "content", type: "richText" }],
-  },
-  {
-    slug: "heading",
-    labels: { singular: "Título", plural: "Títulos" },
-    fields: [
-      { name: "text", type: "text" },
-      { name: "level", type: "select", defaultValue: "h2", options: ["h2", "h3"] },
-    ],
-  },
-];
 
 // Uma aba por página do cluster (hub + 5 sub-rotas). Mesmos blocos em todas → composição livre.
-const teamLayoutTab = (name: string, label: string): Field => ({
-  name,
-  label: "Layout",
-  type: "blocks",
-  blocks: teamLayoutBlocks,
-  admin: { description: `Blocos da página "${label}". Vazio = página padrão do site.` },
-});
+const teamLayoutTab = (name: string, label: string, aba: string): Field[] => [
+  {
+    name: `preview_${name}`,
+    type: "ui",
+    admin: { components: { Field: "@/cms/components/team-preview-link#TeamPreviewLink" }, custom: { aba } },
+  },
+  {
+    name,
+    label: "Layout",
+    labels: { singular: "Bloco", plural: "Blocos" },
+    type: "blocks",
+    blocks: TEAM_LAYOUT_BLOCKS,
+    admin: { description: `Blocos da página "${label}". Vazio = página padrão do site.` },
+  },
+];
 
 // SEO de uma aba do time (meta title/description). O da aba Hub mantém o name "seo"
 // (mesmas colunas no banco); as outras abas usam seoJogoHoje, seoOndeAssistir etc.
@@ -577,7 +545,10 @@ export default buildConfig({
   admin: {
     user: "users",
     importMap: { baseDir: path.resolve(dirname, "app/(payload)") },
+    meta: { titleSuffix: " · Papo de Bola CMS" },
+    livePreview: { breakpoints: PREVIEW_BREAKPOINTS },
   },
+  i18n: { supportedLanguages: { pt }, fallbackLanguage: "pt" },
   db: postgresAdapter({
     pool: { connectionString: process.env.DATABASE_URI || "" },
     // Só o dev sincroniza o schema (PAYLOAD_DB_PUSH=true no .env.local do dev).
@@ -587,13 +558,9 @@ export default buildConfig({
   }),
   collections: [
     {
-      slug: "users",
-      auth: true,
-      admin: { useAsTitle: "email" },
-      fields: [],
-    },
-    {
       slug: "media",
+      labels: { singular: "Mídia", plural: "Mídias" },
+      admin: { group: "Conteúdo" },
       // staticDir no volume COMPARTILHADO (/app/data) — persiste entre deploys e é
       // o mesmo em dev e prod. URL servida via /cms-api/media/file/<filename>.
       // formatOptions: original vira WebP. imageSizes: versão "card" (800px WebP).
@@ -608,229 +575,21 @@ export default buildConfig({
       access: { read: () => true },
       fields: [{ name: "alt", type: "text" }],
     },
-    {
-      slug: "pages",
-      admin: { useAsTitle: "title" },
-      // Rascunho/publicar: edições ficam em draft até publicar. O site (find sem
-      // draft) só mostra a versão publicada. Anônimo só lê publicado.
-      versions: { drafts: true, maxPerDoc: 50 },
-      access: {
-        read: ({ req: { user } }) =>
-          user ? true : { _status: { equals: "published" } },
-      },
-      fields: [
-        { name: "title", type: "text", required: true },
-        { name: "slug", type: "text", required: true, unique: true, index: true },
-        {
-          name: "hero",
-          type: "group",
-          fields: [
-            { name: "h1", type: "text" },
-            { name: "subtitle", type: "text" },
-          ],
-        },
-        {
-          name: "layout",
-          type: "blocks",
-          blocks: [
-            {
-              slug: "richText",
-              labels: { singular: "Texto", plural: "Textos" },
-              fields: [{ name: "content", type: "richText", editor: richTextEditor }],
-            },
-            {
-              slug: "heading",
-              labels: { singular: "Título", plural: "Títulos" },
-              fields: [
-                { name: "text", type: "text" },
-                { name: "level", type: "select", defaultValue: "h2", options: ["h2", "h3"] },
-              ],
-            },
-            {
-              slug: "image",
-              labels: { singular: "Imagem", plural: "Imagens" },
-              fields: [
-                { name: "image", type: "upload", relationTo: "media", required: true },
-                { name: "caption", type: "text" },
-                { name: "align", type: "select", defaultValue: "center", options: ["left", "center", "right"] },
-              ],
-            },
-            {
-              slug: "columns",
-              labels: { singular: "Colunas", plural: "Colunas" },
-              fields: [
-                {
-                  name: "columns",
-                  type: "array",
-                  minRows: 2,
-                  maxRows: 4,
-                  fields: [{ name: "content", type: "richText" }],
-                },
-              ],
-            },
-            {
-              slug: "table",
-              labels: { singular: "Tabela", plural: "Tabelas" },
-              fields: [
-                { name: "headers", type: "array", fields: [{ name: "label", type: "text" }] },
-                {
-                  name: "rows",
-                  type: "array",
-                  fields: [{ name: "cells", type: "array", fields: [{ name: "value", type: "text" }] }],
-                },
-              ],
-            },
-            {
-              slug: "gallery",
-              labels: { singular: "Galeria", plural: "Galerias" },
-              fields: [
-                {
-                  name: "images",
-                  type: "array",
-                  fields: [{ name: "image", type: "upload", relationTo: "media" }],
-                },
-              ],
-            },
-            {
-              slug: "quote",
-              labels: { singular: "Citação", plural: "Citações" },
-              fields: [
-                { name: "text", type: "textarea", required: true },
-                { name: "author", type: "text" },
-              ],
-            },
-            {
-              slug: "button",
-              labels: { singular: "Botão", plural: "Botões" },
-              fields: [
-                { name: "label", type: "text", required: true },
-                { name: "url", type: "text", required: true },
-                { name: "style", type: "select", defaultValue: "primary", options: ["primary", "outline"] },
-              ],
-            },
-            {
-              slug: "list",
-              labels: { singular: "Lista", plural: "Listas" },
-              fields: [
-                {
-                  name: "items",
-                  type: "array",
-                  minRows: 1,
-                  fields: [{ name: "content", type: "richText" }],
-                },
-              ],
-            },
-            {
-              slug: "infoCard",
-              labels: { singular: "Card de info", plural: "Cards de info" },
-              fields: [
-                { name: "label", type: "text", required: true },
-                { name: "value", type: "text", required: true },
-                { name: "href", type: "text" },
-              ],
-            },
-            {
-              slug: "note",
-              labels: { singular: "Nota", plural: "Notas" },
-              fields: [{ name: "text", type: "text", required: true }],
-            },
-            // Bloco DINÂMICO: jogos de hoje (lidos do store; nunca bate na API). O editor
-            // escolhe a liga e a ORDEM (um bloco por campeonato) — como os widgets dos times.
-            {
-              slug: "todayGames",
-              labels: { singular: "Jogos de hoje (dinâmico)", plural: "Jogos de hoje" },
-              fields: [
-                { name: "title", type: "text", admin: { description: "Título acima dos jogos (opcional)" } },
-                {
-                  name: "league",
-                  type: "text",
-                  admin: {
-                    description:
-                      "Liga: 'all' (todos), 'copa-do-mundo', 'brasileirao-serie-a', 'brasileirao-serie-b', 'brasileirao-serie-c', 'copa-do-brasil', 'libertadores', 'sudamericana'. Vazio = todos.",
-                  },
-                },
-                {
-                  name: "emptyTitle",
-                  type: "text",
-                  admin: { description: "Empty-state (só no bloco 'all'): título quando NÃO há jogos hoje" },
-                },
-                { name: "emptyText", type: "text", admin: { description: "Empty-state: texto de apoio" } },
-                { name: "primaryCtaLabel", type: "text", admin: { description: "Empty-state: botão 1 (texto)" } },
-                { name: "primaryCtaHref", type: "text", admin: { description: "Empty-state: botão 1 (URL)" } },
-                { name: "secondaryCtaLabel", type: "text", admin: { description: "Empty-state: botão 2 (texto)" } },
-                { name: "secondaryCtaHref", type: "text", admin: { description: "Empty-state: botão 2 (URL)" } },
-              ],
-            },
-            // Grid de cards de link (ex.: "Principais Campeonatos") — em colunas, e cada
-            // card é um item do array reordenável no /cms.
-            {
-              slug: "linkCards",
-              labels: { singular: "Cards de link (grid)", plural: "Cards de link" },
-              fields: [
-                { name: "title", type: "text", admin: { description: "Título acima dos cards (opcional)" } },
-                {
-                  name: "items",
-                  type: "array",
-                  label: "Cards",
-                  admin: { description: "Cada card é um link. Arraste para reordenar." },
-                  fields: [
-                    { name: "label", type: "text", required: true },
-                    { name: "href", type: "text", required: true },
-                  ],
-                },
-              ],
-            },
-            // Vídeo embed do YouTube. Adicione um bloco por vídeo (arraste pra reordenar).
-            {
-              slug: "youtube",
-              labels: { singular: "Vídeo do YouTube", plural: "Vídeos do YouTube" },
-              fields: [
-                {
-                  name: "url",
-                  type: "text",
-                  required: true,
-                  label: "Link do vídeo",
-                  admin: {
-                    description:
-                      "Cole o link (https://www.youtube.com/watch?v=XXXX, https://youtu.be/XXXX ou o link do Shorts).",
-                  },
-                },
-                { name: "title", type: "text", label: "Título (opcional)", admin: { description: "Aparece acima do vídeo." } },
-                { name: "caption", type: "text", label: "Legenda (opcional)", admin: { description: "Aparece abaixo do vídeo." } },
-              ],
-            },
-          ],
-        },
-        {
-          name: "seo",
-          type: "group",
-          fields: [
-            { name: "metaTitle", type: "text" },
-            { name: "metaDescription", type: "textarea" },
-          ],
-        },
-        {
-          name: "showSponsors",
-          type: "checkbox",
-          defaultValue: false,
-          label: "Exibir faixa de patrocinadores nesta página",
-          admin: {
-            description:
-              "Mostra a faixa com os patrocinadores ATIVOS abaixo do conteúdo desta página. Usado na página do Municipal.",
-          },
-        },
-      ],
-    },
+    pagesCollection(richTextEditor),
+    pageTemplatesCollection(richTextEditor),
     {
       slug: "teams",
       labels: { singular: "Time", plural: "Times" },
       admin: {
         useAsTitle: "name",
+        group: "Futebol",
+        livePreview: { url: ({ data }: { data: { slug?: string } }) => previewUrl("time", data?.slug, "hub") },
+        preview: (data: { slug?: string }) => previewUrl("time", data?.slug, "hub"),
         defaultColumns: ["name", "slug", "tournament", "_status"],
         description:
           "Páginas de time geridas no CMS. Aba de layout vazia = página padrão do site. SEO de cada aba fica dentro da aba.",
       },
-      versions: { drafts: true, maxPerDoc: 30 },
+      versions: { drafts: { autosave: { interval: 1500 } }, maxPerDoc: 30 },
       access: {
         read: ({ req: { user } }) =>
           user ? true : { _status: { equals: "published" } },
@@ -839,7 +598,8 @@ export default buildConfig({
       hooks: {
         afterChange: [
           /* eslint-disable-next-line @typescript-eslint/no-explicit-any */
-          ({ doc }: any) => {
+          ({ doc, req }: any) => {
+            if (isAutosave(req)) return doc;
             try {
               const base = `/futebol/times/${doc.slug}`;
               for (const p of [base, `${base}/jogo-hoje`, `${base}/onde-assistir`, `${base}/escalacao`, `${base}/proximos-jogos`, `${base}/estatisticas`]) {
@@ -885,12 +645,12 @@ export default buildConfig({
         {
           type: "tabs",
           tabs: [
-            { label: "Hub", fields: [teamLayoutTab("layoutHub", "Hub"), teamSeoGroup("seo")] },
-            { label: "Jogo de hoje", fields: [teamLayoutTab("layoutJogoHoje", "Jogo de hoje"), teamSeoGroup("seoJogoHoje")] },
-            { label: "Onde assistir", fields: [teamLayoutTab("layoutOndeAssistir", "Onde assistir"), teamSeoGroup("seoOndeAssistir")] },
-            { label: "Escalação", fields: [teamLayoutTab("layoutEscalacao", "Escalação"), teamSeoGroup("seoEscalacao")] },
-            { label: "Próximos jogos", fields: [teamLayoutTab("layoutProximos", "Próximos jogos"), teamSeoGroup("seoProximos")] },
-            { label: "Estatísticas", fields: [teamLayoutTab("layoutEstatisticas", "Estatísticas"), teamSeoGroup("seoEstatisticas")] },
+            { label: "Hub", fields: [...teamLayoutTab("layoutHub", "Hub", "hub"), teamSeoGroup("seo")] },
+            { label: "Jogo de hoje", fields: [...teamLayoutTab("layoutJogoHoje", "Jogo de hoje", "jogo-hoje"), teamSeoGroup("seoJogoHoje")] },
+            { label: "Onde assistir", fields: [...teamLayoutTab("layoutOndeAssistir", "Onde assistir", "onde-assistir"), teamSeoGroup("seoOndeAssistir")] },
+            { label: "Escalação", fields: [...teamLayoutTab("layoutEscalacao", "Escalação", "escalacao"), teamSeoGroup("seoEscalacao")] },
+            { label: "Próximos jogos", fields: [...teamLayoutTab("layoutProximos", "Próximos jogos", "proximos-jogos"), teamSeoGroup("seoProximos")] },
+            { label: "Estatísticas", fields: [...teamLayoutTab("layoutEstatisticas", "Estatísticas", "estatisticas"), teamSeoGroup("seoEstatisticas")] },
           ],
         },
       ],
@@ -903,22 +663,13 @@ export default buildConfig({
         defaultColumns: ["title", "category", "publishedDate", "_status"],
         // Botão "Preview" no editor → abre o post (mesmo rascunho) renderizado no
         // layout real do site, numa página dedicada (não toca nas páginas públicas/ISR).
-        preview: (doc: { slug?: string }) =>
-          doc?.slug
-            ? `/cms-preview/${doc.slug}?previewSecret=${process.env.CRON_SECRET || ""}`
-            : null,
+        group: "Conteúdo",
+        preview: (doc: { slug?: string }) => (doc?.slug ? previewUrl("post", doc.slug) : null),
         // Live Preview: aba com o site renderizado lado a lado dentro do editor
         // (atualiza ao salvar). Mesma página /cms-preview. Só config — sem schema.
         livePreview: {
-          url: ({ data }: { data: { slug?: string } }) =>
-            data?.slug
-              ? `/cms-preview/${data.slug}?previewSecret=${process.env.CRON_SECRET || ""}`
-              : "",
-          breakpoints: [
-            { label: "Mobile", name: "mobile", width: 390, height: 844 },
-            { label: "Tablet", name: "tablet", width: 768, height: 1024 },
-            { label: "Desktop", name: "desktop", width: 1440, height: 900 },
-          ],
+          url: ({ data }: { data: { slug?: string } }) => (data?.slug ? previewUrl("post", data.slug) : ""),
+          breakpoints: PREVIEW_BREAKPOINTS,
         },
       },
       // schedulePublish: habilita "Schedule Publish" (publicar/despublicar em data/hora).
@@ -1041,6 +792,7 @@ export default buildConfig({
       slug: "authors",
       labels: { singular: "Autor", plural: "Autores" },
       admin: {
+        group: "Conteúdo",
         useAsTitle: "name",
         defaultColumns: ["name", "slug", "role", "_status"],
         description:
@@ -1111,6 +863,7 @@ export default buildConfig({
       slug: "matchComments",
       labels: { singular: "Comentário do jogo", plural: "Comentários do jogo" },
       admin: {
+        group: "Futebol",
         useAsTitle: "label",
         defaultColumns: ["label", "matchId", "minute", "updatedAt"],
         description:
@@ -1185,6 +938,7 @@ export default buildConfig({
       slug: "municipalGames",
       labels: { singular: "Jogo do municipal", plural: "Jogos do municipal" },
       admin: {
+        group: "Futebol",
         useAsTitle: "matchup",
         // A DATA aparece na coluna "date" da lista → distingue jogos dos mesmos times em
         // rodadas diferentes. (useAsTitle precisa ser campo real; virtual quebra o Payload.)
@@ -1362,6 +1116,7 @@ export default buildConfig({
       slug: "sponsors",
       labels: { singular: "Patrocinador", plural: "Patrocinadores" },
       admin: {
+        group: "Comercial",
         useAsTitle: "name",
         defaultColumns: ["name", "format", "active", "clicks", "updatedAt"],
         description:
@@ -1469,6 +1224,15 @@ export default buildConfig({
           admin: { readOnly: true, description: "Contador de cliques no link /parceiro/{slug}." },
         },
       ],
+    },
+    // Usuários por último: o painel ordena os grupos pela 1ª coleção de cada um
+    // (Conteúdo / Futebol / Comercial / Sistema).
+    {
+      slug: "users",
+      labels: { singular: "Usuário", plural: "Usuários" },
+      auth: true,
+      admin: { useAsTitle: "email", group: "Sistema" },
+      fields: [],
     },
   ],
   // Fila de jobs — necessária pro Scheduled Publish. Sem autoRun (rodaria em dev E

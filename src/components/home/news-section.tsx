@@ -9,7 +9,7 @@ interface NewsSectionProps {
 }
 
 /** Card de destaque com imagem de fundo e titulo sobreposto (estilo ge.globo). */
-function FeaturedCard({ article, big }: { article: Article; big?: boolean }) {
+export function FeaturedCard({ article, big }: { article: Article; big?: boolean }) {
   return (
     <Link
       href={article.url}

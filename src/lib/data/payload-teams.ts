@@ -49,6 +49,23 @@ export const getTeam = cache(async (slug: string): Promise<PayloadTeam | null> =
   }
 });
 
+// Versão rascunho (sempre draft:true, sem filtro de status) — só pro preview privado do /cms.
+export const getTeamDraft = cache(async (slug: string): Promise<PayloadTeam | null> => {
+  try {
+    const payload = await getPayload({ config });
+    const res = await payload.find({
+      collection: "teams",
+      draft: true,
+      where: { slug: { equals: slug } },
+      limit: 1,
+      depth: 1,
+    });
+    return (res.docs[0] as unknown as PayloadTeam) || null;
+  } catch {
+    return null;
+  }
+});
+
 // Slugs de todos os times publicados (pra generateStaticParams das rotas de time).
 // No dev com TEAMS_CMS_DRAFTS=1, inclui os rascunhos.
 export const getPayloadTeamSlugs = cache(async (): Promise<string[]> => {

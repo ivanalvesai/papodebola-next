@@ -22,6 +22,7 @@ export async function generateMetadata({
   if (dedicated) permanentRedirect(dedicated);
   const page = await getPayloadPage(slug);
   if (!page) return {};
+  if (page.path) permanentRedirect(page.path);
   return {
     title: page.seo?.metaTitle || page.title,
     description: page.seo?.metaDescription,
@@ -39,5 +40,6 @@ export default async function PaginaPayload({
   if (dedicated) permanentRedirect(dedicated);
   const page = await getPayloadPage(slug);
   if (!page) notFound();
+  if (page.path) permanentRedirect(page.path);
   return <PageBlocks page={page} />;
 }

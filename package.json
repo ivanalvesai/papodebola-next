@@ -6,14 +6,18 @@
     "dev": "next dev",
     "build": "node scripts/gen-importmap.mjs && next build",
     "start": "next start",
-    "test": "node --test --experimental-strip-types src/lib/*.test.ts src/lib/api/*.test.ts"
+    "test": "node --test --experimental-strip-types src/lib/*.test.ts src/lib/api/*.test.ts src/cms/blocks/*.test.ts src/cms/lib/*.test.ts src/cms/puck/*.test.ts",
+    "typecheck": "tsc --noEmit",
+    "thumbs": "node scripts/gen-block-thumbs.mjs"
   },
   "dependencies": {
     "@base-ui/react": "^1.4.0",
     "@payloadcms/db-postgres": "^3.85.1",
+    "@payloadcms/live-preview-react": "3.85.1",
     "@payloadcms/next": "^3.85.1",
     "@payloadcms/richtext-lexical": "^3.85.1",
     "@payloadcms/ui": "^3.85.1",
+    "@puckeditor/core": "0.23.0",
     "@types/jsdom": "^28.0.3",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
