@@ -57,7 +57,10 @@ export async function ScorersBlock({ block }: { block: any }) {
   const r = resolveTournament(block.tournament);
   if (!r) return null;
   try {
-    const scorers = r.kind === "worldcup" ? await getWorldCupScorers() : await getScorersFor(r.t);
+    // Orçamento de 4s: a página não pendura esperando a API; o próximo render ISR pega o cache quente.
+    const fetchScorers = () => (r.kind === "worldcup" ? getWorldCupScorers() : getScorersFor(r.t));
+    const scorers = await Promise.race([fetchScorers(), new Promise<null>((res) => setTimeout(() => res(null), 4000))]);
+    if (!scorers) return null;
     return (
       <div className="space-y-2">
         {block.title && <h2 className="text-base font-bold text-text-primary">{block.title}</h2>}
