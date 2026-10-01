@@ -4,7 +4,8 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
-    "build": "node scripts/gen-importmap.mjs && next build",
+    "gen:paths": "node scripts/gen-reserved-paths.mjs",
+    "build": "node scripts/gen-reserved-paths.mjs && node scripts/gen-importmap.mjs && next build",
     "start": "next start",
     "test": "node --test --experimental-strip-types src/lib/*.test.ts src/lib/api/*.test.ts src/cms/blocks/*.test.ts src/cms/lib/*.test.ts src/cms/puck/*.test.ts",
     "typecheck": "tsc --noEmit",
