@@ -555,6 +555,7 @@ export default buildConfig({
     importMap: { baseDir: path.resolve(dirname, "app/(payload)") },
     meta: { titleSuffix: " · Papo de Bola CMS" },
     livePreview: { breakpoints: PREVIEW_BREAKPOINTS },
+    components: { beforeDashboard: ["@/cms/components/dashboard-shortcuts#DashboardShortcuts"] },
   },
   i18n: { supportedLanguages: { pt }, fallbackLanguage: "pt" },
   db: postgresAdapter({

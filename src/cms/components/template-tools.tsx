@@ -20,8 +20,20 @@ export function TemplateTools() {
   const [json, setJson] = useState("");
   const [msg, setMsg] = useState("");
   const [busy, setBusy] = useState(false);
+  const [snippets, setSnippets] = useState<any[]>([]);
+  const [snipSel, setSnipSel] = useState("");
+  const [layoutLen, setLayoutLen] = useState(0);
+  const [from, setFrom] = useState("1");
+  const [to, setTo] = useState("1");
+  const [snipTitle, setSnipTitle] = useState("");
 
   useEffect(() => { api("/pageTemplates?limit=100&depth=0&sort=title").then((r) => setTemplates(r.docs || [])).catch(() => setMsg("Não foi possível carregar os modelos.")); }, []);
+
+  useEffect(() => { api("/snippets?limit=100&depth=0&sort=title").then((r) => setSnippets(r.docs || [])).catch(() => {}); }, []);
+  useEffect(() => {
+    if (!id) return;
+    api(`/pages/${id}?draft=true&depth=0`).then((d) => { const n = (d.layout || []).length; setLayoutLen(n); setFrom("1"); setTo(String(Math.max(n, 1))); }).catch(() => {});
+  }, [id]);
 
   const patch = async (data: any) => { await api(`/pages/${id}?draft=true`, { method: "PATCH", body: JSON.stringify(data) }); window.location.reload(); };
   const current = async () => api(`/pages/${id}?draft=true&depth=0`);
@@ -37,6 +49,30 @@ export function TemplateTools() {
     setBusy(true);
     try { const doc = await current(); await api("/pageTemplates", { method: "POST", body: JSON.stringify({ title, hero: stripIds(doc.hero), layoutStyle: stripIds(doc.layoutStyle), layout: stripIds(doc.layout || []) }) }); setMsg(`Modelo "${title}" salvo.`); }
     catch (e: any) { setMsg(`Erro ao salvar: ${e.message}`); } finally { setBusy(false); }
+  };
+  const insertSnippet = async () => {
+    if (!snipSel) return;
+    setBusy(true);
+    try {
+      const doc = await current();
+      await patch({ layout: [...(doc.layout || []), { blockType: "snippet", snippet: Number(snipSel) }] });
+    } catch (e: any) { setMsg(`Erro ao inserir: ${e.message}`); setBusy(false); }
+  };
+  const saveSnippet = async () => {
+    const title = snipTitle.trim();
+    if (!title) { setMsg("Dê um nome ao trecho."); return; }
+    setBusy(true);
+    try {
+      const doc = await current();
+      const layout: any[] = doc.layout || [];
+      const a = Math.floor(Number(from)), b = Math.floor(Number(to));
+      if (!(a >= 1) || !(b >= a) || b > layout.length) { setMsg(`Intervalo inválido: use de 1 a ${layout.length}.`); return; }
+      const slice = layout.slice(a - 1, b);
+      if (slice.some((x) => x?.blockType === "snippet")) { setMsg("Um trecho não pode conter outro trecho. Ajuste o intervalo."); return; }
+      await api("/snippets", { method: "POST", body: JSON.stringify({ title, layout: stripIds(slice) }) });
+      setMsg(`Trecho "${title}" salvo.`); setSnipTitle("");
+      api("/snippets?limit=100&depth=0&sort=title").then((r) => setSnippets(r.docs || [])).catch(() => {});
+    } catch (e: any) { setMsg(`Erro ao salvar trecho: ${e.message}`); } finally { setBusy(false); }
   };
   const exportJson = async () => {
     try { const doc = await current(); const out = JSON.stringify({ hero: doc.hero, layoutStyle: doc.layoutStyle, layout: doc.layout }, null, 2); setJson(out); await navigator.clipboard?.writeText(out); setMsg("Layout copiado pro clipboard (e mostrado abaixo)."); }
@@ -66,8 +102,21 @@ export function TemplateTools() {
       <Button size="small" buttonStyle="secondary" disabled={busy} onClick={exportJson}>Exportar layout (JSON)</Button>
       <textarea value={json} onChange={(e) => setJson(e.target.value)} rows={6} placeholder="Cole aqui um layout em JSON (gerado pela IA ou exportado de outra página)" />
       <Button size="small" buttonStyle="secondary" disabled={!json.trim() || busy} onClick={() => { const r = parseLayoutImport(json, PAGE_BLOCK_SLUGS); if (!r.ok) { setMsg(r.error); return; } setMsg(""); openModal("pdb-import"); }}>Importar layout (JSON)</Button>
+      <h4>Trechos</h4>
+      <label>Inserir um trecho no fim da página
+        <select value={snipSel} onChange={(e) => setSnipSel(e.target.value)}><option value="">— escolher —</option>{snippets.map((t) => <option key={t.id} value={t.id}>{t.title}</option>)}</select>
+      </label>
+      <Button size="small" disabled={!snipSel || busy} onClick={() => openModal("pdb-snippet-insert")}>Inserir trecho</Button>
+      <label>Salvar blocos como trecho (esta página tem {layoutLen} blocos)
+        <input type="number" min={1} max={layoutLen || 1} value={from} onChange={(e) => setFrom(e.target.value)} aria-label="do bloco nº" placeholder="do bloco nº" />
+        <input type="number" min={1} max={layoutLen || 1} value={to} onChange={(e) => setTo(e.target.value)} aria-label="ao nº" placeholder="ao nº" />
+        <input type="text" value={snipTitle} onChange={(e) => setSnipTitle(e.target.value)} placeholder="Nome do trecho" />
+      </label>
+      <Button size="small" buttonStyle="secondary" disabled={busy} onClick={() => openModal("pdb-snippet-save")}>Salvar como trecho</Button>
       {msg && <p className="pdb-tools__msg">{msg}</p>}
       {confirmModal("pdb-apply", "Aplicar o modelo substitui TODOS os blocos desta página (fica como rascunho). Continuar?", applyTemplate)}
+      {confirmModal("pdb-snippet-insert", "Inserir o trecho no fim desta página (fica como rascunho)?", insertSnippet)}
+      {confirmModal("pdb-snippet-save", `Salvar os blocos ${from} a ${to} como trecho "${snipTitle}"?`, saveSnippet)}
       {confirmModal("pdb-import", "Importar substitui TODOS os blocos desta página (fica como rascunho). Continuar?", importJson)}
     </div>
   );

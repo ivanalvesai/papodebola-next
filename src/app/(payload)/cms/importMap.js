@@ -29,6 +29,7 @@ import { BlockSummaryLabel as BlockSummaryLabel_107edc80e809ed2f79dec20f493a6c47
 import { PuckView as PuckView_2d06ed7ad265bd5bf6f74be0f5bb2218 } from '@/cms/components/puck-view'
 import { TextRowLabel as TextRowLabel_6e8b6bdca6a0ea08a74865b436a947dc } from '@/cms/components/text-row-label'
 import { TeamPreviewLink as TeamPreviewLink_71623e3fa86aa7226316dda749a1fcf5 } from '@/cms/components/team-preview-link'
+import { DashboardShortcuts as DashboardShortcuts_03e7994181af2b894a14a35a4cff0480 } from '@/cms/components/dashboard-shortcuts'
 import { CollectionCards as CollectionCards_f9c02e79a4aed9a3924487c0cd4cafb1 } from '@payloadcms/next/rsc'
 
 /** @type import('payload').ImportMap */
@@ -64,5 +65,6 @@ export const importMap = {
   "@/cms/components/puck-view#PuckView": PuckView_2d06ed7ad265bd5bf6f74be0f5bb2218,
   "@/cms/components/text-row-label#TextRowLabel": TextRowLabel_6e8b6bdca6a0ea08a74865b436a947dc,
   "@/cms/components/team-preview-link#TeamPreviewLink": TeamPreviewLink_71623e3fa86aa7226316dda749a1fcf5,
+  "@/cms/components/dashboard-shortcuts#DashboardShortcuts": DashboardShortcuts_03e7994181af2b894a14a35a4cff0480,
   "@payloadcms/next/rsc#CollectionCards": CollectionCards_f9c02e79a4aed9a3924487c0cd4cafb1
 }

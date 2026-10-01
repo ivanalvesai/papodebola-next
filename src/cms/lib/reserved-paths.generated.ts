@@ -85,6 +85,7 @@ export const STATIC_TOP_LEVEL: readonly string[] = [
   "artigos",
   "autor",
   "boxe",
+  "cms-guia",
   "cms-preview",
   "combate",
   "contato",
