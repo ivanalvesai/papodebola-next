@@ -1,6 +1,6 @@
 import { getPayload } from "payload";
 import config from "@payload-config";
-import { getTeamPageDataFor, getTeamLastLineup } from "@/lib/data/team";
+import { getTeamPageDataFor } from "@/lib/data/team";
 import { teamInfoFromDoc, type PayloadTeam } from "@/lib/data/payload-teams";
 import { getStandings, getWorldCupStandings } from "@/lib/data/standings";
 import { getScorersFor, getWorldCupScorers } from "@/lib/data/scorers";
@@ -37,8 +37,7 @@ export async function TeamWidgetBlock({ block }: { block: any }) {
   if (!doc || !blockType) return null;
   try {
     const data = await getTeamPageDataFor(teamInfoFromDoc(doc));
-    const lineup = block.widget === "lineup" ? await getTeamLastLineup(data.id, 3).catch(() => null) : null;
-    return <TeamBlock block={{ blockType, title: block.title, limit: block.limit }} data={data} page="hub" lineup={lineup} />;
+    return <TeamBlock block={{ blockType, title: block.title, limit: block.limit }} data={data} page="hub" lineup={null} />;
   } catch { return null; }
 }
 
