@@ -33,6 +33,7 @@ const teamLayoutTab = (name: string, label: string, aba: string): Field[] => [
   {
     name,
     label: "Layout",
+    labels: { singular: "Bloco", plural: "Blocos" },
     type: "blocks",
     blocks: TEAM_LAYOUT_BLOCKS,
     admin: { description: `Blocos da página "${label}". Vazio = página padrão do site.` },
@@ -556,13 +557,6 @@ export default buildConfig({
     push: process.env.PAYLOAD_DB_PUSH === "true",
   }),
   collections: [
-    {
-      slug: "users",
-      labels: { singular: "Usuário", plural: "Usuários" },
-      auth: true,
-      admin: { useAsTitle: "email", group: "Sistema" },
-      fields: [],
-    },
     {
       slug: "media",
       labels: { singular: "Mídia", plural: "Mídias" },
@@ -1230,6 +1224,15 @@ export default buildConfig({
           admin: { readOnly: true, description: "Contador de cliques no link /parceiro/{slug}." },
         },
       ],
+    },
+    // Usuários por último: o painel ordena os grupos pela 1ª coleção de cada um
+    // (Conteúdo / Futebol / Comercial / Sistema).
+    {
+      slug: "users",
+      labels: { singular: "Usuário", plural: "Usuários" },
+      auth: true,
+      admin: { useAsTitle: "email", group: "Sistema" },
+      fields: [],
     },
   ],
   // Fila de jobs — necessária pro Scheduled Publish. Sem autoRun (rodaria em dev E

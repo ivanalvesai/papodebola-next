@@ -73,7 +73,7 @@ export function pagesCollection(richTextEditor: RichTextEditor): CollectionConfi
         options: [{ label: "Blocos", value: "blocks" }, { label: "Construtor (beta)", value: "puck" }] },
       heroGroup,
       layoutStyleGroup,
-      { name: "layout", type: "blocks", label: "Blocos da página", blocks: pageBlocks(richTextEditor), admin: { initCollapsed: true } },
+      { name: "layout", type: "blocks", label: "Blocos da página", labels: { singular: "Bloco", plural: "Blocos" }, blocks: pageBlocks(richTextEditor), admin: { initCollapsed: true } },
       { name: "puckData", type: "json", label: "Dados do Construtor", admin: { hidden: true } },
       { name: "seo", type: "group", label: "SEO", fields: [
         { name: "metaTitle", type: "text", label: "Título (meta title)" },

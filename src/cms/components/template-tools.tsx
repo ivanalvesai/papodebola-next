@@ -65,7 +65,7 @@ export function TemplateTools() {
       <Button size="small" buttonStyle="secondary" disabled={busy} onClick={saveAsTemplate}>Salvar como modelo</Button>
       <Button size="small" buttonStyle="secondary" disabled={busy} onClick={exportJson}>Exportar layout (JSON)</Button>
       <textarea value={json} onChange={(e) => setJson(e.target.value)} rows={6} placeholder="Cole aqui um layout em JSON (gerado pela IA ou exportado de outra página)" />
-      <Button size="small" buttonStyle="secondary" disabled={!json.trim() || busy} onClick={() => openModal("pdb-import")}>Importar layout (JSON)</Button>
+      <Button size="small" buttonStyle="secondary" disabled={!json.trim() || busy} onClick={() => { const r = parseLayoutImport(json, PAGE_BLOCK_SLUGS); if (!r.ok) { setMsg(r.error); return; } setMsg(""); openModal("pdb-import"); }}>Importar layout (JSON)</Button>
       {msg && <p className="pdb-tools__msg">{msg}</p>}
       {confirmModal("pdb-apply", "Aplicar o modelo substitui TODOS os blocos desta página (fica como rascunho). Continuar?", applyTemplate)}
       {confirmModal("pdb-import", "Importar substitui TODOS os blocos desta página (fica como rascunho). Continuar?", importJson)}

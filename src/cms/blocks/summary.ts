@@ -37,6 +37,10 @@ function clip(s: string, max = 52): string {
   return s.length > max ? `${s.slice(0, max)}…` : s;
 }
 
+function cols(n: number): string {
+  return `${n} ${n === 1 ? "coluna" : "colunas"}`;
+}
+
 function join(...parts: (string | number | undefined | null | false)[]): string {
   return parts.filter((p) => p !== undefined && p !== null && p !== false && p !== "").join(" · ");
 }
@@ -55,7 +59,7 @@ export function blockSummary(blockType: string, data: any): string {
     case "note": return clip(d.text || "");
     case "youtube": return clip(d.title || d.url || "");
     case "linkCards": return join(d.title, `${(d.items || []).length} cards`);
-    case "columns": return `${(d.columns || []).length} colunas`;
+    case "columns": return cols((d.columns || []).length);
     case "table": return `${(d.rows || []).length} linhas`;
     case "todayGames": return join(d.title, d.league && d.league !== "all" ? tournamentLabel(d.league) : "Todas as ligas");
     case "teamWidget": {
@@ -72,7 +76,7 @@ export function blockSummary(blockType: string, data: any): string {
       return join(d.title, src, d.limit);
     }
     case "liveMatch": return join(d.title, d.matchId && `jogo ${d.matchId}`);
-    case "section": return join(d.title, `${(d.columns || []).length || 1} colunas`);
+    case "section": return join(d.title, cols((d.columns || []).length || 1));
     default: return "";
   }
 }

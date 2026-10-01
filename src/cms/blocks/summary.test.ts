@@ -26,6 +26,7 @@ test("newsFeed descreve a fonte", () => {
 });
 test("section conta colunas", () => {
   assert.equal(blockSummary("section", { title: "Destaques", columns: [{}, {}] }), "Destaques · 2 colunas");
+  assert.equal(blockSummary("section", { columns: [{}] }), "1 coluna");
 });
 test("desconhecido devolve vazio", () => {
   assert.equal(blockSummary("xpto", {}), "");

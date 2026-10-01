@@ -16,10 +16,11 @@ export const todayGamesBlock: Block = withMeta({
   slug: "todayGames",
   labels: { singular: "Jogos de hoje (dinâmico)", plural: "Jogos de hoje" },
   fields: [
-    { name: "title", type: "text", admin: { description: "Título acima dos jogos (opcional)" } },
+    { name: "title", type: "text", label: "Título", admin: { description: "Título acima dos jogos (opcional)" } },
     {
       name: "league",
       type: "text",
+      label: "Liga",
       admin: {
         description:
           "Liga: 'all' (todos), 'copa-do-mundo', 'brasileirao-serie-a', 'brasileirao-serie-b', 'brasileirao-serie-c', 'copa-do-brasil', 'libertadores', 'sudamericana'. Vazio = todos.",
@@ -28,13 +29,14 @@ export const todayGamesBlock: Block = withMeta({
     {
       name: "emptyTitle",
       type: "text",
+      label: "Sem jogos: título",
       admin: { description: "Empty-state (só no bloco 'all'): título quando NÃO há jogos hoje" },
     },
-    { name: "emptyText", type: "text", admin: { description: "Empty-state: texto de apoio" } },
-    { name: "primaryCtaLabel", type: "text", admin: { description: "Empty-state: botão 1 (texto)" } },
-    { name: "primaryCtaHref", type: "text", admin: { description: "Empty-state: botão 1 (URL)" } },
-    { name: "secondaryCtaLabel", type: "text", admin: { description: "Empty-state: botão 2 (texto)" } },
-    { name: "secondaryCtaHref", type: "text", admin: { description: "Empty-state: botão 2 (URL)" } },
+    { name: "emptyText", type: "text", label: "Sem jogos: texto", admin: { description: "Empty-state: texto de apoio" } },
+    { name: "primaryCtaLabel", type: "text", label: "Botão 1: texto", admin: { description: "Empty-state: botão 1 (texto)" } },
+    { name: "primaryCtaHref", type: "text", label: "Botão 1: URL", admin: { description: "Empty-state: botão 1 (URL)" } },
+    { name: "secondaryCtaLabel", type: "text", label: "Botão 2: texto", admin: { description: "Empty-state: botão 2 (texto)" } },
+    { name: "secondaryCtaHref", type: "text", label: "Botão 2: URL", admin: { description: "Empty-state: botão 2 (URL)" } },
   ],
 }, "data");
 

@@ -134,6 +134,7 @@ export function staticBlocks(richTextEditor: RichTextEditor): Block[] {
           {
             name: "columns",
             type: "array",
+            labels: { singular: "Coluna", plural: "Colunas" },
             minRows: 2,
             maxRows: 4,
             fields: [{ name: "content", type: "richText" }],

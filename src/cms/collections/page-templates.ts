@@ -18,7 +18,7 @@ export function pageTemplatesCollection(richTextEditor: RichTextEditor): Collect
       { name: "thumbnail", type: "upload", relationTo: "media", label: "Miniatura (opcional)" },
       heroGroup,
       layoutStyleGroup,
-      { name: "layout", type: "blocks", label: "Blocos", blocks: pageBlocks(richTextEditor), admin: { initCollapsed: true } },
+      { name: "layout", type: "blocks", label: "Blocos", labels: { singular: "Bloco", plural: "Blocos" }, blocks: pageBlocks(richTextEditor), admin: { initCollapsed: true } },
     ],
   };
 }

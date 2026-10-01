@@ -14,11 +14,11 @@ export function sectionBlock(inner: Block[]): Block {
       { name: "background", type: "select", defaultValue: "none", label: "Fundo",
         options: [{ label: "Nenhum", value: "none" }, { label: "Card branco", value: "card" }, { label: "Verde", value: "green" }, { label: "Escuro", value: "dark" }] },
       {
-        name: "columns", type: "array", label: "Colunas", minRows: 1, maxRows: 3,
+        name: "columns", type: "array", label: "Colunas", labels: { singular: "Coluna", plural: "Colunas" }, minRows: 1, maxRows: 3,
         admin: { description: "1 a 3 colunas. No celular empilham." },
         fields: [
           { name: "span", type: "select", defaultValue: "1", label: "Largura da coluna", options: [{ label: "Normal", value: "1" }, { label: "Dupla", value: "2" }] },
-          { name: "blocks", type: "blocks", label: "Blocos", blocks: inner, admin: { initCollapsed: true } },
+          { name: "blocks", type: "blocks", label: "Blocos", labels: { singular: "Bloco", plural: "Blocos" }, blocks: inner, admin: { initCollapsed: true } },
         ],
       },
     ],
