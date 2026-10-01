@@ -27,6 +27,7 @@ import { ItalicFeatureClient as ItalicFeatureClient_e70f5e05f09f93e00b997edb1ef0
 import { TableFeatureClient as TableFeatureClient_e70f5e05f09f93e00b997edb1ef0c864 } from '@payloadcms/richtext-lexical/client'
 import { BlockSummaryLabel as BlockSummaryLabel_107edc80e809ed2f79dec20f493a6c47 } from '@/cms/components/block-summary-label'
 import { PuckView as PuckView_2d06ed7ad265bd5bf6f74be0f5bb2218 } from '@/cms/components/puck-view'
+import { TextRowLabel as TextRowLabel_6e8b6bdca6a0ea08a74865b436a947dc } from '@/cms/components/text-row-label'
 import { TeamPreviewLink as TeamPreviewLink_71623e3fa86aa7226316dda749a1fcf5 } from '@/cms/components/team-preview-link'
 import { CollectionCards as CollectionCards_f9c02e79a4aed9a3924487c0cd4cafb1 } from '@payloadcms/next/rsc'
 
@@ -61,6 +62,7 @@ export const importMap = {
   "@payloadcms/richtext-lexical/client#TableFeatureClient": TableFeatureClient_e70f5e05f09f93e00b997edb1ef0c864,
   "@/cms/components/block-summary-label#BlockSummaryLabel": BlockSummaryLabel_107edc80e809ed2f79dec20f493a6c47,
   "@/cms/components/puck-view#PuckView": PuckView_2d06ed7ad265bd5bf6f74be0f5bb2218,
+  "@/cms/components/text-row-label#TextRowLabel": TextRowLabel_6e8b6bdca6a0ea08a74865b436a947dc,
   "@/cms/components/team-preview-link#TeamPreviewLink": TeamPreviewLink_71623e3fa86aa7226316dda749a1fcf5,
   "@payloadcms/next/rsc#CollectionCards": CollectionCards_f9c02e79a4aed9a3924487c0cd4cafb1
 }

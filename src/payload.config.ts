@@ -16,6 +16,13 @@ import { pt } from "@payloadcms/translations/languages/pt";
 import { pageBlocks, TEAM_LAYOUT_BLOCKS } from "@/cms/blocks";
 import { pagesCollection } from "@/cms/collections/pages";
 import { pageTemplatesCollection } from "@/cms/collections/page-templates";
+import { snippetsCollection } from "@/cms/collections/snippets";
+import { pageTextsCollection } from "@/cms/collections/page-texts";
+import { usersCollection } from "@/cms/collections/users";
+import { siteSettingsGlobal } from "@/cms/globals/site-settings";
+import { adminOnly, anyLogged, editorOrAdmin } from "@/cms/lib/access";
+import { formBuilderPlugin } from "@payloadcms/plugin-form-builder";
+import { nodemailerAdapter } from "@payloadcms/email-nodemailer";
 import { isAutosave } from "@/cms/lib/is-autosave";
 import { previewUrl, PREVIEW_BREAKPOINTS } from "@/cms/lib/preview-url";
 
@@ -577,6 +584,8 @@ export default buildConfig({
     },
     pagesCollection(richTextEditor),
     pageTemplatesCollection(richTextEditor),
+    snippetsCollection(richTextEditor),
+    pageTextsCollection,
     {
       slug: "teams",
       labels: { singular: "Time", plural: "Times" },
@@ -1227,14 +1236,47 @@ export default buildConfig({
     },
     // Usuários por último: o painel ordena os grupos pela 1ª coleção de cada um
     // (Conteúdo / Futebol / Comercial / Sistema).
-    {
-      slug: "users",
-      labels: { singular: "Usuário", plural: "Usuários" },
-      auth: true,
-      admin: { useAsTitle: "email", group: "Sistema" },
-      fields: [],
-    },
+    usersCollection,
   ],
+  globals: [siteSettingsGlobal],
+  // Formulários (plugin oficial): collections `forms` e `form-submissions`.
+  // Overrides de labels/admin/access são mesclados por cima dos padrões do plugin.
+  plugins: [
+    formBuilderPlugin({
+      fields: {
+        text: true, textarea: true, select: true, radio: true, email: true, checkbox: true, number: true, message: true,
+        state: false, country: false, payment: false, date: false,
+      },
+      redirectRelationships: ["pages"],
+      defaultToEmail: "contato@papodebola.com.br",
+      formOverrides: {
+        labels: { singular: "Formulário", plural: "Formulários" },
+        admin: { group: "Conteúdo", useAsTitle: "title" },
+        access: { read: anyLogged, create: editorOrAdmin, update: editorOrAdmin, delete: editorOrAdmin },
+      },
+      formSubmissionOverrides: {
+        labels: { singular: "Resposta de formulário", plural: "Respostas de formulário" },
+        admin: { group: "Conteúdo" },
+        access: { read: editorOrAdmin, delete: adminOnly },
+      },
+    }),
+  ],
+  // E-mail (respostas de formulário) só com SMTP configurado; sem SMTP_HOST o Payload
+  // usa o adapter de console (só loga) e as respostas continuam salvas no CMS.
+  ...(process.env.SMTP_HOST
+    ? {
+        email: nodemailerAdapter({
+          defaultFromAddress: process.env.SMTP_FROM || "noreply@papodebola.com.br",
+          defaultFromName: "Papo de Bola",
+          transportOptions: {
+            host: process.env.SMTP_HOST,
+            port: Number(process.env.SMTP_PORT || 587),
+            secure: Number(process.env.SMTP_PORT || 587) === 465,
+            auth: { user: process.env.SMTP_USER, pass: process.env.SMTP_PASS },
+          },
+        }),
+      }
+    : {}),
   // Fila de jobs — necessária pro Scheduled Publish. Sem autoRun (rodaria em dev E
   // prod, com corrida de qual revalida). Um cron 1/min no SERVIDOR bate em
   // GET /cms-api/payload-jobs/run (no prod) com Bearer do CRON_SECRET → só o prod
