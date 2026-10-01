@@ -20,9 +20,15 @@ import { ButtonsBlock } from "./buttons";
 import { SocialBlock } from "./social";
 import { IconListBlock } from "./icon-list";
 import { DividerBlock } from "./divider";
+import { FaqBlock } from "./faq";
+import { TestimonialsBlock } from "./testimonials";
+import { CarouselBlock } from "./carousel-client";
+import { InstagramBlock } from "./instagram";
+import { XPostBlock } from "./x-post";
+import { EmbedBlock } from "./embed";
 
 // Barrel seguro pra client components (canvas do editor visual). NÃO importar aqui rich-text,
-// columns, list, media-text nem tabs (lexicalToHtml server-only / RichText do Lexical).
+// columns, list, media-text, tabs, snippet nem countdown (lexicalToHtml server-only / RichText do Lexical).
 // O barrel completo (server) é ./index.ts.
 export const CLIENT_SAFE_COMPONENTS: Record<string, ComponentType<{ block: any }>> = {
   heading: HeadingBlock,
@@ -45,4 +51,10 @@ export const CLIENT_SAFE_COMPONENTS: Record<string, ComponentType<{ block: any }
   social: SocialBlock,
   iconList: IconListBlock,
   divider: DividerBlock,
+  faq: FaqBlock,
+  testimonials: TestimonialsBlock,
+  carousel: CarouselBlock,
+  instagram: InstagramBlock,
+  xPost: XPostBlock,
+  embed: EmbedBlock,
 };

@@ -3,6 +3,9 @@ import { SectionBlock } from "./section-block";
 import { TeamWidgetBlock, StandingsBlock, ScorersBlock, NewsFeedBlock, LiveMatchBlock, TodayGamesDataBlock } from "./data-blocks";
 import { BLOCK_COMPONENTS } from "./blocks";
 import { hideOnClass } from "./blocks/hide-on";
+import { TabsBlock } from "./blocks/tabs";
+import { SnippetBlock } from "./blocks/snippet";
+import { CountdownBlock } from "./blocks/countdown";
 import { isFullBleedSection } from "@/lib/cms-render";
 
 // Renderiza uma "Página" do Payload (hero + blocos) com o visual do site. Os blocos puros
@@ -29,6 +32,11 @@ function renderBlock(block: any, pageWidth: string) {
     case "newsFeed": return <NewsFeedBlock block={block} />;
     case "liveMatch": return <LiveMatchBlock block={block} />;
     case "todayGames": return <TodayGamesDataBlock block={block} />;
+    // Ricos que dependem do servidor (lexicalToHtml / Payload / API esportiva).
+    case "tabs": return <TabsBlock block={block} />;
+    case "countdown": return <CountdownBlock block={block} />;
+    case "snippet":
+      return <SnippetBlock block={block} renderBlock={(b, i) => <PageBlock key={i} block={b} pageWidth={pageWidth} />} />;
     default: {
       const Comp = BLOCK_COMPONENTS[block.blockType];
       return Comp ? <Comp block={block} /> : null;

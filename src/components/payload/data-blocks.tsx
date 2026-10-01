@@ -21,7 +21,7 @@ import { tournamentLabel } from "@/cms/blocks/summary";
 /* eslint-disable @typescript-eslint/no-explicit-any */
 const card = "rounded-lg border border-border-custom bg-card-bg";
 
-async function resolveTeam(team: any): Promise<PayloadTeam | null> {
+export async function resolveTeam(team: any): Promise<PayloadTeam | null> {
   if (team && typeof team === "object" && team.sofascoreId) return team as PayloadTeam;
   const id = typeof team === "number" ? team : Number(team?.id);
   if (!id) return null;

@@ -24,6 +24,12 @@ import { ButtonsBlock } from "./buttons";
 import { SocialBlock } from "./social";
 import { IconListBlock } from "./icon-list";
 import { DividerBlock } from "./divider";
+import { FaqBlock } from "./faq";
+import { TestimonialsBlock } from "./testimonials";
+import { CarouselBlock } from "./carousel-client";
+import { InstagramBlock } from "./instagram";
+import { XPostBlock } from "./x-post";
+import { EmbedBlock } from "./embed";
 import { CLIENT_SAFE_COMPONENTS } from "./client-safe";
 
 // Blocos "puros" (só apresentação, sem buscar dados) por slug do Payload. Seção, blocos de dados
@@ -53,9 +59,15 @@ export const BLOCK_COMPONENTS: Record<string, ComponentType<{ block: any }>> = {
   social: SocialBlock,
   iconList: IconListBlock,
   divider: DividerBlock,
+  faq: FaqBlock,
+  testimonials: TestimonialsBlock,
+  carousel: CarouselBlock,
+  instagram: InstagramBlock,
+  xPost: XPostBlock,
+  embed: EmbedBlock,
 };
 
-// Client-safe = os do barrel ./client-safe (sem richText, columns, list, mediaText, tabs).
+// Client-safe = os do barrel ./client-safe (sem richText, columns, list, mediaText, tabs, snippet, countdown).
 // Client components importam de ./client-safe, NUNCA deste index (puxa rich-text, server-only).
 export const CLIENT_SAFE_SLUGS: readonly string[] = Object.keys(CLIENT_SAFE_COMPONENTS);
 export { CLIENT_SAFE_COMPONENTS };
