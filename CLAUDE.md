@@ -309,6 +309,12 @@ NEXT_PUBLIC_VAPID_PUBLIC_KEY=...
 VAPID_PUBLIC_KEY=...
 VAPID_PRIVATE_KEY=...
 VAPID_SUBJECT=mailto:contato@papodebola.com.br
+# E-mail dos formulários do CMS (opcional; sem SMTP_HOST as respostas ficam só no /cms)
+SMTP_HOST=...
+SMTP_PORT=465
+SMTP_USER=...
+SMTP_PASS=...
+SMTP_FROM=...
 ```
 
 ### Dev (`/home/ivan/papodebola-next-dev/.env.local`)
@@ -698,6 +704,16 @@ Doc completo: `docs/knowledge/2026-06-20-studio-kanbans.md`. Navegação compart
 - **Construtor (beta):** aba com Puck (canvas drag & drop); publicar continua na aba Editar.
 - **Schema:** DDL aditivo aplicado em 01/10 (`~/pdb-ddl-20260930.sql`); em container efêmero passar sempre `NODE_ENV=production` e `PAYLOAD_DB_PUSH=false`.
 - Doc completo: `docs/knowledge/2026-09-30-cms-page-builder.md`.
+
+**Estilo Elementor (01/10, em dev; promote pendente):**
+
+- **Blocos ricos:** +21 em `src/cms/blocks/rich.ts` (hero, cta, cards, stats, faq, tabs, formBlock, embed, countdown, snippet...), componentes puros em `src/components/payload/blocks/`; `hideOn` (celular/desktop) em todo bloco; Vimeo no vídeo. `embed` só admin/editor.
+- **Trechos:** collection `snippets`; salvar/inserir pelo painel da página e bloco `snippet` por referência (tag `snippets`).
+- **Formulários:** plugin oficial (Formulários + Respostas) e bloco Formulário; e-mail só com SMTP (`SMTP_HOST/PORT/USER/PASS/FROM` no `.env.local` + recriar container), destino `contato@papodebola.com.br`.
+- **Textos/SEO no CMS:** global `siteSettings` + collection `pageTexts` (1 doc por rota, padrões `:param`) e `buildMetadata(route, defaults)` em 35 rotas; painel `/painel-pdb-9x/paginas` aposentado (308 pro CMS). `noindex` em layout cascata; todo JSON-LD usa `jsonLd()`.
+- **Papéis:** `admin`/`editor`/`seo` (sem roles = editor); `seo` edita só campos de SEO (`lockFieldsExceptSeo`). Seed de roles obrigatório antes do primeiro deploy (ninguém é admin sem ele).
+- **Validador gerado:** `npm run gen:paths` (`reserved-paths.generated.ts`); teste falha se desatualizado; roda no `build`. Pasta nova em `src/app` exige rodar de novo.
+- **Guia:** `/cms-guia` (logado) e atalhos por papel no dashboard do `/cms`. DDL: `~/pdb-ddl-20261001.sql` (187 tabelas). Doc: `docs/knowledge/2026-10-01-cms-elementor.md`.
 
 ---
 
