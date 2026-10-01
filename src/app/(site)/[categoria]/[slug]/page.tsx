@@ -1,8 +1,9 @@
 import type { Metadata } from "next";
-import { notFound, permanentRedirect } from "next/navigation";
+import { permanentRedirect } from "next/navigation";
 import { getArticleBySlug, getRelatedArticles, articleMetaDescription } from "@/lib/data/articles";
 import { getBrasileiraoStandings } from "@/lib/data/standings";
 import { ArticleView } from "@/components/article/article-view";
+import { CmsPage, cmsPageMetadata } from "@/components/payload/cms-page-route";
 
 // URL canônica de notícia por categoria (estilo ge.globo): /{categoria}/{slug}.
 // O segmento [categoria] no root só é alcançado quando o 1º segmento NÃO é uma rota
@@ -23,7 +24,8 @@ export async function generateMetadata({
   const article = await getArticleBySlug(slug);
   // Só responde metadata se a URL bate com a canônica do artigo (senão a rota
   // redireciona pra URL certa no componente).
-  if (!article || article.url !== `/${categoria}/${slug}`) return {};
+  if (!article) return (await cmsPageMetadata(`/${categoria}/${slug}`)) || {};
+  if (article.url !== `/${categoria}/${slug}`) return {};
 
   const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://papodebola.com.br";
   const desc = articleMetaDescription(article);
@@ -59,7 +61,7 @@ export default async function CategoryArticlePage({
 }) {
   const { categoria, slug } = await params;
   const article = await getArticleBySlug(slug);
-  if (!article) notFound();
+  if (!article) return <CmsPage path={`/${categoria}/${slug}`} />;
 
   // Se a categoria na URL não bate com a canônica do artigo (ex: categoria mudou,
   // ou é categoria reservada que mora em /artigos), redireciona pra URL certa.

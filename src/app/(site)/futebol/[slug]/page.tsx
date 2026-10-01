@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
-import { notFound } from "next/navigation";
 import { TOURNAMENT_BY_SLUG } from "@/lib/config";
+import { CmsPage, cmsPageMetadata } from "@/components/payload/cms-page-route";
 import ChampionshipClient from "./championship-client";
 
 // Slug fora de TOURNAMENT_BY_SLUG -> 404 REAL (notFound no server). Com o loading.tsx
@@ -12,7 +12,7 @@ export async function generateMetadata({
 }): Promise<Metadata> {
   const { slug } = await params;
   const t = TOURNAMENT_BY_SLUG[slug];
-  if (!t) return { title: "Campeonato não encontrado" };
+  if (!t) return (await cmsPageMetadata(`/futebol/${slug}`)) || { title: "Campeonato não encontrado" };
   return {
     alternates: { canonical: `/futebol/${slug}` },
     title: `${t.name}: Tabela, Classificação e Jogos`,
@@ -26,6 +26,6 @@ export default async function CampeonatoPage({
   params: Promise<{ slug: string }>;
 }) {
   const { slug } = await params;
-  if (!TOURNAMENT_BY_SLUG[slug]) notFound();
+  if (!TOURNAMENT_BY_SLUG[slug]) return <CmsPage path={`/futebol/${slug}`} />;
   return <ChampionshipClient />;
 }

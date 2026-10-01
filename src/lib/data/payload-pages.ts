@@ -26,7 +26,7 @@ export const getPayloadPageSlugs = cache(async (): Promise<string[]> => {
     const payload = await getPayload({ config });
     const res = await payload.find({
       collection: "pages",
-      where: { _status: { equals: "published" } },
+      where: { and: [{ _status: { equals: "published" } }, { path: { exists: false } }] },
       limit: 500,
       depth: 0,
       pagination: false,
@@ -36,6 +36,34 @@ export const getPayloadPageSlugs = cache(async (): Promise<string[]> => {
   } catch {
     return [];
   }
+});
+
+export const getPayloadPageByPath = cache(async (path: string, opts?: { draft?: boolean }): Promise<PayloadPage | null> => {
+  if (!path || !path.startsWith("/")) return null;
+  try {
+    const payload = await getPayload({ config });
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const where: any = opts?.draft ? { path: { equals: path } } : { and: [{ path: { equals: path } }, { _status: { equals: "published" } }] };
+    const res = await payload.find({ collection: "pages", where, limit: 1, depth: 2, draft: !!opts?.draft });
+    return (res.docs[0] as unknown as PayloadPage) || null;
+  } catch { return null; }
+});
+
+export const getPayloadPageById = cache(async (id: number | string, draft = false): Promise<PayloadPage | null> => {
+  try {
+    const payload = await getPayload({ config });
+    return (await payload.findByID({ collection: "pages", id, depth: 2, draft })) as unknown as PayloadPage;
+  } catch { return null; }
+});
+
+// Caminhos publicados com `path` (sitemap). Vazio em erro.
+export const getPayloadPagePaths = cache(async (): Promise<string[]> => {
+  try {
+    const payload = await getPayload({ config });
+    const res = await payload.find({ collection: "pages", where: { and: [{ _status: { equals: "published" } }, { path: { exists: true } }] }, limit: 500, depth: 0, pagination: false });
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    return res.docs.map((d: any) => d.path).filter((p: any) => typeof p === "string" && p.startsWith("/"));
+  } catch { return []; }
 });
 
 /* eslint-disable @typescript-eslint/no-explicit-any */

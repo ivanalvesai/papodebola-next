@@ -8,7 +8,7 @@ import { getCraques } from "@/lib/data/craques";
 import { getWorldCupFixtures } from "@/lib/data/match-detail";
 import { matchDateSlug, matchPairSlug } from "@/lib/world-cup-match-url";
 import { getPayloadTeamSlugs } from "@/lib/data/payload-teams";
-import { getPayloadPageSlugs } from "@/lib/data/payload-pages";
+import { getPayloadPagePaths, getPayloadPageSlugs } from "@/lib/data/payload-pages";
 import { dedicatedPageRoute } from "@/lib/dedicated-pages";
 import { getAuthorSlugs } from "@/lib/data/authors";
 import { getMunicipalMatchKeys } from "@/lib/data/municipal";
@@ -283,6 +283,15 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       priority: 0.4,
     }));
 
+  // Páginas do CMS em URL livre (campo `path`) — só as publicadas.
+  const cmsPaths = await getPayloadPagePaths().catch(() => []);
+  const cmsPathPages: MetadataRoute.Sitemap = cmsPaths.map((p) => ({
+    url: `${BASE}${p}`,
+    lastModified: new Date(),
+    changeFrequency: "weekly" as const,
+    priority: 0.6,
+  }));
+
   // Páginas de autor (/autor/{slug}) — só autores publicados (E-E-A-T).
   const authorSlugs = await getAuthorSlugs().catch(() => []);
   const authorPages: MetadataRoute.Sitemap = authorSlugs.map((slug) => ({
@@ -311,6 +320,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     ...sportPages,
     ...tennisMatchPages,
     ...payloadPages,
+    ...cmsPathPages,
     ...authorPages,
     ...parceirosPage,
     ...newsCategoryPages,
