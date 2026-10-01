@@ -1,27 +1,18 @@
 // Campos dos componentes do Puck — COMPARTILHADOS entre o editor (client) e o render do
-// servidor (RSC), senão o Render do Puck não transforma os slots igual. Sem React aqui.
+// servidor (RSC), senão o Render do Puck não transforma os slots igual. Sem JSX aqui (o mapRow da Mídia usa createElement).
 import type { Fields } from "@puckeditor/core";
 import { tournamentOptions, WIDGET_OPTIONS } from "@/cms/blocks/options";
+import { teamExternal } from "./externals";
+import { RICH_FIELDS } from "./fields-rich";
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
 const title = { type: "text", label: "Título (opcional)" } as const;
 const tournament = { type: "select", label: "Campeonato", options: tournamentOptions() } as const;
 
 // Escolha de time direto da collection `teams` (só roda no navegador, dentro do /cms).
-export const teamExternal = {
-  type: "external",
-  label: "Time",
-  placeholder: "Escolher time",
-  fetchList: async ({ query }: { query: string }) => {
-    const qs = query ? `&where[name][like]=${encodeURIComponent(query)}` : "";
-    const r = await fetch(`/cms-api/teams?limit=60&depth=0&sort=name${qs}`, { credentials: "include" }).then((x) => x.json());
-    return (r.docs || []).map((d: any) => ({ id: d.id, name: d.name, slug: d.slug }));
-  },
-  getItemSummary: (item: any) => item?.name || "",
-  showSearch: true,
-} as const;
+export { teamExternal };
 
-export const FIELDS: Record<string, Fields<any>> = {
+const BASE_FIELDS: Record<string, Fields<any>> = {
   Heading: {
     text: { type: "text", label: "Texto" },
     level: { type: "radio", label: "Nível", options: [{ label: "H2", value: "h2" }, { label: "H3", value: "h3" }] },
@@ -38,9 +29,9 @@ export const FIELDS: Record<string, Fields<any>> = {
   },
   Columns: {
     count: { type: "radio", label: "Colunas", options: [{ label: "2", value: 2 }, { label: "3", value: 3 }] },
-    col1: { type: "slot" },
-    col2: { type: "slot" },
-    col3: { type: "slot" },
+    col1: { type: "slot", disallow: ["Snippet"] },
+    col2: { type: "slot", disallow: ["Snippet"] },
+    col3: { type: "slot", disallow: ["Snippet"] },
   },
   Section: {
     title,
@@ -49,7 +40,7 @@ export const FIELDS: Record<string, Fields<any>> = {
       label: "Fundo",
       options: [{ label: "Nenhum", value: "none" }, { label: "Card", value: "card" }, { label: "Verde", value: "green" }, { label: "Escuro", value: "dark" }],
     },
-    content: { type: "slot" },
+    content: { type: "slot", disallow: ["Snippet"] },
   },
   TeamWidget: {
     team: teamExternal as any,
@@ -91,8 +82,14 @@ export const FIELDS: Record<string, Fields<any>> = {
   },
 };
 
+export const FIELDS: Record<string, Fields<any>> = { ...BASE_FIELDS, ...RICH_FIELDS };
+
 export const CATEGORIES = {
-  texto: { title: "Texto e mídia", components: ["Heading", "Text", "Image", "Button"] },
-  layout: { title: "Layout", components: ["Section", "Columns"] },
-  dados: { title: "Dados ao vivo", components: ["TeamWidget", "Standings", "Scorers", "NewsFeed", "LiveMatch", "TodayGames"] },
+  texto: { title: "Texto e mídia", components: ["Heading", "Text", "Image", "Button", "MediaText", "Carousel"] },
+  layout: { title: "Layout", components: ["Section", "Columns", "Divider"] },
+  destaques: { title: "Destaques", components: ["Hero", "Cta", "Cards", "Stats", "Testimonials", "People", "Timeline"] },
+  interacao: { title: "Interação", components: ["Faq", "Tabs", "FormBlock", "Buttons", "Social", "IconList"] },
+  incorporar: { title: "Incorporar", components: ["Instagram", "XPost", "Embed"] },
+  dados: { title: "Dados ao vivo", components: ["TeamWidget", "Standings", "Scorers", "NewsFeed", "LiveMatch", "TodayGames", "Countdown"] },
+  trechos: { title: "Trechos", components: ["Snippet"] },
 };

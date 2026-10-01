@@ -1,114 +1,83 @@
 "use client";
-// Config do Puck pro EDITOR: canvas em "wireframe" (estilos inline simples). O visual real
-// fica no Live Preview. Blocos de dados viram um card-resumo (nada é buscado no editor).
-import type React from "react";
+// Config do Puck pro EDITOR. O canvas recebe o CSS real do site (ver iframe-styles.tsx), então:
+// - blocos puros (client-safe) renderizam o MESMO componente do site;
+// - blocos que dependem do servidor (dados ao vivo, Lexical, formulário, trecho) viram um
+//   mini-preview em iframe (BlockFrame → /cms-block-preview → PageBlock real).
 import type { Config } from "@puckeditor/core";
 import { FIELDS, CATEGORIES } from "./fields";
-import { blockSummary } from "@/cms/blocks/summary";
+import { RICH_DEFAULTS, RICH_LABELS, RICH_SLUG } from "./fields-rich";
 import { puckPropsToBlock } from "./to-block";
+import { BlockFrame } from "./block-frame";
+import { BG, COL } from "./layout-classes";
+import { CLIENT_SAFE_COMPONENTS } from "@/components/payload/blocks/client-safe";
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
-const FONT = "Open Sans, Arial, sans-serif";
-const box: React.CSSProperties = { border: "1px dashed #9CA3AF", borderRadius: 8, padding: 16, background: "#fff", color: "#374151", fontFamily: FONT };
-const LABELS: Record<string, string> = {
-  TeamWidget: "Widget de time",
-  Standings: "Classificação",
-  Scorers: "Artilharia",
-  NewsFeed: "Feed de notícias",
-  LiveMatch: "Jogo ao vivo",
-  TodayGames: "Jogos de hoje",
-};
+const empty = (msg: string) => (
+  <div style={{ border: "1px dashed #9CA3AF", borderRadius: 8, padding: 16, background: "#fff", color: "#6B7280", fontSize: 14 }}>{msg}</div>
+);
 
-function Placeholder({ type, props }: { type: string; props: any }) {
-  const b = puckPropsToBlock(type, props);
-  const summary = b ? blockSummary(b.blockType, b) : "";
-  return (
-    <div style={box}>
-      <strong style={{ display: "block", fontSize: 13, color: "#00965E" }}>{LABELS[type] || type} · dado ao vivo</strong>
-      <span style={{ fontSize: 14 }}>{summary || "configure nos campos à direita"}</span>
-    </div>
-  );
-}
-
-const data = (type: string, defaultProps: Record<string, any> = {}) => ({
-  label: LABELS[type],
+// Bloco puro: o componente do site, com as props convertidas.
+const real = (type: string, slug: string, label: string, defaultProps: Record<string, any> = {}) => ({
+  label,
   fields: FIELDS[type],
   defaultProps,
-  render: (props: any) => <Placeholder type={type} props={props} />,
+  render: (props: any) => {
+    const block = puckPropsToBlock(type, props);
+    const C = CLIENT_SAFE_COMPONENTS[slug];
+    return block && C ? <C block={block} /> : empty(`${label}: configure nos campos à direita`);
+  },
 });
+
+// Bloco que depende do servidor: mini-preview em iframe.
+const framed = (type: string, label: string, defaultProps: Record<string, any> = {}) => ({
+  label,
+  fields: FIELDS[type],
+  defaultProps,
+  render: (props: any) => <BlockFrame block={puckPropsToBlock(type, props)} id={String(props.id || type)} />,
+});
+
+const SERVER_ONLY = new Set(["MediaText", "Tabs", "FormBlock", "Countdown", "Snippet"]);
+
+const richComponents = Object.fromEntries(
+  Object.keys(RICH_SLUG).map((type) => [
+    type,
+    SERVER_ONLY.has(type)
+      ? framed(type, RICH_LABELS[type], RICH_DEFAULTS[type])
+      : real(type, RICH_SLUG[type], RICH_LABELS[type], RICH_DEFAULTS[type]),
+  ])
+);
 
 export const editorConfig: Config = {
   categories: CATEGORIES as any,
   components: {
-    Heading: {
-      label: "Título",
-      fields: FIELDS.Heading,
-      defaultProps: { text: "Título", level: "h2" },
-      render: ({ text, level }: any) =>
-        level === "h3" ? (
-          <h3 style={{ fontFamily: FONT, fontWeight: 700, fontSize: 18, margin: "8px 0" }}>{text}</h3>
-        ) : (
-          <h2 style={{ fontFamily: FONT, fontWeight: 700, fontSize: 22, margin: "8px 0" }}>{text}</h2>
-        ),
-    },
+    Heading: real("Heading", "heading", "Título", { text: "Título", level: "h2" }),
     Text: {
       label: "Texto",
       fields: FIELDS.Text,
       defaultProps: { text: "Escreva aqui." },
+      // Mesmo visual do bloco "Texto" do site (prosa), sem ida ao servidor a cada tecla.
       render: ({ text }: any) => (
-        <div style={{ fontSize: 16, lineHeight: 1.6, fontFamily: FONT }}>
+        <div className="space-y-3 text-sm leading-relaxed text-text-secondary">
           {String(text || "")
             .split(/\r?\n/)
+            .filter((l: string) => l.trim())
             .map((l: string, i: number) => (
-              <p key={i} style={{ margin: "0 0 8px" }}>{l}</p>
+              <p key={i} className="m-0">{l}</p>
             ))}
         </div>
       ),
     },
-    Image: {
-      label: "Imagem",
-      fields: FIELDS.Image,
-      render: ({ url, caption }: any) =>
-        url ? (
-          <figure style={{ margin: 0 }}>
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src={url} alt={caption || ""} style={{ maxWidth: "100%", borderRadius: 8 }} />
-            {caption && <figcaption style={{ fontSize: 13, color: "#6B7280" }}>{caption}</figcaption>}
-          </figure>
-        ) : (
-          <div style={box}>Imagem: informe a URL</div>
-        ),
-    },
-    Button: {
-      label: "Botão",
-      fields: FIELDS.Button,
-      defaultProps: { label: "Saiba mais", url: "/", style: "primary" },
-      render: ({ label, style }: any) => (
-        <span
-          style={{
-            display: "inline-block",
-            padding: "8px 16px",
-            borderRadius: 8,
-            fontWeight: 600,
-            fontFamily: FONT,
-            background: style === "outline" ? "#fff" : "#00965E",
-            color: style === "outline" ? "#00965E" : "#fff",
-            border: "1px solid #00965E",
-          }}
-        >
-          {label}
-        </span>
-      ),
-    },
+    Image: real("Image", "image", "Imagem"),
+    Button: real("Button", "button", "Botão", { label: "Saiba mais", url: "/", style: "primary" }),
     Columns: {
       label: "Colunas",
       fields: FIELDS.Columns,
       defaultProps: { count: 2, col1: [], col2: [], col3: [] },
       render: ({ count, col1: C1, col2: C2, col3: C3 }: any) => (
-        <div style={{ display: "grid", gap: 16, gridTemplateColumns: `repeat(${count || 2}, minmax(0, 1fr))` }}>
-          <C1 />
-          <C2 />
-          {(count || 2) === 3 && <C3 />}
+        <div className={`grid gap-4 ${(count || 2) === 3 ? "md:grid-cols-3" : "md:grid-cols-2"}`}>
+          <C1 className={COL} minEmptyHeight={80} />
+          <C2 className={COL} minEmptyHeight={80} />
+          {(count || 2) === 3 && <C3 className={COL} minEmptyHeight={80} />}
         </div>
       ),
     },
@@ -117,25 +86,18 @@ export const editorConfig: Config = {
       fields: FIELDS.Section,
       defaultProps: { background: "none", content: [] },
       render: ({ title, background, content: Content }: any) => (
-        <section
-          style={{
-            padding: 16,
-            borderRadius: 10,
-            background: background === "green" ? "#00965E" : background === "dark" ? "#111827" : background === "card" ? "#fff" : "transparent",
-            color: background === "green" || background === "dark" ? "#fff" : "inherit",
-            border: background === "card" ? "1px solid #E5E7EB" : "none",
-          }}
-        >
-          {title && <h2 style={{ fontFamily: FONT, fontWeight: 700, fontSize: 18, margin: "0 0 12px" }}>{title}</h2>}
-          <Content />
+        <section className={BG[background || "none"] || undefined}>
+          {title && <h2 className="mb-4 text-lg font-bold text-text-primary">{title}</h2>}
+          <Content className="space-y-5" minEmptyHeight={80} />
         </section>
       ),
     },
-    TeamWidget: data("TeamWidget", { widget: "upcoming" }),
-    Standings: data("Standings", { tournament: "brasileirao-serie-a", compact: false }),
-    Scorers: data("Scorers", { tournament: "brasileirao-serie-a", limit: 10 }),
-    NewsFeed: data("NewsFeed", { source: "latest", limit: 6, layout: "grid" }),
-    LiveMatch: data("LiveMatch"),
-    TodayGames: data("TodayGames", { league: "all" }),
+    TeamWidget: framed("TeamWidget", "Widget de time", { widget: "upcoming" }),
+    Standings: framed("Standings", "Classificação", { tournament: "brasileirao-serie-a", compact: false }),
+    Scorers: framed("Scorers", "Artilharia", { tournament: "brasileirao-serie-a", limit: 10 }),
+    NewsFeed: framed("NewsFeed", "Feed de notícias", { source: "latest", limit: 6, layout: "grid" }),
+    LiveMatch: framed("LiveMatch", "Jogo ao vivo"),
+    TodayGames: framed("TodayGames", "Jogos de hoje", { league: "all" }),
+    ...richComponents,
   },
 };

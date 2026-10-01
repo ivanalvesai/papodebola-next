@@ -4,6 +4,8 @@ import type { Config } from "@puckeditor/core";
 import { FIELDS } from "./fields";
 import { PageBlock } from "@/components/payload/page-blocks";
 import { puckPropsToBlock } from "./to-block";
+import { RICH_SLUG } from "./fields-rich";
+import { BG, COL } from "./layout-classes";
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
 const viaBlock = (type: string) => ({
@@ -13,16 +15,6 @@ const viaBlock = (type: string) => ({
     return b ? <PageBlock block={b} pageWidth="wide" /> : <></>;
   },
 });
-
-const BG: Record<string, string> = {
-  none: "",
-  card: "rounded-lg border border-border-custom bg-card-bg p-6",
-  green: "rounded-lg bg-green p-6 text-white [&_h2]:text-white",
-  dark: "rounded-lg bg-[#111827] p-6 text-white [&_h2]:text-white",
-};
-
-// Slots do Puck renderizam um <div> próprio e aceitam className.
-const COL = "min-w-0 space-y-5";
 
 export const serverConfig: Config = {
   components: {
@@ -36,6 +28,8 @@ export const serverConfig: Config = {
     NewsFeed: viaBlock("NewsFeed"),
     LiveMatch: viaBlock("LiveMatch"),
     TodayGames: viaBlock("TodayGames"),
+    // 21 blocos ricos (inclui o Trecho, que o PageBlock resolve no servidor).
+    ...Object.fromEntries(Object.keys(RICH_SLUG).map((type) => [type, viaBlock(type)])),
     Columns: {
       fields: FIELDS.Columns,
       render: ({ count, col1: C1, col2: C2, col3: C3 }: any) => (
