@@ -1,6 +1,8 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { validatePath, normalizePath } from "./cms-paths.ts";
+import fs from "node:fs";
+import path from "node:path";
+import { validatePath, normalizePath, STATIC_TOP_LEVEL, RESERVED_FIRST_SEGMENTS } from "./cms-paths.ts";
 
 test("aceita caminho simples e aninhado", () => {
   assert.equal(validatePath("/volei/mundial-2026"), true);
@@ -33,4 +35,21 @@ test("recusa subárvores do futebol que são código", () => {
 });
 test("normalizePath tira espaços e barra final", () => {
   assert.equal(normalizePath("  /volei/mundial-2026/ "), "/volei/mundial-2026");
+});
+test("toda pasta estática de src/app/(site) está em STATIC_TOP_LEVEL ou RESERVED_FIRST_SEGMENTS", () => {
+  const dir = path.resolve(process.cwd(), "src/app/(site)");
+  const names = fs.readdirSync(dir, { withFileTypes: true })
+    .filter((d) => d.isDirectory() && !d.name.startsWith("(") && !d.name.startsWith("["))
+    .map((d) => d.name);
+  assert.ok(names.length > 10);
+  for (const n of names) assert.ok(STATIC_TOP_LEVEL.has(n) || RESERVED_FIRST_SEGMENTS.has(n), n);
+});
+test("recusa caminhos sombreados por redirect ou rota de código", () => {
+  for (const p of ["/futsal", "/tenis/halle-2026", "/parceiro/x", "/campeonato/x", "/mma", "/admin", "/agenda/x", "/times/x/y", "/basquete/nba", "/futebolnarede/x"]) {
+    assert.notEqual(validatePath(p), true, p);
+  }
+  assert.match(String(validatePath("/mma")), /redirecionamento/);
+  assert.equal(validatePath("/volei/mundial-2026"), true);
+  assert.equal(validatePath("/futebol/copa-america"), true);
+  assert.equal(validatePath("/agendamento"), true); // prefixo só casa no limite do segmento
 });
