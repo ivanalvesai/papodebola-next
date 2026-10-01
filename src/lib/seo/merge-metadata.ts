@@ -32,12 +32,16 @@ export function mergeMetadata(defaults: Metadata, doc: PageTextsDoc | null | und
   const out: Metadata = { ...defaults };
   if (title) {
     const t = defaults.title;
-    out.title = t && typeof t === "object" && "absolute" in t ? { absolute: title } : title;
+    if (t && typeof t === "object" && "template" in t) out.title = { ...t, default: title };
+    else if (t && typeof t === "object" && "absolute" in t) out.title = { absolute: title };
+    else out.title = title;
+    if (defaults.openGraph) out.openGraph = { ...defaults.openGraph, title };
+    if (defaults.twitter) out.twitter = { ...defaults.twitter, title };
   }
   if (description) {
     out.description = description;
-    if (defaults.openGraph) out.openGraph = { ...defaults.openGraph, description };
-    if (defaults.twitter) out.twitter = { ...defaults.twitter, description };
+    if (out.openGraph) out.openGraph = { ...out.openGraph, description };
+    if (out.twitter) out.twitter = { ...out.twitter, description };
   }
   if (noindex) out.robots = { index: false, follow: false };
   return out;

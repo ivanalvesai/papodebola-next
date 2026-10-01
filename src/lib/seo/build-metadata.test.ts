@@ -68,3 +68,19 @@ test("matchRoute: número de segmentos tem que bater; sem match → null", () =>
   assert.equal(matchRoute("/x", []), null);
   assert.equal(matchRoute("/autor/joao", ["/artigos/:slug"]), null);
 });
+
+test("metaTitle sobrescreve openGraph.title e twitter.title quando existem", () => {
+  const m = mergeMetadata(DEFAULTS, { seo: { metaTitle: "Novo", metaDescription: "Nova desc" } });
+  assert.equal((m.openGraph as { title?: string }).title, "Novo");
+  assert.equal((m.openGraph as { description?: string }).description, "Nova desc");
+  assert.equal((m.twitter as { title?: string }).title, "Novo");
+  assert.equal((m.twitter as { description?: string }).description, "Nova desc");
+  const s = mergeMetadata({ title: "T" }, { seo: { metaTitle: "Novo" } });
+  assert.equal(s.openGraph, undefined);
+  assert.equal(s.twitter, undefined);
+});
+
+test("metaTitle preserva o shape {default, template}", () => {
+  const m = mergeMetadata({ title: { default: "Velho", template: "%s | PDB" } }, { seo: { metaTitle: "Novo" } });
+  assert.deepEqual(m.title, { default: "Novo", template: "%s | PDB" });
+});

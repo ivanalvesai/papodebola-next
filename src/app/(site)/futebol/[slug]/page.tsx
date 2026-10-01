@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { TOURNAMENT_BY_SLUG } from "@/lib/config";
 import { CmsPage, cmsPageMetadata } from "@/components/payload/cms-page-route";
 import ChampionshipClient from "./championship-client";
+import { buildMetadata } from "@/lib/seo/build-metadata";
 
 // Slug fora de TOURNAMENT_BY_SLUG -> 404 REAL (notFound no server). Com o loading.tsx
 // já fora da raiz, o notFound() volta a emitir status 404 (sem soft-404).
@@ -13,11 +14,12 @@ export async function generateMetadata({
   const { slug } = await params;
   const t = TOURNAMENT_BY_SLUG[slug];
   if (!t) return (await cmsPageMetadata(`/futebol/${slug}`)) || { title: "Campeonato não encontrado" };
-  return {
+  // SEO editável no /cms (Textos e SEO das páginas, rota "/futebol/:slug").
+  return buildMetadata("/futebol/:slug", {
     alternates: { canonical: `/futebol/${slug}` },
     title: `${t.name}: Tabela, Classificação e Jogos`,
     description: `Acompanhe ${t.name} no Papo de Bola: tabela de classificação, jogos, rodadas, resultados e horários atualizados.`,
-  };
+  });
 }
 
 export default async function CampeonatoPage({

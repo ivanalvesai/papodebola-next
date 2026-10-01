@@ -48,7 +48,7 @@ export const pageTextsCollection: CollectionConfig = {
       fields: [
         { name: "metaTitle", type: "text", label: "Título (meta title)" },
         { name: "metaDescription", type: "textarea", label: "Descrição (meta description)" },
-        { name: "noindex", type: "checkbox", label: "Não indexar (noindex)" },
+        { name: "noindex", type: "checkbox", label: "Não indexar (noindex)", admin: { description: "Em rotas de layout (ex.: municipal) vale também pras páginas filhas." } },
       ],
     },
     {
