@@ -18,6 +18,7 @@ test("formato: começa com /, minúsculas, sem barra final, máx 6 segmentos", (
   assert.match(String(validatePath("/Volei/Mundial")), /letras minúsculas/);
   assert.match(String(validatePath("/volei/")), /barra no final/);
   assert.match(String(validatePath("/a/b/c/d/e/f/g")), /6 segmentos/);
+  assert.notEqual(validatePath("/cms-guia"), true);
   assert.match(String(validatePath("/volei/mundial 2026")), /letras minúsculas/);
 });
 test("recusa árvores reservadas ao código", () => {
