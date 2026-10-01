@@ -40,9 +40,21 @@ export const getPayloadPageSlugs = cache(async (): Promise<string[]> => {
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
 export interface PayloadPage {
+  id: number;
   title?: string;
   slug?: string;
-  hero?: { h1?: string; subtitle?: string };
+  path?: string | null;
+  layoutStyle?: { width?: "narrow" | "wide" | "full"; showBreadcrumb?: boolean };
+  hero?: {
+    h1?: string;
+    subtitle?: string;
+    style?: "centered" | "left" | "banner";
+    image?: { url?: string; alt?: string } | number | null;
+  };
   layout?: any[];
+  editor?: "blocks" | "puck";
+  puckData?: any;
+  showSponsors?: boolean;
+  _status?: string;
   seo?: { metaTitle?: string; metaDescription?: string };
 }

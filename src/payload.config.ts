@@ -12,20 +12,31 @@ import {
 import sharp from "sharp";
 import { revalidatePath } from "next/cache";
 import { articleHref } from "@/lib/config";
+import { pt } from "@payloadcms/translations/languages/pt";
 import { pageBlocks, TEAM_LAYOUT_BLOCKS } from "@/cms/blocks";
+import { pagesCollection } from "@/cms/collections/pages";
+import { pageTemplatesCollection } from "@/cms/collections/page-templates";
+import { previewUrl, PREVIEW_BREAKPOINTS } from "@/cms/lib/preview-url";
 
 const filename = fileURLToPath(import.meta.url);
 const dirname = path.dirname(filename);
 
 
 // Uma aba por página do cluster (hub + 5 sub-rotas). Mesmos blocos em todas → composição livre.
-const teamLayoutTab = (name: string, label: string): Field => ({
-  name,
-  label: "Layout",
-  type: "blocks",
-  blocks: TEAM_LAYOUT_BLOCKS,
-  admin: { description: `Blocos da página "${label}". Vazio = página padrão do site.` },
-});
+const teamLayoutTab = (name: string, label: string, aba: string): Field[] => [
+  {
+    name: `preview_${name}`,
+    type: "ui",
+    admin: { components: { Field: "@/cms/components/team-preview-link#TeamPreviewLink" }, custom: { aba } },
+  },
+  {
+    name,
+    label: "Layout",
+    type: "blocks",
+    blocks: TEAM_LAYOUT_BLOCKS,
+    admin: { description: `Blocos da página "${label}". Vazio = página padrão do site.` },
+  },
+];
 
 // SEO de uma aba do time (meta title/description). O da aba Hub mantém o name "seo"
 // (mesmas colunas no banco); as outras abas usam seoJogoHoje, seoOndeAssistir etc.
@@ -532,7 +543,10 @@ export default buildConfig({
   admin: {
     user: "users",
     importMap: { baseDir: path.resolve(dirname, "app/(payload)") },
+    meta: { titleSuffix: " · Papo de Bola CMS" },
+    livePreview: { breakpoints: PREVIEW_BREAKPOINTS },
   },
+  i18n: { supportedLanguages: { pt }, fallbackLanguage: "pt" },
   db: postgresAdapter({
     pool: { connectionString: process.env.DATABASE_URI || "" },
     // Só o dev sincroniza o schema (PAYLOAD_DB_PUSH=true no .env.local do dev).
@@ -543,12 +557,15 @@ export default buildConfig({
   collections: [
     {
       slug: "users",
+      labels: { singular: "Usuário", plural: "Usuários" },
       auth: true,
-      admin: { useAsTitle: "email" },
+      admin: { useAsTitle: "email", group: "Sistema" },
       fields: [],
     },
     {
       slug: "media",
+      labels: { singular: "Mídia", plural: "Mídias" },
+      admin: { group: "Conteúdo" },
       // staticDir no volume COMPARTILHADO (/app/data) — persiste entre deploys e é
       // o mesmo em dev e prod. URL servida via /cms-api/media/file/<filename>.
       // formatOptions: original vira WebP. imageSizes: versão "card" (800px WebP).
@@ -563,63 +580,21 @@ export default buildConfig({
       access: { read: () => true },
       fields: [{ name: "alt", type: "text" }],
     },
-    {
-      slug: "pages",
-      admin: { useAsTitle: "title" },
-      // Rascunho/publicar: edições ficam em draft até publicar. O site (find sem
-      // draft) só mostra a versão publicada. Anônimo só lê publicado.
-      versions: { drafts: true, maxPerDoc: 50 },
-      access: {
-        read: ({ req: { user } }) =>
-          user ? true : { _status: { equals: "published" } },
-      },
-      fields: [
-        { name: "title", type: "text", required: true },
-        { name: "slug", type: "text", required: true, unique: true, index: true },
-        {
-          name: "hero",
-          type: "group",
-          fields: [
-            { name: "h1", type: "text" },
-            { name: "subtitle", type: "text" },
-          ],
-        },
-        {
-          name: "layout",
-          type: "blocks",
-          admin: { initCollapsed: true },
-          blocks: pageBlocks(richTextEditor),
-        },
-        {
-          name: "seo",
-          type: "group",
-          fields: [
-            { name: "metaTitle", type: "text" },
-            { name: "metaDescription", type: "textarea" },
-          ],
-        },
-        {
-          name: "showSponsors",
-          type: "checkbox",
-          defaultValue: false,
-          label: "Exibir faixa de patrocinadores nesta página",
-          admin: {
-            description:
-              "Mostra a faixa com os patrocinadores ATIVOS abaixo do conteúdo desta página. Usado na página do Municipal.",
-          },
-        },
-      ],
-    },
+    pagesCollection(richTextEditor),
+    pageTemplatesCollection(richTextEditor),
     {
       slug: "teams",
       labels: { singular: "Time", plural: "Times" },
       admin: {
         useAsTitle: "name",
+        group: "Futebol",
+        livePreview: { url: ({ data }: { data: { slug?: string } }) => previewUrl("time", data?.slug, "hub") },
+        preview: (data: { slug?: string }) => previewUrl("time", data?.slug, "hub"),
         defaultColumns: ["name", "slug", "tournament", "_status"],
         description:
           "Páginas de time geridas no CMS. Aba de layout vazia = página padrão do site. SEO de cada aba fica dentro da aba.",
       },
-      versions: { drafts: true, maxPerDoc: 30 },
+      versions: { drafts: { autosave: { interval: 1500 } }, maxPerDoc: 30 },
       access: {
         read: ({ req: { user } }) =>
           user ? true : { _status: { equals: "published" } },
@@ -674,12 +649,12 @@ export default buildConfig({
         {
           type: "tabs",
           tabs: [
-            { label: "Hub", fields: [teamLayoutTab("layoutHub", "Hub"), teamSeoGroup("seo")] },
-            { label: "Jogo de hoje", fields: [teamLayoutTab("layoutJogoHoje", "Jogo de hoje"), teamSeoGroup("seoJogoHoje")] },
-            { label: "Onde assistir", fields: [teamLayoutTab("layoutOndeAssistir", "Onde assistir"), teamSeoGroup("seoOndeAssistir")] },
-            { label: "Escalação", fields: [teamLayoutTab("layoutEscalacao", "Escalação"), teamSeoGroup("seoEscalacao")] },
-            { label: "Próximos jogos", fields: [teamLayoutTab("layoutProximos", "Próximos jogos"), teamSeoGroup("seoProximos")] },
-            { label: "Estatísticas", fields: [teamLayoutTab("layoutEstatisticas", "Estatísticas"), teamSeoGroup("seoEstatisticas")] },
+            { label: "Hub", fields: [...teamLayoutTab("layoutHub", "Hub", "hub"), teamSeoGroup("seo")] },
+            { label: "Jogo de hoje", fields: [...teamLayoutTab("layoutJogoHoje", "Jogo de hoje", "jogo-hoje"), teamSeoGroup("seoJogoHoje")] },
+            { label: "Onde assistir", fields: [...teamLayoutTab("layoutOndeAssistir", "Onde assistir", "onde-assistir"), teamSeoGroup("seoOndeAssistir")] },
+            { label: "Escalação", fields: [...teamLayoutTab("layoutEscalacao", "Escalação", "escalacao"), teamSeoGroup("seoEscalacao")] },
+            { label: "Próximos jogos", fields: [...teamLayoutTab("layoutProximos", "Próximos jogos", "proximos-jogos"), teamSeoGroup("seoProximos")] },
+            { label: "Estatísticas", fields: [...teamLayoutTab("layoutEstatisticas", "Estatísticas", "estatisticas"), teamSeoGroup("seoEstatisticas")] },
           ],
         },
       ],
@@ -692,22 +667,13 @@ export default buildConfig({
         defaultColumns: ["title", "category", "publishedDate", "_status"],
         // Botão "Preview" no editor → abre o post (mesmo rascunho) renderizado no
         // layout real do site, numa página dedicada (não toca nas páginas públicas/ISR).
-        preview: (doc: { slug?: string }) =>
-          doc?.slug
-            ? `/cms-preview/${doc.slug}?previewSecret=${process.env.CRON_SECRET || ""}`
-            : null,
+        group: "Conteúdo",
+        preview: (doc: { slug?: string }) => (doc?.slug ? previewUrl("post", doc.slug) : null),
         // Live Preview: aba com o site renderizado lado a lado dentro do editor
         // (atualiza ao salvar). Mesma página /cms-preview. Só config — sem schema.
         livePreview: {
-          url: ({ data }: { data: { slug?: string } }) =>
-            data?.slug
-              ? `/cms-preview/${data.slug}?previewSecret=${process.env.CRON_SECRET || ""}`
-              : "",
-          breakpoints: [
-            { label: "Mobile", name: "mobile", width: 390, height: 844 },
-            { label: "Tablet", name: "tablet", width: 768, height: 1024 },
-            { label: "Desktop", name: "desktop", width: 1440, height: 900 },
-          ],
+          url: ({ data }: { data: { slug?: string } }) => (data?.slug ? previewUrl("post", data.slug) : ""),
+          breakpoints: PREVIEW_BREAKPOINTS,
         },
       },
       // schedulePublish: habilita "Schedule Publish" (publicar/despublicar em data/hora).
@@ -830,6 +796,7 @@ export default buildConfig({
       slug: "authors",
       labels: { singular: "Autor", plural: "Autores" },
       admin: {
+        group: "Conteúdo",
         useAsTitle: "name",
         defaultColumns: ["name", "slug", "role", "_status"],
         description:
@@ -900,6 +867,7 @@ export default buildConfig({
       slug: "matchComments",
       labels: { singular: "Comentário do jogo", plural: "Comentários do jogo" },
       admin: {
+        group: "Futebol",
         useAsTitle: "label",
         defaultColumns: ["label", "matchId", "minute", "updatedAt"],
         description:
@@ -974,6 +942,7 @@ export default buildConfig({
       slug: "municipalGames",
       labels: { singular: "Jogo do municipal", plural: "Jogos do municipal" },
       admin: {
+        group: "Futebol",
         useAsTitle: "matchup",
         // A DATA aparece na coluna "date" da lista → distingue jogos dos mesmos times em
         // rodadas diferentes. (useAsTitle precisa ser campo real; virtual quebra o Payload.)
@@ -1151,6 +1120,7 @@ export default buildConfig({
       slug: "sponsors",
       labels: { singular: "Patrocinador", plural: "Patrocinadores" },
       admin: {
+        group: "Comercial",
         useAsTitle: "name",
         defaultColumns: ["name", "format", "active", "clicks", "updatedAt"],
         description:

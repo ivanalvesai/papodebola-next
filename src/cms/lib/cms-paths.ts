@@ -1,0 +1,43 @@
+import { RESERVED_TOP_LEVEL, TOURNAMENT_BY_SLUG } from "../../lib/config.ts";
+
+// Caminhos que o CMS pode ou não usar. Regra: rota em CÓDIGO sempre ganha. Aqui só
+// impedimos o editor de gravar um caminho que nunca vai responder (ou que colide).
+
+// Rotas estáticas de 1 segmento que existem em src/app/(site) (um CMS path igual nunca responderia).
+export const STATIC_TOP_LEVEL = new Set([
+  "apostas", "boxe", "combate", "esports", "formula-1", "futebol", "futebol-americano", "nba", "tenis", "volei",
+  "sobre", "contato", "parceiros", "politica-de-privacidade", "termos-de-uso", "casas-de-apostas",
+]);
+// Árvores inteiramente do código (qualquer coisa abaixo é recusada).
+// RESERVED_TOP_LEVEL também lista rotas estáticas (futebol, sobre, contato, parceiros): essas saem
+// daqui e ficam no STATIC_TOP_LEVEL (mensagem "já existe"; /futebol/{x} segue liberado).
+export const RESERVED_FIRST_SEGMENTS = new Set([
+  ...[...RESERVED_TOP_LEVEL].filter((s) => !STATIC_TOP_LEVEL.has(s)), "api", "cms", "cms-api", "cms-preview", "paginas", "img", "_next",
+  "autor", "studio-pdb", "painel-pdb-9x", "sitemap.xml", "robots.txt", "manifest.webmanifest", "llms.txt",
+]);
+// Subárvores do /futebol que são código.
+const FUTEBOL_CODE = new Set(["times", "copa-do-mundo", "copa-do-mundo-feminina", "selecao-brasileira", "selecoes", "craque", "onde-assistir"]);
+
+export function normalizePath(v: string | undefined | null): string {
+  const s = String(v ?? "").trim();
+  return s.length > 1 ? s.replace(/\/+$/, "") : s;
+}
+
+export function validatePath(value: string | undefined | null): true | string {
+  const v = String(value ?? "").trim();
+  if (!v) return true;
+  if (!v.startsWith("/")) return "O caminho precisa começar com / (ex.: /volei/mundial-2026).";
+  if (v.length > 1 && v.endsWith("/")) return "Sem barra no final.";
+  const segs = v.slice(1).split("/");
+  if (segs.length > 6) return "Máximo de 6 segmentos.";
+  const [first, second] = segs;
+  if (RESERVED_FIRST_SEGMENTS.has(first)) return `"/${first}" é reservado ao código do site.`;
+  if (!segs.every((s) => /^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(s))) return "Use só letras minúsculas, números e hífens em cada parte.";
+  if (segs.length === 1 && STATIC_TOP_LEVEL.has(first)) return `A rota /${first} já existe no site.`;
+  if (first === "futebol") {
+    if (FUTEBOL_CODE.has(second)) return `"/futebol/${second}" é reservado ao código do site.`;
+    if (TOURNAMENT_BY_SLUG[second]) return `/futebol/${second} já existe (campeonato).`;
+    if (segs.length > 2) return "Abaixo de /futebol só é possível 1 nível (ex.: /futebol/copa-america).";
+  }
+  return true;
+}
