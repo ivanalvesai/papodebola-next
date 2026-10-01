@@ -43,3 +43,19 @@ test("snippetItem monta o componente Trecho", () => {
   assert.deepEqual(it.props.snippet, { id: 3, title: "Rodapé" });
   assert.ok(it.props.id.startsWith("Snippet-"));
 });
+test("lista mista dentro de slot também é conferida", () => {
+  const r = parsePuckJson(
+    JSON.stringify({ content: [{ type: "Section", props: { id: "s", content: [{ type: "Heading", props: {} }, { foo: 1 }] } }] }),
+    names
+  );
+  assert.equal(r.ok, false);
+});
+test("Trecho dentro de slot é recusado", () => {
+  const r = parsePuckJson(
+    JSON.stringify({ content: [{ type: "Section", props: { id: "s", content: [{ type: "Snippet", props: { snippet: { id: 1 } } }] } }] }),
+    names
+  );
+  assert.equal(r.ok, false);
+  if (!r.ok) assert.match(r.error, /Trecho/);
+  assert.equal(parsePuckJson(JSON.stringify({ content: [{ type: "Snippet", props: {} }] }), names).ok, true);
+});

@@ -14,16 +14,19 @@ export function newId(type: string): string {
 const isItem = (v: any) => v && typeof v === "object" && !Array.isArray(v) && typeof v.type === "string" && "props" in v;
 
 // Confere o tipo de cada componente (inclusive dentro de slots) e garante props.id.
-function checkItems(items: any[], names: Set<string>, where: string): string | null {
+// Trecho só no nível da página (igual aos Blocos): dentro de slot é recusado.
+function checkItems(items: any[], names: Set<string>, where: string, nested = false): string | null {
   for (let i = 0; i < items.length; i++) {
     const it = items[i];
     if (!it || typeof it !== "object" || typeof it.type !== "string") return `${where}: o item ${i + 1} não tem "type".`;
     if (!names.has(it.type)) return `${where}: componente desconhecido "${it.type}".`;
+    if (nested && it.type === "Snippet") return `${where}: Trecho só pode ficar direto na página, não dentro de Seção/Colunas.`;
     if (!it.props || typeof it.props !== "object" || Array.isArray(it.props)) it.props = {};
     if (!it.props.id) it.props.id = newId(it.type);
     for (const [k, v] of Object.entries(it.props)) {
-      if (Array.isArray(v) && v.length && v.every(isItem)) {
-        const err = checkItems(v, names, `${it.type} → ${k}`);
+      // Lista com QUALQUER componente é um slot: confere todos os itens (lista mista não passa).
+      if (Array.isArray(v) && v.some(isItem)) {
+        const err = checkItems(v, names, `${it.type} → ${k}`, true);
         if (err) return err;
       }
     }
@@ -47,7 +50,7 @@ export function parsePuckJson(text: string, componentNames: string[]): PuckJsonR
   const zones = raw.zones && typeof raw.zones === "object" && !Array.isArray(raw.zones) ? raw.zones : {};
   for (const [zone, items] of Object.entries(zones)) {
     if (!Array.isArray(items)) return { ok: false, error: `A zona "${zone}" não é uma lista.` };
-    const zErr = checkItems(items, names, `Zona ${zone}`);
+    const zErr = checkItems(items, names, `Zona ${zone}`, true);
     if (zErr) return { ok: false, error: zErr };
   }
   const root = raw.root && typeof raw.root === "object" ? raw.root : { props: {} };
