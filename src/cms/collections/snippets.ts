@@ -1,7 +1,7 @@
 import type { CollectionConfig } from "payload";
 import type { lexicalEditor } from "@payloadcms/richtext-lexical";
 import { pageBlocks } from "@/cms/blocks";
-import { anyLogged, editorOrAdmin } from "@/cms/lib/access";
+import { anyLogged, editorOrAdmin, hiddenUnlessEditor } from "@/cms/lib/access";
 import { expireTag } from "@/cms/lib/revalidate-tag";
 
 type RichTextEditor = ReturnType<typeof lexicalEditor>;
@@ -17,6 +17,7 @@ export function snippetsCollection(richTextEditor: RichTextEditor): CollectionCo
       group: "Conteúdo",
       defaultColumns: ["title", "description", "updatedAt"],
       description: "Seções prontas pra reaproveitar em várias páginas. Editou aqui, muda em todas.",
+      hidden: hiddenUnlessEditor,
     },
     access: { read: anyLogged, create: editorOrAdmin, update: editorOrAdmin, delete: editorOrAdmin },
     hooks: {

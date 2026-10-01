@@ -20,7 +20,8 @@ import { snippetsCollection } from "@/cms/collections/snippets";
 import { pageTextsCollection } from "@/cms/collections/page-texts";
 import { usersCollection } from "@/cms/collections/users";
 import { siteSettingsGlobal } from "@/cms/globals/site-settings";
-import { adminOnly, anyLogged, editorOrAdmin } from "@/cms/lib/access";
+import { adminOnly, anyLogged, editorOrAdmin, hiddenUnlessEditor, publishedOrLogged, seoOrEditorOrAdmin } from "@/cms/lib/access";
+import { lockFieldsExceptSeo } from "@/cms/lib/lock-fields";
 import { formBuilderPlugin } from "@payloadcms/plugin-form-builder";
 import { nodemailerAdapter } from "@payloadcms/email-nodemailer";
 import { isAutosave } from "@/cms/lib/is-autosave";
@@ -579,7 +580,7 @@ export default buildConfig({
         ],
       },
       // Leitura pública: as imagens/arquivos precisam abrir pra qualquer visitante.
-      access: { read: () => true },
+      access: { read: () => true, create: editorOrAdmin, update: editorOrAdmin, delete: editorOrAdmin },
       fields: [{ name: "alt", type: "text" }],
     },
     pagesCollection(richTextEditor),
@@ -599,10 +600,8 @@ export default buildConfig({
           "Páginas de time geridas no CMS. Aba de layout vazia = página padrão do site. SEO de cada aba fica dentro da aba.",
       },
       versions: { drafts: { autosave: { interval: 1500 } }, maxPerDoc: 30 },
-      access: {
-        read: ({ req: { user } }) =>
-          user ? true : { _status: { equals: "published" } },
-      },
+      // seo: pode salvar, mas só os campos de SEO (lockFieldsExceptSeo nos fields).
+      access: { read: publishedOrLogged, create: editorOrAdmin, update: seoOrEditorOrAdmin, delete: adminOnly },
       // Editar/publicar um time revalida o hub + as 5 sub-rotas na hora.
       hooks: {
         afterChange: [
@@ -621,7 +620,7 @@ export default buildConfig({
           },
         ],
       },
-      fields: [
+      fields: lockFieldsExceptSeo([
         { name: "name", type: "text", required: true, label: "Nome" },
         {
           name: "slug",
@@ -662,7 +661,7 @@ export default buildConfig({
             { label: "Estatísticas", fields: [...teamLayoutTab("layoutEstatisticas", "Estatísticas", "estatisticas"), teamSeoGroup("seoEstatisticas")] },
           ],
         },
-      ],
+      ]),
     },
     {
       slug: "posts",
@@ -684,10 +683,8 @@ export default buildConfig({
       // schedulePublish: habilita "Schedule Publish" (publicar/despublicar em data/hora).
       // Usa a fila de jobs (ver `jobs` no fim do config), disparada por cron 1/min no prod.
       versions: { drafts: { schedulePublish: true }, maxPerDoc: 20 },
-      access: {
-        read: ({ req: { user } }) =>
-          user ? true : { _status: { equals: "published" } },
-      },
+      // seo: pode salvar, mas só os campos de SEO (lockFieldsExceptSeo nos fields).
+      access: { read: publishedOrLogged, create: editorOrAdmin, update: seoOrEditorOrAdmin, delete: editorOrAdmin },
       // 3e: edição/publicação no /cms revalida o site na hora (substitui o mu-plugin).
       hooks: {
         // Ao PUBLICAR sem "Data de publicação" preenchida, carimba a data com o horário
@@ -732,7 +729,7 @@ export default buildConfig({
           },
         ],
       },
-      fields: [
+      fields: lockFieldsExceptSeo([
         { name: "title", type: "text", required: true },
         { name: "slug", type: "text", required: true, unique: true, index: true },
         {
@@ -795,7 +792,7 @@ export default buildConfig({
           index: true,
           admin: { readOnly: true, description: "ID de origem no WordPress (import)" },
         },
-      ],
+      ]),
     },
     {
       slug: "authors",
@@ -803,12 +800,13 @@ export default buildConfig({
       admin: {
         group: "Conteúdo",
         useAsTitle: "name",
+        hidden: hiddenUnlessEditor,
         defaultColumns: ["name", "slug", "role", "_status"],
         description:
           "Autores/colunistas. Cada autor publica a página /autor/{slug} (bio + artigos) e pode ser ligado aos posts (byline linkável + autoria no SEO). Criar autor novo = 1 entrada aqui. Salvou = no ar.",
       },
       // Sem drafts (publica direto ao salvar): mantém o schema enxuto (uma tabela só).
-      access: { read: () => true },
+      access: { read: () => true, create: editorOrAdmin, update: editorOrAdmin, delete: adminOnly },
       // Editar/publicar um autor revalida a página dele na hora.
       hooks: {
         afterChange: [
@@ -874,11 +872,12 @@ export default buildConfig({
       admin: {
         group: "Futebol",
         useAsTitle: "label",
+        hidden: hiddenUnlessEditor,
         defaultColumns: ["label", "matchId", "minute", "updatedAt"],
         description:
           "Comentários manuais injetados no lance a lance de um jogo (texto + imagem + link). Preencha o ID do jogo e o minuto; o card aparece encaixado no minuto, sem atrapalhar a API. Salvou = no ar (o lance a lance puxa no polling, ~10-15s).",
       },
-      access: { read: () => true },
+      access: { read: () => true, create: editorOrAdmin, update: editorOrAdmin, delete: editorOrAdmin },
       fields: [
         {
           name: "matchId",
@@ -949,13 +948,14 @@ export default buildConfig({
       admin: {
         group: "Futebol",
         useAsTitle: "matchup",
+        hidden: hiddenUnlessEditor,
         // A DATA aparece na coluna "date" da lista → distingue jogos dos mesmos times em
         // rodadas diferentes. (useAsTitle precisa ser campo real; virtual quebra o Payload.)
         defaultColumns: ["matchup", "date", "time", "roundLabel", "updatedAt"],
         description:
           "Página de jogo do municipal com vídeo do YouTube (embed) + comentários editáveis, no layout dos jogos da Copa. URL: /sp/santana-de-parnaiba/municipal/jogo/{data}/{slug}. Salvou = no ar. Use a coluna Data pra achar o jogo certo.",
       },
-      access: { read: () => true },
+      access: { read: () => true, create: editorOrAdmin, update: editorOrAdmin, delete: editorOrAdmin },
       fields: [
         {
           name: "slug",
@@ -1127,11 +1127,12 @@ export default buildConfig({
       admin: {
         group: "Comercial",
         useAsTitle: "name",
+        hidden: hiddenUnlessEditor,
         defaultColumns: ["name", "format", "active", "clicks", "updatedAt"],
         description:
           "Cadastre a empresa 1x. Tipo 'Card' aparece na faixa do rodapé; tipo 'Banner' você posiciona na página do jogo. Marque 'Ativo' pra publicar. Cliques contados via /parceiro/{slug}.",
       },
-      access: { read: () => true },
+      access: { read: () => true, create: editorOrAdmin, update: editorOrAdmin, delete: adminOnly },
       fields: [
         { name: "name", type: "text", required: true, label: "Nome" },
         {
@@ -1251,12 +1252,12 @@ export default buildConfig({
       defaultToEmail: "contato@papodebola.com.br",
       formOverrides: {
         labels: { singular: "Formulário", plural: "Formulários" },
-        admin: { group: "Conteúdo", useAsTitle: "title" },
+        admin: { group: "Conteúdo", useAsTitle: "title", hidden: hiddenUnlessEditor },
         access: { read: anyLogged, create: editorOrAdmin, update: editorOrAdmin, delete: editorOrAdmin },
       },
       formSubmissionOverrides: {
         labels: { singular: "Resposta de formulário", plural: "Respostas de formulário" },
-        admin: { group: "Conteúdo" },
+        admin: { group: "Conteúdo", hidden: hiddenUnlessEditor },
         access: { read: editorOrAdmin, delete: adminOnly },
       },
     }),

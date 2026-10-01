@@ -25,6 +25,8 @@ export const editorOrAdmin: Access = ({ req }) => hasRole(req.user as U, "editor
 export const seoOrEditorOrAdmin: Access = ({ req }) => hasRole(req.user as U, "seo", "editor", "admin");
 export const publishedOrLogged: Access = ({ req }) => (req.user ? true : { _status: { equals: "published" } });
 export const fieldEditorOrAdmin: FieldAccess = ({ req }) => hasRole(req.user as U, "editor", "admin");
+// admin.hidden: some do menu do /cms pra quem não é editor/admin (papel seo).
+export const hiddenUnlessEditor = ({ user }: { user: unknown }): boolean => !hasRole(user as U, "editor", "admin");
 export const fieldSeoOrEditorOrAdmin: FieldAccess = ({ req }) => hasRole(req.user as U, "seo", "editor", "admin");
 
 // Admin: tudo. Demais: só o próprio documento (com id → compara; sem id, ex. listagem → filtra).

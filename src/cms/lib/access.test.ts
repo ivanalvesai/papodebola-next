@@ -42,3 +42,10 @@ test("adminOnly, anyLogged e selfOrAdmin", () => {
 test("selfOrAdmin sem id filtra pelo próprio usuário", () => {
   assert.deepEqual(selfOrAdmin(req(["editor"], 7)), { id: { equals: 7 } });
 });
+
+test("hiddenUnlessEditor esconde do papel seo", async () => {
+  const { hiddenUnlessEditor } = await import("./access.ts");
+  assert.equal(hiddenUnlessEditor({ user: { roles: ["seo"] } }), true);
+  assert.equal(hiddenUnlessEditor({ user: { roles: ["editor"] } }), false);
+  assert.equal(hiddenUnlessEditor({ user: { roles: [] } }), false);
+});
