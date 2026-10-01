@@ -2,8 +2,10 @@
 
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
+import { useIsCmsPreview } from "@/lib/use-is-cms-preview";
 
 export function CookieConsent() {
+  const isCmsPreview = useIsCmsPreview();
   const [visible, setVisible] = useState(false);
 
   useEffect(() => {
@@ -16,7 +18,7 @@ export function CookieConsent() {
     setVisible(false);
   }
 
-  if (!visible) return null;
+  if (!visible || isCmsPreview) return null;
 
   return (
     <div className="fixed bottom-0 left-0 right-0 z-[100] bg-footer-bg text-white p-4 shadow-lg">

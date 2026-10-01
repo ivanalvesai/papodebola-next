@@ -1,11 +1,12 @@
-// URLs de preview/live preview por collection. CRON_SECRET autoriza o iframe do /cms
-// mesmo sem cookie (ver cms-preview-auth). Relativas: o admin e o site são o mesmo host.
+// URLs de preview/live preview por collection. Relativas e same-origin: o iframe do
+// Live Preview e o botão Preview levam o cookie payload-token, que basta pro
+// assertPreviewAccess. NÃO embutir o CRON_SECRET aqui: a página de preview roda no
+// layout do site (GTM/GA4/Clarity) e a URL com o secret iria pros analytics.
+// (assertPreviewAccess segue aceitando ?previewSecret= pra uso manual/curl.)
 export function previewUrl(kind: "pagina" | "time" | "post", key: string | number | undefined, extra?: string): string {
-  const secret = process.env.CRON_SECRET || "";
-  const base = kind === "pagina" ? `/cms-preview/pagina/${key ?? "novo"}`
+  return kind === "pagina" ? `/cms-preview/pagina/${key ?? "novo"}`
     : kind === "time" ? `/cms-preview/time/${key ?? "novo"}/${extra || "hub"}`
     : `/cms-preview/${key ?? ""}`;
-  return `${base}?previewSecret=${encodeURIComponent(secret)}`;
 }
 export const PREVIEW_BREAKPOINTS = [
   { label: "Celular", name: "mobile", width: 390, height: 844 },
