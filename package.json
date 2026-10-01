@@ -6,7 +6,7 @@
     "dev": "next dev",
     "build": "node scripts/gen-importmap.mjs && next build",
     "start": "next start",
-    "test": "node --test --experimental-strip-types src/lib/*.test.ts src/lib/api/*.test.ts",
+    "test": "node --test --experimental-strip-types src/lib/*.test.ts src/lib/api/*.test.ts src/cms/blocks/*.test.ts src/cms/lib/*.test.ts",
     "typecheck": "tsc --noEmit",
     "thumbs": "node scripts/gen-block-thumbs.mjs"
   },

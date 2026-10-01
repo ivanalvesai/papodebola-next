@@ -12,63 +12,18 @@ import {
 import sharp from "sharp";
 import { revalidatePath } from "next/cache";
 import { articleHref } from "@/lib/config";
+import { pageBlocks, TEAM_LAYOUT_BLOCKS } from "@/cms/blocks";
 
 const filename = fileURLToPath(import.meta.url);
 const dirname = path.dirname(filename);
 
-// ── Biblioteca de blocos da collection `teams` (piloto do CMS de blocos de time) ──
-// DINÂMICOS: ao renderizar, buscam dado AO VIVO via getTeamPageDataFor(team) — os mesmos
-// cards de hoje, embrulhados (ver TeamBlockRenderer). O editor só escolhe/ordena e pode
-// dar um título. ESTÁTICOS: texto/título autoral. Os mesmos blocos ficam disponíveis em
-// todas as abas (hub + 5 sub-rotas) → composição livre por página.
-const blockTitle: Field = {
-  name: "title",
-  type: "text",
-  admin: { description: "Título exibido acima do bloco (opcional)" },
-};
-const blockLimit: Field = {
-  name: "limit",
-  type: "number",
-  admin: { description: "Quantos itens mostrar (opcional)" },
-};
-
-const teamLayoutBlocks: Block[] = [
-  // — Dinâmicos (dados ao vivo do time) —
-  { slug: "teamTodayMatch", labels: { singular: "Jogo de hoje", plural: "Jogo de hoje" }, fields: [blockTitle] },
-  { slug: "teamUpcoming", labels: { singular: "Próximos jogos", plural: "Próximos jogos" }, fields: [blockTitle, blockLimit] },
-  { slug: "teamResults", labels: { singular: "Resultados recentes", plural: "Resultados recentes" }, fields: [blockTitle, blockLimit] },
-  { slug: "teamStanding", labels: { singular: "Classificação (posição)", plural: "Classificação" }, fields: [blockTitle] },
-  { slug: "teamNews", labels: { singular: "Notícias do time", plural: "Notícias do time" }, fields: [blockTitle, blockLimit] },
-  { slug: "teamScorers", labels: { singular: "Artilheiros", plural: "Artilheiros" }, fields: [blockTitle, blockLimit] },
-  { slug: "teamWhereToWatch", labels: { singular: "Onde assistir", plural: "Onde assistir" }, fields: [blockTitle] },
-  { slug: "teamLineup", labels: { singular: "Escalação provável", plural: "Escalação" }, fields: [blockTitle] },
-  { slug: "teamClusterLinks", labels: { singular: "Links do cluster (hub)", plural: "Links do cluster" }, fields: [] },
-  { slug: "teamAutoText", labels: { singular: "Texto automático do time", plural: "Textos automáticos" }, fields: [] },
-  // Página padrão da aba inteira (os mesmos cards dos times do config). Textos/títulos do
-  // editor entram antes/depois dela.
-  { slug: "teamClassic", labels: { singular: "Página padrão do time (cards automáticos)", plural: "Páginas padrão do time" }, fields: [] },
-  // — Estáticos (texto autoral) —
-  {
-    slug: "richText",
-    labels: { singular: "Texto", plural: "Textos" },
-    fields: [{ name: "content", type: "richText" }],
-  },
-  {
-    slug: "heading",
-    labels: { singular: "Título", plural: "Títulos" },
-    fields: [
-      { name: "text", type: "text" },
-      { name: "level", type: "select", defaultValue: "h2", options: ["h2", "h3"] },
-    ],
-  },
-];
 
 // Uma aba por página do cluster (hub + 5 sub-rotas). Mesmos blocos em todas → composição livre.
 const teamLayoutTab = (name: string, label: string): Field => ({
   name,
   label: "Layout",
   type: "blocks",
-  blocks: teamLayoutBlocks,
+  blocks: TEAM_LAYOUT_BLOCKS,
   admin: { description: `Blocos da página "${label}". Vazio = página padrão do site.` },
 });
 
@@ -632,108 +587,9 @@ export default buildConfig({
         {
           name: "layout",
           type: "blocks",
+          admin: { initCollapsed: true },
           blocks: [
-            {
-              slug: "richText",
-              labels: { singular: "Texto", plural: "Textos" },
-              fields: [{ name: "content", type: "richText", editor: richTextEditor }],
-            },
-            {
-              slug: "heading",
-              labels: { singular: "Título", plural: "Títulos" },
-              fields: [
-                { name: "text", type: "text" },
-                { name: "level", type: "select", defaultValue: "h2", options: ["h2", "h3"] },
-              ],
-            },
-            {
-              slug: "image",
-              labels: { singular: "Imagem", plural: "Imagens" },
-              fields: [
-                { name: "image", type: "upload", relationTo: "media", required: true },
-                { name: "caption", type: "text" },
-                { name: "align", type: "select", defaultValue: "center", options: ["left", "center", "right"] },
-              ],
-            },
-            {
-              slug: "columns",
-              labels: { singular: "Colunas", plural: "Colunas" },
-              fields: [
-                {
-                  name: "columns",
-                  type: "array",
-                  minRows: 2,
-                  maxRows: 4,
-                  fields: [{ name: "content", type: "richText" }],
-                },
-              ],
-            },
-            {
-              slug: "table",
-              labels: { singular: "Tabela", plural: "Tabelas" },
-              fields: [
-                { name: "headers", type: "array", fields: [{ name: "label", type: "text" }] },
-                {
-                  name: "rows",
-                  type: "array",
-                  fields: [{ name: "cells", type: "array", fields: [{ name: "value", type: "text" }] }],
-                },
-              ],
-            },
-            {
-              slug: "gallery",
-              labels: { singular: "Galeria", plural: "Galerias" },
-              fields: [
-                {
-                  name: "images",
-                  type: "array",
-                  fields: [{ name: "image", type: "upload", relationTo: "media" }],
-                },
-              ],
-            },
-            {
-              slug: "quote",
-              labels: { singular: "Citação", plural: "Citações" },
-              fields: [
-                { name: "text", type: "textarea", required: true },
-                { name: "author", type: "text" },
-              ],
-            },
-            {
-              slug: "button",
-              labels: { singular: "Botão", plural: "Botões" },
-              fields: [
-                { name: "label", type: "text", required: true },
-                { name: "url", type: "text", required: true },
-                { name: "style", type: "select", defaultValue: "primary", options: ["primary", "outline"] },
-              ],
-            },
-            {
-              slug: "list",
-              labels: { singular: "Lista", plural: "Listas" },
-              fields: [
-                {
-                  name: "items",
-                  type: "array",
-                  minRows: 1,
-                  fields: [{ name: "content", type: "richText" }],
-                },
-              ],
-            },
-            {
-              slug: "infoCard",
-              labels: { singular: "Card de info", plural: "Cards de info" },
-              fields: [
-                { name: "label", type: "text", required: true },
-                { name: "value", type: "text", required: true },
-                { name: "href", type: "text" },
-              ],
-            },
-            {
-              slug: "note",
-              labels: { singular: "Nota", plural: "Notas" },
-              fields: [{ name: "text", type: "text", required: true }],
-            },
+            ...pageBlocks(richTextEditor),
             // Bloco DINÂMICO: jogos de hoje (lidos do store; nunca bate na API). O editor
             // escolhe a liga e a ORDEM (um bloco por campeonato) — como os widgets dos times.
             {
@@ -759,44 +615,6 @@ export default buildConfig({
                 { name: "primaryCtaHref", type: "text", admin: { description: "Empty-state: botão 1 (URL)" } },
                 { name: "secondaryCtaLabel", type: "text", admin: { description: "Empty-state: botão 2 (texto)" } },
                 { name: "secondaryCtaHref", type: "text", admin: { description: "Empty-state: botão 2 (URL)" } },
-              ],
-            },
-            // Grid de cards de link (ex.: "Principais Campeonatos") — em colunas, e cada
-            // card é um item do array reordenável no /cms.
-            {
-              slug: "linkCards",
-              labels: { singular: "Cards de link (grid)", plural: "Cards de link" },
-              fields: [
-                { name: "title", type: "text", admin: { description: "Título acima dos cards (opcional)" } },
-                {
-                  name: "items",
-                  type: "array",
-                  label: "Cards",
-                  admin: { description: "Cada card é um link. Arraste para reordenar." },
-                  fields: [
-                    { name: "label", type: "text", required: true },
-                    { name: "href", type: "text", required: true },
-                  ],
-                },
-              ],
-            },
-            // Vídeo embed do YouTube. Adicione um bloco por vídeo (arraste pra reordenar).
-            {
-              slug: "youtube",
-              labels: { singular: "Vídeo do YouTube", plural: "Vídeos do YouTube" },
-              fields: [
-                {
-                  name: "url",
-                  type: "text",
-                  required: true,
-                  label: "Link do vídeo",
-                  admin: {
-                    description:
-                      "Cole o link (https://www.youtube.com/watch?v=XXXX, https://youtu.be/XXXX ou o link do Shorts).",
-                  },
-                },
-                { name: "title", type: "text", label: "Título (opcional)", admin: { description: "Aparece acima do vídeo." } },
-                { name: "caption", type: "text", label: "Legenda (opcional)", admin: { description: "Aparece abaixo do vídeo." } },
               ],
             },
           ],
