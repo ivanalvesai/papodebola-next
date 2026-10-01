@@ -4,6 +4,7 @@ import { getArticleBySlug, getRelatedArticles, articleMetaDescription } from "@/
 import { getBrasileiraoStandings } from "@/lib/data/standings";
 import { ArticleView } from "@/components/article/article-view";
 import { CmsPage, cmsPageMetadata } from "@/components/payload/cms-page-route";
+import { getPayloadPageByPath } from "@/lib/data/payload-pages";
 
 // URL canônica de notícia por categoria (estilo ge.globo): /{categoria}/{slug}.
 // O segmento [categoria] no root só é alcançado quando o 1º segmento NÃO é uma rota
@@ -24,8 +25,12 @@ export async function generateMetadata({
   const article = await getArticleBySlug(slug);
   // Só responde metadata se a URL bate com a canônica do artigo (senão a rota
   // redireciona pra URL certa no componente).
-  if (!article) return (await cmsPageMetadata(`/${categoria}/${slug}`)) || {};
-  if (article.url !== `/${categoria}/${slug}`) return {};
+  const path = `/${categoria}/${slug}`;
+  if (!article) return (await cmsPageMetadata(path)) || {};
+  if (article.url !== path) {
+    // Post com o mesmo slug não pode sequestrar uma página do CMS desse caminho.
+    return (await cmsPageMetadata(path)) || {};
+  }
 
   const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://papodebola.com.br";
   const desc = articleMetaDescription(article);
@@ -61,11 +66,17 @@ export default async function CategoryArticlePage({
 }) {
   const { categoria, slug } = await params;
   const article = await getArticleBySlug(slug);
-  if (!article) return <CmsPage path={`/${categoria}/${slug}`} />;
+  const path = `/${categoria}/${slug}`;
+  if (!article) return <CmsPage path={path} />;
 
   // Se a categoria na URL não bate com a canônica do artigo (ex: categoria mudou,
-  // ou é categoria reservada que mora em /artigos), redireciona pra URL certa.
-  if (article.url !== `/${categoria}/${slug}`) permanentRedirect(article.url);
+  // ou é categoria reservada que mora em /artigos), redireciona pra URL certa —
+  // a não ser que exista uma página do CMS nesse caminho (ela ganha do post).
+  if (article.url !== path) {
+    const cmsPage = await getPayloadPageByPath(path);
+    if (cmsPage) return <CmsPage path={path} />;
+    permanentRedirect(article.url);
+  }
 
   const [related, standings] = await Promise.all([
     getRelatedArticles(article.category, article.slug, 4).catch(() => []),
