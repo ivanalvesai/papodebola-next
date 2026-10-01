@@ -1,7 +1,7 @@
 "use client";
 import React, { useEffect, useState } from "react";
 import { useDocumentInfo, useModal, Modal, Button } from "@payloadcms/ui";
-import { parseLayoutImport } from "@/cms/lib/layout-io";
+import { parseLayoutImport, stripIds } from "@/cms/lib/layout-io";
 import { PAGE_BLOCK_SLUGS } from "@/cms/blocks";
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
@@ -21,7 +21,7 @@ export function TemplateTools() {
   const [msg, setMsg] = useState("");
   const [busy, setBusy] = useState(false);
 
-  useEffect(() => { api("/pageTemplates?limit=100&depth=0&sort=title").then((r) => setTemplates(r.docs || [])).catch(() => {}); }, []);
+  useEffect(() => { api("/pageTemplates?limit=100&depth=0&sort=title").then((r) => setTemplates(r.docs || [])).catch(() => setMsg("Não foi possível carregar os modelos.")); }, []);
 
   const patch = async (data: any) => { await api(`/pages/${id}?draft=true`, { method: "PATCH", body: JSON.stringify(data) }); window.location.reload(); };
   const current = async () => api(`/pages/${id}?draft=true&depth=0`);
@@ -29,13 +29,13 @@ export function TemplateTools() {
   const applyTemplate = async () => {
     const t = templates.find((x) => String(x.id) === sel); if (!t) return;
     setBusy(true);
-    try { await patch({ layout: (t.layout || []).map(({ id: _i, ...b }: any) => b), hero: t.hero, layoutStyle: t.layoutStyle }); }
+    try { await patch({ layout: stripIds(t.layout || []), hero: stripIds(t.hero), layoutStyle: stripIds(t.layoutStyle) }); }
     catch (e: any) { setMsg(`Erro ao aplicar: ${e.message}`); setBusy(false); }
   };
   const saveAsTemplate = async () => {
     const title = window.prompt("Nome do modelo:"); if (!title) return;
     setBusy(true);
-    try { const doc = await current(); await api("/pageTemplates", { method: "POST", body: JSON.stringify({ title, hero: doc.hero, layoutStyle: doc.layoutStyle, layout: (doc.layout || []).map(({ id: _i, ...b }: any) => b) }) }); setMsg(`Modelo "${title}" salvo.`); }
+    try { const doc = await current(); await api("/pageTemplates", { method: "POST", body: JSON.stringify({ title, hero: stripIds(doc.hero), layoutStyle: stripIds(doc.layoutStyle), layout: stripIds(doc.layout || []) }) }); setMsg(`Modelo "${title}" salvo.`); }
     catch (e: any) { setMsg(`Erro ao salvar: ${e.message}`); } finally { setBusy(false); }
   };
   const exportJson = async () => {
@@ -50,7 +50,7 @@ export function TemplateTools() {
   };
 
   if (!id) return <div className="pdb-tools"><p className="pdb-tools__hint">Salve a página (rascunho) pra liberar modelos, importar e exportar.</p></div>;
-  const confirm = (slug: string, text: string, onYes: () => void) => (
+  const confirmModal = (slug: string, text: string, onYes: () => void) => (
     <Modal slug={slug} className="pdb-confirm">
       <div className="pdb-confirm__box"><p>{text}</p><div className="pdb-confirm__actions"><Button buttonStyle="secondary" onClick={() => closeModal(slug)}>Cancelar</Button><Button onClick={() => { closeModal(slug); onYes(); }}>Confirmar</Button></div></div>
     </Modal>
@@ -63,12 +63,12 @@ export function TemplateTools() {
       </label>
       <Button size="small" disabled={!sel || busy} onClick={() => openModal("pdb-apply")}>Aplicar modelo</Button>
       <Button size="small" buttonStyle="secondary" disabled={busy} onClick={saveAsTemplate}>Salvar como modelo</Button>
-      <Button size="small" buttonStyle="secondary" onClick={exportJson}>Exportar layout (JSON)</Button>
+      <Button size="small" buttonStyle="secondary" disabled={busy} onClick={exportJson}>Exportar layout (JSON)</Button>
       <textarea value={json} onChange={(e) => setJson(e.target.value)} rows={6} placeholder="Cole aqui um layout em JSON (gerado pela IA ou exportado de outra página)" />
       <Button size="small" buttonStyle="secondary" disabled={!json.trim() || busy} onClick={() => openModal("pdb-import")}>Importar layout (JSON)</Button>
       {msg && <p className="pdb-tools__msg">{msg}</p>}
-      {confirm("pdb-apply", "Aplicar o modelo substitui TODOS os blocos desta página (fica como rascunho). Continuar?", applyTemplate)}
-      {confirm("pdb-import", "Importar substitui TODOS os blocos desta página (fica como rascunho). Continuar?", importJson)}
+      {confirmModal("pdb-apply", "Aplicar o modelo substitui TODOS os blocos desta página (fica como rascunho). Continuar?", applyTemplate)}
+      {confirmModal("pdb-import", "Importar substitui TODOS os blocos desta página (fica como rascunho). Continuar?", importJson)}
     </div>
   );
 }
