@@ -1,3 +1,4 @@
+import { jsonLd } from "@/lib/json-ld";
 import Link from "next/link";
 import { ChevronRight } from "lucide-react";
 
@@ -29,7 +30,7 @@ export function PageBreadcrumb({ items, className = "" }: PageBreadcrumbProps) {
     <>
       <script
         type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(schema) }}
+        dangerouslySetInnerHTML={{ __html: jsonLd(schema) }}
       />
       <nav aria-label="Breadcrumb" className={className}>
         <ol className="flex items-center flex-wrap gap-1 text-xs text-text-muted">

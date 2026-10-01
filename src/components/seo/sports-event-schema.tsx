@@ -1,3 +1,4 @@
+import { jsonLd } from "@/lib/json-ld";
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || "https://www.papodebola.com.br";
 
 // JSON-LD SportsEvent para as páginas de jogo da Copa. É o dado mais citável de
@@ -124,7 +125,7 @@ export function SportsEventSchema({
   return (
     <script
       type="application/ld+json"
-      dangerouslySetInnerHTML={{ __html: JSON.stringify(schema) }}
+      dangerouslySetInnerHTML={{ __html: jsonLd(schema) }}
     />
   );
 }

@@ -1,3 +1,4 @@
+import { jsonLd } from "@/lib/json-ld";
 // JSON-LD FAQPage — alimentado pelo bloco "Perguntas frequentes" do editor.
 // Nota: desde 2023 o Google só mostra rich result de FAQ para sites de saúde/governo.
 // Mantemos o schema porque ele continua sendo lido por AI Overviews/LLMs e ajuda o
@@ -16,7 +17,7 @@ export function FaqSchema({ items }: { items: { question: string; answer: string
   return (
     <script
       type="application/ld+json"
-      dangerouslySetInnerHTML={{ __html: JSON.stringify(schema) }}
+      dangerouslySetInnerHTML={{ __html: jsonLd(schema) }}
     />
   );
 }
@@ -55,7 +56,7 @@ export function RankingSchema({
   return (
     <script
       type="application/ld+json"
-      dangerouslySetInnerHTML={{ __html: JSON.stringify(schema) }}
+      dangerouslySetInnerHTML={{ __html: jsonLd(schema) }}
     />
   );
 }

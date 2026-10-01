@@ -1,3 +1,4 @@
+import { jsonLd } from "@/lib/json-ld";
 import type { Article } from "@/types/article";
 import { articleMetaDescription } from "@/lib/data/articles";
 
@@ -58,7 +59,7 @@ export function ArticleSchema({ article }: ArticleSchemaProps) {
   return (
     <script
       type="application/ld+json"
-      dangerouslySetInnerHTML={{ __html: JSON.stringify(schema) }}
+      dangerouslySetInnerHTML={{ __html: jsonLd(schema) }}
     />
   );
 }
