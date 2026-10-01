@@ -5,6 +5,7 @@ import { notFound } from "next/navigation";
 import { PageBreadcrumb } from "@/components/seo/page-breadcrumb";
 import { getAuthorBySlug, getAuthorSlugs } from "@/lib/data/authors";
 import { getArticlesByAuthorId } from "@/lib/data/articles-payload";
+import { buildMetadata } from "@/lib/seo/build-metadata";
 
 // Página do autor: lê do Payload (collection `authors`). Autor novo no /cms = no ar.
 // ISR 5min + revalidate na hora ao editar (hook afterChange da collection).
@@ -12,7 +13,7 @@ export const revalidate = 300;
 
 type Params = { slug: string };
 
-export async function generateMetadata({
+async function metadataDefaults({
   params,
 }: {
   params: Promise<Params>;
@@ -29,6 +30,13 @@ export async function generateMetadata({
     description,
     alternates: { canonical: `/autor/${slug}` },
   };
+}
+
+// SEO editável no /cms (Textos e SEO das páginas, rota "/autor/:slug") sobre os defaults acima.
+export async function generateMetadata(
+  props: Parameters<typeof metadataDefaults>[0]
+): Promise<Metadata> {
+  return buildMetadata("/autor/:slug", await metadataDefaults(props));
 }
 
 export default async function AutorPage({ params }: { params: Promise<Params> }) {

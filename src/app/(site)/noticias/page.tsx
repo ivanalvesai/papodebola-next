@@ -4,15 +4,18 @@ import { getArticles } from "@/lib/data/articles";
 import { slugifyCategory, WP_CATEGORY_BY_SLUG } from "@/lib/config";
 import { NewsListView } from "@/components/news/news-list-view";
 import { ItemListSchema } from "@/components/seo/item-list-schema";
+import { buildMetadata } from "@/lib/seo/build-metadata";
 
 export const revalidate = 1800;
 
-export const metadata: Metadata = {
-  title: "Notícias de Futebol",
-  description:
-    "Últimas notícias de futebol brasileiro e mundial. Brasileirão, Copa do Brasil, Libertadores, Champions League e mais.",
-  alternates: { canonical: "/noticias" },
-};
+export async function generateMetadata(): Promise<Metadata> {
+  return buildMetadata("/noticias", {
+    title: "Notícias de Futebol",
+    description:
+      "Últimas notícias de futebol brasileiro e mundial. Brasileirão, Copa do Brasil, Libertadores, Champions League e mais.",
+    alternates: { canonical: "/noticias" },
+  });
+}
 
 interface PageProps {
   searchParams: Promise<{ cat?: string; search?: string; page?: string }>;
