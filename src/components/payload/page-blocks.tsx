@@ -6,6 +6,7 @@ import { hideOnClass } from "./blocks/hide-on";
 import { TabsBlock } from "./blocks/tabs";
 import { SnippetBlock } from "./blocks/snippet";
 import { CountdownBlock } from "./blocks/countdown";
+import { FormBlockView } from "./blocks/form-block";
 import { isFullBleedSection } from "@/lib/cms-render";
 
 // Renderiza uma "Página" do Payload (hero + blocos) com o visual do site. Os blocos puros
@@ -35,6 +36,7 @@ function renderBlock(block: any, pageWidth: string) {
     // Ricos que dependem do servidor (lexicalToHtml / Payload / API esportiva).
     case "tabs": return <TabsBlock block={block} />;
     case "countdown": return <CountdownBlock block={block} />;
+    case "formBlock": return <FormBlockView block={block} />;
     case "snippet":
       return <SnippetBlock block={block} renderBlock={(b, i) => <PageBlock key={i} block={b} pageWidth={pageWidth} />} />;
     default: {
