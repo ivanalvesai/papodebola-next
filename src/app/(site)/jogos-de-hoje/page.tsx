@@ -6,17 +6,20 @@ import { AgendaTabs } from "@/components/agenda/agenda-tabs";
 import { MatchCarousel } from "@/components/match-bar/match-carousel";
 import { getGeneralAgenda, type AgendaEvent } from "@/lib/data/agenda";
 import type { MatchBarCardProps } from "@/components/match-bar/match-bar-card";
+import { buildMetadata } from "@/lib/seo/build-metadata";
 
 // Futebol vem do store (barato); outros esportes do feed por data (funciona). Revalida
 // rápido pra refletir o store atualizado pelo cron do dev.
 export const revalidate = 60;
 
-export const metadata: Metadata = {
-  title: "Agenda de Jogos de Hoje",
-  description:
-    "Confira os jogos de hoje no Brasil e no mundo com cobertura completa no Papo de Bola.",
-  alternates: { canonical: "/jogos-de-hoje" },
-};
+export async function generateMetadata(): Promise<Metadata> {
+  return buildMetadata("/jogos-de-hoje", {
+    title: "Agenda de Jogos de Hoje",
+    description:
+      "Confira os jogos de hoje no Brasil e no mundo com cobertura completa no Papo de Bola.",
+    alternates: { canonical: "/jogos-de-hoje" },
+  });
+}
 
 function isoOf(dt: Date): string {
   return `${dt.getFullYear()}-${String(dt.getMonth() + 1).padStart(2, "0")}-${String(dt.getDate()).padStart(2, "0")}`;
