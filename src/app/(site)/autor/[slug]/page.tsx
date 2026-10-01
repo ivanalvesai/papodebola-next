@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { jsonLd } from "@/lib/json-ld";
 import Link from "next/link";
 import Image from "next/image";
 import { notFound } from "next/navigation";
@@ -72,7 +73,7 @@ export default async function AutorPage({ params }: { params: Promise<Params> })
     <div className="mx-auto max-w-[900px] px-4 py-8">
       <script
         type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(personSchema) }}
+        dangerouslySetInnerHTML={{ __html: jsonLd(personSchema) }}
       />
       <PageBreadcrumb
         className="mb-5"

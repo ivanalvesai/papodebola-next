@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { jsonLd } from "@/lib/json-ld";
 import { notFound } from "next/navigation";
 import { Trophy, Newspaper } from "lucide-react";
 import { PageBreadcrumb } from "@/components/seo/page-breadcrumb";
@@ -97,7 +98,7 @@ export default async function CopaFasePage({
       {eventSchema && (
         <script
           type="application/ld+json"
-          dangerouslySetInnerHTML={{ __html: JSON.stringify(eventSchema) }}
+          dangerouslySetInnerHTML={{ __html: jsonLd(eventSchema) }}
         />
       )}
       <PageBreadcrumb

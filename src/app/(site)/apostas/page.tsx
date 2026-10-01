@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { jsonLd } from "@/lib/json-ld";
 import Link from "next/link";
 import { getArticles } from "@/lib/data/articles";
 import { getPayloadPage } from "@/lib/data/payload-pages";
@@ -123,7 +124,7 @@ export default async function ApostasPage() {
 
       <script
         type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbLd) }}
+        dangerouslySetInnerHTML={{ __html: jsonLd(breadcrumbLd) }}
       />
     </div>
   );

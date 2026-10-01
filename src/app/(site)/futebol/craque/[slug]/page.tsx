@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { jsonLd } from "@/lib/json-ld";
 import { notFound } from "next/navigation";
 import { Trophy } from "lucide-react";
 import { PageBreadcrumb } from "@/components/seo/page-breadcrumb";
@@ -66,7 +67,7 @@ export default async function CraquePage({
     <div className="mx-auto max-w-[760px] px-4 py-8">
       <script
         type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(personSchema) }}
+        dangerouslySetInnerHTML={{ __html: jsonLd(personSchema) }}
       />
 
       <PageBreadcrumb
