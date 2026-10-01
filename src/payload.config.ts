@@ -1,7 +1,7 @@
 import path from "path";
 import { fileURLToPath } from "url";
 import { buildConfig } from "payload";
-import type { Block, Field } from "payload";
+import type { Field } from "payload";
 import { postgresAdapter } from "@payloadcms/db-postgres";
 import {
   lexicalEditor,

@@ -1,14 +1,16 @@
 import type { Block } from "payload";
 import type { lexicalEditor } from "@payloadcms/richtext-lexical";
-import { withMeta } from "./meta";
+import { withMeta } from "./meta.ts";
 
 type RichTextEditor = ReturnType<typeof lexicalEditor>;
 
 // Blocos estáticos das Páginas do CMS (movidos verbatim do payload.config.ts).
 // Slugs e campos NÃO podem mudar: as tabelas do Postgres levam o nome do slug.
 // A ordem aqui é a ordem no drawer.
+export const STATIC_BLOCK_SLUGS = ["richText","heading","image","gallery","youtube","quote","list","table","note","columns","button","infoCard","linkCards"] as const;
+
 export function staticBlocks(richTextEditor: RichTextEditor): Block[] {
-  return [
+  const blocks: Block[] = [
     withMeta(
       {
         slug: "richText",
@@ -185,4 +187,7 @@ export function staticBlocks(richTextEditor: RichTextEditor): Block[] {
       "layout",
     ),
   ];
+  // Ordem do drawer = ordem de STATIC_BLOCK_SLUGS (fonte única).
+  const pos = (b: Block) => (STATIC_BLOCK_SLUGS as readonly string[]).indexOf(b.slug);
+  return blocks.sort((a, b) => pos(a) - pos(b));
 }

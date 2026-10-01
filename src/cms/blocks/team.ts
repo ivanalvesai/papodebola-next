@@ -1,5 +1,5 @@
 import type { Block, Field } from "payload";
-import { withMeta } from "./meta";
+import { withMeta } from "./meta.ts";
 
 // ── Biblioteca de blocos da collection `teams` (piloto do CMS de blocos de time) ──
 // DINÂMICOS: ao renderizar, buscam dado AO VIVO via getTeamPageDataFor(team) — os mesmos

@@ -11,4 +11,4 @@ export { BLOCK_GROUPS, thumbUrl, withMeta } from "./meta";
 export function pageBlocks(richTextEditor: RichTextEditor): Block[] {
   return [...staticBlocks(richTextEditor)];
 }
-export const PAGE_BLOCK_SLUGS = ["richText","heading","image","gallery","youtube","quote","list","table","note","columns","button","infoCard","linkCards"] as const;
+export { STATIC_BLOCK_SLUGS as PAGE_BLOCK_SLUGS } from "./static";
