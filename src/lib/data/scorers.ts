@@ -1,7 +1,7 @@
 import { fetchAllSports } from "@/lib/api/allsports";
-import { TOURNAMENTS } from "@/lib/config";
+import { TOURNAMENTS, type Tournament } from "@/lib/config";
 import { translateCountry } from "@/lib/i18n/countries";
-import { getBrasileiraoStandings } from "./standings";
+import { getStandings } from "./standings";
 import type { Scorer } from "@/types/team";
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
@@ -37,11 +37,14 @@ export async function getWorldCupScorers(): Promise<Scorer[]> {
 }
 
 export async function getTopScorers(): Promise<Scorer[]> {
-  const t = TOURNAMENTS.BRASILEIRAO_A;
+  return getScorersFor(TOURNAMENTS.BRASILEIRAO_A);
+}
+
+export async function getScorersFor(t: Tournament): Promise<Scorer[]> {
   if (!t.seasonId) return [];
 
   // Get top 10 teams from standings
-  const standings = await getBrasileiraoStandings();
+  const standings = await getStandings(t.id, t.seasonId);
   const topTeams = standings[0]?.rows?.slice(0, 10) || [];
 
   if (topTeams.length === 0) return [];

@@ -72,7 +72,7 @@ function EmptyState({ block }: { block: any }) {
   );
 }
 
-function TodayGamesBlock({ block, leagues }: { block: any; leagues: AgendaLeagueGroup[] }) {
+export function TodayGamesBlock({ block, leagues }: { block: any; leagues: AgendaLeagueGroup[] }) {
   const slug = String(block.league || "all").trim();
   const isAll = slug === "" || slug === "all";
   const filtered = isAll
