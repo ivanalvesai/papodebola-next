@@ -2,7 +2,7 @@ import type { CollectionConfig, Field } from "payload";
 import type { lexicalEditor } from "@payloadcms/richtext-lexical";
 import { revalidatePath } from "next/cache";
 import { pageBlocks } from "@/cms/blocks";
-import { validatePath, normalizePath } from "@/cms/lib/cms-paths";
+import { validatePagePath, normalizePath } from "@/cms/lib/cms-paths";
 import { previewUrl, PREVIEW_BREAKPOINTS } from "@/cms/lib/preview-url";
 import { isAutosave } from "@/cms/lib/is-autosave";
 import { dedicatedPageRoute } from "@/lib/dedicated-pages";
@@ -56,7 +56,15 @@ export function pagesCollection(richTextEditor: RichTextEditor): CollectionConfi
     versions: { drafts: { autosave: { interval: 1500 } }, maxPerDoc: 50 },
     access: { read: ({ req: { user } }) => (user ? true : { _status: { equals: "published" } }) },
     hooks: {
-      afterChange: [({ doc, req }: any) => { if (isAutosave(req)) return doc; revalidatePageDoc(doc); return doc; }],
+      afterChange: [({ doc, previousDoc, req }: any) => {
+        if (isAutosave(req)) return doc;
+        revalidatePageDoc(doc);
+        // Caminho renomeado: derruba a URL antiga também.
+        if (previousDoc?.path && previousDoc.path !== doc?.path) {
+          try { revalidatePath(previousDoc.path); } catch { /* fora de request */ }
+        }
+        return doc;
+      }],
       afterDelete: [({ doc }: any) => { revalidatePageDoc(doc); return doc; }],
     },
     fields: [
@@ -65,7 +73,7 @@ export function pagesCollection(richTextEditor: RichTextEditor): CollectionConfi
         name: "path", type: "text", unique: true, index: true, label: "Caminho (URL final)",
         admin: { position: "sidebar", description: "Ex.: /volei/mundial-2026. Vazio = /paginas/{slug}. Rotas que já existem no site são recusadas." },
         hooks: { beforeValidate: [({ value }: any) => (value ? normalizePath(value) || null : null)] },
-        validate: (value: any) => validatePath(value),
+        validate: (value: any, { siblingData }: any) => validatePagePath(value, siblingData?.slug),
       },
       { name: "slug", type: "text", required: true, unique: true, index: true, admin: { position: "sidebar", description: "Identificador interno (também usado em /paginas/{slug})" } },
       { name: "templateTools", type: "ui", admin: { position: "sidebar", components: { Field: "@/cms/components/template-tools#TemplateTools" } } },

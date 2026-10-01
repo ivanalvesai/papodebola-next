@@ -2,7 +2,7 @@ import { test } from "node:test";
 import assert from "node:assert/strict";
 import fs from "node:fs";
 import path from "node:path";
-import { validatePath, normalizePath, STATIC_TOP_LEVEL, RESERVED_FIRST_SEGMENTS } from "./cms-paths.ts";
+import { validatePath, validatePagePath, normalizePath, STATIC_TOP_LEVEL, RESERVED_FIRST_SEGMENTS } from "./cms-paths.ts";
 
 test("aceita caminho simples e aninhado", () => {
   assert.equal(validatePath("/volei/mundial-2026"), true);
@@ -52,4 +52,11 @@ test("recusa caminhos sombreados por redirect ou rota de código", () => {
   assert.equal(validatePath("/volei/mundial-2026"), true);
   assert.equal(validatePath("/futebol/copa-america"), true);
   assert.equal(validatePath("/agendamento"), true); // prefixo só casa no limite do segmento
+});
+test("validatePagePath: página com rota dedicada não aceita Caminho", () => {
+  assert.match(String(validatePagePath("/quem-somos", "sobre")), /rota própria \(\/sobre\)/);
+  assert.equal(validatePagePath("", "sobre"), true);
+  assert.equal(validatePagePath(null, "apostas"), true);
+  assert.equal(validatePagePath("/volei/mundial-2026", "mundial-volei"), true);
+  assert.match(String(validatePagePath("/mma", "x")), /redirecionamento/);
 });

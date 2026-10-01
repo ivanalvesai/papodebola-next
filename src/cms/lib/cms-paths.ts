@@ -1,4 +1,5 @@
 import { RESERVED_TOP_LEVEL, TOURNAMENT_BY_SLUG } from "../../lib/config.ts";
+import { dedicatedPageRoute } from "../../lib/dedicated-pages.ts";
 
 // Caminhos que o CMS pode ou não usar. Regra: rota em CÓDIGO sempre ganha. Aqui só
 // impedimos o editor de gravar um caminho que nunca vai responder (ou que colide).
@@ -59,4 +60,15 @@ export function validatePath(value: string | undefined | null): true | string {
     if (segs.length > 2) return "Abaixo de /futebol só é possível 1 nível (ex.: /futebol/copa-america).";
   }
   return true;
+}
+
+// Validador do campo "Caminho" da collection pages: página com rota dedicada (sobre,
+// contato, apostas…) não pode ganhar outro caminho — ela já responde na rota própria.
+export function validatePagePath(value: string | undefined | null, slug: string | undefined | null): true | string {
+  const v = String(value ?? "").trim();
+  if (v) {
+    const route = slug ? dedicatedPageRoute(slug) : null;
+    if (route) return `Esta página já tem rota própria (${route}); deixe o Caminho vazio.`;
+  }
+  return validatePath(value);
 }
