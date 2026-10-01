@@ -1,14 +1,17 @@
 import type { Metadata } from "next";
 import { SportPageContent } from "@/components/sports/sport-page-content";
+import { buildMetadata } from "@/lib/seo/build-metadata";
 
 export const revalidate = 86400;
 
-export const metadata: Metadata = {
-  alternates: { canonical: "/boxe" },
-  title: "Boxe - Lutas, Resultados e Cinturões",
-  description:
-    "Acompanhe o boxe mundial. Lutas, resultados, campeões, cinturões WBA/WBC/IBF/WBO e calendário completo.",
-};
+export async function generateMetadata(): Promise<Metadata> {
+  return buildMetadata("/boxe", {
+    alternates: { canonical: "/boxe" },
+    title: "Boxe - Lutas, Resultados e Cinturões",
+    description:
+      "Acompanhe o boxe mundial. Lutas, resultados, campeões, cinturões WBA/WBC/IBF/WBO e calendário completo.",
+  });
+}
 
 export default function BoxePage() {
   return (

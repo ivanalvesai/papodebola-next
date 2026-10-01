@@ -1,14 +1,17 @@
 import type { Metadata } from "next";
 import { SportPageContent } from "@/components/sports/sport-page-content";
+import { buildMetadata } from "@/lib/seo/build-metadata";
 
 export const revalidate = 86400;
 
-export const metadata: Metadata = {
-  alternates: { canonical: "/formula-1" },
-  title: "Fórmula 1 - Calendário, Resultados e Classificação",
-  description:
-    "Fórmula 1: calendário de GPs, resultados das corridas, classificação de pilotos e construtores, horários ao vivo.",
-};
+export async function generateMetadata(): Promise<Metadata> {
+  return buildMetadata("/formula-1", {
+    alternates: { canonical: "/formula-1" },
+    title: "Fórmula 1 - Calendário, Resultados e Classificação",
+    description:
+      "Fórmula 1: calendário de GPs, resultados das corridas, classificação de pilotos e construtores, horários ao vivo.",
+  });
+}
 
 export default function Formula1Page() {
   return (
