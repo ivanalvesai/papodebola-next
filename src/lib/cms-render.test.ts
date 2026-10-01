@@ -1,6 +1,6 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { widgetToBlockType, resolveTournament, pathBreadcrumb, hideOnClass, parseStatValue, formatStatValue, gridColsClass } from "./cms-render.ts";
+import { widgetToBlockType, resolveTournament, pathBreadcrumb, hideOnClass, parseStatValue, formatStatValue, gridColsClass, isFullBleedSection } from "./cms-render.ts";
 
 test("widgetToBlockType mapeia pros slugs dos blocos de time", () => {
   assert.equal(widgetToBlockType("upcoming"), "teamUpcoming");
@@ -50,4 +50,11 @@ test("gridColsClass converte a coluna salva como texto em classes estáticas", (
   assert.equal(gridColsClass("4"), "sm:grid-cols-2 lg:grid-cols-4");
   assert.equal(gridColsClass(undefined), "sm:grid-cols-2 lg:grid-cols-3");
   assert.equal(gridColsClass("9"), "sm:grid-cols-2 lg:grid-cols-3");
+});
+test("isFullBleedSection só para seção largura total em página largura total", () => {
+  assert.equal(isFullBleedSection({ blockType: "section", width: "full" }, "full"), true);
+  assert.equal(isFullBleedSection({ blockType: "section", width: "full" }, "narrow"), false);
+  assert.equal(isFullBleedSection({ blockType: "section", width: "wide" }, "full"), false);
+  assert.equal(isFullBleedSection({ blockType: "hero", width: "full" }, "full"), false);
+  assert.equal(isFullBleedSection(undefined, "full"), false);
 });

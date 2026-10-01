@@ -52,3 +52,9 @@ const GRID_COLS: Record<string, string> = {
 export function gridColsClass(columns: string | number | null | undefined): string {
   return GRID_COLS[String(columns ?? "")] ?? GRID_COLS["3"];
 }
+
+// Seção "largura total" numa página "largura total": o SectionBlock devolve <div data-full> e o
+// page-shell não limita esses filhos diretos. Qualquer wrapper em volta precisa manter data-full.
+export function isFullBleedSection(block: { blockType?: string; width?: string | null } | null | undefined, pageWidth: string | undefined): boolean {
+  return block?.blockType === "section" && block?.width === "full" && pageWidth === "full";
+}
