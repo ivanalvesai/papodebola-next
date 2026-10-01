@@ -1,14 +1,19 @@
 import type { Block } from "payload";
 import type { lexicalEditor } from "@payloadcms/richtext-lexical";
-import { staticBlocks } from "./static";
+import { staticBlocks, STATIC_BLOCK_SLUGS } from "./static.ts";
+import { dataBlocks } from "./data.ts";
+import { sectionBlock } from "./section.ts";
 
 type RichTextEditor = ReturnType<typeof lexicalEditor>;
-export { TEAM_LAYOUT_BLOCKS } from "./team";
-export { BLOCK_GROUPS, thumbUrl, withMeta } from "./meta";
+export { TEAM_LAYOUT_BLOCKS } from "./team.ts";
+export { BLOCK_GROUPS, thumbUrl, withMeta } from "./meta.ts";
+export { dataBlocks, todayGamesBlock } from "./data.ts";
 
-// Biblioteca completa das Páginas (e dos Modelos). A Task 2 acrescenta os blocos de dados
-// e a Seção aqui.
+// Biblioteca completa das Páginas (e dos Modelos): a Seção (colunas) + todos os blocos,
+// que também são os permitidos DENTRO da Seção (sem Seção aninhada).
 export function pageBlocks(richTextEditor: RichTextEditor): Block[] {
-  return [...staticBlocks(richTextEditor)];
+  const inner = [...staticBlocks(richTextEditor), ...dataBlocks()];
+  return [sectionBlock(inner), ...inner];
 }
-export { STATIC_BLOCK_SLUGS as PAGE_BLOCK_SLUGS } from "./static";
+export const SECTION_INNER_SLUGS = [...STATIC_BLOCK_SLUGS, "todayGames", "teamWidget", "standings", "scorers", "newsFeed", "liveMatch"] as const;
+export const PAGE_BLOCK_SLUGS = ["section", ...SECTION_INNER_SLUGS] as const;
