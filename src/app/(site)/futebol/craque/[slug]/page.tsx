@@ -4,6 +4,7 @@ import { Trophy } from "lucide-react";
 import { PageBreadcrumb } from "@/components/seo/page-breadcrumb";
 import { getCraques, getCraqueBySlug } from "@/lib/data/craques";
 import { articleMetaDescription } from "@/lib/data/articles";
+import { buildMetadata } from "@/lib/seo/build-metadata";
 
 export const revalidate = 1800;
 
@@ -18,7 +19,7 @@ function plain(text: string, max: number): string {
   return (text || "").replace(/\s+/g, " ").trim().slice(0, max);
 }
 
-export async function generateMetadata({
+async function metadataDefaults({
   params,
 }: {
   params: Promise<{ slug: string }>;
@@ -33,6 +34,13 @@ export async function generateMetadata({
     alternates: { canonical: `/futebol/craque/${slug}` },
     ...(c.image ? { openGraph: { images: [{ url: c.image }] } } : {}),
   };
+}
+
+// SEO editável no /cms (Textos e SEO das páginas, rota "/futebol/craque/:slug") sobre os defaults acima.
+export async function generateMetadata(
+  props: Parameters<typeof metadataDefaults>[0]
+): Promise<Metadata> {
+  return buildMetadata("/futebol/craque/:slug", await metadataDefaults(props));
 }
 
 export default async function CraquePage({

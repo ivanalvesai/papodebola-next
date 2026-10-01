@@ -13,6 +13,7 @@ import {
   SELECAO_PREFIX,
   type SelecaoFixture,
 } from "@/lib/data/selecao-jogos";
+import { buildMetadata } from "@/lib/seo/build-metadata";
 
 // Lance a lance dos jogos da Seleção fora da Copa (amistosos, Eliminatórias):
 // /futebol/selecao-brasileira/{DD-MM-AAAA}/{casa}-{fora}. O [slug] do nível de cima é a
@@ -23,7 +24,7 @@ export const revalidate = 30;
 
 type Params = { slug: string; confronto: string };
 
-export async function generateMetadata({ params }: { params: Promise<Params> }): Promise<Metadata> {
+async function metadataDefaults({ params }: { params: Promise<Params> }): Promise<Metadata> {
   const { slug, confronto } = await params;
   const f = await resolveSelecaoMatch(slug, confronto);
   if (!f) notFound();
@@ -45,6 +46,13 @@ export async function generateMetadata({ params }: { params: Promise<Params> }):
   }
 
   return { title: { absolute: title }, description, alternates: { canonical: url } };
+}
+
+// SEO editável no /cms (Textos e SEO das páginas, rota "/futebol/selecao-brasileira/:slug/:confronto") sobre os defaults acima.
+export async function generateMetadata(
+  props: Parameters<typeof metadataDefaults>[0]
+): Promise<Metadata> {
+  return buildMetadata("/futebol/selecao-brasileira/:slug/:confronto", await metadataDefaults(props));
 }
 
 function seedDetail(f: SelecaoFixture): MatchDetail {

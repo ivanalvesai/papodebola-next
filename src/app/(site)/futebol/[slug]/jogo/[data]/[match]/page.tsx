@@ -9,6 +9,7 @@ import {
   findRescheduledChampionshipHref,
   getMatchDetail,
 } from "@/lib/data/match-detail";
+import { buildMetadata } from "@/lib/seo/build-metadata";
 
 // Lance a lance de QUALQUER campeonato (Série B, Série A, Libertadores...), no mesmo
 // padrão da Copa: /futebol/{campeonato}/jogo/{data}/{confronto}. A Copa do Mundo tem rota
@@ -50,7 +51,7 @@ async function resolveOrRedirect(slug: string, data: string, match: string) {
   notFound();
 }
 
-export async function generateMetadata({
+async function metadataDefaults({
   params,
 }: {
   params: Promise<Params>;
@@ -64,6 +65,13 @@ export async function generateMetadata({
     description: `${fixture.home} x ${fixture.away} pelo ${fixture.tournamentName}: placar ao vivo, lance a lance, escalações e estatísticas em tempo real (horário de Brasília).`,
     alternates: { canonical: `/futebol/${slug}/jogo/${data}/${match}` },
   };
+}
+
+// SEO editável no /cms (Textos e SEO das páginas, rota "/futebol/:slug/jogo/:data/:match") sobre os defaults acima.
+export async function generateMetadata(
+  props: Parameters<typeof metadataDefaults>[0]
+): Promise<Metadata> {
+  return buildMetadata("/futebol/:slug/jogo/:data/:match", await metadataDefaults(props));
 }
 
 export default async function JogoCampeonatoPage({

@@ -11,6 +11,7 @@ import { getWorldCupScorers } from "@/lib/data/scorers";
 import { getArticles } from "@/lib/data/articles";
 import { KNOCKOUT_PHASES, PHASE_BY_SLUG } from "@/lib/world-cup-phases";
 import { knockoutVenueLabel } from "@/lib/world-cup-knockout-schedule";
+import { buildMetadata } from "@/lib/seo/build-metadata";
 
 const COPA_CATEGORY = "Copa do Mundo";
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || "https://www.papodebola.com.br";
@@ -22,7 +23,7 @@ export function generateStaticParams() {
   return KNOCKOUT_PHASES.map((p) => ({ fase: p.slug }));
 }
 
-export async function generateMetadata({
+async function metadataDefaults({
   params,
 }: {
   params: Promise<{ fase: string }>;
@@ -36,6 +37,13 @@ export async function generateMetadata({
     title: `${phase.longLabel} da Copa do Mundo 2026 — Jogos e Chaveamento`,
     description: `Confrontos, datas, horários e resultados das ${phase.longLabel} da Copa do Mundo 2026.`,
   };
+}
+
+// SEO editável no /cms (Textos e SEO das páginas, rota "/futebol/copa-do-mundo/fase/:fase") sobre os defaults acima.
+export async function generateMetadata(
+  props: Parameters<typeof metadataDefaults>[0]
+): Promise<Metadata> {
+  return buildMetadata("/futebol/copa-do-mundo/fase/:fase", await metadataDefaults(props));
 }
 
 export default async function CopaFasePage({

@@ -9,15 +9,18 @@ import { MatchCarousel } from "@/components/match-bar/match-carousel";
 import { TOURNAMENTS } from "@/lib/config";
 import type { MatchBarCardProps } from "@/components/match-bar/match-bar-card";
 import type { NormalizedMatch } from "@/types/match";
+import { buildMetadata } from "@/lib/seo/build-metadata";
 
 export const revalidate = 1800;
 
-export const metadata: Metadata = {
-  title: "Futebol: notícias, jogos e classificações",
-  description:
-    "Futebol brasileiro e mundial: últimas notícias, Brasileirão, Copa do Mundo 2026, Libertadores, Champions League e mais no Papo de Bola.",
-  alternates: { canonical: "/futebol" },
-};
+export async function generateMetadata(): Promise<Metadata> {
+  return buildMetadata("/futebol", {
+    title: "Futebol: notícias, jogos e classificações",
+    description:
+      "Futebol brasileiro e mundial: últimas notícias, Brasileirão, Copa do Mundo 2026, Libertadores, Champions League e mais no Papo de Bola.",
+    alternates: { canonical: "/futebol" },
+  });
+}
 
 const SLUG_BY_ID = new Map(Object.values(TOURNAMENTS).map((t) => [t.id, t.slug]));
 

@@ -3,6 +3,7 @@ import { notFound, permanentRedirect } from "next/navigation";
 import { getArticleBySlug, getRelatedArticles, articleMetaDescription } from "@/lib/data/articles";
 import { getBrasileiraoStandings } from "@/lib/data/standings";
 import { ArticleView } from "@/components/article/article-view";
+import { buildMetadata } from "@/lib/seo/build-metadata";
 
 // Notícia de futebol aninhada sob /futebol/{torneio|bucket}/{slug} (estilo ge.globo).
 // O 1º segmento ([slug]) é o torneio/bucket (brasileirao, libertadores, mercado-da-bola...);
@@ -14,7 +15,7 @@ function plain(text: string, max: number): string {
   return (text || "").replace(/\s+/g, " ").trim().slice(0, max);
 }
 
-export async function generateMetadata({
+async function metadataDefaults({
   params,
 }: {
   params: Promise<{ slug: string; article: string }>;
@@ -48,6 +49,13 @@ export async function generateMetadata({
       description: desc,
     },
   };
+}
+
+// SEO editável no /cms (Textos e SEO das páginas, rota "/futebol/:slug/:article") sobre os defaults acima.
+export async function generateMetadata(
+  props: Parameters<typeof metadataDefaults>[0]
+): Promise<Metadata> {
+  return buildMetadata("/futebol/:slug/:article", await metadataDefaults(props));
 }
 
 export default async function FutebolArticlePage({

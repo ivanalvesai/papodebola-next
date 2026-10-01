@@ -7,6 +7,7 @@ import { getArticles } from "@/lib/data/articles";
 import { SELECOES, SELECAO_BY_SLUG, BRAZIL_ID } from "@/lib/selecoes";
 import { PageBreadcrumb } from "@/components/seo/page-breadcrumb";
 import { TeamLogo } from "@/components/ui/team-logo";
+import { buildMetadata } from "@/lib/seo/build-metadata";
 
 export const revalidate = 1800;
 export const dynamicParams = false;
@@ -20,7 +21,7 @@ export function generateStaticParams() {
   return SELECOES.filter((s) => s.id !== BRAZIL_ID).map((s) => ({ slug: s.slug }));
 }
 
-export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
+async function metadataDefaults({ params }: PageProps): Promise<Metadata> {
   const { slug } = await params;
   const s = SELECAO_BY_SLUG[slug];
   if (!s) return {};
@@ -29,6 +30,13 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
     description: `Tudo sobre a seleção de ${s.name} na Copa do Mundo 2026: jogos, grupo e últimas notícias no Papo de Bola.`,
     alternates: { canonical: `/futebol/selecoes/${slug}` },
   };
+}
+
+// SEO editável no /cms (Textos e SEO das páginas, rota "/futebol/selecoes/:slug") sobre os defaults acima.
+export async function generateMetadata(
+  props: Parameters<typeof metadataDefaults>[0]
+): Promise<Metadata> {
+  return buildMetadata("/futebol/selecoes/:slug", await metadataDefaults(props));
 }
 
 export default async function SelecaoPage({ params }: PageProps) {

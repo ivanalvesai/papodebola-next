@@ -1,9 +1,10 @@
 import type { Metadata } from "next";
 import { TOURNAMENT_BY_SLUG } from "@/lib/config";
+import { buildMetadata } from "@/lib/seo/build-metadata";
 
 // A página do campeonato (/futebol/[slug]) é client component (busca via fetch),
 // então o SEO — inclusive o canonical auto-referente — vive aqui no layout server.
-export async function generateMetadata({
+async function metadataDefaults({
   params,
 }: {
   params: Promise<{ slug: string }>;
@@ -19,6 +20,13 @@ export async function generateMetadata({
       : undefined,
     alternates: { canonical: `/futebol/${slug}` },
   };
+}
+
+// SEO editável no /cms (Textos e SEO das páginas, rota "/futebol/:slug") sobre os defaults acima.
+export async function generateMetadata(
+  props: Parameters<typeof metadataDefaults>[0]
+): Promise<Metadata> {
+  return buildMetadata("/futebol/:slug", await metadataDefaults(props));
 }
 
 export default function CampeonatoLayout({ children }: { children: React.ReactNode }) {

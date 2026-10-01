@@ -3,6 +3,7 @@ import { notFound, permanentRedirect } from "next/navigation";
 import { getArticleBySlug, getRelatedArticles, articleMetaDescription } from "@/lib/data/articles";
 import { getBrasileiraoStandings } from "@/lib/data/standings";
 import { ArticleView } from "@/components/article/article-view";
+import { buildMetadata } from "@/lib/seo/build-metadata";
 
 // Notícia da Seleção Brasileira aninhada sob o hub: /futebol/selecao-brasileira/{slug}.
 // (selecao-brasileira é pasta estática, então precisa da rota [slug] própria — como a Copa.)
@@ -14,7 +15,7 @@ function plain(text: string, max: number): string {
   return (text || "").replace(/\s+/g, " ").trim().slice(0, max);
 }
 
-export async function generateMetadata({
+async function metadataDefaults({
   params,
 }: {
   params: Promise<{ slug: string }>;
@@ -48,6 +49,13 @@ export async function generateMetadata({
       description: desc,
     },
   };
+}
+
+// SEO editável no /cms (Textos e SEO das páginas, rota "/futebol/selecao-brasileira/:slug") sobre os defaults acima.
+export async function generateMetadata(
+  props: Parameters<typeof metadataDefaults>[0]
+): Promise<Metadata> {
+  return buildMetadata("/futebol/selecao-brasileira/:slug", await metadataDefaults(props));
 }
 
 export default async function SelecaoArticlePage({
