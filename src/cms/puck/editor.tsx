@@ -39,13 +39,20 @@ export function PuckEditor({ id }: { id?: number | string }) {
   const [data, setData] = useState<Data | null>(null);
   const [status, setStatus] = useState("");
   const [busy, setBusy] = useState(false);
+  const [loadError, setLoadError] = useState<string | null>(null);
 
   useEffect(() => {
     if (!id) return;
     fetch(`/cms-api/pages/${id}?draft=true&depth=0`, { credentials: "include" })
-      .then((r) => r.json())
-      .then((d) => setData(Array.isArray(d?.puckData?.content) ? d.puckData : EMPTY))
-      .catch(() => setData(EMPTY));
+      .then(async (r) => {
+        if (!r.ok) {
+          setLoadError(`Não foi possível carregar a página (HTTP ${r.status}). Recarregue a aba antes de editar.`);
+          return;
+        }
+        const d = await r.json();
+        setData(Array.isArray(d?.puckData?.content) ? d.puckData : EMPTY);
+      })
+      .catch(() => setLoadError("Não foi possível carregar a página. Recarregue a aba antes de editar."));
   }, [id]);
 
   const save = useCallback(
@@ -77,6 +84,16 @@ export function PuckEditor({ id }: { id?: number | string }) {
     return (
       <div style={{ padding: 32 }}>
         <p>Salve a página (rascunho) na aba Editar antes de usar o Construtor.</p>
+      </div>
+    );
+  }
+  if (loadError) {
+    return (
+      <div style={{ padding: 32 }}>
+        <p style={{ color: "#E8312A" }}>{loadError}</p>
+        <button type="button" onClick={() => window.location.reload()}>
+          Recarregar
+        </button>
       </div>
     );
   }
