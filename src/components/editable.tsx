@@ -1,15 +1,33 @@
-import { cache } from "react";
-import { getEditableValues } from "@/lib/data/editable-content-store";
 import { EDITABLE } from "@/lib/data/editable-content";
+import { getPageTexts, getSiteSettings, textValue, type SiteSettings } from "@/lib/data/site-texts";
 
-// `cache` memoiza a leitura do JSON por request → uma única leitura mesmo com
-// vários <Editable> na mesma página.
-const load = cache(getEditableValues);
+// ids "site.*" → campo do global siteSettings (editável no /cms → Configurações do site).
+const SITE_FIELDS: Record<string, (s: SiteSettings) => string | null | undefined> = {
+  "site.name": (s) => s.siteName,
+  "site.meta.titleDefault": (s) => s.metaTitleDefault,
+  "site.meta.descriptionDefault": (s) => s.metaDescriptionDefault,
+  "site.social.instagram": (s) => s.social?.instagram,
+  "site.social.x": (s) => s.social?.x,
+  "site.social.youtube": (s) => s.social?.youtube,
+};
 
-// Texto editável resolvido: override do painel ?? default do registro.
+function nonEmpty(v: unknown): string | null {
+  return typeof v === "string" && v.trim() ? v : null;
+}
+
+// Texto editável resolvido: valor do /cms (pageTexts da rota / siteSettings) ?? default do registro.
 export async function getEditableText(id: string): Promise<string> {
-  const all = await load();
-  return all[id] ?? EDITABLE[id]?.default ?? "";
+  const def = EDITABLE[id];
+  const fallback = def?.default ?? "";
+  if (id.startsWith("site.")) {
+    const pick: ((s: SiteSettings) => string | null | undefined) | undefined = SITE_FIELDS[id];
+    if (!pick) return fallback;
+    const settings = await getSiteSettings();
+    return (settings && nonEmpty(pick(settings))) || fallback;
+  }
+  if (!def?.page) return fallback;
+  const doc = await getPageTexts(def.page);
+  return textValue(doc, id) ?? fallback;
 }
 
 // Igual ao getEditableText, mas substitui placeholders {variavel} por valores reais.
@@ -25,8 +43,8 @@ export async function getEditableTemplate(
 
 type Tag = "span" | "p" | "h1" | "h2" | "h3" | "div";
 
-// Renderiza um texto editável (editável no painel "Páginas"), com fallback no
-// default do código. Ex: <Editable id="sobre.h1" as="h1" className="..." />
+// Renderiza um texto editável (editável no /cms → Textos e SEO das páginas), com
+// fallback no default do código. Ex: <Editable id="sobre.h1" as="h1" className="..." />
 export async function Editable({
   id,
   as = "span",

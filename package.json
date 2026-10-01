@@ -7,7 +7,7 @@
     "gen:paths": "node scripts/gen-reserved-paths.mjs",
     "build": "node scripts/gen-reserved-paths.mjs && node scripts/gen-importmap.mjs && next build",
     "start": "next start",
-    "test": "node --test --experimental-strip-types src/lib/*.test.ts src/lib/api/*.test.ts src/cms/blocks/*.test.ts src/cms/lib/*.test.ts src/cms/puck/*.test.ts",
+    "test": "node --test --experimental-strip-types src/lib/*.test.ts src/lib/api/*.test.ts src/cms/blocks/*.test.ts src/cms/lib/*.test.ts src/cms/puck/*.test.ts src/lib/seo/*.test.ts",
     "typecheck": "tsc --noEmit",
     "thumbs": "node scripts/gen-block-thumbs.mjs"
   },
