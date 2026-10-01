@@ -14,7 +14,10 @@ export const isValidPreviewId = (id: unknown): boolean => typeof id === "string"
 export const isPreviewKey = (k: unknown): boolean =>
   typeof k === "string" && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(k);
 
-export type PreviewEntry = { block: any; width: string };
+export type PreviewEntry = { block: any; width: string; userId?: string | number };
+
+// Tamanho máximo do corpo do POST da prévia.
+export const MAX_PREVIEW_BODY = 200 * 1024;
 
 // Valida o corpo do POST. Devolve a entrada ou uma mensagem de erro em PT.
 export function parsePreviewBody(body: any): PreviewEntry | string {
@@ -22,6 +25,15 @@ export function parsePreviewBody(body: any): PreviewEntry | string {
   if (!block || typeof block !== "object" || Array.isArray(block)) return "Bloco inválido.";
   if (!isFramedBlockType(block.blockType)) return "Bloco não suportado na prévia.";
   const width = body?.width === "narrow" ? "narrow" : "wide";
+  if (block.blockType === "snippet") {
+    // Só o id numérico: o trecho é sempre relido do banco (nunca um `layout` embutido).
+    const raw = block.snippet && typeof block.snippet === "object" ? block.snippet.id : block.snippet;
+    const id = Number(raw);
+    if (!Number.isInteger(id) || id <= 0) return "Escolha um trecho.";
+    const clean: any = { blockType: "snippet", snippet: id };
+    if (typeof block.hideOn === "string") clean.hideOn = block.hideOn;
+    return { block: clean, width };
+  }
   return { block, width };
 }
 
@@ -47,7 +59,7 @@ export function createPreviewStore(opts: { ttlMs?: number; cap?: number; now?: (
         map.delete(key);
         return null;
       }
-      return { block: v.block, width: v.width };
+      return { block: v.block, width: v.width, userId: v.userId };
     },
     size: () => map.size,
   };

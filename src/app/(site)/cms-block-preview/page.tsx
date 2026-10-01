@@ -1,10 +1,13 @@
 // Mini-preview de UM bloco pro canvas do Construtor (Puck): renderiza o PageBlock real do
 // site (dados ao vivo, Lexical, formulário, trecho) dentro de um iframe do editor. Lê o
-// bloco do store em memória (`?k=`, gravado por POST /api/cms/block-preview), só abre
-// pra quem está logado no /cms e avisa a altura ao pai por postMessage. O cabeçalho e o
+// bloco do store em memória (`?k=`, gravado por POST /api/cms/block-preview e preso ao
+// usuário que o criou), só abre pra quem está logado no /cms e avisa a altura ao pai por postMessage. O cabeçalho e o
 // rodapé do layout do site ficam escondidos aqui.
 import type { ReactNode } from "react";
+import { headers } from "next/headers";
 import { notFound } from "next/navigation";
+import { getPayload } from "payload";
+import config from "@payload-config";
 import { assertPreviewAccess } from "@/lib/cms-preview-auth";
 import { PageBlock } from "@/components/payload/page-blocks";
 import { isFramedBlockType, isPreviewKey, isValidPreviewId, previewStore } from "@/cms/puck/preview-guard";
@@ -31,6 +34,16 @@ const script = (id: string) => `(function(){
   setTimeout(send,1500);
 })();`;
 
+async function currentUserId(): Promise<string | number | null> {
+  try {
+    const payload = await getPayload({ config });
+    const { user } = await payload.auth({ headers: await headers() });
+    return user ? user.id : null;
+  } catch {
+    return null;
+  }
+}
+
 export default async function CmsBlockPreview({
   searchParams,
 }: {
@@ -39,7 +52,10 @@ export default async function CmsBlockPreview({
   const { k, id, previewSecret } = await searchParams;
   if (!(await assertPreviewAccess(previewSecret))) notFound();
   if (!isValidPreviewId(id)) notFound();
-  const entry = isPreviewKey(k) ? previewStore().get(String(k)) : null;
+  const found = isPreviewKey(k) ? previewStore().get(String(k)) : null;
+  // A prévia só abre pro mesmo usuário que a criou (chave vazada não serve pra outro).
+  const userId = await currentUserId();
+  const entry = found && userId !== null && String(found.userId) === String(userId) ? found : null;
   let node: ReactNode;
   if (!entry) {
     node = <p className="text-sm text-text-muted">Prévia expirada, edite o bloco pra recarregar.</p>;

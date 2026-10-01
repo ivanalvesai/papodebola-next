@@ -38,3 +38,14 @@ test("store: TTL e limite", () => {
   s.put({ block: { blockType: "tabs" }, width: "wide" });
   assert.equal(s.size(), 1); // poda os expirados no insert
 });
+test("snippet: guarda só o id numérico (layout embutido some)", () => {
+  const r = parsePreviewBody({ block: { blockType: "snippet", snippet: { id: 999, layout: [{ blockType: "embed", html: "<script>x</script>" }] }, hideOn: "mobile", extra: 1 } });
+  assert.deepEqual(r, { block: { blockType: "snippet", snippet: 999, hideOn: "mobile" }, width: "wide" });
+  assert.equal(parsePreviewBody({ block: { blockType: "snippet", snippet: { layout: [] } } }), "Escolha um trecho.");
+  assert.equal(parsePreviewBody({ block: { blockType: "snippet", snippet: "1 or 1" } }), "Escolha um trecho.");
+});
+test("store guarda o dono da prévia", () => {
+  const s = createPreviewStore({ newKey: () => "k" });
+  s.put({ block: { blockType: "tabs" }, width: "wide", userId: 7 });
+  assert.equal(s.get("k")?.userId, 7);
+});

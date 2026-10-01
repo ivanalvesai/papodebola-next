@@ -12,19 +12,19 @@ export async function SnippetBlock({
   block: any;
   renderBlock: (b: any, i: number) => ReactNode;
 }) {
+  // Resolve SEMPRE pelo id no banco (nunca usa o objeto embutido no bloco: um `layout`
+  // inline viria de quem montou o bloco, não do trecho salvo). Sem id válido/doc → nada.
   const ref = block.snippet;
+  const raw = ref && typeof ref === "object" ? ref.id : ref;
+  const id = Number(raw);
+  if (!Number.isInteger(id) || id <= 0) return null;
   let doc: any = null;
   try {
-    if (ref && typeof ref === "object" && Array.isArray(ref.layout)) {
-      // Já veio populado — ainda assim relê pelo cache (depth 2 garante mídia populada).
-      doc = (await getSnippet(ref.id)) ?? ref;
-    } else {
-      const id = ref && typeof ref === "object" ? ref.id : ref;
-      doc = await getSnippet(id);
-    }
+    doc = await getSnippet(id);
   } catch {
     return null;
   }
+  if (!doc) return null;
   const layout: any[] = Array.isArray(doc?.layout) ? doc.layout : [];
   const nodes = layout.filter((b) => b && b.blockType !== "snippet").map((b, i) => renderBlock(b, i));
   if (!nodes.length) return null;

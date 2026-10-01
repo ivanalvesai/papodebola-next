@@ -5,6 +5,7 @@ import { convertLexicalToHTML } from "@payloadcms/richtext-lexical/html";
 import { articleHref, cleanTag } from "@/lib/config";
 import { normalizeSponsor, sponsorCardHtml } from "./sponsor";
 import type { Article } from "@/types/article";
+import { escHtml, escAttr, safeUrl, stripUnsafeUrls, videoFigureHtml } from "@/lib/html-escape";
 
 // Leitura de artigos do Payload (Fase 3c). getArticles/getArticleBySlug tentam
 // daqui primeiro; se der null (banco fora), caem pro WordPress (fallback).
@@ -21,12 +22,6 @@ function stripHtml(html: string): string {
     .trim();
 }
 
-function escHtml(s: string): string {
-  return String(s || "").replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
-}
-function escAttr(s: string): string {
-  return escHtml(s).replace(/"/g, "&quot;");
-}
 // Classe de tema de cor dos cards (whitelist — o valor vem de um select, mas garante).
 const CARD_COLORS = ["verde", "azul", "vermelho", "dourado", "roxo", "escuro"];
 function themeClass(cor: string): string {
@@ -107,9 +102,8 @@ const lexicalConverters: any = ({ defaultConverters }: any) => ({
     video: ({ node }: any) => {
       const src = videoEmbedSrc(node?.fields?.url || "");
       if (!src) return "";
-      const cap = node?.fields?.caption;
-      const figcap = cap ? `<figcaption>${cap}</figcaption>` : "";
-      return `<figure class="pdb-video"><div class="pdb-video-frame"><iframe src="${src}" title="${cap || "Vídeo"}" loading="lazy" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe></div>${figcap}</figure>`;
+      // Legenda escapada no <figcaption> e no title (ver html-escape.ts).
+      return videoFigureHtml(src, node?.fields?.caption);
     },
     // Card do Instagram: blockquote oficial (instagram-media). `data-instgrm-captioned`
     // faz o embed.js renderizar a versão COM a legenda do post (o comentário do jogador) —
@@ -183,7 +177,9 @@ const lexicalConverters: any = ({ defaultConverters }: any) => ({
       return `<div class="pdb-columns pdb-cols-${cols.length}">${inner}</div>`;
     },
     callout: ({ node }: any) => {
-      const style = node?.fields?.style || "info";
+      // Vai pra dentro do class="" → só [a-z-] (o select do editor já limita; garante).
+      const raw = String(node?.fields?.style || "info");
+      const style = /^[a-z-]{1,20}$/.test(raw) ? raw : "info";
       const x = node?.fields?.content;
       const inner = x?.root?.children?.length ? convertLexicalToHTML({ data: x }) : "";
       return `<div class="pdb-callout pdb-callout-${style}">${inner}</div>`;
@@ -430,16 +426,17 @@ const lexicalConverters: any = ({ defaultConverters }: any) => ({
   upload: ({ node }: any) => {
     const doc = node?.value;
     if (!doc || typeof doc !== "object" || !doc.url) return "";
-    const align = node?.fields?.alignment || "center";
+    const rawAlign = String(node?.fields?.alignment || "center");
+    const align = ["left", "center", "right"].includes(rawAlign) ? rawAlign : "center";
     const src = String(doc.url).startsWith("http") ? doc.url : `${SITE_URL}${doc.url}`;
-    const alt = String(doc.alt || "").replace(/"/g, "&quot;");
-    const dims = doc.width && doc.height ? ` width="${doc.width}" height="${doc.height}"` : "";
+    const alt = escAttr(doc.alt || "");
+    const w = Number(doc.width);
+    const h = Number(doc.height);
+    const dims = w > 0 && h > 0 ? ` width="${w}" height="${h}"` : "";
     // Legenda/crédito do bloco (campo do UploadFeature) → figcaption (semântico, bom p/ SEO).
-    const escHtml = (s: string) =>
-      s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
     const capText = String(node?.fields?.caption || "").trim();
     const figcap = capText ? `<figcaption>${escHtml(capText)}</figcaption>` : "";
-    return `<figure class="pdb-img pdb-img-${align}"><img src="${src}" alt="${alt}"${dims} loading="lazy" />${figcap}</figure>`;
+    return `<figure class="pdb-img pdb-img-${align}"><img src="${escAttr(src)}" alt="${alt}"${dims} loading="lazy" />${figcap}</figure>`;
   },
 });
 
@@ -487,7 +484,7 @@ function postBodyHtml(p: any): string {
   const c = p.content;
   if (c && typeof c === "object" && c.root && Array.isArray(c.root.children) && c.root.children.length) {
     try {
-      return fillAutoToc(withHeadingAnchors(convertLexicalToHTML({ data: c, converters: lexicalConverters })));
+      return stripUnsafeUrls(fillAutoToc(withHeadingAnchors(convertLexicalToHTML({ data: c, converters: lexicalConverters }))));
     } catch {
       return p.body || "";
     }
@@ -522,7 +519,7 @@ export function extractStructured(content: any): {
     }
     if (b.blockType === "bettingTable" && !ranking.length) {
       for (const r of b.rows || []) {
-        if (r?.name) ranking.push({ name: String(r.name), href: String(r.href || "") || undefined });
+        if (r?.name) ranking.push({ name: String(r.name), href: safeUrl(r.href) || undefined });
       }
     }
   }
@@ -530,7 +527,7 @@ export function extractStructured(content: any): {
   if (!ranking.length) {
     for (const b of blocks) {
       if (b.blockType === "bettingReview" && b.name) {
-        ranking.push({ name: String(b.name), href: String(b.linkHref || "") || undefined });
+        ranking.push({ name: String(b.name), href: safeUrl(b.linkHref) || undefined });
       }
     }
   }
@@ -544,7 +541,8 @@ export function lexicalToHtml(content: any): string {
   if (!content || typeof content !== "object" || !content.root?.children?.length) return "";
   try {
     // Mesmo pós-processamento do corpo do post: âncoras nos títulos + índice automático.
-    return fillAutoToc(withHeadingAnchors(convertLexicalToHTML({ data: content, converters: lexicalConverters })));
+    // stripUnsafeUrls: o conversor de link padrão do Payload não filtra `javascript:`.
+    return stripUnsafeUrls(fillAutoToc(withHeadingAnchors(convertLexicalToHTML({ data: content, converters: lexicalConverters }))));
   } catch {
     return "";
   }
