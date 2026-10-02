@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { Editable, getEditableText } from "@/components/editable";
+import { buildMetadata } from "@/lib/seo/build-metadata";
 import { getPayloadPage } from "@/lib/data/payload-pages";
 import { PageBlocks } from "@/components/payload/page-blocks";
 
@@ -14,7 +15,8 @@ export async function generateMetadata(): Promise<Metadata> {
     getEditableText("sobre.meta.title"),
     getEditableText("sobre.meta.description"),
   ]);
-  return {
+  // Ordem: SEO da entrada "/sobre" (Textos e SEO) > SEO da Página do CMS > textos sobre.meta.*.
+  return buildMetadata("/sobre", {
     alternates: { canonical: "/sobre" },
     title: page?.seo?.metaTitle || fbTitle,
     description: page?.seo?.metaDescription || fbDesc,
@@ -25,7 +27,7 @@ export async function generateMetadata(): Promise<Metadata> {
       url: "/sobre",
       type: "website",
     },
-  };
+  });
 }
 
 // Fallback: conteúdo atual em código (Editable). Usado enquanto não houver uma

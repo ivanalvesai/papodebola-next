@@ -1,3 +1,4 @@
+import { jsonLd } from "@/lib/json-ld";
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || "https://www.papodebola.com.br";
 
 // JSON-LD ItemList para páginas de listagem (notícias, jogos, etc.) — ajuda o
@@ -21,7 +22,7 @@ export function ItemListSchema({
   return (
     <script
       type="application/ld+json"
-      dangerouslySetInnerHTML={{ __html: JSON.stringify(schema) }}
+      dangerouslySetInnerHTML={{ __html: jsonLd(schema) }}
     />
   );
 }

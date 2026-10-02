@@ -4,15 +4,18 @@ import { Trophy, ChevronRight } from "lucide-react";
 import { SportPageContent } from "@/components/sports/sport-page-content";
 import { TennisTournamentStrip } from "@/components/tennis/tennis-tournament-strip";
 import { getTennisDraw, TENNIS_TOURNAMENTS } from "@/lib/data/tennis";
+import { buildMetadata } from "@/lib/seo/build-metadata";
 
 export const revalidate = 300;
 
-export const metadata: Metadata = {
-  alternates: { canonical: "/tenis" },
-  title: "Tênis - Resultados, Ranking ATP e Calendário",
-  description:
-    "Acompanhe resultados de tênis, ranking ATP, calendário de torneios e jogos ao vivo. ATP, WTA, Grand Slams.",
-};
+export async function generateMetadata(): Promise<Metadata> {
+  return buildMetadata("/tenis", {
+    alternates: { canonical: "/tenis" },
+    title: "Tênis - Resultados, Ranking ATP e Calendário",
+    description:
+      "Acompanhe resultados de tênis, ranking ATP, calendário de torneios e jogos ao vivo. ATP, WTA, Grand Slams.",
+  });
+}
 
 const T = TENNIS_TOURNAMENTS["halle-2026"];
 

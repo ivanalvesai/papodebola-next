@@ -2,7 +2,7 @@
 
 import { useState, useRef, useEffect } from "react";
 import {
-  LayoutGrid, FileText, Flame, LayoutTemplate, Users, Gamepad2,
+  LayoutGrid, FileText, Flame, Users, Gamepad2,
   Bell, Settings, Rocket, Sparkles, Lightbulb, ChevronDown, KanbanSquare,
 } from "lucide-react";
 
@@ -14,7 +14,6 @@ const ITEMS: { href: string; label: string; icon: React.ElementType }[] = [
   { href: "/studio-pdb/meu-kanban", label: "Meu Kanban", icon: KanbanSquare },
   { href: "/painel-pdb-9x/artigos", label: "Artigos", icon: FileText },
   { href: "/painel-pdb-9x/pautas", label: "Pautas", icon: Flame },
-  { href: "/painel-pdb-9x/paginas", label: "Páginas", icon: LayoutTemplate },
   { href: "/painel-pdb-9x/usuarios", label: "Usuarios", icon: Users },
   { href: "/painel-pdb-9x/jogos", label: "Jogos", icon: Gamepad2 },
   { href: "/painel-pdb-9x/notificacoes", label: "Notificações", icon: Bell },

@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import { getArticles } from "@/lib/data/articles";
 import { WP_CATEGORY_BY_SLUG } from "@/lib/config";
 import { NewsListView } from "@/components/news/news-list-view";
+import { buildMetadata } from "@/lib/seo/build-metadata";
 
 export const revalidate = 1800;
 // Só os slugs conhecidos são válidos; qualquer outro vira 404 de verdade.
@@ -17,7 +18,7 @@ export function generateStaticParams() {
   return Object.keys(WP_CATEGORY_BY_SLUG).map((categoria) => ({ categoria }));
 }
 
-export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
+async function metadataDefaults({ params }: PageProps): Promise<Metadata> {
   const { categoria } = await params;
   const name = WP_CATEGORY_BY_SLUG[categoria];
   if (!name) return {};
@@ -26,6 +27,13 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
     description: `Últimas notícias de ${name}: resultados, análises e bastidores no Papo de Bola.`,
     alternates: { canonical: `/noticias/${categoria}` },
   };
+}
+
+// SEO editável no /cms (Textos e SEO das páginas, rota "/noticias/:categoria") sobre os defaults acima.
+export async function generateMetadata(
+  props: Parameters<typeof metadataDefaults>[0]
+): Promise<Metadata> {
+  return buildMetadata("/noticias/:categoria", await metadataDefaults(props));
 }
 
 export default async function CategoriaPage({ params, searchParams }: PageProps) {

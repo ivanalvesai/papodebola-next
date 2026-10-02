@@ -3,6 +3,7 @@ import { Trophy, MapPin, Layers } from "lucide-react";
 import { PageBreadcrumb } from "@/components/seo/page-breadcrumb";
 import { TennisDrawView } from "@/components/tennis/tennis-draw";
 import { getTennisDraw, TENNIS_TOURNAMENTS } from "@/lib/data/tennis";
+import { buildMetadata } from "@/lib/seo/build-metadata";
 
 const T = TENNIS_TOURNAMENTS["halle-2026"];
 
@@ -10,12 +11,14 @@ const T = TENNIS_TOURNAMENTS["halle-2026"];
 // atualiza sozinho no cliente (polling em /api/tenis/halle-2026).
 export const revalidate = 60;
 
-export const metadata: Metadata = {
-  alternates: { canonical: "/tenis/halle-2026" },
-  title: "ATP de Halle 2026: Chaveamento, Jogos e Resultados ao Vivo",
-  description:
-    "Acompanhe o ATP 500 de Halle 2026 (Terra Wortmann Open) ao vivo: chaveamento, jogos, placares set a set, resultados e horários. Grama, Alemanha.",
-};
+export async function generateMetadata(): Promise<Metadata> {
+  return buildMetadata("/tenis/halle-2026", {
+    alternates: { canonical: "/tenis/halle-2026" },
+    title: "ATP de Halle 2026: Chaveamento, Jogos e Resultados ao Vivo",
+    description:
+      "Acompanhe o ATP 500 de Halle 2026 (Terra Wortmann Open) ao vivo: chaveamento, jogos, placares set a set, resultados e horários. Grama, Alemanha.",
+  });
+}
 
 export default async function HallePage() {
   const draw = await getTennisDraw("halle-2026");

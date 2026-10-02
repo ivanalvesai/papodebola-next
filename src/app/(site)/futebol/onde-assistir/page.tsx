@@ -5,15 +5,18 @@ import { Tv } from "lucide-react";
 import { getBroadcasters } from "@/lib/broadcasters";
 import { TeamLogo } from "@/components/ui/team-logo";
 import type { NormalizedMatch } from "@/types/match";
+import { buildMetadata } from "@/lib/seo/build-metadata";
 
 export const revalidate = 1800;
 
-export const metadata: Metadata = {
-  alternates: { canonical: "/futebol/onde-assistir" },
-  title: "Onde Assistir Futebol Hoje - Transmissão Ao Vivo",
-  description:
-    "Onde assistir aos jogos de futebol de hoje. TV aberta, pay-per-view e streaming. Brasileirão, Libertadores, Champions League e mais.",
-};
+export async function generateMetadata(): Promise<Metadata> {
+  return buildMetadata("/futebol/onde-assistir", {
+    alternates: { canonical: "/futebol/onde-assistir" },
+    title: "Onde Assistir Futebol Hoje - Transmissão Ao Vivo",
+    description:
+      "Onde assistir aos jogos de futebol de hoje. TV aberta, pay-per-view e streaming. Brasileirão, Libertadores, Champions League e mais.",
+  });
+}
 
 function groupByLeague(matches: NormalizedMatch[]) {
   const groups: Record<string, NormalizedMatch[]> = {};

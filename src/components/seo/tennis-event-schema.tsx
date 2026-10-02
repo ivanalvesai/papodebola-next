@@ -1,3 +1,4 @@
+import { jsonLd } from "@/lib/json-ld";
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || "https://www.papodebola.com.br";
 
 // JSON-LD SportsEvent pra páginas de jogo de tênis (chave de ATP/WTA). Habilita
@@ -84,7 +85,7 @@ export function TennisEventSchema({
   return (
     <script
       type="application/ld+json"
-      dangerouslySetInnerHTML={{ __html: JSON.stringify(schema) }}
+      dangerouslySetInnerHTML={{ __html: jsonLd(schema) }}
     />
   );
 }

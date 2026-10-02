@@ -19,19 +19,19 @@ const blockLimit: Field = {
 
 export const TEAM_LAYOUT_BLOCKS: Block[] = [
   // — Dinâmicos (dados ao vivo do time) —
-  withMeta({ slug: "teamTodayMatch", labels: { singular: "Jogo de hoje", plural: "Jogo de hoje" }, fields: [blockTitle] }, "team"),
-  withMeta({ slug: "teamUpcoming", labels: { singular: "Próximos jogos", plural: "Próximos jogos" }, fields: [blockTitle, blockLimit] }, "team"),
-  withMeta({ slug: "teamResults", labels: { singular: "Resultados recentes", plural: "Resultados recentes" }, fields: [blockTitle, blockLimit] }, "team"),
-  withMeta({ slug: "teamStanding", labels: { singular: "Classificação (posição)", plural: "Classificação" }, fields: [blockTitle] }, "team"),
-  withMeta({ slug: "teamNews", labels: { singular: "Notícias do time", plural: "Notícias do time" }, fields: [blockTitle, blockLimit] }, "team"),
-  withMeta({ slug: "teamScorers", labels: { singular: "Artilheiros", plural: "Artilheiros" }, fields: [blockTitle, blockLimit] }, "team"),
-  withMeta({ slug: "teamWhereToWatch", labels: { singular: "Onde assistir", plural: "Onde assistir" }, fields: [blockTitle] }, "team"),
-  withMeta({ slug: "teamLineup", labels: { singular: "Escalação provável", plural: "Escalação" }, fields: [blockTitle] }, "team"),
-  withMeta({ slug: "teamClusterLinks", labels: { singular: "Links do cluster (hub)", plural: "Links do cluster" }, fields: [] }, "team"),
-  withMeta({ slug: "teamAutoText", labels: { singular: "Texto automático do time", plural: "Textos automáticos" }, fields: [] }, "team"),
+  withMeta({ slug: "teamTodayMatch", labels: { singular: "Jogo de hoje", plural: "Jogo de hoje" }, fields: [blockTitle] }, "team", { hideOn: false }),
+  withMeta({ slug: "teamUpcoming", labels: { singular: "Próximos jogos", plural: "Próximos jogos" }, fields: [blockTitle, blockLimit] }, "team", { hideOn: false }),
+  withMeta({ slug: "teamResults", labels: { singular: "Resultados recentes", plural: "Resultados recentes" }, fields: [blockTitle, blockLimit] }, "team", { hideOn: false }),
+  withMeta({ slug: "teamStanding", labels: { singular: "Classificação (posição)", plural: "Classificação" }, fields: [blockTitle] }, "team", { hideOn: false }),
+  withMeta({ slug: "teamNews", labels: { singular: "Notícias do time", plural: "Notícias do time" }, fields: [blockTitle, blockLimit] }, "team", { hideOn: false }),
+  withMeta({ slug: "teamScorers", labels: { singular: "Artilheiros", plural: "Artilheiros" }, fields: [blockTitle, blockLimit] }, "team", { hideOn: false }),
+  withMeta({ slug: "teamWhereToWatch", labels: { singular: "Onde assistir", plural: "Onde assistir" }, fields: [blockTitle] }, "team", { hideOn: false }),
+  withMeta({ slug: "teamLineup", labels: { singular: "Escalação provável", plural: "Escalação" }, fields: [blockTitle] }, "team", { hideOn: false }),
+  withMeta({ slug: "teamClusterLinks", labels: { singular: "Links do cluster (hub)", plural: "Links do cluster" }, fields: [] }, "team", { hideOn: false }),
+  withMeta({ slug: "teamAutoText", labels: { singular: "Texto automático do time", plural: "Textos automáticos" }, fields: [] }, "team", { hideOn: false }),
   // Página padrão da aba inteira (os mesmos cards dos times do config). Textos/títulos do
   // editor entram antes/depois dela.
-  withMeta({ slug: "teamClassic", labels: { singular: "Página padrão do time (cards automáticos)", plural: "Páginas padrão do time" }, fields: [] }, "team"),
+  withMeta({ slug: "teamClassic", labels: { singular: "Página padrão do time (cards automáticos)", plural: "Páginas padrão do time" }, fields: [] }, "team", { hideOn: false }),
   // — Estáticos (texto autoral) —
   withMeta(
     {
@@ -40,6 +40,7 @@ export const TEAM_LAYOUT_BLOCKS: Block[] = [
       fields: [{ name: "content", type: "richText" }],
     },
     "text",
+    { hideOn: false },
   ),
   withMeta(
     {
@@ -51,5 +52,6 @@ export const TEAM_LAYOUT_BLOCKS: Block[] = [
       ],
     },
     "text",
+    { hideOn: false },
   ),
 ];

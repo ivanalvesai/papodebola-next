@@ -41,6 +41,11 @@ function cols(n: number): string {
   return `${n} ${n === 1 ? "coluna" : "colunas"}`;
 }
 
+function count(arr: unknown, one: string, many: string): string {
+  const n = Array.isArray(arr) ? arr.length : 0;
+  return `${n} ${n === 1 ? one : many}`;
+}
+
 function join(...parts: (string | number | undefined | null | false)[]): string {
   return parts.filter((p) => p !== undefined && p !== null && p !== false && p !== "").join(" · ");
 }
@@ -77,6 +82,23 @@ export function blockSummary(blockType: string, data: any): string {
     }
     case "liveMatch": return join(d.title, d.matchId && `jogo ${d.matchId}`);
     case "section": return join(d.title, cols((d.columns || []).length || 1));
+    // ── blocos ricos ──
+    case "hero": return clip(d.title || "");
+    case "cta": return clip(d.title || "");
+    case "mediaText": return clip(d.title || "");
+    case "faq": return join(d.title, count(d.items, "pergunta", "perguntas"));
+    case "tabs": return join(d.title, count(d.items, "aba", "abas"));
+    case "carousel": return join(d.title, count(d.images, "imagem", "imagens"));
+    case "buttons": return count(d.items, "botão", "botões");
+    case "social": return count(d.items, "rede", "redes");
+    case "stats": case "testimonials": case "people": case "timeline": case "iconList": case "cards":
+      return join(d.title, count(d.items, "item", "itens"));
+    case "divider": return d.style === "space" ? "Espaço" : "Linha";
+    case "instagram": case "xPost": return clip((d.url || "").replace(/^https?:\/\/(www\.)?/, ""));
+    case "embed": return `HTML (${(d.html || "").length} caracteres)`;
+    case "formBlock": return (d.form && typeof d.form === "object" && d.form.title) || "Formulário";
+    case "countdown": return (d.team && typeof d.team === "object" && d.team.name) || (d.matchId && `jogo ${d.matchId}`) || "";
+    case "snippet": return (d.snippet && typeof d.snippet === "object" && d.snippet.title) || "Trecho";
     default: return "";
   }
 }

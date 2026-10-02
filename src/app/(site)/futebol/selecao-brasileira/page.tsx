@@ -5,6 +5,7 @@ import { getArticles } from "@/lib/data/articles";
 import { PageBreadcrumb } from "@/components/seo/page-breadcrumb";
 import { Newspaper, Trophy, CalendarDays } from "lucide-react";
 import { getSelecaoFixtures, selecaoMatchHref, type SelecaoFixture } from "@/lib/data/selecao-jogos";
+import { buildMetadata } from "@/lib/seo/build-metadata";
 
 // 60s: o card do jogo ao vivo mostra o placar atualizado (a lista vem do índice
 // durável + fetch cacheado, sem martelar a API).
@@ -70,12 +71,14 @@ function GameCard({ f }: { f: SelecaoFixture }) {
   );
 }
 
-export const metadata: Metadata = {
-  alternates: { canonical: "/futebol/selecao-brasileira" },
-  title: "Seleção Brasileira - Notícias, Convocados e Jogos",
-  description:
-    "Tudo sobre a Seleção Brasileira de futebol: convocações, jogos, Copa do Mundo 2026, Eliminatórias Sul-Americanas e notícias atualizadas.",
-};
+export async function generateMetadata(): Promise<Metadata> {
+  return buildMetadata("/futebol/selecao-brasileira", {
+    alternates: { canonical: "/futebol/selecao-brasileira" },
+    title: "Seleção Brasileira - Notícias, Convocados e Jogos",
+    description:
+      "Tudo sobre a Seleção Brasileira de futebol: convocações, jogos, Copa do Mundo 2026, Eliminatórias Sul-Americanas e notícias atualizadas.",
+  });
+}
 
 export default async function SelecaoBrasileiraPage() {
   const [{ articles }, fixtures] = await Promise.all([

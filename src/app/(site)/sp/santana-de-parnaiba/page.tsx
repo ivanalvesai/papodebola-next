@@ -4,15 +4,18 @@ import Image from "next/image";
 import { Trophy, MapPin, ChevronRight, Newspaper } from "lucide-react";
 import { PageBreadcrumb } from "@/components/seo/page-breadcrumb";
 import { getFirstDivision } from "@/lib/data/sisgel";
+import { buildMetadata } from "@/lib/seo/build-metadata";
 
 export const revalidate = 3600;
 
-export const metadata: Metadata = {
-  title: "Esportes em Santana de Parnaíba",
-  description:
-    "Notícias e campeonatos esportivos de Santana de Parnaíba/SP: tabela da 1ª divisão do futebol municipal, jogos e resultados.",
-  alternates: { canonical: "/sp/santana-de-parnaiba" },
-};
+export async function generateMetadata(): Promise<Metadata> {
+  return buildMetadata("/sp/santana-de-parnaiba", {
+    title: "Esportes em Santana de Parnaíba",
+    description:
+      "Notícias e campeonatos esportivos de Santana de Parnaíba/SP: tabela da 1ª divisão do futebol municipal, jogos e resultados.",
+    alternates: { canonical: "/sp/santana-de-parnaiba" },
+  });
+}
 
 const MUNICIPAL_HREF = "/sp/santana-de-parnaiba/municipal";
 

@@ -309,6 +309,12 @@ NEXT_PUBLIC_VAPID_PUBLIC_KEY=...
 VAPID_PUBLIC_KEY=...
 VAPID_PRIVATE_KEY=...
 VAPID_SUBJECT=mailto:contato@papodebola.com.br
+# E-mail dos formulários do CMS (opcional; sem SMTP_HOST as respostas ficam só no /cms)
+SMTP_HOST=...
+SMTP_PORT=465
+SMTP_USER=...
+SMTP_PASS=...
+SMTP_FROM=...
 ```
 
 ### Dev (`/home/ivan/papodebola-next-dev/.env.local`)
@@ -693,10 +699,24 @@ Doc completo: `docs/knowledge/2026-06-20-studio-kanbans.md`. Navegação compart
 - **Blocos:** biblioteca única em `src/cms/blocks/` (13 estáticos + Seção em colunas + dados ao vivo: jogos de hoje, widget de time, classificação, artilharia, feed de notícias, jogo ao vivo). `PAGE_BLOCK_SLUGS` é a fonte única.
 - **Regra dos caminhos:** rota em código sempre ganha do CMS (catch-all `[...path]` + fallthrough); validação em `src/cms/lib/cms-paths.ts`.
 - **Nunca publicar sem ordem:** o banco é compartilhado, publicar no dev vai pra prod. Teste como rascunho e use `/cms-preview/pagina/{id}`.
+- **Preview:** autenticado pelo cookie do /cms (sem segredo na URL); `previewSecret` só pra curl.
 - **Modelos + JSON:** painel lateral aplica/salva modelo e importa/exporta `{ hero, layoutStyle, layout }`, o formato que a IA gera.
 - **Construtor (beta):** aba com Puck (canvas drag & drop); publicar continua na aba Editar.
 - **Schema:** DDL aditivo aplicado em 01/10 (`~/pdb-ddl-20260930.sql`); em container efêmero passar sempre `NODE_ENV=production` e `PAYLOAD_DB_PUSH=false`.
 - Doc completo: `docs/knowledge/2026-09-30-cms-page-builder.md`.
+
+**Estilo Elementor (01–02/10, em dev validado por API; promote pendente):**
+
+- **Blocos ricos:** +21 em `src/cms/blocks/rich.ts` (hero, cta, cards, stats, faq, tabs, formBlock, embed, countdown, snippet...), componentes puros em `src/components/payload/blocks/`; `hideOn` (celular/desktop) em todo bloco; Vimeo no vídeo. `embed` só admin/editor.
+- **Trechos:** collection `snippets`; salvar/inserir pelo painel da página e bloco `snippet` por referência (tag `snippets`).
+- **Formulários:** plugin oficial (Formulários + Respostas) e bloco Formulário; e-mail só com SMTP (`SMTP_HOST/PORT/USER/PASS/FROM` no `.env.local` + recriar container), destino `contato@papodebola.com.br`.
+- **Textos/SEO no CMS:** global `siteSettings` + collection `pageTexts` (1 doc por rota, padrões `:param`) e `buildMetadata(route, defaults)` em 35 rotas; painel `/painel-pdb-9x/paginas` aposentado (308 pro CMS). `noindex` em layout cascata; todo JSON-LD usa `jsonLd()`.
+- **Papéis:** `admin`/`editor`/`seo` (sem roles = editor); `seo` edita só campos de SEO (`lockFieldsExceptSeo`). Seed de roles obrigatório antes do primeiro deploy (ninguém é admin sem ele).
+- **Validador gerado:** `npm run gen:paths` (`reserved-paths.generated.ts`); teste falha se desatualizado; roda no `build`. Pasta nova em `src/app` exige rodar de novo.
+- **Guia:** `/cms-guia` (logado) e atalhos por papel no dashboard do `/cms`. DDL aplicado em 02/10 (`~/pdb-ddl-20261001.sql` + `~/pdb-ddl-20261002-page-texts-entries.sql`; backup `~/pdb_payload_backup_20261001b.sql`) e seed rodado (`~/run-seed.sh` + `~/seed-elementor.mjs`: ivansjp=admin, utopiaseo01=seo, 38 pageTexts, form Contato, trecho, modelo). Doc: `docs/knowledge/2026-10-01-cms-elementor.md`.
+- **GOTCHA Payload/Drizzle:** array/blocks chamado `texts`, `numbers` ou `rels` colide com as tabelas reservadas `{tabela}_texts/_numbers/_rels` e quebra todo `find` da collection (`reading 'referencedTable'`). `pageTexts.texts` usa `dbName: "page_texts_entries"`; nunca nomear assim sem `dbName`.
+- **Home, hub da Copa e `/sobre`** passam por `buildMetadata` (SEO da entrada "Textos e SEO" > textos `*.meta.*` do registro). **`/paginas/{slug}`** só serve página publicada (rascunho = 404) e não redireciona quando o Caminho é igual ao padrão.
+- **Scripts `payload run` no servidor:** `bash ~/run-seed.sh <script.mjs>` (container efêmero `pdb-migrate`, rede `pdb-net`, volume montado, `NODE_ENV=production PAYLOAD_DB_PUSH=false`); stdout do script vai pra `/app/out.txt`. Limpeza dos testes de 02/10: `bash ~/run-seed.sh cleanup.mjs`.
 
 ---
 

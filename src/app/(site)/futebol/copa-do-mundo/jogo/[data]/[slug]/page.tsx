@@ -16,6 +16,7 @@ import {
   type WorldCupFixture,
   type MatchDetail,
 } from "@/lib/data/match-detail";
+import { buildMetadata } from "@/lib/seo/build-metadata";
 
 // ISR (não force-dynamic): a página cacheia e serve na hora; o cliente faz polling
 // pro ao vivo (não precisa renderizar dinâmico a cada hit). force-dynamic sem cache
@@ -43,7 +44,7 @@ const BROADCAST: { label: string; val: string }[] = [
   { label: "TV fechada", val: "SporTV" },
 ];
 
-export async function generateMetadata({
+async function metadataDefaults({
   params,
 }: {
   params: Promise<Params>;
@@ -77,6 +78,13 @@ export async function generateMetadata({
   }
 
   return { title, description, alternates: { canonical: url } };
+}
+
+// SEO editável no /cms (Textos e SEO das páginas, rota "/futebol/copa-do-mundo/jogo/:data/:slug") sobre os defaults acima.
+export async function generateMetadata(
+  props: Parameters<typeof metadataDefaults>[0]
+): Promise<Metadata> {
+  return buildMetadata("/futebol/copa-do-mundo/jogo/:data/:slug", await metadataDefaults(props));
 }
 
 // Bloco de pré-jogo (só em jogo futuro): horário + onde assistir + link interno.

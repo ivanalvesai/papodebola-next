@@ -5,15 +5,18 @@ import { PageBreadcrumb } from "@/components/seo/page-breadcrumb";
 import { TeamLogo } from "@/components/ui/team-logo";
 import { getStandings } from "@/lib/data/standings";
 import { TOURNAMENTS } from "@/lib/config";
+import { buildMetadata } from "@/lib/seo/build-metadata";
 
 export const revalidate = 21600; // 6h
 
-export const metadata: Metadata = {
-  title: "Futebol de São Paulo: Paulistão, Jogos e Times",
-  description:
-    "Futebol do estado de São Paulo: classificação do Campeonato Paulista, times paulistas, jogos e notícias no Papo de Bola.",
-  alternates: { canonical: "/sp" },
-};
+export async function generateMetadata(): Promise<Metadata> {
+  return buildMetadata("/sp", {
+    title: "Futebol de São Paulo: Paulistão, Jogos e Times",
+    description:
+      "Futebol do estado de São Paulo: classificação do Campeonato Paulista, times paulistas, jogos e notícias no Papo de Bola.",
+    alternates: { canonical: "/sp" },
+  });
+}
 
 const PAULISTA = TOURNAMENTS.PAULISTA;
 

@@ -2,15 +2,17 @@ import { cache } from "react";
 import { getPayload } from "payload";
 import config from "@payload-config";
 
-// Busca uma "Página" do Payload por slug. Retorna null em QUALQUER erro (banco
-// fora, página inexistente) — quem chama faz fallback pro conteúdo atual em código.
+// Busca uma "Página" PUBLICADA do Payload por slug. Retorna null em QUALQUER erro (banco
+// fora, página inexistente ou só rascunho) — quem chama faz fallback pro conteúdo atual em código.
 // cache() dedup por request (metadata + page usam a mesma busca).
+// Rascunho nunca sai daqui (02/10): sem o filtro, uma página nunca publicada aparecia em
+// /paginas/{slug} pra qualquer visitante. Preview de rascunho é só pelo /cms-preview (por id).
 export const getPayloadPage = cache(async (slug: string) => {
   try {
     const payload = await getPayload({ config });
     const res = await payload.find({
       collection: "pages",
-      where: { slug: { equals: slug } },
+      where: { and: [{ slug: { equals: slug } }, { _status: { equals: "published" } }] },
       limit: 1,
       depth: 2,
     });

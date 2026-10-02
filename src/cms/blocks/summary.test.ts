@@ -31,3 +31,17 @@ test("section conta colunas", () => {
 test("desconhecido devolve vazio", () => {
   assert.equal(blockSummary("xpto", {}), "");
 });
+
+test("blocos ricos: hero, faq, formBlock, countdown, snippet, embed", () => {
+  assert.equal(blockSummary("hero", { title: "Bem-vindo ao Papo de Bola, o portal do futebol brasileiro e mundial" }), "Bem-vindo ao Papo de Bola, o portal do futebol brasi…");
+  assert.equal(blockSummary("faq", { title: "Dúvidas", items: [{}, {}, {}] }), "Dúvidas · 3 perguntas");
+  assert.equal(blockSummary("formBlock", { form: { title: "Contato" } }), "Contato");
+  assert.equal(blockSummary("formBlock", { form: 3 }), "Formulário");
+  assert.equal(blockSummary("countdown", { team: { name: "Cruzeiro" } }), "Cruzeiro");
+  assert.equal(blockSummary("countdown", { matchId: 123 }), "jogo 123");
+  assert.equal(blockSummary("snippet", { snippet: { title: "Rodapé institucional" } }), "Rodapé institucional");
+  assert.equal(blockSummary("snippet", { snippet: 7 }), "Trecho");
+  assert.equal(blockSummary("embed", { html: "<div></div>" }), "HTML (11 caracteres)");
+  assert.equal(blockSummary("divider", { style: "space" }), "Espaço");
+  assert.equal(blockSummary("cards", { title: "Destaques", items: [{}, {}] }), "Destaques · 2 itens");
+});

@@ -15,6 +15,7 @@ import { getWorldCupData, getKnockoutFixtures } from "@/lib/data/world-cup";
 import { getWorldCupScorers } from "@/lib/data/scorers";
 import { getArticles } from "@/lib/data/articles";
 import { getEditableText } from "@/components/editable";
+import { buildMetadata } from "@/lib/seo/build-metadata";
 
 const COPA_CATEGORY = "Copa do Mundo";
 
@@ -29,11 +30,12 @@ export async function generateMetadata(): Promise<Metadata> {
     getEditableText("copa.meta.title"),
     getEditableText("copa.meta.description"),
   ]);
-  return {
+  // O grupo SEO da entrada "/futebol/copa-do-mundo" (Textos e SEO) sobrescreve os textos copa.meta.*.
+  return buildMetadata("/futebol/copa-do-mundo", {
     alternates: { canonical: "/futebol/copa-do-mundo" },
     title,
     description,
-  };
+  });
 }
 
 export default async function CopaDoMundoPage() {

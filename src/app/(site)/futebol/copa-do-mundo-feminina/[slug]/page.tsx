@@ -3,6 +3,7 @@ import { notFound, permanentRedirect } from "next/navigation";
 import { getArticleBySlug, getRelatedArticles, articleMetaDescription } from "@/lib/data/articles";
 import { getBrasileiraoStandings } from "@/lib/data/standings";
 import { ArticleView } from "@/components/article/article-view";
+import { buildMetadata } from "@/lib/seo/build-metadata";
 
 // Notícia da Copa do Mundo Feminina aninhada sob o hub: /futebol/copa-do-mundo-feminina/{slug}
 // (a categoria "Copa do Mundo Feminina" mapeia pra cá via CATEGORY_HUB). Precisa existir como
@@ -11,7 +12,7 @@ export const revalidate = 1800;
 
 const PREFIX = "/futebol/copa-do-mundo-feminina";
 
-export async function generateMetadata({
+async function metadataDefaults({
   params,
 }: {
   params: Promise<{ slug: string }>;
@@ -45,6 +46,13 @@ export async function generateMetadata({
       description: desc,
     },
   };
+}
+
+// SEO editável no /cms (Textos e SEO das páginas, rota "/futebol/copa-do-mundo-feminina/:slug") sobre os defaults acima.
+export async function generateMetadata(
+  props: Parameters<typeof metadataDefaults>[0]
+): Promise<Metadata> {
+  return buildMetadata("/futebol/copa-do-mundo-feminina/:slug", await metadataDefaults(props));
 }
 
 export default async function CopaFemininaArticlePage({

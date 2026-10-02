@@ -1,3 +1,4 @@
+import { jsonLd } from "@/lib/json-ld";
 import { getEditableText } from "@/components/editable";
 
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || "https://www.papodebola.com.br";
@@ -50,7 +51,7 @@ export async function SiteSchema() {
   return (
     <script
       type="application/ld+json"
-      dangerouslySetInnerHTML={{ __html: JSON.stringify(graph) }}
+      dangerouslySetInnerHTML={{ __html: jsonLd(graph) }}
     />
   );
 }

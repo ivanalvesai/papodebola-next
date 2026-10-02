@@ -4,14 +4,17 @@ import Image from "next/image";
 import { Radio } from "lucide-react";
 import type { NormalizedMatch } from "@/types/match";
 import { PageBreadcrumb } from "@/components/seo/page-breadcrumb";
+import { buildMetadata } from "@/lib/seo/build-metadata";
 
 export const revalidate = 900;
 
-export const metadata: Metadata = {
-  alternates: { canonical: "/ao-vivo" },
-  title: "Jogos Ao Vivo - Placares em Tempo Real",
-  description: "Acompanhe jogos de futebol ao vivo com placares em tempo real. Brasileirao, Copa do Brasil, Libertadores, Champions League e mais.",
-};
+export async function generateMetadata(): Promise<Metadata> {
+  return buildMetadata("/ao-vivo", {
+    alternates: { canonical: "/ao-vivo" },
+    title: "Jogos Ao Vivo - Placares em Tempo Real",
+    description: "Acompanhe jogos de futebol ao vivo com placares em tempo real. Brasileirao, Copa do Brasil, Libertadores, Champions League e mais.",
+  });
+}
 
 export default async function AoVivoPage() {
   const matches = await getTodayMatches().catch(() => []);

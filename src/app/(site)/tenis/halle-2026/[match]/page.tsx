@@ -4,6 +4,7 @@ import { PageBreadcrumb } from "@/components/seo/page-breadcrumb";
 import { TennisMatchView } from "@/components/tennis/tennis-match";
 import { TennisEventSchema } from "@/components/seo/tennis-event-schema";
 import { getTennisMatchDetail, TENNIS_TOURNAMENTS } from "@/lib/data/tennis";
+import { buildMetadata } from "@/lib/seo/build-metadata";
 
 const SLUG = "halle-2026" as const;
 const T = TENNIS_TOURNAMENTS[SLUG];
@@ -11,7 +12,7 @@ const T = TENNIS_TOURNAMENTS[SLUG];
 // 30s: placar/estatística ao vivo (o cliente também faz polling).
 export const revalidate = 30;
 
-export async function generateMetadata({
+async function metadataDefaults({
   params,
 }: {
   params: Promise<{ match: string }>;
@@ -45,6 +46,13 @@ export async function generateMetadata({
   }
 
   return { alternates: { canonical: url }, title, description };
+}
+
+// SEO editável no /cms (Textos e SEO das páginas, rota "/tenis/halle-2026/:match") sobre os defaults acima.
+export async function generateMetadata(
+  props: Parameters<typeof metadataDefaults>[0]
+): Promise<Metadata> {
+  return buildMetadata("/tenis/halle-2026/:match", await metadataDefaults(props));
 }
 
 export default async function HalleMatchPage({

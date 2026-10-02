@@ -12,6 +12,12 @@ export const dynamic = "force-dynamic";
 // duplicado (/paginas/sobre e /sobre seriam a mesma página). 308 pra rota dedicada,
 // ANTES de qualquer consulta ao banco (mapa em @/lib/dedicated-pages).
 
+// Caminho personalizado diferente do padrão /paginas/{slug}: redireciona pra ele. Se o
+// editor digitou exatamente o caminho padrão, renderiza aqui (senão vira loop de 308).
+function customPath(page: { path?: string | null }, slug: string): boolean {
+  return !!page.path && page.path !== `/paginas/${slug}`;
+}
+
 export async function generateMetadata({
   params,
 }: {
@@ -22,7 +28,7 @@ export async function generateMetadata({
   if (dedicated) permanentRedirect(dedicated);
   const page = await getPayloadPage(slug);
   if (!page) return {};
-  if (page.path) permanentRedirect(page.path);
+  if (customPath(page, slug)) permanentRedirect(page.path as string);
   return {
     title: page.seo?.metaTitle || page.title,
     description: page.seo?.metaDescription,
@@ -40,6 +46,6 @@ export default async function PaginaPayload({
   if (dedicated) permanentRedirect(dedicated);
   const page = await getPayloadPage(slug);
   if (!page) notFound();
-  if (page.path) permanentRedirect(page.path);
+  if (customPath(page, slug)) permanentRedirect(page.path as string);
   return <PageBlocks page={page} />;
 }

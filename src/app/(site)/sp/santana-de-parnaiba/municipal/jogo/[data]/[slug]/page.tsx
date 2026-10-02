@@ -5,13 +5,14 @@ import Image from "next/image";
 import { findFixedMunicipalMatchKey, getMunicipalMatch } from "@/lib/data/municipal";
 import { getMunicipalGame } from "@/lib/data/municipal-game";
 import { MunicipalGameView } from "@/components/municipal/municipal-game-view";
+import { buildMetadata } from "@/lib/seo/build-metadata";
 
 // Página de jogo do municipal. Se houver um "Jogo do municipal" no CMS com este slug
 // (jogo com vídeo/comentários, ex.: transmissão de YouTube), renderiza esse. Senão, a
 // ficha estática do SisGel (placar, gols, escalações). Sem tempo real.
 export const dynamic = "force-dynamic";
 
-export async function generateMetadata({
+async function metadataDefaults({
   params,
 }: {
   params: Promise<{ data: string; slug: string }>;
@@ -38,6 +39,13 @@ export async function generateMetadata({
     m.venue ? `, no ${m.venue}` : ""
   }: placar, gols e escalações.`;
   return { title, description, alternates: { canonical } };
+}
+
+// SEO editável no /cms (Textos e SEO das páginas, rota "/sp/santana-de-parnaiba/municipal/jogo/:data/:slug") sobre os defaults acima.
+export async function generateMetadata(
+  props: Parameters<typeof metadataDefaults>[0]
+): Promise<Metadata> {
+  return buildMetadata("/sp/santana-de-parnaiba/municipal/jogo/:data/:slug", await metadataDefaults(props));
 }
 
 function Crest({ src, alt, size = 40 }: { src: string; alt: string; size?: number }) {

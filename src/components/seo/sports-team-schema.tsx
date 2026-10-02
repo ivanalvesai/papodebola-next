@@ -1,3 +1,4 @@
+import { jsonLd } from "@/lib/json-ld";
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || "https://www.papodebola.com.br";
 
 // JSON-LD SportsTeam para os hubs de time (cluster SEO). Sinal de entidade pro
@@ -22,7 +23,7 @@ export function SportsTeamSchema({
   return (
     <script
       type="application/ld+json"
-      dangerouslySetInnerHTML={{ __html: JSON.stringify(schema) }}
+      dangerouslySetInnerHTML={{ __html: jsonLd(schema) }}
     />
   );
 }

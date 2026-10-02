@@ -23,3 +23,38 @@ export function pathBreadcrumb(path: string, title: string): { label: string; hr
   });
   return items;
 }
+// Esconde o bloco por dispositivo (campo `hideOn` dos blocos de Página). "" = visível em tudo.
+export function hideOnClass(block: { hideOn?: string | null } | null | undefined): string {
+  return block?.hideOn === "mobile" ? "max-md:hidden" : block?.hideOn === "desktop" ? "md:hidden" : "";
+}
+
+// Bloco "Números": só valores inteiros (com ou sem separador de milhar) ganham contador animado.
+// "1.200" → { target: 1200, sep: "." }; "3,5" / "R$ 10" → null (fica estático).
+export function parseStatValue(value: string | null | undefined): { target: number; sep: "." | "," | "" } | null {
+  const v = String(value ?? "").trim();
+  if (/^\d+$/.test(v)) return { target: Number(v), sep: "" };
+  const m = v.match(/^\d{1,3}([.,])\d{3}(?:\1\d{3})*$/);
+  if (!m) return null;
+  return { target: Number(v.split(m[1]).join("")), sep: m[1] as "." | "," };
+}
+export function formatStatValue(n: number, sep: string): string {
+  const s = String(Math.round(n));
+  return sep ? s.replace(/\B(?=(\d{3})+(?!\d))/g, sep) : s;
+}
+
+// Colunas dos blocos de grade (salvas como texto "2"/"3"/"4"). Mapa estático: o Tailwind não
+// gera classe montada em tempo de execução.
+const GRID_COLS: Record<string, string> = {
+  "2": "sm:grid-cols-2",
+  "3": "sm:grid-cols-2 lg:grid-cols-3",
+  "4": "sm:grid-cols-2 lg:grid-cols-4",
+};
+export function gridColsClass(columns: string | number | null | undefined): string {
+  return GRID_COLS[String(columns ?? "")] ?? GRID_COLS["3"];
+}
+
+// Seção "largura total" numa página "largura total": o SectionBlock devolve <div data-full> e o
+// page-shell não limita esses filhos diretos. Qualquer wrapper em volta precisa manter data-full.
+export function isFullBleedSection(block: { blockType?: string; width?: string | null } | null | undefined, pageWidth: string | undefined): boolean {
+  return block?.blockType === "section" && block?.width === "full" && pageWidth === "full";
+}

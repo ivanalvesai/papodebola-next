@@ -59,7 +59,7 @@ export function staticBlocks(richTextEditor: RichTextEditor): Block[] {
     withMeta(
       {
         slug: "youtube",
-        labels: { singular: "Vídeo do YouTube", plural: "Vídeos do YouTube" },
+        labels: { singular: "Vídeo (YouTube/Vimeo)", plural: "Vídeos" },
         fields: [
           {
             name: "url",
@@ -68,14 +68,25 @@ export function staticBlocks(richTextEditor: RichTextEditor): Block[] {
             label: "Link do vídeo",
             admin: {
               description:
-                "Cole o link (https://www.youtube.com/watch?v=XXXX, https://youtu.be/XXXX ou o link do Shorts).",
+                "Cole o link (https://www.youtube.com/watch?v=XXXX, https://youtu.be/XXXX, o link do Shorts ou https://vimeo.com/NNNN).",
             },
           },
           { name: "title", type: "text", label: "Título (opcional)", admin: { description: "Aparece acima do vídeo." } },
           { name: "caption", type: "text", label: "Legenda (opcional)", admin: { description: "Aparece abaixo do vídeo." } },
+          {
+            name: "provider",
+            type: "select",
+            defaultValue: "auto",
+            label: "Plataforma",
+            options: [
+              { label: "Automático (pelo link)", value: "auto" },
+              { label: "YouTube", value: "youtube" },
+              { label: "Vimeo", value: "vimeo" },
+            ],
+          },
         ],
       },
-      "text",
+      "embed",
     ),
     withMeta(
       {

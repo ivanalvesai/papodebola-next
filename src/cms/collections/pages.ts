@@ -6,6 +6,8 @@ import { validatePagePath, normalizePath } from "@/cms/lib/cms-paths";
 import { previewUrl, PREVIEW_BREAKPOINTS } from "@/cms/lib/preview-url";
 import { isAutosave } from "@/cms/lib/is-autosave";
 import { dedicatedPageRoute } from "@/lib/dedicated-pages";
+import { editorOrAdmin, publishedOrLogged, seoOrEditorOrAdmin } from "@/cms/lib/access";
+import { lockFieldsExceptSeo } from "@/cms/lib/lock-fields";
 
 type RichTextEditor = ReturnType<typeof lexicalEditor>;
 
@@ -54,7 +56,8 @@ export function pagesCollection(richTextEditor: RichTextEditor): CollectionConfi
     },
     // Rascunho/publicar: o site (find sem draft) só mostra a versão publicada.
     versions: { drafts: { autosave: { interval: 1500 } }, maxPerDoc: 50 },
-    access: { read: ({ req: { user } }) => (user ? true : { _status: { equals: "published" } }) },
+    // seo: pode salvar, mas só os campos de SEO (lockFieldsExceptSeo nos fields).
+    access: { read: publishedOrLogged, create: editorOrAdmin, update: seoOrEditorOrAdmin, delete: editorOrAdmin },
     hooks: {
       afterChange: [({ doc, previousDoc, req }: any) => {
         if (isAutosave(req)) return doc;
@@ -67,7 +70,7 @@ export function pagesCollection(richTextEditor: RichTextEditor): CollectionConfi
       }],
       afterDelete: [({ doc }: any) => { revalidatePageDoc(doc); return doc; }],
     },
-    fields: [
+    fields: lockFieldsExceptSeo([
       { name: "title", type: "text", required: true, label: "Nome da página" },
       {
         name: "path", type: "text", unique: true, index: true, label: "Caminho (URL final)",
@@ -89,7 +92,7 @@ export function pagesCollection(richTextEditor: RichTextEditor): CollectionConfi
       ] },
       { name: "showSponsors", type: "checkbox", defaultValue: false, label: "Exibir faixa de patrocinadores nesta página",
         admin: { description: "Mostra a faixa com os patrocinadores ATIVOS abaixo do conteúdo desta página. Usado na página do Municipal." } },
-    ],
+    ]),
   };
 }
 

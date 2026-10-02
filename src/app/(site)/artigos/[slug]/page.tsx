@@ -4,6 +4,7 @@ import { getArticleBySlug, getRelatedArticles, articleMetaDescription } from "@/
 import { getBrasileiraoStandings } from "@/lib/data/standings";
 import { ArticleView } from "@/components/article/article-view";
 import { CRAQUE_SLUGS } from "@/lib/data/craques";
+import { buildMetadata } from "@/lib/seo/build-metadata";
 
 // /artigos/[slug] é o FALLBACK: só renderiza notícias de categorias que colidem com
 // rotas existentes (formula-1, tenis, esports...). As demais têm URL canônica
@@ -14,7 +15,7 @@ function plain(text: string, max: number): string {
   return (text || "").replace(/\s+/g, " ").trim().slice(0, max);
 }
 
-export async function generateMetadata({
+async function metadataDefaults({
   params,
 }: {
   params: Promise<{ slug: string }>;
@@ -51,6 +52,13 @@ export async function generateMetadata({
       description: desc,
     },
   };
+}
+
+// SEO editável no /cms (Textos e SEO das páginas, rota "/artigos/:slug") sobre os defaults acima.
+export async function generateMetadata(
+  props: Parameters<typeof metadataDefaults>[0]
+): Promise<Metadata> {
+  return buildMetadata("/artigos/:slug", await metadataDefaults(props));
 }
 
 export default async function ArticlePage({

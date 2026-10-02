@@ -1,3 +1,4 @@
+import { jsonLd } from "@/lib/json-ld";
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || "https://www.papodebola.com.br";
 
 // JSON-LD do TORNEIO (Copa 2026), só na página-hub /futebol/copa-do-mundo. É o lugar
@@ -29,7 +30,7 @@ export function WorldCupTournamentSchema() {
   return (
     <script
       type="application/ld+json"
-      dangerouslySetInnerHTML={{ __html: JSON.stringify(schema) }}
+      dangerouslySetInnerHTML={{ __html: jsonLd(schema) }}
     />
   );
 }
