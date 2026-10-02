@@ -705,7 +705,7 @@ Doc completo: `docs/knowledge/2026-06-20-studio-kanbans.md`. Navegação compart
 - **Schema:** DDL aditivo aplicado em 01/10 (`~/pdb-ddl-20260930.sql`); em container efêmero passar sempre `NODE_ENV=production` e `PAYLOAD_DB_PUSH=false`.
 - Doc completo: `docs/knowledge/2026-09-30-cms-page-builder.md`.
 
-**Estilo Elementor (01/10, em dev; promote pendente):**
+**Estilo Elementor (01–02/10, em dev validado por API; promote pendente):**
 
 - **Blocos ricos:** +21 em `src/cms/blocks/rich.ts` (hero, cta, cards, stats, faq, tabs, formBlock, embed, countdown, snippet...), componentes puros em `src/components/payload/blocks/`; `hideOn` (celular/desktop) em todo bloco; Vimeo no vídeo. `embed` só admin/editor.
 - **Trechos:** collection `snippets`; salvar/inserir pelo painel da página e bloco `snippet` por referência (tag `snippets`).
@@ -713,7 +713,10 @@ Doc completo: `docs/knowledge/2026-06-20-studio-kanbans.md`. Navegação compart
 - **Textos/SEO no CMS:** global `siteSettings` + collection `pageTexts` (1 doc por rota, padrões `:param`) e `buildMetadata(route, defaults)` em 35 rotas; painel `/painel-pdb-9x/paginas` aposentado (308 pro CMS). `noindex` em layout cascata; todo JSON-LD usa `jsonLd()`.
 - **Papéis:** `admin`/`editor`/`seo` (sem roles = editor); `seo` edita só campos de SEO (`lockFieldsExceptSeo`). Seed de roles obrigatório antes do primeiro deploy (ninguém é admin sem ele).
 - **Validador gerado:** `npm run gen:paths` (`reserved-paths.generated.ts`); teste falha se desatualizado; roda no `build`. Pasta nova em `src/app` exige rodar de novo.
-- **Guia:** `/cms-guia` (logado) e atalhos por papel no dashboard do `/cms`. DDL: `~/pdb-ddl-20261001.sql` (187 tabelas). Doc: `docs/knowledge/2026-10-01-cms-elementor.md`.
+- **Guia:** `/cms-guia` (logado) e atalhos por papel no dashboard do `/cms`. DDL aplicado em 02/10 (`~/pdb-ddl-20261001.sql` + `~/pdb-ddl-20261002-page-texts-entries.sql`; backup `~/pdb_payload_backup_20261001b.sql`) e seed rodado (`~/run-seed.sh` + `~/seed-elementor.mjs`: ivansjp=admin, utopiaseo01=seo, 38 pageTexts, form Contato, trecho, modelo). Doc: `docs/knowledge/2026-10-01-cms-elementor.md`.
+- **GOTCHA Payload/Drizzle:** array/blocks chamado `texts`, `numbers` ou `rels` colide com as tabelas reservadas `{tabela}_texts/_numbers/_rels` e quebra todo `find` da collection (`reading 'referencedTable'`). `pageTexts.texts` usa `dbName: "page_texts_entries"`; nunca nomear assim sem `dbName`.
+- **Home, hub da Copa e `/sobre`** passam por `buildMetadata` (SEO da entrada "Textos e SEO" > textos `*.meta.*` do registro). **`/paginas/{slug}`** só serve página publicada (rascunho = 404) e não redireciona quando o Caminho é igual ao padrão.
+- **Scripts `payload run` no servidor:** `bash ~/run-seed.sh <script.mjs>` (container efêmero `pdb-migrate`, rede `pdb-net`, volume montado, `NODE_ENV=production PAYLOAD_DB_PUSH=false`); stdout do script vai pra `/app/out.txt`. Limpeza dos testes de 02/10: `bash ~/run-seed.sh cleanup.mjs`.
 
 ---
 
