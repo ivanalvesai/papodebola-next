@@ -20,18 +20,21 @@ import { getTopScorers } from "@/lib/data/scorers";
 import { getChampionshipData } from "@/lib/data/championship";
 import { enrichStandingsWithForm } from "@/lib/standings-utils";
 import { Editable, getEditableText } from "@/components/editable";
+import { buildMetadata } from "@/lib/seo/build-metadata";
 import type { ChampionshipMatch } from "@/types/match";
 import type { ChampionshipData } from "@/types/tournament";
 
 export const revalidate = 1800;
 
-// Title/description editáveis no painel "Páginas" (com fallback no default do registro).
+// Title/description editáveis no /cms (Textos e SEO da página "/"): o grupo SEO da entrada
+// (metaTitle/metaDescription/noindex) sobrescreve via buildMetadata; sem ele valem os
+// textos "home.meta.*" (com fallback no default do registro).
 export async function generateMetadata(): Promise<Metadata> {
   const [title, description] = await Promise.all([
     getEditableText("home.meta.title"),
     getEditableText("home.meta.description"),
   ]);
-  return {
+  return buildMetadata("/", {
     // `absolute` evita o template "%s | Papo de Bola" do layout (senao duplicaria a marca).
     title: { absolute: title },
     description,
@@ -43,7 +46,7 @@ export async function generateMetadata(): Promise<Metadata> {
       description,
       images: [{ url: "/og-image.jpg", width: 1200, height: 630 }],
     },
-  };
+  });
 }
 
 export default async function HomePage() {
