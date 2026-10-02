@@ -54,6 +54,10 @@ export const pageTextsCollection: CollectionConfig = {
     {
       name: "texts",
       type: "array",
+      // dbName: a tabela padrão seria "page_texts_texts", que é o nome RESERVADO pelo adapter
+      // Drizzle pra campos de texto hasMany ("{tabela}_texts"). Com a colisão, todo find em
+      // pageTexts quebrava ("Cannot read properties of undefined (reading 'referencedTable')").
+      dbName: "page_texts_entries",
       label: "Textos da tela",
       labels: { singular: "Texto", plural: "Textos" },
       admin: { components: { RowLabel: "@/cms/components/text-row-label#TextRowLabel" } },
