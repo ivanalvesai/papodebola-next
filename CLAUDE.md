@@ -705,7 +705,7 @@ Doc completo: `docs/knowledge/2026-06-20-studio-kanbans.md`. Navegação compart
 - **Schema:** DDL aditivo aplicado em 01/10 (`~/pdb-ddl-20260930.sql`); em container efêmero passar sempre `NODE_ENV=production` e `PAYLOAD_DB_PUSH=false`.
 - Doc completo: `docs/knowledge/2026-09-30-cms-page-builder.md`.
 
-**Estilo Elementor (01–02/10, em dev validado por API; promote pendente):**
+**Estilo Elementor (01–02/10, EM PROD desde 02/10 07h50 — promote 9596e16):**
 
 - **Blocos ricos:** +21 em `src/cms/blocks/rich.ts` (hero, cta, cards, stats, faq, tabs, formBlock, embed, countdown, snippet...), componentes puros em `src/components/payload/blocks/`; `hideOn` (celular/desktop) em todo bloco; Vimeo no vídeo. `embed` só admin/editor.
 - **Trechos:** collection `snippets`; salvar/inserir pelo painel da página e bloco `snippet` por referência (tag `snippets`).

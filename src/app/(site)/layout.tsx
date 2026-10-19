@@ -91,6 +91,19 @@ export default function RootLayout({
         <Script id="gtm-head" strategy="lazyOnload">
           {`(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src='https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);})(window,document,'script','dataLayer','GTM-MMRXG48R');`}
         </Script>
+        {/* Vetor Media Analytics: estatísticas (script.js) + gravação de sessão
+            (recorder.js). Tags cruas no <head> com defer (não bloqueiam o parse);
+            este layout cobre todas as páginas do site. */}
+        <script
+          defer
+          src="https://analytics.vetormedia.com/script.js"
+          data-website-id="7b34291b-c909-4f27-8179-df2f3595892c"
+        />
+        <script
+          defer
+          src="https://analytics.vetormedia.com/recorder.js"
+          data-website-id="7b34291b-c909-4f27-8179-df2f3595892c"
+        />
         <SiteSchema />
       </head>
       <body className="min-h-screen flex flex-col bg-body font-sans text-text-primary">
