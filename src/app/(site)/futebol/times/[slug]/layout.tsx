@@ -6,6 +6,7 @@ import { teamRouteStaticParams } from "@/components/payload/team-cms-page";
 import { notFound } from "next/navigation";
 import { TeamBreadcrumb } from "@/components/seo/team-breadcrumb";
 import { SportsTeamSchema } from "@/components/seo/sports-team-schema";
+import { TeamH1 } from "@/components/team/team-h1";
 
 export async function generateStaticParams() {
   return teamRouteStaticParams();
@@ -73,7 +74,7 @@ export default async function TeamLayout({
             unoptimized
           />
           <div>
-            <h1 className="text-xl font-bold text-text-primary">{team.name}</h1>
+            <TeamH1 name={team.name} />
             <p className="text-sm text-text-muted">Futebol</p>
           </div>
         </div>

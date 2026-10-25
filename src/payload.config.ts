@@ -739,6 +739,22 @@ export default buildConfig({
           admin: { description: "Nome da categoria (define a URL /{categoria}/{slug})" },
         },
         { name: "tags", type: "array", fields: [{ name: "tag", type: "text" }] },
+        // Times do post: a notícia aparece nas páginas desses times (hub + abas) e nas
+        // páginas dos jogos deles. Posts antigos sem o campo seguem casando por tag/título.
+        {
+          name: "teams",
+          type: "relationship",
+          relationTo: "teams",
+          hasMany: true,
+          label: "Times",
+          admin: { description: "A notícia aparece nas páginas desses times e dos jogos deles." },
+        },
+        {
+          name: "matchId",
+          type: "number",
+          label: "ID do jogo (opcional)",
+          admin: { description: "ID do jogo na API — liga o post à página do jogo." },
+        },
         { name: "cover", type: "upload", relationTo: "media" },
         { name: "excerpt", type: "textarea", admin: { description: "Resumo (meta description)" } },
         // Corpo VISUAL (editor Lexical) — o que o redator usa (negrito, títulos, listas,

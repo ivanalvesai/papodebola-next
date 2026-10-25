@@ -34,6 +34,9 @@ export function ClassicTeamJogoHoje({ data }: { data: TeamPageData }) {
           startTimestamp={schemaMatch.timestamp}
           statusType={schemaMatch.status}
           url={`/futebol/times/${data.slug}/jogo-hoje`}
+          // Sem isto o schema caía no padrão "Copa do Mundo FIFA 2026" (local/organizador FIFA).
+          competition={schemaMatch.league || "Futebol"}
+          venue={schemaMatch.venue ? { stadium: schemaMatch.venue, city: "", country: "" } : null}
         />
       )}
 

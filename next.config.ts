@@ -48,6 +48,9 @@ const nextConfig: NextConfig = {
       // Páginas legais renomeadas pra slugs descritivos (jun/2026)
       { source: "/privacidade", destination: "/politica-de-privacidade", permanent: true },
       { source: "/termos", destination: "/termos-de-uso", permanent: true },
+      // Feed RSS: caminhos que leitores/agregadores (e o WordPress antigo) usam.
+      { source: "/feed", destination: "/feed.xml", permanent: true },
+      { source: "/rss", destination: "/feed.xml", permanent: true },
       // /agenda renomeada pra /jogos-de-hoje (jun/2026) — termo mais forte de SEO
       { source: "/agenda", destination: "/jogos-de-hoje", permanent: true },
       { source: "/agenda/:path*", destination: "/jogos-de-hoje/:path*", permanent: true },

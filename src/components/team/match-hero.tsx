@@ -1,5 +1,7 @@
 import Image from "next/image";
+import Link from "next/link";
 import type { TeamMatch } from "@/lib/data/team";
+import { TeamNameLink } from "./match-link";
 
 // Card "premium" de um confronto (jogo de hoje ou próximo jogo): faixa com a
 // competição, escudo grande de cada time, horário/placar no centro e a data por
@@ -35,14 +37,14 @@ function longDate(tsSec: number): string {
   return s.charAt(0).toUpperCase() + s.slice(1);
 }
 
-function Side({ id, name, role }: { id: number; name: string; role: string }) {
+function Side({ id, name, slug, role }: { id: number; name: string; slug: string | null; role: string }) {
   return (
     <div className="flex min-w-0 flex-1 flex-col items-center gap-3 text-center">
       <div className="flex h-20 w-20 items-center justify-center rounded-full bg-white shadow-md ring-1 ring-border-custom sm:h-24 sm:w-24">
         <Image src={`/api/team-img/${id}`} alt={`Escudo do ${name}`} width={64} height={64} className="h-14 w-14 object-contain sm:h-16 sm:w-16" unoptimized />
       </div>
       <div className="min-w-0">
-        <div className="text-base font-bold leading-tight text-text-primary sm:text-lg">{name}</div>
+        <TeamNameLink slug={slug} name={name} className="block text-base font-bold leading-tight text-text-primary hover:text-green sm:text-lg" />
         <div className="mt-1 text-xs uppercase tracking-wide text-text-muted">{role}</div>
       </div>
     </div>
@@ -72,7 +74,7 @@ export function MatchHero({
       </div>
 
       <div className="flex items-start justify-between gap-2 px-4 py-6 sm:px-8 sm:py-8">
-        <Side id={match.homeId} name={match.home} role="Mandante" />
+        <Side id={match.homeId} name={match.home} slug={match.homeSlug} role="Mandante" />
 
         <div className="flex shrink-0 flex-col items-center gap-2 pt-5 sm:pt-7">
           {hasScore ? (
@@ -98,7 +100,7 @@ export function MatchHero({
           )}
         </div>
 
-        <Side id={match.awayId} name={match.away} role="Visitante" />
+        <Side id={match.awayId} name={match.away} slug={match.awaySlug} role="Visitante" />
       </div>
 
       <div className="border-t border-border-light bg-body/60 px-5 py-3 text-center text-sm text-text-secondary">
@@ -106,6 +108,15 @@ export function MatchHero({
         {!hasScore && match.time ? <span> · {match.time} (Brasília)</span> : null}
         {match.venue ? <span> · {match.venue}</span> : null}
       </div>
+
+      {match.href && (
+        <Link
+          href={match.href}
+          className="block border-t border-border-light px-5 py-3 text-center text-sm font-semibold text-green hover:bg-green-light"
+        >
+          {finished ? "Ver lance a lance e estatísticas" : live ? "Acompanhar ao vivo" : "Onde assistir, escalações e detalhes do jogo"} &rarr;
+        </Link>
+      )}
     </div>
   );
 }

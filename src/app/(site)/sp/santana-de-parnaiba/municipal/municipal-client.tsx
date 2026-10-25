@@ -53,11 +53,32 @@ interface Championship {
   totalRounds: number; updatedAt: string;
 }
 
-export default function MunicipalPage({ videoGameSlugs = [] }: { videoGameSlugs?: string[] }) {
-  const [data, setData] = useState<Championship[]>([]);
-  const [loading, setLoading] = useState(true);
+// Última rodada com pelo menos um jogo encerrado (com placar) — rodada inicial da tela.
+function lastPlayedRound(champ: Championship | undefined): number {
+  if (!champ?.matchesByRound) return 1;
+  const rounds = Object.keys(champ.matchesByRound).map(Number).sort((a, b) => a - b);
+  let lastPlayed = rounds[0] || 0;
+  for (const r of rounds) {
+    const games = champ.matchesByRound[String(r)] || [];
+    if (games.some((g) => g.homeScore !== null && g.awayScore !== null)) lastPlayed = r;
+  }
+  return lastPlayed;
+}
+
+// initialData vem do servidor (page.tsx) com o 1º campeonato: o HTML já sai com tabela,
+// jogos e H1 — antes saía só um spinner (o Google via ~100 palavras e nenhum H1). As
+// outras divisões chegam pelo fetch do cliente, sem mexer na rodada já aberta.
+export default function MunicipalPage({
+  videoGameSlugs = [],
+  initialData,
+}: {
+  videoGameSlugs?: string[];
+  initialData?: Championship[];
+}) {
+  const [data, setData] = useState<Championship[]>(initialData || []);
+  const [loading, setLoading] = useState(!initialData);
   const [selectedChamp, setSelectedChamp] = useState(0);
-  const [selectedRound, setSelectedRound] = useState(1);
+  const [selectedRound, setSelectedRound] = useState(() => lastPlayedRound(initialData?.[0]));
   const [liveMap, setLiveMap] = useState<Record<string, { live?: boolean }>>({});
   const [userNavigated, setUserNavigated] = useState(false);
 
@@ -96,17 +117,7 @@ export default function MunicipalPage({ videoGameSlugs = [] }: { videoGameSlugs?
       .then((r) => r.json())
       .then((d) => {
         setData(d);
-        if (d[0]?.matchesByRound) {
-          // Find last round that has at least one finished match (with score)
-          const rounds = Object.keys(d[0].matchesByRound).map(Number).sort((a: number, b: number) => a - b);
-          let lastPlayed = rounds[0] || 0;
-          for (const r of rounds) {
-            const games = d[0].matchesByRound[String(r)] || [];
-            const hasFinished = games.some((g: Match) => g.homeScore !== null && g.awayScore !== null);
-            if (hasFinished) lastPlayed = r;
-          }
-          setSelectedRound(lastPlayed);
-        }
+        if (!initialData && d[0]?.matchesByRound) setSelectedRound(lastPlayedRound(d[0]));
       })
       .catch(() => {})
       .finally(() => setLoading(false));

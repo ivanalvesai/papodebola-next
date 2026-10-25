@@ -11,6 +11,8 @@ import { ClassicTeamOndeAssistir } from "@/components/team/classic/onde-assistir
 import { ClassicTeamEscalacao } from "@/components/team/classic/escalacao";
 import { ClassicTeamProximos } from "@/components/team/classic/proximos";
 import { ClassicTeamEstatisticas } from "@/components/team/classic/estatisticas";
+import { TeamCrossLinks } from "@/components/team/team-cross-links";
+import type { TeamPageData } from "@/lib/data/team";
 
 // generateStaticParams compartilhado: une os slugs do config (Série A/EU) com os times
 // publicados no Payload (Série B). Cada rota de time chama isto.
@@ -42,6 +44,21 @@ const CLASSIC = {
 // aba pedida. Aba vazia = página clássica do site (igual aos times do config).
 export async function TeamCmsView({ doc, page }: { doc: PayloadTeam; page: TeamNarrativePage }) {
   const data = await getTeamPageDataFor(teamInfoFromDoc(doc));
+  return (
+    <>
+      <TeamCmsBody doc={doc} page={page} data={data} />
+      <TeamTabFooter data={data} page={page} />
+    </>
+  );
+}
+
+// Rodapé de navegação (notícias, tabela, próximo adversário) em toda aba menos o hub,
+// que já mostra tudo isso. Usado também pelos ramos clássicos das rotas (times sem doc).
+export function TeamTabFooter({ data, page }: { data: TeamPageData; page: TeamNarrativePage }) {
+  return page === "hub" ? null : <TeamCrossLinks data={data} />;
+}
+
+async function TeamCmsBody({ doc, page, data }: { doc: PayloadTeam; page: TeamNarrativePage; data: TeamPageData }) {
   const layout = (doc[FIELD_BY_KEY[page]] as unknown as { blockType?: string }[] | undefined) || [];
   const lineup = page === "escalacao" ? await getTeamLastLineup(data.id, 3).catch(() => null) : null;
   if (!layout.length) {

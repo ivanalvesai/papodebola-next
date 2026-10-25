@@ -1,13 +1,14 @@
 import type { Metadata } from "next";
 import { TEAM_BY_SLUG } from "@/lib/config";
-import { getTeamPageData } from "@/lib/data/team";
+import { getTeamPageData, getTeamNextForSeo } from "@/lib/data/team";
 import { getTeam } from "@/lib/data/payload-teams";
-import { TeamCmsView, teamRouteStaticParams } from "@/components/payload/team-cms-page";
+import { TeamCmsView, TeamTabFooter, teamRouteStaticParams } from "@/components/payload/team-cms-page";
 import { ClassicTeamOndeAssistir } from "@/components/team/classic/onde-assistir";
 import { notFound } from "next/navigation";
 import { teamSeo, TEAM_PAGE_PATH } from "@/lib/team-seo";
 
-export const revalidate = 86400;
+// 1h: o título traz o jogo de HOJE (a chamada à API segue em cache de 12h).
+export const revalidate = 3600;
 
 export async function generateStaticParams() {
   return teamRouteStaticParams();
@@ -18,7 +19,9 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
   const doc = await getTeam(slug);
   const name = doc?.name || TEAM_BY_SLUG[slug]?.name;
   if (!name) return {};
-  const { title, description } = teamSeo(doc, "ondeAssistir", name);
+  const teamId = doc?.sofascoreId || TEAM_BY_SLUG[slug]?.id;
+  const next = teamId ? await getTeamNextForSeo(teamId, true) : null;
+  const { title, description } = teamSeo(doc, "ondeAssistir", name, next);
   return { title, description, alternates: { canonical: `/futebol/times/${slug}${TEAM_PAGE_PATH.ondeAssistir}` } };
 }
 
@@ -28,5 +31,10 @@ export default async function OndeAssistirPage({ params }: { params: Promise<{ s
   if (doc) return <TeamCmsView doc={doc} page="ondeAssistir" />;
   const data = await getTeamPageData(slug);
   if (!data) notFound();
-  return <ClassicTeamOndeAssistir data={data} />;
+  return (
+    <>
+      <ClassicTeamOndeAssistir data={data} />
+      <TeamTabFooter data={data} page="ondeAssistir" />
+    </>
+  );
 }

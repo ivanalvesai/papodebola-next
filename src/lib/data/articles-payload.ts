@@ -5,6 +5,7 @@ import { convertLexicalToHTML } from "@payloadcms/richtext-lexical/html";
 import { articleHref, cleanTag } from "@/lib/config";
 import { normalizeSponsor, sponsorCardHtml } from "./sponsor";
 import type { Article } from "@/types/article";
+import { teamPostsWhere, postMatchesTeam } from "@/lib/team-posts-where";
 import { escHtml, escAttr, safeUrl, stripUnsafeUrls, videoFigureHtml } from "@/lib/html-escape";
 
 // Leitura de artigos do Payload (Fase 3c). getArticles/getArticleBySlug tentam
@@ -594,13 +595,15 @@ export async function getArticlesPayload(options?: {
   category?: string;
   search?: string;
   tag?: string;
+  // Posts de um time (campo "Times" OU tag/título com o nome) — ver teamPostsWhere.
+  team?: { id: number; name: string };
 }): Promise<{ articles: Article[]; total: number } | null> {
   // No build o Postgres não é alcançável (builder fora da pdb-net) → não tenta,
   // retorna null → getArticles cai pro WP. ISR popula do Payload em runtime.
   if (process.env.NEXT_PHASE === "phase-production-build") return null;
   try {
     const payload = await getClient();
-    const { page = 1, perPage = 20, category, search, tag } = options || {};
+    const { page = 1, perPage = 20, category, search, tag, team } = options || {};
     const and: any[] = [];
     // Só posts PUBLICADOS no site — rascunhos (Studio→CMS) ficam só no /cms.
     and.push({ _status: { equals: "published" } });
@@ -614,6 +617,22 @@ export async function getArticlesPayload(options?: {
     }
     if (search) and.push({ title: { like: search } });
     if (tag) and.push({ "tags.tag": { like: tag } });
+    if (team) and.push(teamPostsWhere(team.id, team.name));
+
+    if (team) {
+      // Filtro do banco é largo (título por ILIKE); refina em JS (nome como palavra
+      // inteira, nomes ambíguos só por relação/tag) — por isso busca 4× e corta.
+      const wide = await payload.find({
+        collection: "posts",
+        where: { and },
+        sort: "-publishedDate",
+        page: 1,
+        limit: Math.min(perPage * 4, 60),
+        depth: 1,
+      });
+      const hits = wide.docs.filter((d: any) => postMatchesTeam(d, team.id, team.name));
+      return { articles: hits.slice((page - 1) * perPage, page * perPage).map(mapPost), total: hits.length };
+    }
 
     const res = await payload.find({
       collection: "posts",

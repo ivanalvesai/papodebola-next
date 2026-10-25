@@ -4,6 +4,7 @@ import { getMunicipalGameKeys } from "@/lib/data/municipal-game";
 import { PageBlock } from "@/components/payload/page-blocks";
 import { SponsorStrip } from "@/components/sponsors/sponsor-strip";
 import MunicipalData from "./municipal-client";
+import { getMunicipalChampionships } from "@/lib/data/sisgel";
 
 // A parte de DADOS (classificação, artilheiros, defesa, rodadas) é o client component
 // MunicipalData (lê /api/municipal). Abaixo dela renderizamos a área EDITÁVEL no /cms
@@ -31,10 +32,17 @@ export default async function MunicipalPage() {
   const showSponsors = (page as any)?.showSponsors === true;
   // Chaves (data/par) de jogos com página no CMS (vídeo) → viram link na lista mesmo sem placar.
   const videoGameSlugs = await getMunicipalGameKeys();
+  // SSR só do campeonato exibido primeiro (o JSON inteiro tem ~430 KB; o resto o cliente
+  // busca no /api/municipal). Mesma fonte do endpoint: arquivo local, sem API externa.
+  const all = await getMunicipalChampionships().catch(() => []);
+  const initialData = all.length ? all.slice(0, 1) : undefined;
 
   return (
     <>
-      <MunicipalData videoGameSlugs={videoGameSlugs} />
+      <MunicipalData
+        videoGameSlugs={videoGameSlugs}
+        initialData={initialData as unknown as Parameters<typeof MunicipalData>[0]["initialData"]}
+      />
 
       {showSponsors && (
         <div className="mx-auto max-w-[1240px] px-4 pt-2">

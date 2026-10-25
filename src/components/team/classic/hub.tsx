@@ -4,6 +4,7 @@ import { TeamLogo } from "@/components/ui/team-logo";
 import type { TeamPageData } from "@/lib/data/team";
 import { buildTeamNarrative } from "@/lib/team-narrative";
 import { TeamNarrativeSection } from "@/components/team/team-narrative";
+import { MatchLink } from "@/components/team/match-link";
 
 // Página clássica do hub do time (duas colunas). Usada pelos times do config e pelos
 // times do CMS com a aba "Hub" vazia.
@@ -45,7 +46,7 @@ export function ClassicTeamHub({ data }: { data: TeamPageData }) {
 
           {/* Today's match */}
           {data.todayMatch && (
-            <div className="bg-card-bg rounded-lg border border-green p-4">
+            <MatchLink match={data.todayMatch} className="block bg-card-bg rounded-lg border border-green p-4 hover:shadow-sm">
               <h2 className="text-sm font-bold text-green uppercase mb-3">
                 Jogo de Hoje
               </h2>
@@ -60,14 +61,14 @@ export function ClassicTeamHub({ data }: { data: TeamPageData }) {
                   ) : (
                     <span className="text-lg font-bold text-text-muted">{data.todayMatch.time}</span>
                   )}
-                  <div className="text-[10px] text-text-muted mt-1">{data.todayMatch.league}</div>
+                  <div className="text-xs text-text-muted mt-1">{data.todayMatch.league}</div>
                 </div>
                 <div className="flex flex-col items-center gap-1">
                   <TeamLogo teamId={data.todayMatch.awayId} size={40} />
                   <span className="text-xs font-semibold">{data.todayMatch.away}</span>
                 </div>
               </div>
-            </div>
+            </MatchLink>
           )}
 
           <TeamNarrativeSection narrative={buildTeamNarrative(data, "hub")} />
@@ -136,17 +137,17 @@ export function ClassicTeamHub({ data }: { data: TeamPageData }) {
             ) : (
               <div className="divide-y divide-border-light">
                 {data.upcomingMatches.slice(0, 5).map((m) => (
-                  <div key={m.id} className="px-4 py-2.5">
-                    <div className="flex items-center justify-between text-xs">
+                  <MatchLink key={m.id} match={m} className="block px-4 py-2.5 hover:bg-body">
+                    <div className="flex items-center justify-between text-sm">
                       <span className="font-semibold truncate">{m.home}</span>
                       <span className="text-text-muted mx-1">vs</span>
                       <span className="font-semibold truncate text-right">{m.away}</span>
                     </div>
-                    <div className="text-[10px] text-text-muted mt-0.5 flex justify-between">
+                    <div className="text-xs text-text-muted mt-0.5 flex justify-between">
                       <span>{m.league}</span>
                       <span>{m.date} {m.time}</span>
                     </div>
-                  </div>
+                  </MatchLink>
                 ))}
               </div>
             )}
@@ -165,14 +166,14 @@ export function ClassicTeamHub({ data }: { data: TeamPageData }) {
             ) : (
               <div className="divide-y divide-border-light">
                 {data.recentMatches.slice(0, 5).map((m) => (
-                  <div key={m.id} className="px-4 py-2.5">
-                    <div className="flex items-center justify-between text-xs">
+                  <MatchLink key={m.id} match={m} className="block px-4 py-2.5 hover:bg-body">
+                    <div className="flex items-center justify-between text-sm">
                       <span className="font-semibold truncate">{m.home}</span>
                       <span className="font-bold mx-1">{m.homeScore} - {m.awayScore}</span>
                       <span className="font-semibold truncate text-right">{m.away}</span>
                     </div>
-                    <div className="text-[10px] text-text-muted mt-0.5">{m.league} - {m.date}</div>
-                  </div>
+                    <div className="text-xs text-text-muted mt-0.5">{m.league} - {m.date}</div>
+                  </MatchLink>
                 ))}
               </div>
             )}

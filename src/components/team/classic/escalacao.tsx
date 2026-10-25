@@ -3,6 +3,7 @@ import Link from "next/link";
 import { Users } from "lucide-react";
 import type { TeamPageData, TeamLastLineup } from "@/lib/data/team";
 import { buildTeamNarrative } from "@/lib/team-narrative";
+import { MatchLink } from "@/components/team/match-link";
 import { TeamNarrativeSection, ProbableLineup } from "@/components/team/team-narrative";
 
 // Página clássica "Escalação" do time. O XI do último jogo (lineup) é buscado por quem
@@ -19,7 +20,7 @@ export function ClassicTeamEscalacao({ data, lineup }: { data: TeamPageData; lin
       </h2>
 
       {match && (
-        <div className="bg-card-bg rounded-lg border border-border-custom p-4">
+        <MatchLink match={match} className="block bg-card-bg rounded-lg border border-border-custom p-4 hover:border-green">
           <div className="text-xs text-text-muted mb-2">Próximo jogo</div>
           <div className="flex items-center justify-center gap-4 text-sm">
             <span className="font-semibold">{match.home}</span>
@@ -27,7 +28,7 @@ export function ClassicTeamEscalacao({ data, lineup }: { data: TeamPageData; lin
             <span className="font-semibold">{match.away}</span>
             <span className="text-text-muted">- {match.date} {match.time}</span>
           </div>
-        </div>
+        </MatchLink>
       )}
 
       <TeamNarrativeSection narrative={buildTeamNarrative(data, "escalacao", { lineup })} />

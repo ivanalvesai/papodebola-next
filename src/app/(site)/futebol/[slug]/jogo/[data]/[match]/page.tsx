@@ -10,6 +10,8 @@ import {
   getMatchDetail,
 } from "@/lib/data/match-detail";
 import { buildMetadata } from "@/lib/seo/build-metadata";
+import { championshipMatchSeo } from "@/lib/match-seo";
+import { MatchPreview } from "@/components/match/match-preview";
 
 // Lance a lance de QUALQUER campeonato (Série B, Série A, Libertadores...), no mesmo
 // padrão da Copa: /futebol/{campeonato}/jogo/{data}/{confronto}. A Copa do Mundo tem rota
@@ -59,10 +61,17 @@ async function metadataDefaults({
   const { slug, data, match } = await params;
   const fixture = await resolveFixture(slug, data, match);
   if (!fixture) return {}; // a página decide: 308 (remarcado/renomeado) ou 404
-  const title = `${fixture.home} x ${fixture.away} ao vivo - ${fixture.tournamentName}`;
+  // Mesmo getMatchDetail da página (fetch deduplicado no render): título por status.
+  const detail = await getMatchDetail(fixture.id).catch(() => null);
+  const { title, description } = championshipMatchSeo({
+    ...fixture,
+    status: detail?.event.statusType || "",
+    homeScore: detail?.event.homeScore,
+    awayScore: detail?.event.awayScore,
+  });
   return {
     title,
-    description: `${fixture.home} x ${fixture.away} pelo ${fixture.tournamentName}: placar ao vivo, lance a lance, escalações e estatísticas em tempo real (horário de Brasília).`,
+    description,
     alternates: { canonical: `/futebol/${slug}/jogo/${data}/${match}` },
   };
 }
@@ -83,6 +92,11 @@ export default async function JogoCampeonatoPage({
   const fixture = await resolveOrRedirect(slug, data, match);
 
   const detail = await getMatchDetail(fixture.id);
+  const status = detail?.event.statusType || "";
+  const started = status === "inprogress" || status === "finished";
+  const preview = (
+    <MatchPreview fixture={fixture} champSlug={slug} venue={detail?.event.venue} finished={status === "finished"} />
+  );
 
   return (
     <div className="mx-auto max-w-[1240px] px-4 py-6">
@@ -115,6 +129,9 @@ export default async function JogoCampeonatoPage({
         </span>
       </h1>
 
+      {/* Antes do apito o pré-jogo vem primeiro; ao vivo/encerrado, o placar vem antes. */}
+      {!started && preview}
+
       {detail ? (
         <LiveMatch matchId={fixture.id} initial={detail} group={null} competition={fixture.tournamentName} />
       ) : (
@@ -122,6 +139,8 @@ export default async function JogoCampeonatoPage({
           Dados do jogo indisponíveis no momento. Atualize em instantes.
         </p>
       )}
+
+      {started && <div className="mt-6">{preview}</div>}
     </div>
   );
 }

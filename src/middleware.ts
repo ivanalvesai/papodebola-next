@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 import { jwtVerify } from "jose";
 import { slugifyCategory, WP_CATEGORY_BY_SLUG } from "@/lib/config";
+import { isGonePath } from "@/lib/gone-paths";
 
 const SECRET = new TextEncoder().encode(
   process.env.JWT_SECRET || "papodebola-dev-secret"
@@ -10,6 +11,10 @@ const SECRET = new TextEncoder().encode(
 const PANEL_PATH = "/painel-pdb-9x";
 
 export async function middleware(request: NextRequest) {
+  if (isGonePath(request.nextUrl.pathname)) {
+    return new NextResponse("Gone", { status: 410, headers: { "Content-Type": "text/plain" } });
+  }
+
   const protectedPaths = [PANEL_PATH, "/studio-pdb", "/api/kanban", "/api/ideas", "/api/meu-kanban", "/api/promote", "/api/push/send"];
   const isProtected = protectedPaths.some((p) => request.nextUrl.pathname.startsWith(p));
   const isLogin = request.nextUrl.pathname.startsWith(`${PANEL_PATH}/login`);
@@ -68,5 +73,13 @@ export const config = {
     "/api/push/send/:path*",
     "/admin/:path*",
     "/noticias",
+    // 410 Gone (src/lib/gone-paths.ts)
+    "/cache/:path*",
+    "/contagiro/:path*",
+    "/fabiocunha/:path*",
+    "/pernambucoaqui/:path*",
+    "/index24horas.jpg",
+    "/indexpapodemidia.jpg",
+    "/PB2018v2.png",
   ],
 };

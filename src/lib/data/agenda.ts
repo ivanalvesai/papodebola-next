@@ -152,7 +152,27 @@ const FOOTBALL_AGENDA_CHAMPS = [
   "copa-do-brasil",
   "libertadores",
   "sudamericana",
+  // Europa: sem elas, domingo sem Brasileirão deixava /jogos-de-hoje/futebol vazio (25/10).
+  // Custo contido (banda): rounds (6h) + 2 feeds de rodada a 30 min; 120 s só com jogo
+  // EM ANDAMENTO (ver EUROPE_AGENDA_CHAMPS no refresh).
+  "champions-league",
+  "europa-league",
+  "premier-league",
+  "la-liga",
+  "serie-a-italia",
+  "bundesliga",
+  "ligue-1",
 ];
+
+const EUROPE_AGENDA_CHAMPS = new Set([
+  "champions-league",
+  "europa-league",
+  "premier-league",
+  "la-liga",
+  "serie-a-italia",
+  "bundesliga",
+  "ligue-1",
+]);
 
 // [início, fim) do dia em horário de Brasília (00:00 BRT = 03:00 UTC).
 function dayBoundsBRT(date: Date): [number, number] {
@@ -333,17 +353,20 @@ export async function refreshTodayFootballStore(): Promise<{
     FOOTBALL_AGENDA_CHAMPS.map((s) => [TOURNAMENT_BY_SLUG[s]?.name || s, s] as const)
   );
   const liveSlugs = new Set<string>();
+  const inProgressSlugs = new Set<string>();
   const nowSec = Date.now() / 1000;
   for (const g of prevGames) {
     if (g.statusType === "finished") frozen.set(g.id, g);
     const soon = g.timestamp > nowSec && g.timestamp - nowSec < 2 * 3600;
-    if (g.statusType === "inprogress" || soon) {
-      const slug = nameToSlug.get(g.league);
-      if (slug) liveSlugs.add(slug);
-    }
+    const slug = nameToSlug.get(g.league);
+    if (!slug) continue;
+    if (g.statusType === "inprogress" || soon) liveSlugs.add(slug);
+    if (g.statusType === "inprogress") inProgressSlugs.add(slug);
   }
-  // Feed da rodada: 60s p/ liga com jogo ao vivo/próximo; 30min no resto (economia).
-  const ttlFor = (slug: string) => (liveSlugs.has(slug) ? 60 : 1800);
+  // Feed da rodada: 60s p/ liga BR com jogo ao vivo/próximo; europeias só com jogo em
+  // andamento e a 120s (banda: 10 GB/mês); 30min no resto.
+  const ttlFor = (slug: string) =>
+    EUROPE_AGENDA_CHAMPS.has(slug) ? (inProgressSlugs.has(slug) ? 120 : 1800) : liveSlugs.has(slug) ? 60 : 1800;
 
   const leagues = await getFootballAgendaForDay(new Date(), { ttlFor, frozen });
   await saveSnapshot("agenda", "football-today", {

@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import Link from "next/link";
 import { Trophy, MapPin, Layers } from "lucide-react";
 import { PageBreadcrumb } from "@/components/seo/page-breadcrumb";
 import { TennisDrawView } from "@/components/tennis/tennis-draw";
@@ -7,12 +8,17 @@ import { buildMetadata } from "@/lib/seo/build-metadata";
 
 const T = TENNIS_TOURNAMENTS["halle-2026"];
 
-// 60s: o HTML re-renderiza rápido pra pegar placares novos; o card ao vivo já
-// atualiza sozinho no cliente (polling em /api/tenis/halle-2026).
-export const revalidate = 60;
+// Torneio encerrado (jun/2026): 1 dia basta — era 60s, consultando a API por nada.
+export const revalidate = 86400;
+
+const isEmpty = (draw: Awaited<ReturnType<typeof getTennisDraw>>) =>
+  !draw || draw.rounds.every((r) => r.matches.length === 0);
 
 export async function generateMetadata(): Promise<Metadata> {
+  // Sem chaveamento (API não serve mais o torneio): página sem conteúdo → noindex.
+  const empty = isEmpty(await getTennisDraw("halle-2026").catch(() => null));
   return buildMetadata("/tenis/halle-2026", {
+    ...(empty ? { robots: { index: false, follow: true } } : {}),
     alternates: { canonical: "/tenis/halle-2026" },
     title: "ATP de Halle 2026: Chaveamento, Jogos e Resultados ao Vivo",
     description:
@@ -48,12 +54,16 @@ export default async function HallePage() {
         <span>Horários de Brasília · placar set a set, ao vivo · use a seta para avançar as fases</span>
       </div>
 
-      {!draw || draw.rounds.every((r) => r.matches.length === 0) ? (
+      {isEmpty(draw) ? (
         <p className="py-10 text-center text-sm text-text-muted">
-          Chaveamento indisponível no momento. Atualize em instantes.
+          O ATP de Halle 2026 foi disputado em junho.{" "}
+          <Link href="/tenis" className="font-semibold text-green hover:text-green-hover">
+            Veja as notícias e torneios de tênis
+          </Link>
+          .
         </p>
       ) : (
-        <TennisDrawView initial={draw} slug="halle-2026" />
+        <TennisDrawView initial={draw!} slug="halle-2026" />
       )}
     </div>
   );
