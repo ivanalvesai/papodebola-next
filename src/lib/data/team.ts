@@ -58,16 +58,17 @@ export interface TeamMatch {
 }
 
 // Página do jogo: só campeonatos com temporada configurada têm /futebol/{camp}/jogo/…
-const MATCH_HREF_DEPS: MatchHrefDeps = {
-  champSlugById: Object.fromEntries(
-    Object.values(TOURNAMENT_BY_ID)
-      .filter((t) => t.seasonId)
-      .map((t) => [t.id, t.slug])
-  ),
+const CONFIGURED = Object.values(TOURNAMENT_BY_ID).filter((t) => t.seasonId);
+const matchHrefDeps = (): MatchHrefDeps => ({
+  champSlugById: Object.fromEntries(CONFIGURED.map((t) => [t.id, t.slug])),
+  champSeasonById: Object.fromEntries(CONFIGURED.map((t) => [t.id, t.seasonId as number])),
+  nowSec: Date.now() / 1000,
+  // ~rodada atual + a próxima (o que a tabela do campeonato carrega).
+  maxAheadSec: 7 * 86400,
   isWorldCup: (m) => isWorldCupFixture({ uniqueTournamentId: m.uniqueTournamentId, tournamentName: m.tournamentName }),
   worldCupHref: worldCupMatchHref,
   champHref: championshipMatchHref,
-};
+});
 
 const CLUSTER_SLUG_BY_ID: Record<number, string> = Object.fromEntries(ALL_CLUSTER_TEAMS.map((t) => [t.id, t.slug]));
 
@@ -100,7 +101,10 @@ function normalizeTeamMatch(event: any): TeamMatch {
   const timestamp = event.startTimestamp || 0;
   return {
     uniqueTournamentId,
-    href: matchHref({ uniqueTournamentId, tournamentName, timestamp, homeId, awayId, home, away }, MATCH_HREF_DEPS),
+    href: matchHref(
+      { uniqueTournamentId, tournamentName, timestamp, homeId, awayId, home, away, seasonId: event.season?.id || 0 },
+      matchHrefDeps()
+    ),
     homeSlug: CLUSTER_SLUG_BY_ID[homeId] || null,
     awaySlug: CLUSTER_SLUG_BY_ID[awayId] || null,
     id: event.id,
