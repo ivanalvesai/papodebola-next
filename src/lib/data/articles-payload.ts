@@ -5,7 +5,7 @@ import { convertLexicalToHTML } from "@payloadcms/richtext-lexical/html";
 import { articleHref, cleanTag } from "@/lib/config";
 import { normalizeSponsor, sponsorCardHtml } from "./sponsor";
 import type { Article } from "@/types/article";
-import { teamPostsWhere } from "@/lib/team-posts-where";
+import { teamPostsWhere, postMatchesTeam } from "@/lib/team-posts-where";
 import { escHtml, escAttr, safeUrl, stripUnsafeUrls, videoFigureHtml } from "@/lib/html-escape";
 
 // Leitura de artigos do Payload (Fase 3c). getArticles/getArticleBySlug tentam
@@ -618,6 +618,21 @@ export async function getArticlesPayload(options?: {
     if (search) and.push({ title: { like: search } });
     if (tag) and.push({ "tags.tag": { like: tag } });
     if (team) and.push(teamPostsWhere(team.id, team.name));
+
+    if (team) {
+      // Filtro do banco é largo (título por ILIKE); refina em JS (nome como palavra
+      // inteira, nomes ambíguos só por relação/tag) — por isso busca 4× e corta.
+      const wide = await payload.find({
+        collection: "posts",
+        where: { and },
+        sort: "-publishedDate",
+        page: 1,
+        limit: Math.min(perPage * 4, 60),
+        depth: 1,
+      });
+      const hits = wide.docs.filter((d: any) => postMatchesTeam(d, team.id, team.name));
+      return { articles: hits.slice((page - 1) * perPage, page * perPage).map(mapPost), total: hits.length };
+    }
 
     const res = await payload.find({
       collection: "posts",
