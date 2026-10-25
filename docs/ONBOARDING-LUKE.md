@@ -195,3 +195,115 @@ Documentos: `docs/superpowers/specs/2026-10-25-seo-retencao-teia-do-jogo-design.
 2. **Conteúdo com algo próprio** (dados, análise, cobertura local do municipal). Não reescrever matéria do ge ou do Lance.
 3. **Página de política editorial** (ainda não existe) e autores reais nos posts.
 4. **Pendências pequenas** (lista "Deferred minors" no plano de 25/10): título de jogo adiado, `cache()` na página de jogo, tipo da imagem no RSS.
+
+---
+
+## 9. Tarefas comuns: onde mexer e comandos
+
+Regra geral: **conteúdo, textos e SEO se editam no `/cms`**, sem código e sem deploy (vale na hora, dev e prod, porque o banco é compartilhado). **Layout, componentes e dados novos se fazem em código** e passam por `pushdev` → validar → `promote`.
+
+Antes de qualquer tarefa de código:
+
+```bash
+cd papodebola-next
+git checkout development
+git pull --rebase origin development
+npm install          # só se o package.json mudou
+```
+
+### 9.1 Criar uma página (sem código)
+
+`/cms` → **Páginas** → *Create new*:
+
+- **Título** e **Caminho**, por exemplo `/futebol/guia-do-brasileirao`. Vazio = `/paginas/{slug}`.
+- Monte com blocos: texto, hero, cards, FAQ, formulário, jogos de hoje, classificação, artilharia, feed de notícias, jogo ao vivo etc. O **Live Preview** mostra no celular, tablet e desktop.
+- Aba **SEO**: meta title e description.
+- Salve como **rascunho**, confira em `/cms-preview/pagina/{id}` e publique.
+- Se o caminho já existir em código, a rota do código ganha.
+
+Guia do editor: `/cms-guia` (logado). Doc técnico: `docs/knowledge/2026-09-30-cms-page-builder.md` e `2026-10-01-cms-elementor.md`. A pasta `docs/knowledge` não está no Git; peça ao Ivan se precisar.
+
+### 9.2 Editar SEO (sem código)
+
+| O quê | Onde |
+|---|---|
+| Home, `/sobre`, hub da Copa e as ~35 rotas em código (title, description, textos) | `/cms` → **Textos e SEO** (collection `pageTexts`, um documento por rota; aceita padrões como `:slug`) |
+| Nome do site, título e descrição padrão | `/cms` → **Configurações do site** (`siteSettings`) |
+| Cada time e cada aba (hub, próximos jogos, jogo de hoje, onde assistir, escalação, estatísticas) | `/cms` → **Times** → o time → grupos de SEO por aba. Aceita `{adversario} {data} {hora} {campeonato}`. Deixar o texto padrão = título dinâmico automático. |
+| Post | `/cms` → **Posts** → campo **SEO** (meta title/description) + **Resumo** |
+| Página criada no CMS | aba SEO da própria página |
+
+Depois de salvar, a página se revalida sozinha. Se não atualizar, use a revalidação forçada da seção 9.6.
+
+### 9.3 Publicar uma notícia (sem código)
+
+`/cms` → **Posts** → *Create new*:
+
+- Título, categoria, capa (a imagem vira WebP sozinha), conteúdo no editor visual (aceita embed de X, Instagram e YouTube).
+- **Times** (sempre), **ID do jogo** (pré-jogo e pós-jogo), autor, resumo.
+- Dá pra agendar (Schedule Publish).
+- O `/studio-pdb` gera rascunho com IA + Humanizer. Revise antes de publicar.
+
+### 9.4 Criar uma página em código (rota nova)
+
+```bash
+# 1. cria a rota
+mkdir -p "src/app/(site)/minha-rota"
+#    e escreve src/app/(site)/minha-rota/page.tsx (copie o padrão de uma rota parecida,
+#    ex.: src/app/(site)/sobre/page.tsx, com generateMetadata via buildMetadata)
+
+# 2. obrigatório quando cria pasta nova em src/app (senão um teste falha)
+npm run gen:paths
+
+# 3. se a página deve ser indexada, adicione no src/app/sitemap.ts
+
+# 4. confere
+npm run dev            # http://localhost:3000/minha-rota
+npm test
+npm run typecheck
+
+# 5. sobe
+git add -A && git commit -m "feat: página minha-rota"
+git pushdev            # valida em development.papodebola.com.br/minha-rota
+git promote
+```
+
+Se a página usa a API de esportes: `export const revalidate = 300` (ou mais). **Nunca** `force-dynamic`.
+
+### 9.5 Mexer em times, campeonatos e temporadas (código)
+
+- **Campeonatos e temporadas:** `src/lib/config.ts` (`TOURNAMENTS`: `id`, `seasonId`, `slug`). Pra achar a temporada atual:
+  ```bash
+  ssh papodebola 'T=$(grep ^SPORTS_PROXY_TOKEN= /home/ivan/papodebola-next/.env.local | cut -d= -f2-); curl -s -H "x-proxy-auth: $T" http://127.0.0.1:3001/api/sports-proxy/tournament/17/seasons | head -c 300'
+  ```
+  (troque o `17`, que é a Premier League, pelo id do campeonato)
+- **Times:** a identidade e o SEO de todos os 57 ficam no `/cms` → Times. O `config.ts` (`TEAMS`) é a rede de segurança se o banco cair.
+- **Componentes das páginas de time:** `src/components/team/` (classic/, match-hero, team-cross-links).
+- **Página de jogo:** `src/app/(site)/futebol/[slug]/jogo/[data]/[match]/page.tsx` + `src/components/match/match-preview.tsx`.
+
+### 9.6 Comandos rápidos
+
+```bash
+npm run dev                      # site local
+npm test                         # testes
+npm run typecheck                # TypeScript
+git pushdev                      # sobe pro dev
+git promote                      # sobe pra produção
+
+# forçar revalidação de páginas em produção (o secret está no .env.local: REVALIDATION_SECRET)
+curl -X POST -H 'Content-Type: application/json' \
+  -d '{"secret":"<REVALIDATION_SECRET>","paths":["/","/futebol/times/flamengo"]}' \
+  https://www.papodebola.com.br/api/revalidate
+
+# medir SEO (credencial do Search Console com o Ivan)
+node scripts/gsc-report.mjs
+```
+
+### 9.7 Mudar o schema do CMS (collections e campos novos)
+
+É o único ponto que pode derrubar o `/cms` inteiro. O Payload em produção **não** cria tabela sozinho.
+
+1. Edite `src/payload.config.ts` (ou `src/cms/collections/*`).
+2. Gere e aplique **só o DDL aditivo** (CREATE TABLE / ADD COLUMN), com backup antes. Receita completa na seção "Receita de migrations" do `CLAUDE.md`. Exemplo real: `~/pdb-ddl-20261025-posts-teams.sql` no servidor.
+3. **Nunca** dar a um array ou bloco o nome `texts`, `numbers` ou `rels` sem `dbName`: colide com tabelas internas e quebra o CMS.
+4. Depois do deploy: `docker logs papodebola-next-dev 2>&1 | grep payloadInitError` tem que vir vazio.
