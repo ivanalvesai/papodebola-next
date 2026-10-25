@@ -551,6 +551,17 @@ Doc completo: `docs/deploys/2026-06-15/04-web-push.md`.
   (encerrado mostra placar/resultado; futuro "horário/onde assistir/escalação"); bloco de pré-jogo
   (onde assistir + horário); schema `SportsEvent` com `location`/venue + organizer + superEvent; o
   `sitemap.ts` (revalidate runtime) lista as 72 páginas de jogo da Copa pra o Google descobrir antes do apito.
+- **"Teia do jogo" (25/10)** — doc `docs/knowledge/2026-10-25-seo-teia-do-jogo.md`, baseline `node scripts/gsc-report.mjs`:
+  - Cards de jogo das abas de time linkam a página do jogo (`TeamMatch.href`, `src/lib/match-href.ts`: só temporada configurada e até 7 dias à frente, senão 404) e os times (`homeSlug/awaySlug`).
+  - Rodapé `TeamCrossLinks` nas 5 abas (notícias, recorte da tabela, próximo adversário); H1 por aba (`TeamH1`).
+  - Posts têm campo **Times** (`teams`, hasMany) + `matchId`; notícias do time = relação OU tag OU nome no título como palavra inteira (`src/lib/team-posts-where.ts`).
+  - Títulos dinâmicos (`teamSeo(..., next)`) com placeholders `{adversario} {data} {hora} {campeonato}` no /cms. **GOTCHA:** os 171 campos de SEO das abas têm o padrão antigo gravado pelo seed; texto idêntico ao padrão = "não personalizado".
+  - Página de jogo de campeonato: `MatchPreview` + título por status (`src/lib/match-seo.ts`).
+  - `/feed.xml` + `/news-sitemap.xml` (`/feed`, `/rss` → 308); sitemap lista todos os posts.
+  - Mídia `.jpg/.png` já convertida → 301 pro `.webp` (wrapper à mão no `cms-api/[...slug]/route.ts`).
+  - 410 em `src/lib/gone-paths.ts`.
+- **`seasonId` vira todo ano:** europeias em **agosto**, brasileiras/sul-americanas em **janeiro** (`src/lib/config.ts`; `GET tournament/{id}/seasons` via sports-proxy). Em 25/10 as 7 europeias ainda estavam na 25/26 e mostravam a temporada encerrada.
+- **Agenda de jogos de hoje** inclui as 7 ligas europeias (antes, domingo sem Brasileirão = "Nenhum jogo" em `/jogos-de-hoje/futebol`).
 - **Tênis (Halle)**: o chaveamento vem dos **feeds por data** (`tennis/events/d/m/y`), não do `cuptrees`
   (que só traz o qualifying). Ver `getTennisDraw` em `src/lib/data/tennis.ts`.
 
