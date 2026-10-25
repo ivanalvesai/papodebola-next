@@ -263,7 +263,9 @@ npm test
 npm run typecheck
 
 # 5. sobe
-git add -A && git commit -m "feat: página minha-rota"
+git status        # confira: nada de .env, chave ou arquivo solto
+git add "src/app/(site)/minha-rota" src/cms/lib/reserved-paths.generated.ts src/app/sitemap.ts
+git commit -m "feat: página minha-rota"
 git pushdev            # valida em development.papodebola.com.br/minha-rota
 git promote
 ```
@@ -297,6 +299,22 @@ curl -X POST -H 'Content-Type: application/json' \
 
 # medir SEO (credencial do Search Console com o Ivan)
 node scripts/gsc-report.mjs
+```
+
+### 9.6.1 /cms local (túnel pro banco) — só se precisar
+
+No `npm run dev` o `/cms` não abre: o Postgres só existe dentro da rede Docker do servidor (`pdb-net`), sem porta no host. Dá pra abrir um túnel, mas **é o banco de PRODUÇÃO**: salvar ou publicar no `/cms` local vale no site no ar. Na dúvida, teste no dev remoto (`git pushdev`).
+
+```bash
+# 1. IP do container do Postgres (muda se o container reiniciar)
+ssh papodebola "docker inspect -f '{{range .NetworkSettings.Networks}}{{.IPAddress}}{{end}}' pdb-postgres"
+
+# 2. túnel (deixe esse terminal aberto); troque <IP> pelo valor acima
+ssh -N -L 5433:<IP>:5432 papodebola
+
+# 3. no .env.local, DATABASE_URI apontando pra 127.0.0.1:5433 (mesmo usuário/senha/banco)
+#    NUNCA ponha PAYLOAD_DB_PUSH=true no seu .env.local: o Payload alteraria o schema
+#    da produção pra bater com o seu código local.
 ```
 
 ### 9.7 Mudar o schema do CMS (collections e campos novos)
