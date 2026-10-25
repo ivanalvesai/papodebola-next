@@ -35,6 +35,9 @@ export async function ClassicTeamProximos({ data }: { data: TeamPageData }) {
           startTimestamp={next.timestamp}
           statusType={next.status}
           url={`/futebol/times/${data.slug}/proximos-jogos`}
+          // Sem isto o schema caía no padrão "Copa do Mundo FIFA 2026" (local/organizador FIFA).
+          competition={next.league || "Futebol"}
+          venue={next.venue ? { stadium: next.venue, city: "", country: "" } : null}
         />
       )}
 
