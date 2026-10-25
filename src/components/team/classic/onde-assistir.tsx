@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { TeamNameLink } from "@/components/team/match-link";
 import { Tv } from "lucide-react";
 import { TeamLogo } from "@/components/ui/team-logo";
 import type { TeamPageData } from "@/lib/data/team";
@@ -24,17 +25,22 @@ export function ClassicTeamOndeAssistir({ data }: { data: TeamPageData }) {
             <div className="flex items-center justify-center gap-6">
               <div className="flex flex-col items-center gap-1.5">
                 <TeamLogo teamId={match.homeId} size={44} />
-                <span className="text-sm font-semibold">{match.home}</span>
+                <TeamNameLink slug={match.homeSlug} name={match.home} className="text-sm font-semibold hover:text-green" />
               </div>
               <div className="text-lg font-bold text-text-muted">
                 {match.homeScore !== null ? `${match.homeScore} - ${match.awayScore}` : match.time}
               </div>
               <div className="flex flex-col items-center gap-1.5">
                 <TeamLogo teamId={match.awayId} size={44} />
-                <span className="text-sm font-semibold">{match.away}</span>
+                <TeamNameLink slug={match.awaySlug} name={match.away} className="text-sm font-semibold hover:text-green" />
               </div>
             </div>
             <div className="text-xs text-text-muted mt-2">{match.date}</div>
+            {match.href && (
+              <Link href={match.href} className="inline-block mt-3 text-sm font-semibold text-green hover:text-green-hover">
+                Escalações, horário e detalhes do jogo &rarr;
+              </Link>
+            )}
           </div>
 
           <div className="border-t border-border-custom pt-4">

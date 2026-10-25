@@ -4,6 +4,7 @@ import { RichText } from "@payloadcms/richtext-lexical/react";
 import { ArrowRight, Calendar, Trophy, BarChart3, Tv, Users } from "lucide-react";
 import { TeamLogo } from "@/components/ui/team-logo";
 import { MatchHero } from "@/components/team/match-hero";
+import { MatchLink } from "@/components/team/match-link";
 import type { TeamPageData, TeamLastLineup } from "@/lib/data/team";
 import { buildTeamNarrative, type TeamNarrativePage } from "@/lib/team-narrative";
 import { BroadcastChannels, ProbableLineup, TeamNarrativeSection } from "@/components/team/team-narrative";
@@ -42,17 +43,17 @@ function Upcoming({ data, title, limit }: { data: TeamPageData; title?: string; 
       ) : (
         <div className="divide-y divide-border-light">
           {list.map((m) => (
-            <div key={m.id} className="px-4 py-2.5">
-              <div className="flex items-center justify-between text-xs">
+            <MatchLink key={m.id} match={m} className="block px-4 py-2.5 hover:bg-body">
+              <div className="flex items-center justify-between text-sm">
                 <span className="font-semibold truncate">{m.home}</span>
                 <span className="text-text-muted mx-1">vs</span>
                 <span className="font-semibold truncate text-right">{m.away}</span>
               </div>
-              <div className="text-[10px] text-text-muted mt-0.5 flex justify-between">
+              <div className="text-xs text-text-muted mt-0.5 flex justify-between">
                 <span>{m.league}</span>
                 <span>{m.date} {m.time}</span>
               </div>
-            </div>
+            </MatchLink>
           ))}
         </div>
       )}
@@ -72,14 +73,14 @@ function Results({ data, title, limit }: { data: TeamPageData; title?: string; l
       ) : (
         <div className="divide-y divide-border-light">
           {list.map((m) => (
-            <div key={m.id} className="px-4 py-2.5">
-              <div className="flex items-center justify-between text-xs">
+            <MatchLink key={m.id} match={m} className="block px-4 py-2.5 hover:bg-body">
+              <div className="flex items-center justify-between text-sm">
                 <span className="font-semibold truncate">{m.home}</span>
                 <span className="font-bold mx-1">{m.homeScore} - {m.awayScore}</span>
                 <span className="font-semibold truncate text-right">{m.away}</span>
               </div>
-              <div className="text-[10px] text-text-muted mt-0.5">{m.league} - {m.date}</div>
-            </div>
+              <div className="text-xs text-text-muted mt-0.5">{m.league} - {m.date}</div>
+            </MatchLink>
           ))}
         </div>
       )}

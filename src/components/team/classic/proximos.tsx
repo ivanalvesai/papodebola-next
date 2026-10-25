@@ -8,6 +8,7 @@ import { getTeamNextEvents, type TeamPageData } from "@/lib/data/team";
 import { dropStaleUpcoming } from "@/lib/team-match-filters";
 import { buildTeamNarrative } from "@/lib/team-narrative";
 import { TeamNarrativeSection } from "@/components/team/team-narrative";
+import { MatchLink } from "@/components/team/match-link";
 
 // Página clássica "Próximos jogos" do time. Busca a lista completa de próximos jogos
 // (mesma chamada em cache usada por getTeamPageData). Usada pelos times do config e
@@ -56,7 +57,7 @@ export async function ClassicTeamProximos({ data }: { data: TeamPageData }) {
               <h3 className="text-base font-bold text-text-primary mb-3">Depois disso</h3>
               <div className="space-y-2">
           {matches.slice(1).map((m) => (
-            <div key={m.id} className="bg-card-bg rounded-lg border border-border-custom p-4 hover:border-green transition-colors">
+            <MatchLink key={m.id} match={m} className="block bg-card-bg rounded-lg border border-border-custom p-4 hover:border-green transition-colors">
               <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
                 {/* Date */}
                 <div className="w-16 text-center shrink-0">
@@ -82,7 +83,7 @@ export async function ClassicTeamProximos({ data }: { data: TeamPageData }) {
                   {m.venue && <div className="text-xs text-text-muted mt-0.5">{m.venue}</div>}
                 </div>
               </div>
-            </div>
+            </MatchLink>
           ))}
               </div>
             </div>
