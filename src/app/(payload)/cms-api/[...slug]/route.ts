@@ -21,19 +21,19 @@ const MEDIA_DIR = path.resolve(process.cwd(), "data/cms-media");
 const payloadGET = REST_GET(config);
 
 // Arquivo de mídia pedido pelo nome original (.jpg/.png) depois da conversão pra WebP:
-// o handler do Payload estoura 500. Se o .webp existe → 301 (o Google Imagens migra);
-// senão → 404 (some do índice) em vez de erro de servidor.
+// o handler do Payload responde 404 ou estoura 500. Se o .webp existe → 301 (o Google
+// Imagens migra); senão → 404 (some do índice) em vez de erro de servidor.
 export const GET: typeof payloadGET = async (req, ctx) => {
   const res = await payloadGET(req, ctx);
   const { pathname } = new URL(req.url);
-  if (res.status < 500 || !pathname.startsWith(MEDIA_PREFIX)) return res;
+  if (res.status < 400 || !pathname.startsWith(MEDIA_PREFIX)) return res;
   const name = decodeURIComponent(pathname.slice(MEDIA_PREFIX.length));
   const webp = webpFallbackName(name);
   if (webp && existsSync(path.join(MEDIA_DIR, webp))) {
     // Location relativo: atrás do nginx o req.url traz o host interno (0.0.0.0:3000).
     return new Response(null, { status: 301, headers: { Location: MEDIA_PREFIX + encodeURIComponent(webp) } });
   }
-  return new Response("Not found", { status: 404 });
+  return res.status >= 500 ? new Response("Not found", { status: 404 }) : res;
 };
 export const POST = REST_POST(config);
 export const DELETE = REST_DELETE(config);
