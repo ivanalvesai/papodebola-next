@@ -26,16 +26,16 @@ export const TOURNAMENTS: Record<string, Tournament> = {
   LIBERTADORES:   { id: 384,   name: 'Copa Libertadores',    seasonId: 87760, slug: 'libertadores' },
   SUDAMERICANA:   { id: 480,   name: 'Copa Sudamericana',    seasonId: 87770, slug: 'sudamericana' },
 
-  // Europa - UEFA
-  CHAMPIONS:      { id: 7,     name: 'Champions League',     seasonId: 76953, slug: 'champions-league' },
-  EUROPA_LEAGUE:  { id: 679,   name: 'Europa League',        seasonId: 76984, slug: 'europa-league' },
+  // Europa - UEFA (temporada 26/27 — trocar os seasonId a cada agosto: GET tournament/{id}/seasons)
+  CHAMPIONS:      { id: 7,     name: 'Champions League',     seasonId: 96518, slug: 'champions-league' },
+  EUROPA_LEAGUE:  { id: 679,   name: 'Europa League',        seasonId: 96522, slug: 'europa-league' },
 
   // Europa - Ligas
-  PREMIER:        { id: 17,    name: 'Premier League',       seasonId: 76986, slug: 'premier-league' },
-  LA_LIGA:        { id: 8,     name: 'La Liga',              seasonId: 77559, slug: 'la-liga' },
-  SERIE_A_IT:     { id: 23,    name: 'Serie A (Itália)',      seasonId: 76457, slug: 'serie-a-italia' },
-  BUNDESLIGA:     { id: 35,    name: 'Bundesliga',           seasonId: 77333, slug: 'bundesliga' },
-  LIGUE_1:        { id: 34,    name: 'Ligue 1',              seasonId: 77356, slug: 'ligue-1' },
+  PREMIER:        { id: 17,    name: 'Premier League',       seasonId: 96668, slug: 'premier-league' },
+  LA_LIGA:        { id: 8,     name: 'La Liga',              seasonId: 97268, slug: 'la-liga' },
+  SERIE_A_IT:     { id: 23,    name: 'Serie A (Itália)',      seasonId: 95836, slug: 'serie-a-italia' },
+  BUNDESLIGA:     { id: 35,    name: 'Bundesliga',           seasonId: 97464, slug: 'bundesliga' },
+  LIGUE_1:        { id: 34,    name: 'Ligue 1',              seasonId: 96127, slug: 'ligue-1' },
 } as const;
 
 export interface TeamInfo {
