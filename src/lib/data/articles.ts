@@ -144,13 +144,16 @@ export async function getArticles(options?: {
   category?: string;
   search?: string;
   tag?: string;
+  // Só Payload: posts de um time (campo "Times" OU tag/título). No fallback do WP vira tag.
+  team?: { id: number; name: string };
   noCache?: boolean;
 }): Promise<{ articles: Article[]; total: number }> {
-  const { page = 1, perPage = 20, category, search, tag, noCache } = options || {};
+  const { page = 1, perPage = 20, category, search, team, noCache } = options || {};
+  const tag = options?.tag ?? team?.name;
 
   // Fase 3: o Payload é a fonte dos artigos. Fallback pro WordPress só se o Payload
   // cair (retorno null). Resultado vazio do Payload é resultado válido (não cai pro WP).
-  const fromPayload = await getArticlesPayload({ page, perPage, category, search, tag });
+  const fromPayload = await getArticlesPayload({ page, perPage, category, search, tag: options?.tag, team });
   if (fromPayload) return fromPayload;
 
   const categories = await getCategories();

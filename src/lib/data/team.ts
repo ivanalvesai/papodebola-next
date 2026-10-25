@@ -178,7 +178,7 @@ export async function getTeamPageDataFor(team: TeamInfo): Promise<TeamPageData> 
     getTeamPreviousEvents(team.id).catch(() => []),
     getTeamTopPlayers(team).catch(() => []),
     getTeamStandingsTable(team).catch(() => [] as StandingRow[]),
-    getArticles({ tag: team.name, perPage: 10 }).catch(() => ({ articles: [], total: 0 })),
+    getArticles({ team: { id: team.id, name: team.name }, perPage: 10 }).catch(() => ({ articles: [], total: 0 })),
   ]);
 
   const upcoming = dropStaleUpcoming(nextEvents, Date.now() / 1000);

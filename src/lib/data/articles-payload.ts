@@ -5,6 +5,7 @@ import { convertLexicalToHTML } from "@payloadcms/richtext-lexical/html";
 import { articleHref, cleanTag } from "@/lib/config";
 import { normalizeSponsor, sponsorCardHtml } from "./sponsor";
 import type { Article } from "@/types/article";
+import { teamPostsWhere } from "@/lib/team-posts-where";
 import { escHtml, escAttr, safeUrl, stripUnsafeUrls, videoFigureHtml } from "@/lib/html-escape";
 
 // Leitura de artigos do Payload (Fase 3c). getArticles/getArticleBySlug tentam
@@ -594,13 +595,15 @@ export async function getArticlesPayload(options?: {
   category?: string;
   search?: string;
   tag?: string;
+  // Posts de um time (campo "Times" OU tag/título com o nome) — ver teamPostsWhere.
+  team?: { id: number; name: string };
 }): Promise<{ articles: Article[]; total: number } | null> {
   // No build o Postgres não é alcançável (builder fora da pdb-net) → não tenta,
   // retorna null → getArticles cai pro WP. ISR popula do Payload em runtime.
   if (process.env.NEXT_PHASE === "phase-production-build") return null;
   try {
     const payload = await getClient();
-    const { page = 1, perPage = 20, category, search, tag } = options || {};
+    const { page = 1, perPage = 20, category, search, tag, team } = options || {};
     const and: any[] = [];
     // Só posts PUBLICADOS no site — rascunhos (Studio→CMS) ficam só no /cms.
     and.push({ _status: { equals: "published" } });
@@ -614,6 +617,7 @@ export async function getArticlesPayload(options?: {
     }
     if (search) and.push({ title: { like: search } });
     if (tag) and.push({ "tags.tag": { like: tag } });
+    if (team) and.push(teamPostsWhere(team.id, team.name));
 
     const res = await payload.find({
       collection: "posts",
