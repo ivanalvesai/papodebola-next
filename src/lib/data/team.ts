@@ -1,5 +1,10 @@
 import { fetchAllSports } from "@/lib/api/allsports";
-import { TEAM_BY_SLUG, teamTournament, type TeamInfo } from "@/lib/config";
+import { TEAM_BY_SLUG, TOURNAMENT_BY_ID, ALL_CLUSTER_TEAMS, teamTournament, type TeamInfo } from "@/lib/config";
+import { getPayloadTeamSlugMap } from "./payload-teams";
+import { championshipMatchHref } from "./match-detail";
+import { matchHref, type MatchHrefDeps } from "@/lib/match-href";
+import { worldCupMatchHref } from "@/lib/world-cup-match-url";
+import { isWorldCupFixture } from "@/lib/world-cup-fixture";
 import { getArticles } from "./articles";
 import { getStandings } from "./standings";
 import type { NormalizedMatch } from "@/types/match";
@@ -42,11 +47,60 @@ export interface TeamMatch {
   time: string;
   timestamp: number;
   venue?: string;
+  // uniqueTournament.id da API (0 = desconhecido) e página do jogo (null = sem página).
+  uniqueTournamentId: number;
+  href: string | null;
+  // slug do time quando ele tem página no cluster (/futebol/times/{slug}); null = sem.
+  homeSlug: string | null;
+  awaySlug: string | null;
+}
+
+// Página do jogo: só campeonatos com temporada configurada têm /futebol/{camp}/jogo/…
+const MATCH_HREF_DEPS: MatchHrefDeps = {
+  champSlugById: Object.fromEntries(
+    Object.values(TOURNAMENT_BY_ID)
+      .filter((t) => t.seasonId)
+      .map((t) => [t.id, t.slug])
+  ),
+  isWorldCup: (m) => isWorldCupFixture({ uniqueTournamentId: m.uniqueTournamentId, tournamentName: m.tournamentName }),
+  worldCupHref: worldCupMatchHref,
+  champHref: championshipMatchHref,
+};
+
+const CLUSTER_SLUG_BY_ID: Record<number, string> = Object.fromEntries(ALL_CLUSTER_TEAMS.map((t) => [t.id, t.slug]));
+
+// slug da página do time (config = Série A/EU; Payload = Série B). null = time sem página.
+export async function teamSlugById(id: number): Promise<string | null> {
+  if (CLUSTER_SLUG_BY_ID[id]) return CLUSTER_SLUG_BY_ID[id];
+  const cms = await getPayloadTeamSlugMap().catch(() => ({}) as Record<number, string>);
+  return cms[id] || null;
+}
+
+// Completa os slugs dos times da Série B (só no Payload) depois do normalize síncrono.
+async function withPayloadSlugs(matches: TeamMatch[]): Promise<TeamMatch[]> {
+  if (matches.every((m) => m.homeSlug && m.awaySlug)) return matches;
+  const cms = await getPayloadTeamSlugMap().catch(() => ({}) as Record<number, string>);
+  return matches.map((m) => ({
+    ...m,
+    homeSlug: m.homeSlug || cms[m.homeId] || null,
+    awaySlug: m.awaySlug || cms[m.awayId] || null,
+  }));
 }
 
 function normalizeTeamMatch(event: any): TeamMatch {
   const ts = event.startTimestamp ? new Date(event.startTimestamp * 1000) : new Date();
+  const homeId = event.homeTeam?.id || 0;
+  const awayId = event.awayTeam?.id || 0;
+  const home = event.homeTeam?.name || "";
+  const away = event.awayTeam?.name || "";
+  const uniqueTournamentId = event.tournament?.uniqueTournament?.id || 0;
+  const tournamentName = event.tournament?.uniqueTournament?.name || event.tournament?.name || "";
+  const timestamp = event.startTimestamp || 0;
   return {
+    uniqueTournamentId,
+    href: matchHref({ uniqueTournamentId, tournamentName, timestamp, homeId, awayId, home, away }, MATCH_HREF_DEPS),
+    homeSlug: CLUSTER_SLUG_BY_ID[homeId] || null,
+    awaySlug: CLUSTER_SLUG_BY_ID[awayId] || null,
     id: event.id,
     home: event.homeTeam?.name || "",
     away: event.awayTeam?.name || "",
@@ -67,13 +121,13 @@ function normalizeTeamMatch(event: any): TeamMatch {
 export async function getTeamNextEvents(teamId: number): Promise<TeamMatch[]> {
   const data = await fetchAllSports<any>(`team/${teamId}/matches/next/0`, 43200);
   if (!data?.events) return [];
-  return data.events.map(normalizeTeamMatch);
+  return withPayloadSlugs(data.events.map(normalizeTeamMatch));
 }
 
 export async function getTeamPreviousEvents(teamId: number): Promise<TeamMatch[]> {
   const data = await fetchAllSports<any>(`team/${teamId}/matches/previous/0`, 43200);
   if (!data?.events) return [];
-  return data.events.map(normalizeTeamMatch).reverse();
+  return withPayloadSlugs(data.events.map(normalizeTeamMatch).reverse());
 }
 
 export async function getTeamTopPlayers(team: TeamInfo): Promise<Scorer[]> {
