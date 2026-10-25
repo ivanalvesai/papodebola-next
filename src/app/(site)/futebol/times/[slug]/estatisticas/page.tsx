@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { TEAM_BY_SLUG } from "@/lib/config";
 import { getTeamPageData } from "@/lib/data/team";
 import { getTeam } from "@/lib/data/payload-teams";
-import { TeamCmsView, teamRouteStaticParams } from "@/components/payload/team-cms-page";
+import { TeamCmsView, TeamTabFooter, teamRouteStaticParams } from "@/components/payload/team-cms-page";
 import { ClassicTeamEstatisticas } from "@/components/team/classic/estatisticas";
 import { notFound } from "next/navigation";
 import { teamSeo, TEAM_PAGE_PATH } from "@/lib/team-seo";
@@ -28,5 +28,10 @@ export default async function EstatisticasPage({ params }: { params: Promise<{ s
   if (doc) return <TeamCmsView doc={doc} page="estatisticas" />;
   const data = await getTeamPageData(slug);
   if (!data) notFound();
-  return <ClassicTeamEstatisticas data={data} />;
+  return (
+    <>
+      <ClassicTeamEstatisticas data={data} />
+      <TeamTabFooter data={data} page="estatisticas" />
+    </>
+  );
 }

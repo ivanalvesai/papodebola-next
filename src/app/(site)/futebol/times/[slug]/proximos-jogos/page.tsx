@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { TEAM_BY_SLUG } from "@/lib/config";
 import { getTeamPageData } from "@/lib/data/team";
 import { getTeam } from "@/lib/data/payload-teams";
-import { TeamCmsView, teamRouteStaticParams } from "@/components/payload/team-cms-page";
+import { TeamCmsView, TeamTabFooter, teamRouteStaticParams } from "@/components/payload/team-cms-page";
 import { ClassicTeamProximos } from "@/components/team/classic/proximos";
 import { notFound } from "next/navigation";
 import { teamSeo, TEAM_PAGE_PATH } from "@/lib/team-seo";
@@ -28,5 +28,10 @@ export default async function ProximosJogosPage({ params }: { params: Promise<{ 
   if (doc) return <TeamCmsView doc={doc} page="proximos" />;
   const data = await getTeamPageData(slug);
   if (!data) notFound();
-  return <ClassicTeamProximos data={data} />;
+  return (
+    <>
+      <ClassicTeamProximos data={data} />
+      <TeamTabFooter data={data} page="proximos" />
+    </>
+  );
 }

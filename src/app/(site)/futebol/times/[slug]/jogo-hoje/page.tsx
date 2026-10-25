@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { TEAM_BY_SLUG } from "@/lib/config";
 import { getTeamPageData } from "@/lib/data/team";
 import { getTeam } from "@/lib/data/payload-teams";
-import { TeamCmsView, teamRouteStaticParams } from "@/components/payload/team-cms-page";
+import { TeamCmsView, TeamTabFooter, teamRouteStaticParams } from "@/components/payload/team-cms-page";
 import { ClassicTeamJogoHoje } from "@/components/team/classic/jogo-hoje";
 import { notFound } from "next/navigation";
 import { teamSeo, TEAM_PAGE_PATH } from "@/lib/team-seo";
@@ -28,5 +28,10 @@ export default async function JogoHojePage({ params }: { params: Promise<{ slug:
   if (doc) return <TeamCmsView doc={doc} page="jogoHoje" />;
   const data = await getTeamPageData(slug);
   if (!data) notFound();
-  return <ClassicTeamJogoHoje data={data} />;
+  return (
+    <>
+      <ClassicTeamJogoHoje data={data} />
+      <TeamTabFooter data={data} page="jogoHoje" />
+    </>
+  );
 }

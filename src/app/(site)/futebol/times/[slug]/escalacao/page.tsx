@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { TEAM_BY_SLUG } from "@/lib/config";
 import { getTeamPageData, getTeamLastLineup } from "@/lib/data/team";
 import { getTeam } from "@/lib/data/payload-teams";
-import { TeamCmsView, teamRouteStaticParams } from "@/components/payload/team-cms-page";
+import { TeamCmsView, TeamTabFooter, teamRouteStaticParams } from "@/components/payload/team-cms-page";
 import { ClassicTeamEscalacao } from "@/components/team/classic/escalacao";
 import { notFound } from "next/navigation";
 import { teamSeo, TEAM_PAGE_PATH } from "@/lib/team-seo";
@@ -30,5 +30,10 @@ export default async function EscalacaoPage({ params }: { params: Promise<{ slug
   if (!data) notFound();
   // XI do último jogo (base da provável). Poucas tentativas pra não pendurar o render.
   const lineup = await getTeamLastLineup(data.id, 3).catch(() => null);
-  return <ClassicTeamEscalacao data={data} lineup={lineup} />;
+  return (
+    <>
+      <ClassicTeamEscalacao data={data} lineup={lineup} />
+      <TeamTabFooter data={data} page="escalacao" />
+    </>
+  );
 }
