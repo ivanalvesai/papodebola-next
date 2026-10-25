@@ -301,7 +301,38 @@ curl -X POST -H 'Content-Type: application/json' \
 node scripts/gsc-report.mjs
 ```
 
-### 9.6.1 /cms local (túnel pro banco) — só se precisar
+### 9.6.0 /cms local com CÓPIA do banco (recomendado)
+
+No `npm run dev` o `/cms` não abre porque o Postgres só existe dentro da rede Docker do servidor, e ele é o banco de produção. O jeito seguro é rodar uma **cópia** no seu PC: você mexe à vontade e nada chega no site no ar. O banco tem ~58 MB. Precisa do **Docker Desktop**.
+
+```bash
+# 1. baixa uma cópia atual do banco (Git Bash, na pasta do projeto)
+ssh papodebola "docker exec pdb-postgres pg_dump -U pdb -d pdb_payload --no-owner --no-privileges" > pdb_local.sql
+
+# 2. sobe um Postgres 16 local (mesma versão do servidor)
+docker run -d --name pdb-local -e POSTGRES_USER=pdb -e POSTGRES_PASSWORD=pdb -e POSTGRES_DB=pdb_payload -p 5432:5432 postgres:16-alpine
+sleep 5
+
+# 3. restaura a cópia
+docker exec -i pdb-local psql -q -U pdb -d pdb_payload < pdb_local.sql
+
+# 4. no .env.local, aponte pro banco local:
+#    DATABASE_URI=postgres://pdb:pdb@127.0.0.1:5432/pdb_payload
+#    (mantenha PAYLOAD_SECRET igual; NÃO adicione PAYLOAD_DB_PUSH)
+
+# 5. reinicia o npm run dev → http://localhost:3000/cms
+#    Login: os mesmos usuários do /cms de produção.
+
+# atualizar a cópia depois (apaga a local e baixa de novo):
+docker exec pdb-local psql -q -U pdb -d postgres -c "DROP DATABASE pdb_payload" -c "CREATE DATABASE pdb_payload OWNER pdb"
+docker exec -i pdb-local psql -q -U pdb -d pdb_payload < pdb_local.sql
+```
+
+- **Imagens:** os arquivos de mídia ficam no volume do servidor, então as capas aparecem quebradas no local. Pra ter as imagens (~69 MB): `ssh papodebola "docker exec papodebola-next tar -C /app/data -cf - cms-media" | tar -C data -xf -` (cria `data/cms-media`, que não vai pro Git).
+- **`pdb_local.sql` tem dados reais** (usuários, e-mails, senhas criptografadas). Não comite (já está no `.gitignore`) nem compartilhe.
+- O que você salvar no `/cms` local fica **só na cópia**. Pra valer no site, faça no `/cms` de produção (ou do dev, que é o mesmo banco).
+
+### 9.6.1 /cms local (túnel pro banco) — evite (é o banco de PRODUÇÃO)
 
 No `npm run dev` o `/cms` não abre: o Postgres só existe dentro da rede Docker do servidor (`pdb-net`), sem porta no host. Dá pra abrir um túnel, mas **é o banco de PRODUÇÃO**: salvar ou publicar no `/cms` local vale no site no ar. Na dúvida, teste no dev remoto (`git pushdev`).
 

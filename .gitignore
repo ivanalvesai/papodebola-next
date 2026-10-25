@@ -104,3 +104,6 @@ CLAUDE.local.md
 *_ed25519.pub
 papodebola_luke*
 sportsapi.txt
+pdb_local.sql
+*.sql.gz
+/data/
