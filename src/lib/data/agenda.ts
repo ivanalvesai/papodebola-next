@@ -152,6 +152,15 @@ const FOOTBALL_AGENDA_CHAMPS = [
   "copa-do-brasil",
   "libertadores",
   "sudamericana",
+  // Europa: sem elas, domingo sem Brasileirão deixava /jogos-de-hoje/futebol vazio (25/10).
+  // Mesmo custo por liga: rounds (6h) + 2 feeds de rodada (30 min; 60 s só com jogo ao vivo).
+  "champions-league",
+  "europa-league",
+  "premier-league",
+  "la-liga",
+  "serie-a-italia",
+  "bundesliga",
+  "ligue-1",
 ];
 
 // [início, fim) do dia em horário de Brasília (00:00 BRT = 03:00 UTC).
