@@ -86,6 +86,9 @@ export default function RootLayout({
         {/* Antecipa a conexão com o GTM/GA4. (As imagens agora são same-origin via
             Payload /cms-api/media — não precisa mais de preconnect pro WP.) */}
         <link rel="preconnect" href="https://www.googletagmanager.com" />
+        {/* Feed RSS no <head> direto: via metadata.alternates seria sobrescrito pelo
+            alternates (canonical) de cada página. */}
+        <link rel="alternate" type="application/rss+xml" title="Papo de Bola" href="/feed.xml" />
         {/* GTM em lazyOnload: carrega após o navegador ficar ocioso, sem disputar
             com a hidratação → corta o TBT. O analytics dispara um pouco depois. */}
         <Script id="gtm-head" strategy="lazyOnload">

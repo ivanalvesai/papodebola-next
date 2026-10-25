@@ -209,9 +209,17 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     priority: 0.6,
   }));
 
-  // Artigos do WordPress (cauda longa). Limite de 100 do WP REST; se houver mais,
-  // paginar futuramente. Falha de rede não derruba o sitemap (catch → []).
-  const { articles } = await getArticles({ perPage: 100 }).catch(() => ({ articles: [] }));
+  // Artigos (cauda longa): pagina de 100 em 100 até acabar (eram só os 100 mais recentes
+  // de 430+). Teto de 20 páginas. Falha de rede não derruba o sitemap (catch → []).
+  const articles: Awaited<ReturnType<typeof getArticles>>["articles"] = [];
+  for (let page = 1; page <= 20; page++) {
+    const { articles: batch, total } = await getArticles({ page, perPage: 100 }).catch(() => ({
+      articles: [],
+      total: 0,
+    }));
+    articles.push(...batch);
+    if (batch.length < 100 || articles.length >= total) break;
+  }
   const articlePages: MetadataRoute.Sitemap = articles.map((a) => ({
     url: `${BASE}${a.url}`,
     lastModified: a.updatedAt || a.pubDate ? new Date(a.updatedAt || a.pubDate) : now,
