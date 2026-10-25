@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { TEAM_BY_SLUG } from "@/lib/config";
-import { getTeamPageData } from "@/lib/data/team";
+import { getTeamPageData, getTeamNextForSeo } from "@/lib/data/team";
 import { getTeam } from "@/lib/data/payload-teams";
 import { TeamCmsView, TeamTabFooter, teamRouteStaticParams } from "@/components/payload/team-cms-page";
 import { ClassicTeamJogoHoje } from "@/components/team/classic/jogo-hoje";
@@ -18,7 +18,9 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
   const doc = await getTeam(slug);
   const name = doc?.name || TEAM_BY_SLUG[slug]?.name;
   if (!name) return {};
-  const { title, description } = teamSeo(doc, "jogoHoje", name);
+  const teamId = doc?.sofascoreId || TEAM_BY_SLUG[slug]?.id;
+  const next = teamId ? await getTeamNextForSeo(teamId, true) : null;
+  const { title, description } = teamSeo(doc, "jogoHoje", name, next);
   return { title, description, alternates: { canonical: `/futebol/times/${slug}${TEAM_PAGE_PATH.jogoHoje}` } };
 }
 

@@ -5,6 +5,8 @@ import { championshipMatchHref } from "./match-detail";
 import { matchHref, type MatchHrefDeps } from "@/lib/match-href";
 import { worldCupMatchHref } from "@/lib/world-cup-match-url";
 import { isWorldCupFixture } from "@/lib/world-cup-fixture";
+import { formatTeamNext } from "@/lib/team-next-format";
+import type { TeamNextMatch } from "@/lib/team-seo";
 import { getArticles } from "./articles";
 import { getStandings } from "./standings";
 import type { NormalizedMatch } from "@/types/match";
@@ -122,6 +124,19 @@ export async function getTeamNextEvents(teamId: number): Promise<TeamMatch[]> {
   const data = await fetchAllSports<any>(`team/${teamId}/matches/next/0`, 43200);
   if (!data?.events) return [];
   return withPayloadSlugs(data.events.map(normalizeTeamMatch));
+}
+
+// Próximo jogo formatado pros títulos dinâmicos (mesma chamada em cache da página).
+// todayOnly: só se o jogo é hoje (aba "Jogo de hoje"/"Onde assistir").
+export async function getTeamNextForSeo(teamId: number, todayOnly = false): Promise<TeamNextMatch | null> {
+  const nowSec = Date.now() / 1000;
+  const next = dropStaleUpcoming(await getTeamNextEvents(teamId).catch(() => []), nowSec)[0] || null;
+  if (!next) return null;
+  if (todayOnly) {
+    const day = (ts: number) => new Date(ts * 1000).toLocaleDateString("en-CA", { timeZone: "America/Sao_Paulo" });
+    if (day(next.timestamp) !== day(nowSec)) return null;
+  }
+  return formatTeamNext(next, teamId);
 }
 
 export async function getTeamPreviousEvents(teamId: number): Promise<TeamMatch[]> {
