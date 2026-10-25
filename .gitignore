@@ -91,3 +91,6 @@ casas-de-apostas.docx
 ~$*.docx
 jogos-de-hoje-futebol/
 sponsors/
+
+# Instruções locais do Claude Code (cada pessoa tem o seu)
+CLAUDE.local.md
