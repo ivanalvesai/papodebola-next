@@ -97,12 +97,8 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     priority: 0.6,
   });
 
-  // Tênis: torneio com chaveamento próprio (ATP de Halle)
-  sportPages.push({
-    url: `${BASE}/tenis/halle-2026`,
-    changeFrequency: "daily" as const,
-    priority: 0.6,
-  });
+  // /tenis/halle-2026 saiu do sitemap (25/10): torneio de junho, a API não serve mais o
+  // chaveamento (página vazia fica noindex). A URL continua no ar pros links antigos.
 
   // Parceiros (institucional)
   const parceirosPage: MetadataRoute.Sitemap = [
