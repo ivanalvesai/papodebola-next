@@ -7,7 +7,9 @@ export default function robots(): MetadataRoute.Robots {
     rules: [
       {
         userAgent: "*",
-        allow: "/",
+        // Escudos/fotos ficam rastreáveis (regra mais longa vence o Disallow /api/) pra o
+        // Google ler o X-Robots-Tag: noindex do next.config e desindexar essas URLs.
+        allow: ["/", "/api/team-img/", "/api/player-img/"],
         // "/*_rsc=" bloqueia os requests internos de RSC/prefetch do Next (?_rsc=... e
         // &_rsc=...). Não são páginas — o Google já os ignora, mas o bloqueio evita que
         // crawlers/ferramentas (ex: Screaming Frog) desperdicem budget: numa auditoria de
