@@ -10,9 +10,11 @@ export const dynamic = "force-dynamic";
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
-export async function GET(req: Request, ctx: { params: Promise<{ slug: string }> }) {
+export async function GET(_req: Request, ctx: { params: Promise<{ slug: string }> }) {
   const { slug } = await ctx.params;
-  const home = new URL("/", req.url);
+  // Atrás do proxy, req.url traz o host interno do container (0.0.0.0:3000): volta pra
+  // home pelo domínio público.
+  const home = new URL("/", process.env.NEXT_PUBLIC_SITE_URL || "https://www.papodebola.com.br");
   const noindex = { "X-Robots-Tag": "noindex, nofollow" };
 
   try {
