@@ -64,7 +64,7 @@ export function PromoBannerClient({ banners, initialSlug }: { banners: PromoBann
             className="block w-full h-auto aspect-[3/1] sm:aspect-[4/1] object-cover"
           />
         </picture>
-        <span className="absolute right-2 top-1.5 rounded bg-black/45 px-1.5 py-0.5 text-[11px] font-semibold uppercase tracking-wide text-white">
+        <span className="absolute bottom-1.5 right-2 rounded bg-black/45 px-1.5 py-0.5 text-[11px] font-semibold uppercase tracking-wide text-white">
           {preview && !linked ? "Prévia sem link" : "Publicidade"}
         </span>
       </a>
