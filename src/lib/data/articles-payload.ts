@@ -226,6 +226,26 @@ const lexicalConverters: any = ({ defaultConverters }: any) => ({
       const cls = f.style === "outline" ? "pdb-cta-outline" : "pdb-cta-primary";
       return `<a class="pdb-cta ${cls} ${themeClass(f.cor)}" href="${escAttr(f.url)}" target="_blank" rel="sponsored nofollow noopener">${escHtml(f.label)}</a>`;
     },
+    // Cupom de desconto (/cupons/*): sem link E sem código não renderiza (modelo vazio
+    // nunca vaza pro site). Botão "Copiar" é ligado pelo CouponCopyLoader (client).
+    coupon: ({ node }: any) => {
+      const f = node?.fields || {};
+      const url = safeUrl(f.url);
+      const code = String(f.code || "").trim();
+      if (!f.title || (!url && !code)) return "";
+      const STORES: Record<string, string> = { mercadolivre: "Mercado Livre", amazon: "Amazon", shopee: "Shopee" };
+      const storeKey = STORES[f.store] ? f.store : "outra";
+      const storeName = STORES[f.store] || String(f.storeName || "Loja");
+      const codeHtml = code
+        ? `<div class="pdb-coupon-code"><span class="pdb-coupon-code-txt">${escHtml(code)}</span><button type="button" class="pdb-coupon-copy" data-code="${escAttr(code)}">Copiar</button></div>`
+        : `<div class="pdb-coupon-code pdb-coupon-nocode">Desconto aplicado pelo link</div>`;
+      const details = f.details ? `<p class="pdb-coupon-details">${escHtml(f.details)}</p>` : "";
+      const valid = f.validUntil ? `<span class="pdb-coupon-valid">Validade: ${escHtml(f.validUntil)}</span>` : "";
+      const btn = url
+        ? `<a class="pdb-coupon-btn" href="${escAttr(url)}" target="_blank" rel="sponsored nofollow noopener">${escHtml(f.buttonLabel || "Ir para a loja")} &rsaquo;</a>`
+        : "";
+      return `<div class="pdb-coupon pdb-coupon-${storeKey}"><div class="pdb-coupon-store">${escHtml(storeName)}</div><div class="pdb-coupon-body"><div class="pdb-coupon-title">${escHtml(f.title)}</div>${details}${valid}</div><div class="pdb-coupon-actions">${codeHtml}${btn}</div></div>`;
+    },
     // Prós e contras em duas colunas (✅ / ❌).
     prosCons: ({ node }: any) => {
       const f = node?.fields || {};
@@ -612,7 +632,7 @@ export async function getArticlesPayload(options?: {
     // (home "Últimas Notícias", /noticias, "Leia também", sitemap geral). Só aparecem quando
     // a categoria é pedida explicitamente. Craques = página própria; Casas de Apostas = seção
     // dedicada (card "Casas de Apostas" na home + hub /casas-de-apostas), fora do feed editorial.
-    for (const siloed of ["Craques", "Casas de Apostas"]) {
+    for (const siloed of ["Craques", "Casas de Apostas", "Cupons"]) {
       if (category !== siloed) and.push({ category: { not_equals: siloed } });
     }
     if (search) and.push({ title: { like: search } });

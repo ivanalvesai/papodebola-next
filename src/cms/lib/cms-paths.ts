@@ -18,7 +18,7 @@ export const STATIC_TOP_LEVEL = new Set<string>(GEN_STATIC);
 export const RESERVED_FIRST_SEGMENTS = new Set([
   ...[...RESERVED_TOP_LEVEL].filter((s) => s !== "futebol"), "api", "cms", "cms-api", "cms-preview", "cms-guia", "paginas", "img", "_next",
   "autor", "studio-pdb", "painel-pdb-9x", "sitemap.xml", "robots.txt", "manifest.webmanifest", "llms.txt",
-  "admin", "not-found", "parceiro",
+  "admin", "not-found", "parceiro", "oferta",
 ]);
 export const RESERVED_EXACT_PATHS = new Set<string>(RESERVED_EXACT);
 export { RESERVED_PREFIXES };

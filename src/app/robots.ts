@@ -18,7 +18,7 @@ export default function robots(): MetadataRoute.Robots {
         // "/parceiro/" são redirects de saída pra patrocinadores (link rastreado); não são
         // páginas indexáveis e não devem passar autoridade pro site do parceiro (par com o
         // rel="sponsored" dos links). Bloquear evita que o Google siga o redirect.
-        disallow: ["/painel-pdb-9x/", "/admin/", "/api/", "/parceiro/", "/*_rsc="],
+        disallow: ["/painel-pdb-9x/", "/admin/", "/api/", "/parceiro/", "/oferta/", "/*_rsc="],
       },
     ],
     sitemap: [`${BASE}/sitemap.xml`, `${BASE}/news-sitemap.xml`],
