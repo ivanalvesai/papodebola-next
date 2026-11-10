@@ -28,12 +28,18 @@ export function PromoBannerClient({ banners, initialSlug }: { banners: PromoBann
       setList(items);
       setSlug(ok.length ? ok[Math.floor(Math.random() * ok.length)].slug : null);
     };
+    // Sorteia já com o que veio no HTML e confirma com a lista atual: a página pode estar
+    // em cache de antes de um banner ganhar link, trocar de arte ou sair do ar.
     if (banners.length) pick(banners);
-    else
-      fetch("/api/promo-banners")
-        .then((r) => (r.ok ? r.json() : { banners: [] }))
-        .then((j) => pick(Array.isArray(j?.banners) ? j.banners : []))
-        .catch(() => {});
+    fetch("/api/promo-banners")
+      .then((r) => (r.ok ? r.json() : null))
+      .then((j) => {
+        if (!j || !Array.isArray(j.banners)) return;
+        const fresh: PromoBanner[] = j.banners;
+        const same = fresh.length === banners.length && fresh.every((b, i) => JSON.stringify(b) === JSON.stringify(banners[i]));
+        if (!same) pick(fresh);
+      })
+      .catch(() => {});
     return () => {
       alive = false;
     };
