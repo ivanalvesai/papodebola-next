@@ -691,6 +691,273 @@ const DATA = {
 };
 const FAN_URL = "https://s.shopee.com.br/4VeHqICyQ2";
 const CHECKED = "11/11/2026, às 15h";
+// Ofertas da lista de afiliados da Shopee (WhatsApp, 11/11 à noite), com os NOSSOS links.
+const ZAP = {
+ "cupomUrl": "https://s.shopee.com.br/6q2Cl6BGyy",
+ "games": [
+  {
+   "badge": "Vale a partir de 12/11",
+   "name": "Cadeira gamer reclinável F19",
+   "imageUrl": "https://cf.shopee.com.br/file/br-11134207-820le-mukoyf5uregw16",
+   "note": "432 vendidos · vendido por KODI",
+   "rating": "4,8",
+   "reviews": "",
+   "tag": "",
+   "price": "R$ 255,55 no Pix com cupom",
+   "oldPrice": "R$ 288,99",
+   "store": "shopee",
+   "url": "https://s.shopee.com.br/W89DTPhNV"
+  }
+ ],
+ "pet": [
+  {
+   "badge": "",
+   "name": "Ração GranPlus Choice gatos adultos 10,1 kg",
+   "imageUrl": "https://cf.shopee.com.br/file/br-11134211-7r98o-m67d23ure8qa64",
+   "note": "3 mil+ vendidos · vendido por Popular Pet",
+   "rating": "4,9",
+   "reviews": "",
+   "tag": "",
+   "price": "R$ 89,30 no Pix",
+   "oldPrice": "R$ 93,99",
+   "store": "shopee",
+   "url": "https://s.shopee.com.br/4qH8NQwU6M"
+  }
+ ],
+ "casa": [
+  {
+   "badge": "",
+   "name": "Sofá retrátil e reclinável 2,30 m",
+   "imageUrl": "https://cf.shopee.com.br/file/sg-11134201-825ak-mvbtew34v18obf",
+   "note": "243 vendidos · vendido por King House BR",
+   "rating": "4,9",
+   "reviews": "",
+   "tag": "",
+   "price": "R$ 1.655,09 no Pix com cupom",
+   "oldPrice": "R$ 1.899,00",
+   "store": "shopee",
+   "url": "https://s.shopee.com.br/2gCdnRijZc"
+  },
+  {
+   "badge": "",
+   "name": "Conjunto sala de jantar com 4 cadeiras",
+   "imageUrl": "https://cf.shopee.com.br/file/sg-11134201-7qvd8-lk0xzo2657iu3a",
+   "note": "411 vendidos · vendido por Madesa Móveis",
+   "rating": "4,9",
+   "reviews": "",
+   "tag": "",
+   "price": "R$ 431,00 no Pix com cupom",
+   "oldPrice": "R$ 473,68",
+   "store": "shopee",
+   "url": "https://s.shopee.com.br/1qdWnuluIv"
+  },
+  {
+   "badge": "",
+   "name": "Cama box baú casal com colchão de molas",
+   "imageUrl": "https://cf.shopee.com.br/file/sg-11134201-825ar-mfxy5px40sgd7e",
+   "note": "812 vendidos · vendido por Esplanada Móveis",
+   "rating": "4,8",
+   "reviews": "",
+   "tag": "",
+   "price": "R$ 735,08 no Pix com cupom",
+   "oldPrice": "R$ 899,00",
+   "store": "shopee",
+   "url": "https://s.shopee.com.br/8pnH8mlAvy"
+  },
+  {
+   "badge": "",
+   "name": "Air fryer oven Philco 11 litros",
+   "imageUrl": "https://cf.shopee.com.br/file/sg-11134201-825bb-muw81q77356v3f",
+   "note": "1 mil+ vendidos · vendido por Philco Oficial",
+   "rating": "5,0",
+   "reviews": "",
+   "tag": "",
+   "price": "R$ 274,55 no Pix com cupom",
+   "oldPrice": "R$ 309,00",
+   "store": "shopee",
+   "url": "https://s.shopee.com.br/8fTqwThPT4"
+  },
+  {
+   "badge": "Mais vendido",
+   "name": "Chaleira elétrica inox 1,8 litro",
+   "imageUrl": "https://cf.shopee.com.br/file/br-11134207-820lg-mqfmutp6p53522",
+   "note": "11 mil+ vendidos · vendido por AB Midia",
+   "rating": "4,9",
+   "reviews": "",
+   "tag": "",
+   "price": "R$ 36,99",
+   "oldPrice": "",
+   "store": "shopee",
+   "url": "https://s.shopee.com.br/2VtDb9E68q"
+  },
+  {
+   "badge": "",
+   "name": "Jogo de toalhas banhão Karsten (2 peças)",
+   "imageUrl": "https://cf.shopee.com.br/file/br-11134207-820ln-mr0ol3ur65fr32",
+   "note": "1 mil+ vendidos · vendido por Bf Casa Oficial",
+   "rating": "4,9",
+   "reviews": "",
+   "tag": "",
+   "price": "R$ 110,91 no Pix com cupom",
+   "oldPrice": "R$ 136,74",
+   "store": "shopee",
+   "url": "https://s.shopee.com.br/1qdWnuppDj"
+  },
+  {
+   "badge": "Mais vendido",
+   "name": "Varal de chão dobrável 3 andares",
+   "imageUrl": "https://cf.shopee.com.br/file/br-11134207-7r98o-m7augbm6ixf693",
+   "note": "8 mil+ vendidos · vendido por Na Web Group De Marcas",
+   "rating": "4,9",
+   "reviews": "",
+   "tag": "",
+   "price": "A partir de R$ 54,90",
+   "oldPrice": "",
+   "store": "shopee",
+   "url": "https://s.shopee.com.br/8Kr0Xregxy"
+  },
+  {
+   "badge": "",
+   "name": "Tinta acrílica fosca Coral 16 litros",
+   "imageUrl": "https://cf.shopee.com.br/file/sg-11134201-7rcca-m65nrp1irra6e6",
+   "note": "1 mil+ vendidos · vendido por Atacadão das Tintas Ltda",
+   "rating": "4,9",
+   "reviews": "",
+   "tag": "",
+   "price": "R$ 266,29 no Pix com cupom",
+   "oldPrice": "R$ 300,30",
+   "store": "shopee",
+   "url": "https://s.shopee.com.br/7Af39iejXv"
+  },
+  {
+   "badge": "",
+   "name": "Piscina inflável 4.600 litros",
+   "imageUrl": "https://cf.shopee.com.br/file/sg-11134201-7rbn2-lpgp2ote7w8u35",
+   "note": "545 vendidos · vendido por Palácio das Ferramentas",
+   "rating": "4,9",
+   "reviews": "",
+   "tag": "",
+   "price": "R$ 246,91 no Pix com cupom",
+   "oldPrice": "R$ 279,90",
+   "store": "shopee",
+   "url": "https://s.shopee.com.br/qkzc4u2pm"
+  }
+ ],
+ "beleza": [
+  {
+   "badge": "",
+   "name": "Protetor solar em bastão L’Oréal Paris",
+   "imageUrl": "https://cf.shopee.com.br/file/br-11134207-820m9-mul7k3m7bojmb1",
+   "note": "577 vendidos · vendido por L'Oréal Paris - Loja Oficial",
+   "rating": "5,0",
+   "reviews": "",
+   "tag": "",
+   "price": "R$ 79,99 no Pix",
+   "oldPrice": "R$ 84,20",
+   "store": "shopee",
+   "url": "https://s.shopee.com.br/4qH8NQRcKi"
+  },
+  {
+   "badge": "",
+   "name": "Kit Nivea sabonete líquido óleo de banho (3 un.)",
+   "imageUrl": "https://cf.shopee.com.br/file/br-11134207-81z1k-mdxpz4z0lwjk53",
+   "note": "5 mil+ vendidos · vendido por NIVEA OFICIAL",
+   "rating": "4,9",
+   "reviews": "",
+   "tag": "",
+   "price": "R$ 69,90",
+   "oldPrice": "R$ 99,99",
+   "store": "shopee",
+   "url": "https://s.shopee.com.br/7VHtYKH3Mr"
+  },
+  {
+   "badge": "",
+   "name": "Kit Wella Invigo Nutri-Enrich",
+   "imageUrl": "https://cf.shopee.com.br/file/sg-11134201-7rdx0-m15pe0s36kro6c",
+   "note": "2 mil+ vendidos · vendido por Evas",
+   "rating": "4,9",
+   "reviews": "",
+   "tag": "",
+   "price": "R$ 195,70 no Pix com cupom",
+   "oldPrice": "R$ 226,00",
+   "store": "shopee",
+   "url": "https://s.shopee.com.br/40i1NtmSRn"
+  },
+  {
+   "badge": "",
+   "name": "Escova secadora Britânia 4 em 1 1300W",
+   "imageUrl": "https://cf.shopee.com.br/file/sg-11134201-8258f-mvc75duuxjpj9c",
+   "note": "2 mil+ vendidos · vendido por Britânia Oficial",
+   "rating": "4,9",
+   "reviews": "",
+   "tag": "",
+   "price": "R$ 75,90",
+   "oldPrice": "",
+   "store": "shopee",
+   "url": "https://s.shopee.com.br/1LhGD00s5u"
+  },
+  {
+   "badge": "",
+   "name": "Aparador de pelos Philco Multi Groom 12 em 1",
+   "imageUrl": "https://cf.shopee.com.br/file/sg-11134201-82584-mve1yu7dl2bl0d",
+   "note": "150 vendidos · vendido por Philco Oficial",
+   "rating": "4,8",
+   "reviews": "",
+   "tag": "",
+   "price": "R$ 116,76 no Pix com cupom",
+   "oldPrice": "R$ 142,90",
+   "store": "shopee",
+   "url": "https://s.shopee.com.br/4fxiB7WeS9"
+  },
+  {
+   "badge": "Mais vendido",
+   "name": "Camiseta Insider Light T-shirt",
+   "imageUrl": "https://cf.shopee.com.br/file/sg-11134201-8259i-mslho0ubry14d7",
+   "note": "7 mil+ vendidos · vendido por INSIDER",
+   "rating": "4,9",
+   "reviews": "",
+   "tag": "",
+   "price": "R$ 49,00",
+   "oldPrice": "",
+   "store": "shopee",
+   "url": "https://s.shopee.com.br/7pujwwXNoX"
+  },
+  {
+   "badge": "",
+   "name": "Blazer + calça slim masculino",
+   "imageUrl": "https://cf.shopee.com.br/file/2d89cbb24cb81c47e9e728a308db3e88",
+   "note": "2 mil+ vendidos · vendido por Elegance_Ternos",
+   "rating": "4,7",
+   "reviews": "",
+   "tag": "",
+   "price": "R$ 132,91 no Pix com cupom",
+   "oldPrice": "R$ 159,90",
+   "store": "shopee",
+   "url": "https://s.shopee.com.br/7pujwwpOVl"
+  },
+  {
+   "badge": "",
+   "name": "Tênis de treino Under Armour Tribase Reps",
+   "imageUrl": "https://cf.shopee.com.br/file/sg-11134201-82585-msbb91gsrw9625",
+   "note": "472 vendidos · vendido por UnderArmour_Oficial",
+   "rating": "5,0",
+   "reviews": "",
+   "tag": "",
+   "price": "R$ 209,00 no Pix com cupom",
+   "oldPrice": "R$ 239,99",
+   "store": "shopee",
+   "url": "https://s.shopee.com.br/9KjXjhaxBD"
+  }
+ ]
+};
+const ZAP_CHECKED = "11/11/2026, às 20h, na lista de ofertas da Shopee (os marcados com cupom dependem de resgatar o cupom; alguns valem a partir das 0h de 12/11)";
+{
+  const fan = DATA.groups.flatMap((g) => g.items).find((i) => i.url === FAN_URL);
+  if (fan) Object.assign(fan, { price: "R$ 69,90 com cupom", oldPrice: "R$ 142,99", tag: "-51%" });
+  DATA.groups.find((g) => g.h3 === "Games e tecnologia").items.push(...ZAP.games);
+  DATA.groups.find((g) => g.h3 === "Bebê, pet e mercado").items.push(...ZAP.pet);
+}
+const TOTAL = DATA.groups.reduce((n, g) => n + g.items.length, 0) + ZAP.casa.length + ZAP.beleza.length;
 
 // ── helpers Lexical ──
 const T = (text, format = 0) => ({ type: "text", text, format, detail: 0, mode: "normal", style: "", version: 1 });
@@ -716,19 +983,21 @@ const CUPONS = BLOCK("coupon", {
   store: "shopee", storeName: "", headline: "Cupons liberados", value: "Até R$ 100 OFF",
   title: "Cupons Shopee de hoje: os destaques do 11.11",
   code: "",
-  details: `Sem código: toque em "Resgatar" na página da Shopee e o cupom fica salvo na sua conta para usar no fechamento do pedido. A Shopee solta novas levas de cupom ao longo do dia (16h, 18h, 20h e 22h). Também há 2 fretes grátis sem valor mínimo. Conferidos em ${CHECKED}.`,
+  details: `Sem código: toque em "Resgatar" na página da Shopee e o cupom fica salvo na sua conta para usar no fechamento do pedido. A Shopee solta novas levas de cupom ao longo do dia (16h, 18h, 20h e 22h). Os cupons de R$ 70 e R$ 20 OFF são com código: copie e cole no carrinho. Também há 2 fretes grátis sem valor mínimo. Conferidos em ${CHECKED}.`,
   validUntil: "Hoje, 11/11/2026, até 23h59 (ou enquanto durarem)",
   url: DATA.campaign,
   buttonLabel: "Resgatar cupons na Shopee",
   offers: [
     { label: "Todas as lojas", value: "R$ 100", note: "Compras acima de R$ 729", code: "", url: DATA.campaign },
     { label: "Estoque na Shopee (Full)", value: "30%", note: "Limite de R$ 25", code: "", url: DATA.campaign },
-    { label: "Ventilador Mondial 30 cm", value: "R$ 20", note: "Só esse produto, acima de R$ 60", code: "", url: FAN_URL },
+    { label: "Compras acima de R$ 350", value: "R$ 70", note: "Com código", code: "C4RR1NH0CH310", url: DATA.campaign },
+    { label: "Compras acima de R$ 99", value: "R$ 20", note: "Com código", code: "20D3SBL0QU34D0", url: DATA.campaign },
+    { label: "Ventilador Mondial 30 cm", value: "R$ 20", note: "Só esse produto, acima de R$ 60", code: "", url: ZAP.cupomUrl },
   ],
 });
 
 const content = RT(
-  P("O 11.11 é a maior data de ofertas da Shopee no ano. Separamos ", B("48 produtos"), " da página da campanha de hoje, ", B("11 de novembro de 2026"), ", com desconto de verdade e boa nota de quem já comprou: games, celulares, ventiladores, casa, ferramentas, moda e itens de bebê e pet."),
+  P("O 11.11 é a maior data de ofertas da Shopee no ano. Separamos ", B(`${TOTAL} produtos`), " da página da campanha de hoje, ", B("11 de novembro de 2026"), ", com desconto de verdade e boa nota de quem já comprou: games, celulares, ventiladores, casa, ferramentas, moda e itens de bebê e pet."),
   P(`Os preços dos cards são os da campanha em ${CHECKED}; vários valem só no Pix. Na Shopee o preço e o estoque mudam ao longo do dia, então toque em `, B("Ver na Shopee"), " para conferir o valor atualizado. Antes de comprar, resgate os cupons abaixo: eles somam com o desconto do produto."),
   CUPONS,
   H("h2", "Games, monitor e projetor"),
@@ -741,7 +1010,7 @@ const content = RT(
   P("Bike de spinning e ergométrica com até 80% de desconto, whey, creatina e capacete de ciclismo."),
   group("Esporte e academia em casa"),
   H("h2", "Ventilador, climatizador e ar-condicionado"),
-  P("Com o calor chegando, o ventilador Mondial de 30 cm é um dos mais vendidos da campanha e ainda tem cupom de R$ 20 só para ele (está no card de cupons acima)."),
+  P("Com o calor chegando, o ventilador Mondial de 30 cm é um dos mais vendidos da campanha: sai por R$ 69,90 com o cupom de R$ 20 só para ele (está no card de cupons acima)."),
   group("Ventiladores, climatizadores e ar-condicionado"),
   H("h2", "Casa e cozinha"),
   P("Micro-ondas, fogão de 5 bocas, cooktop, panelas, robô aspirador e panificadora."),
@@ -755,6 +1024,12 @@ const content = RT(
   H("h2", "Bebê, pet e mercado"),
   P("Fralda Pampers em pacote jumbo, carrinho de bebê, ração para gato castrado e café."),
   group("Bebê, pet e mercado"),
+  H("h2", "Mais achadinhos do 11.11 para a casa"),
+  P("Sofá retrátil, sala de jantar, cama box, air fryer e até piscina inflável. Boa parte desses preços só aparece no Pix e com o cupom resgatado; alguns passam a valer a partir da meia-noite."),
+  BLOCK("productGrid", { title: "Casa, móveis e cozinha", columns: "3", priceDate: ZAP_CHECKED, items: ZAP.casa }),
+  H("h2", "Beleza, cuidados e moda"),
+  P("Protetor solar em bastão da L'Oréal, kit Nivea, Wella, escova secadora Britânia, aparador Philco, camiseta Insider, blazer com calça e tênis Under Armour."),
+  BLOCK("productGrid", { title: "Beleza, cuidados e moda", columns: "3", priceDate: ZAP_CHECKED, items: ZAP.beleza }),
   H("h2", "Como usar cupom na Shopee hoje"),
   LIST("ol", [
     "Entre na sua conta da Shopee, de preferência pelo app.",
@@ -765,7 +1040,7 @@ const content = RT(
   P("Mais cupons da Shopee, da Amazon e do Mercado Livre na nossa página de cupons, atualizada nas datas de promoção:"),
   BLOCK("ctaButton", { label: "Ver todos os cupons da Shopee", url: "/cupons/shopee", style: "primary" }),
   FAQ([
-    ["Qual o cupom Shopee de hoje, 11/11?", "O maior é o de R$ 100 OFF para todas as lojas em compras acima de R$ 729. Também há 30% OFF (limite de R$ 25) em produtos com estoque na Shopee e 2 fretes grátis sem valor mínimo. Os cupons acabam por leva; a Shopee solta novas às 16h, 18h, 20h e 22h."],
+    ["Qual o cupom Shopee de hoje, 11/11?", "O maior é o de R$ 100 OFF para todas as lojas em compras acima de R$ 729. Com código, o C4RR1NH0CH310 dá R$ 70 OFF em compras acima de R$ 350 e o 20D3SBL0QU34D0 dá R$ 20 OFF acima de R$ 99. Também há 30% OFF (limite de R$ 25) em produtos com estoque na Shopee e 2 fretes grátis sem valor mínimo. Os cupons acabam por leva; a Shopee solta novas às 16h, 18h, 20h e 22h."],
     ["Até que horas vale o 11.11 da Shopee?", "As ofertas e cupons do 11.11 valem até 23h59 de 11 de novembro, ou enquanto durar o estoque. Depois começam as ofertas de Black Friday."],
     ["Cupom da Shopee junta com o desconto do produto?", "Sim. O cupom é aplicado no fechamento do pedido, em cima do preço promocional. Dá para usar um cupom de desconto e um de frete grátis no mesmo pedido."],
     ["O preço no Pix é diferente?", "Em vários produtos sim: a Shopee dá um desconto extra para pagamento no Pix. Nos cards indicamos quando o preço é no Pix."],
@@ -786,19 +1061,19 @@ try {
 
   const authors = await payload.find({ collection: "authors", limit: 1, where: { slug: { equals: "redacao" } } }).catch(() => ({ docs: [] }));
   const data = {
-    title: "Cupom Shopee hoje 11/11: 48 ofertas do 11.11 com games, celular, ventilador e mais",
+    title: `Cupom Shopee hoje 11/11: ${TOTAL} ofertas do 11.11 com games, celular, casa e mais`,
     slug: SLUG,
     category: "Cupons",
     tags: ["Cupom Shopee", "11.11", "Cupons de hoje", "Shopee", "Black Friday"].map((tag) => ({ tag })),
     cover: coverId,
-    excerpt: "Cupons de hoje 11.11 na Shopee (até R$ 100 OFF) e 48 ofertas selecionadas: DualSense, Switch Lite, Galaxy A17, ventiladores, casa, ferramentas, moda e bebê.",
+    excerpt: `Cupons de hoje 11.11 na Shopee (até R$ 100 OFF e códigos de R$ 70 e R$ 20) e ${TOTAL} ofertas: DualSense, Galaxy A17, ventilador por R$ 69,90, sofá, air fryer, beleza e moda.`,
     content,
     author: "Redação",
     ...(authors.docs[0] ? { authorProfile: authors.docs[0].id } : {}),
     publishedDate: new Date().toISOString(),
     seo: {
       metaTitle: "Cupom Shopee hoje 11/11: cupons e ofertas do 11.11 | Papo de Bola",
-      metaDescription: "Cupom Shopee de hoje (11/11): até R$ 100 OFF, frete grátis e 48 ofertas do 11.11 com games, celulares, ventilador, casa, ferramentas e moda.",
+      metaDescription: `Cupom Shopee de hoje (11/11): até R$ 100 OFF, código C4RR1NH0CH310 de R$ 70, frete grátis e ${TOTAL} ofertas do 11.11 com games, celular, casa e moda.`,
     },
     _status: "draft",
   };
