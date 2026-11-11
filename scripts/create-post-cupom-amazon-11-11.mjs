@@ -30,10 +30,12 @@ const FAQ = (items) => BLOCK("faq", { title: "Perguntas frequentes", firstOpen: 
 // ── produtos (links SiteStripe, tag pap0debola-20) ──
 const link = (asin, linkId) => `https://www.amazon.com.br/dp/${asin}?&linkCode=ll2&tag=pap0debola-20&linkId=${linkId}&ref_=as_li_ss_tl`;
 const img = (id) => `https://m.media-amazon.com/images/I/${id}._AC_SL500_.jpg`;
+const PRICES = {"B0H6KT2RWH": ["R$ 418,40", ""], "B0FPGF9J2J": ["R$ 3.719,90", ""], "B0F8R9NDXC": ["R$ 4.184,90", ""], "B0CQKKHT5J": ["R$ 399,00", ""], "B0HGGNZY3Y": ["R$ 305,58", ""], "B0HCRPPXB1": ["R$ 2.279,05", ""], "B0FYRDJ4GJ": ["R$ 1.459,99", ""], "B0DMQKNPR8": ["R$ 1.899,99", ""], "B0DD81K7V7": ["R$ 3.732,55", ""], "B09WR8L93B": ["R$ 1.151,10", ""], "B0G4MTMHF5": ["R$ 399,90", ""], "B0GQWJK3SG": ["R$ 68,30", ""], "B0CDQGYL23": ["R$ 189,90", "R$ 399,99"], "B0GTBYTK7P": ["R$ 239,00", "R$ 279,99"], "B0DHL93XCN": ["R$ 246,92", ""], "B0CVCLGV1W": ["R$ 185,25", ""], "B0FN5DD149": ["R$ 129,00", ""], "B00M3IFUMK": ["R$ 163,29", ""], "B0GQJM9NJK": ["R$ 4.844,05", ""], "B0BCFKG49M": ["R$ 169,99", ""], "B09B8VGCR8": ["R$ 349,00", ""], "B0CFPL6CFY": ["R$ 1.034,10", ""]};
 const prod = (asin, linkId, imgId, name, { badge = "", note = "", rating = "", reviews = "", tag = "" } = {}) => ({
-  badge, name, imageUrl: img(imgId), note, rating, reviews, tag, store: "amazon", url: link(asin, linkId),
+  badge, name, imageUrl: img(imgId), note, rating, reviews, tag, price: PRICES[asin]?.[0] || "", oldPrice: PRICES[asin]?.[1] || "", store: "amazon", url: link(asin, linkId),
 });
-const GRID = (title, items, columns = "3") => BLOCK("productGrid", { title, columns, items });
+const PRICE_DATE = "11/11/2026, às 00h10";
+const GRID = (title, items, columns = "3") => BLOCK("productGrid", { title, columns, items, priceDate: PRICE_DATE });
 
 const GTA = prod("B0H6KT2RWH", "35c97f0b362f6b1153dc8cf57c767777", "81o4MCqBv5L", "Grand Theft Auto VI (GTA 6) para PS5", {
   badge: "Pré-venda", tag: "Lança 19/11", note: "Reserve agora e receba no lançamento. Mídia física para PlayStation 5.",
@@ -78,7 +80,7 @@ const TECH = [
 
 const content = RT(
   P("O 11.11 chegou e a Amazon abriu a temporada de descontos antes da Black Friday. Separamos os produtos que valem a pena olhar hoje, ", B("11 de novembro de 2026"), ", com destaque para a pré-venda de GTA 6, consoles PS5, Smart TVs, impressoras 3D e itens de futebol."),
-  P("A gente não coloca preço fixo nos cards: na Amazon o valor muda várias vezes no mesmo dia, e o cupom de hoje pode acabar antes do fim da tarde. Toque em ", B("Ver na Amazon"), " para conferir o preço atualizado e se o cupom ainda está ativo."),
+  P("Os preços dos cards foram conferidos na madrugada do 11.11. Na Amazon o valor muda várias vezes no mesmo dia e o cupom pode acabar antes do fim da tarde, então toque em ", B("Ver na Amazon"), " para ver o preço atualizado e se o cupom ainda está ativo."),
   H("h2", "GTA 6 na Amazon: pré-venda e cupom de hoje"),
   P("O lançamento mais esperado do ano está marcado para ", B("19 de novembro"), ". Na Amazon dá para reservar só o jogo ou levar o combo com o PS5 Slim Digital, que hoje aparece com ", B("cupom de R$ 250"), " na página do produto."),
   GRID("GTA 6 em destaque", [GTA, BUNDLE], "2"),
@@ -153,10 +155,13 @@ const data = {
 };
 
 const existing = await payload.find({ collection: "posts", where: { slug: { equals: SLUG } }, limit: 1, draft: true });
+// Já publicado (pelo agendamento): atualiza mantendo publicado e não agenda de novo.
+const KEEP_PUBLISHED = existing.docs[0]?._status === "published";
+if (KEEP_PUBLISHED) data._status = "published";
 let id;
 if (existing.docs[0]) {
   id = existing.docs[0].id;
-  await payload.update({ collection: "posts", id, data, draft: true });
+  await payload.update({ collection: "posts", id, data, draft: !KEEP_PUBLISHED });
   log(`updated draft id=${id}`);
 } else {
   const doc = await payload.create({ collection: "posts", data, draft: true });
@@ -164,6 +169,7 @@ if (existing.docs[0]) {
   log(`created draft id=${id}`);
 }
 
+if (KEEP_PUBLISHED) { log("done (update publicado)"); process.exit(0); }
 // agenda publicação (evita duplicar job)
 const jobs = await payload.find({ collection: "payload-jobs", where: { taskSlug: { equals: "schedulePublish" }, completedAt: { exists: false } }, limit: 50 });
 const dup = jobs.docs.find((j) => j?.input?.doc?.value == id && j?.input?.type === "publish");

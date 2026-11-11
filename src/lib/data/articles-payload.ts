@@ -245,11 +245,14 @@ const lexicalConverters: any = ({ defaultConverters }: any) => ({
           ? `<div class="pdb-pg-rating"><span class="pdb-pg-stars">&#9733;</span> ${escHtml(it.rating)}${it.reviews ? ` <span class="pdb-pg-reviews">(${escHtml(it.reviews)} avaliações)</span>` : ""}</div>`
           : "";
         const note = it.note ? `<p class="pdb-pg-note">${escHtml(it.note)}</p>` : "";
+        const price = it.price
+          ? `<div class="pdb-pg-price">${it.oldPrice ? `<s class="pdb-pg-old">${escHtml(it.oldPrice)}</s>` : ""}<span class="pdb-pg-now">${escHtml(it.price)}</span></div>`
+          : "";
         const prep = store === "mercadolivre" ? "no" : "na";
-        return `<div class="pdb-pg-cell">${badge}<a class="pdb-pg-imgwrap" href="${href}" target="_blank" rel="sponsored nofollow noopener">${img}${tag}</a><div class="pdb-pg-name">${escHtml(it.name)}</div>${rating}${note}<a class="pdb-pg-btn pdb-pg-${store}" href="${href}" target="_blank" rel="sponsored nofollow noopener">Ver ${prep} <span class="pdb-pg-store">${escHtml(STORE[store])}</span></a></div>`;
+        return `<div class="pdb-pg-cell">${badge}<a class="pdb-pg-imgwrap" href="${href}" target="_blank" rel="sponsored nofollow noopener">${img}${tag}</a><div class="pdb-pg-name">${escHtml(it.name)}</div>${rating}${price}${note}<a class="pdb-pg-btn pdb-pg-${store}" href="${href}" target="_blank" rel="sponsored nofollow noopener">Ver ${prep} <span class="pdb-pg-store">${escHtml(STORE[store])}</span></a></div>`;
       }).join("");
       const cols = f.columns === "2" ? "2" : "3";
-      return `<div class="pdb-pg pdb-pg-cols-${cols}"><div class="pdb-pg-head"><span class="pdb-pg-check">&#10003;</span>${escHtml(f.title || "Nossas escolhas")}</div><div class="pdb-pg-grid">${cells}</div></div>`;
+      return `<div class="pdb-pg pdb-pg-cols-${cols}"><div class="pdb-pg-head"><span class="pdb-pg-check">&#10003;</span>${escHtml(f.title || "Nossas escolhas")}</div><div class="pdb-pg-grid">${cells}</div>${f.priceDate && items.some((it: any) => it.price) ? `<p class="pdb-pg-pricedate">Preços consultados em ${escHtml(f.priceDate)} e sujeitos a alteração. O preço e a disponibilidade exibidos na loja no momento da compra são os que valem.</p>` : ""}</div>`;
     },
     // Cupom de desconto (/cupons/*): sem link E sem código não renderiza (modelo vazio
     // nunca vaza pro site). Botão "Copiar" é ligado pelo CouponCopyLoader (client).
