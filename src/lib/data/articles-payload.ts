@@ -257,22 +257,47 @@ const lexicalConverters: any = ({ defaultConverters }: any) => ({
     // Cupom de desconto (/cupons/*): sem link E sem código não renderiza (modelo vazio
     // nunca vaza pro site). Botão "Copiar" é ligado pelo CouponCopyLoader (client).
     coupon: ({ node }: any) => {
+      // Visual de "ticket": canhoto colorido da loja (marca + desconto + frase) e corpo
+      // com a oferta, os mini-cupons (vários cupons ao mesmo tempo), o código e o botão.
+      // Com código + link, o botão copia o código e já abre a loja.
       const f = node?.fields || {};
       const url = safeUrl(f.url);
       const code = String(f.code || "").trim();
-      if (!f.title || (!url && !code)) return "";
+      const offers = (f.offers || []).filter((o: any) => o?.label && (safeUrl(o?.url) || String(o?.code || "").trim()));
+      if (!f.title || (!url && !code && !offers.length)) return "";
       const STORES: Record<string, string> = { mercadolivre: "Mercado Livre", amazon: "Amazon", shopee: "Shopee" };
       const storeKey = STORES[f.store] ? f.store : "outra";
       const storeName = STORES[f.store] || String(f.storeName || "Loja");
+      const rel = `target="_blank" rel="sponsored nofollow noopener"`;
+      const brand = storeKey === "amazon" ? "amazon" : storeName;
+      const value = String(f.value || "").trim();
+      const headline = String(f.headline ?? "Cupons liberados").trim();
+      const stub = `<div class="pdb-coupon-stub"><span class="pdb-coupon-brand">${escHtml(brand)}</span>${value ? `<span class="pdb-coupon-value">${escHtml(value)}</span>` : ""}${headline ? `<span class="pdb-coupon-headline">${escHtml(headline)}</span>` : ""}</div>`;
+      const details = f.details ? `<p class="pdb-coupon-details">${escHtml(f.details)}</p>` : "";
+      const offersHtml = offers.length
+        ? `<div class="pdb-coupon-offers">${offers.map((o: any) => {
+            const oc = String(o.code || "").trim();
+            const ou = safeUrl(o.url);
+            const inner = `${o.value ? `<b class="pdb-coupon-offer-val">${escHtml(String(o.value).replace(/\s*off\s*$/i, ""))}</b>` : ""}<span class="pdb-coupon-offer-lbl">${escHtml(o.label)}</span>${o.note ? `<span class="pdb-coupon-offer-note">${escHtml(o.note)}</span>` : ""}${oc ? `<span class="pdb-coupon-offer-code">${escHtml(oc)}</span>` : ""}`;
+            return ou
+              ? `<a class="pdb-coupon-offer${oc ? " pdb-coupon-copygo" : ""}" href="${escAttr(ou)}" ${rel}${oc ? ` data-code="${escAttr(oc)}"` : ""}>${inner}</a>`
+              : `<button type="button" class="pdb-coupon-offer pdb-coupon-copygo" data-code="${escAttr(oc)}">${inner}</button>`;
+          }).join("")}</div>`
+        : "";
       const codeHtml = code
         ? `<div class="pdb-coupon-code"><span class="pdb-coupon-code-txt">${escHtml(code)}</span><button type="button" class="pdb-coupon-copy" data-code="${escAttr(code)}">Copiar</button></div>`
-        : `<div class="pdb-coupon-code pdb-coupon-nocode">Desconto aplicado pelo link</div>`;
-      const details = f.details ? `<p class="pdb-coupon-details">${escHtml(f.details)}</p>` : "";
-      const valid = f.validUntil ? `<span class="pdb-coupon-valid">Validade: ${escHtml(f.validUntil)}</span>` : "";
-      const btn = url
-        ? `<a class="pdb-coupon-btn" href="${escAttr(url)}" target="_blank" rel="sponsored nofollow noopener">${escHtml(f.buttonLabel || "Ir para a loja")} &rsaquo;</a>`
         : "";
-      return `<div class="pdb-coupon pdb-coupon-${storeKey}"><div class="pdb-coupon-store">${escHtml(storeName)}</div><div class="pdb-coupon-body"><div class="pdb-coupon-title">${escHtml(f.title)}</div>${details}${valid}</div><div class="pdb-coupon-actions">${codeHtml}${btn}</div></div>`;
+      const rawLabel = String(f.buttonLabel || "").trim();
+      const btnLabel = escHtml(code && (!rawLabel || rawLabel === "Ir para a loja") ? "Copiar código e ir para a loja" : rawLabel || "Ir para a loja");
+      const btn = url
+        ? `<a class="pdb-coupon-btn pdb-coupon-btn-${storeKey}${code ? " pdb-coupon-copygo" : ""}" href="${escAttr(url)}" ${rel}${code ? ` data-code="${escAttr(code)}"` : ""}>${btnLabel} &rsaquo;</a>`
+        : "";
+      const meta = [
+        !code && url && !offers.length ? `<span class="pdb-coupon-auto">Sem código: o desconto é aplicado pelo link</span>` : "",
+        f.validUntil ? `<span class="pdb-coupon-valid">Validade: ${escHtml(f.validUntil)}</span>` : "",
+      ].filter(Boolean).join("");
+      const actions = codeHtml || btn ? `<div class="pdb-coupon-actions">${codeHtml}${btn}</div>` : "";
+      return `<div class="pdb-coupon pdb-coupon-${storeKey}"><div class="pdb-coupon-ticket">${stub}<div class="pdb-coupon-body"><div class="pdb-coupon-title">${escHtml(f.title)}</div>${details}${offersHtml}${actions}${meta ? `<div class="pdb-coupon-meta">${meta}</div>` : ""}</div></div></div>`;
     },
     // Prós e contras em duas colunas (✅ / ❌).
     prosCons: ({ node }: any) => {
