@@ -235,7 +235,7 @@ export function ArticleView({
         >
           {article.category === "Casas de Apostas" && <BettingDisclaimer className="mb-6" />}
           <article className="prose-article" dangerouslySetInnerHTML={{ __html: bodyHtml }} />
-          {article.category === "Cupons" && <AffiliateDisclosure className="mt-8" />}
+          {article.category === "Cupons" && <AffiliateDisclosure className="mt-8" html={bodyHtml} />}
           {bodyHtml.includes("instagram-media") && <InstagramEmbedLoader />}
           {bodyHtml.includes("twitter-tweet") && <TweetEmbedLoader />}
           {bodyHtml.includes("pdb-coupon-copy") && <CouponCopyLoader />}
