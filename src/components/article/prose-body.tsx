@@ -1,6 +1,7 @@
 import { InstagramEmbedLoader } from "./instagram-embed";
 import { TweetEmbedLoader } from "./x-embed";
 import { ProseStyles } from "./prose-styles";
+import { CouponCopyLoader } from "./coupon-copy";
 
 // Corpo "prose-article" (HTML já convertido do Lexical) com os MESMOS estilos e loaders
 // dos posts. Usado nas páginas do CMS (PageBlock) para os cards (Instagram, X, escalação,
@@ -17,6 +18,7 @@ export function ProseBody({ html, className }: { html: string; className?: strin
       />
       {html.includes("instagram-media") && <InstagramEmbedLoader />}
       {html.includes("twitter-tweet") && <TweetEmbedLoader />}
+      {html.includes("pdb-coupon-copy") && <CouponCopyLoader />}
     </>
   );
 }

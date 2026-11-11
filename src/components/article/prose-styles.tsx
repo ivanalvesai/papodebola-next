@@ -478,6 +478,64 @@ export function ProseStyles() {
           .prose-article .pdb-br-score, .prose-article .pdb-br-pending { margin-left: 0; }
           .prose-article .pdb-br-ctas a.pdb-cta { flex: 1 1 100%; }
         }
-      `}</style>
+      
+        /* Vitrine de produtos (afiliado) */
+        .prose-article .pdb-pg { margin: 28px 0; border-radius: 16px; overflow: hidden; border: 1px solid #e3e6ea; background: #fff; box-shadow: 0 4px 18px rgba(0,0,0,.06); }
+        .prose-article .pdb-pg-head { display: flex; align-items: center; gap: 10px; background: #14110a; color: #fff; font-weight: 800; font-size: 16px; padding: 12px 18px; border-bottom: 4px solid #00965E; }
+        .prose-article .pdb-pg-check { display: inline-flex; align-items: center; justify-content: center; width: 22px; height: 22px; border-radius: 50%; background: #ffd23f; color: #14110a; font-size: 13px; }
+        .prose-article .pdb-pg-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); }
+        .prose-article .pdb-pg-cols-2 .pdb-pg-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+        .prose-article .pdb-pg-cell { position: relative; display: flex; flex-direction: column; gap: 6px; padding: 16px; border-right: 1px solid #eef0f2; border-bottom: 1px solid #eef0f2; min-width: 0; }
+        .prose-article .pdb-pg-badge { align-self: flex-start; font-size: 12px; font-weight: 800; letter-spacing: .04em; text-transform: uppercase; color: #00965E; }
+        .prose-article a.pdb-pg-imgwrap { position: relative; display: flex; align-items: center; justify-content: center; height: 170px; background: #fff; border-radius: 12px; border: 1px solid #f0f1f3; text-decoration: none !important; }
+        .prose-article img.pdb-pg-img { max-width: 88%; max-height: 150px; width: auto; height: auto; object-fit: contain; margin: 0 !important; border-radius: 0 !important; box-shadow: none !important; }
+        .prose-article .pdb-pg-tag { position: absolute; top: 8px; left: 8px; background: #ffd23f; color: #14110a; font-size: 12px; font-weight: 800; padding: 3px 8px; border-radius: 999px; }
+        .prose-article .pdb-pg-name { font-size: 15px; font-weight: 700; line-height: 1.35; color: #1A1D23; overflow-wrap: anywhere; }
+        .prose-article .pdb-pg-rating { font-size: 13px; font-weight: 700; color: #1A1D23; }
+        .prose-article .pdb-pg-stars { color: #f5a623; }
+        .prose-article .pdb-pg-reviews { font-weight: 400; color: #6b7280; }
+        .prose-article p.pdb-pg-note { font-size: 14px; line-height: 1.5; color: #555; margin: 0 !important; }
+        .prose-article a.pdb-pg-btn { margin-top: auto; display: inline-flex; align-items: center; justify-content: center; gap: 6px; padding: 9px 14px; border-radius: 999px;
+          font-size: 14px; font-weight: 700; text-decoration: none !important; background: #14110a; color: #fff !important; border: 2px solid #14110a; }
+        .prose-article a.pdb-pg-btn:hover { background: #00965E; border-color: #00965E; }
+        .prose-article .pdb-pg-store { position: relative; font-weight: 900; letter-spacing: -.01em; }
+        .prose-article .pdb-pg-amazon .pdb-pg-store { color: #fff; padding-bottom: 3px; }
+        .prose-article .pdb-pg-amazon .pdb-pg-store::after { content: ""; position: absolute; left: 8%; right: 4%; bottom: -2px; height: 6px; border-bottom: 2px solid #FF9900; border-radius: 0 0 60% 60%; }
+        @media (max-width: 640px) {
+          .prose-article .pdb-pg-grid, .prose-article .pdb-pg-cols-2 .pdb-pg-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+          .prose-article .pdb-pg-cell { padding: 12px; }
+          .prose-article a.pdb-pg-imgwrap { height: 130px; }
+          .prose-article img.pdb-pg-img { max-height: 115px; }
+          .prose-article .pdb-pg-name { font-size: 14px; }
+          .prose-article p.pdb-pg-note { display: none; }
+          .prose-article a.pdb-pg-btn { font-size: 13px; padding: 8px 10px; }
+        }
+        /* ── Cupom de desconto (/cupons/*) ── */
+        .prose-article .pdb-coupon { display: grid; grid-template-columns: 132px 1fr auto; align-items: stretch; margin: 20px 0;
+          border: 2px dashed #d7dbe0; border-radius: 14px; background: #fff; overflow: hidden; }
+        .prose-article .pdb-coupon-store { display: flex; align-items: center; justify-content: center; text-align: center; padding: 14px 10px;
+          font-weight: 800; font-size: 15px; line-height: 1.2; background: #00965E; color: #fff; }
+        .prose-article .pdb-coupon-mercadolivre .pdb-coupon-store { background: #FFE600; color: #2D3277; }
+        .prose-article .pdb-coupon-amazon .pdb-coupon-store { background: #232F3E; color: #FF9900; }
+        .prose-article .pdb-coupon-shopee .pdb-coupon-store { background: #EE4D2D; color: #fff; }
+        .prose-article .pdb-coupon-body { padding: 14px 18px; min-width: 0; overflow-wrap: anywhere; }
+        .prose-article .pdb-coupon-title { font-size: 19px; font-weight: 800; color: #1A1D23; line-height: 1.3; }
+        .prose-article .pdb-coupon-details { font-size: 15px; line-height: 1.5; color: #555; margin: 6px 0 0; }
+        .prose-article .pdb-coupon-valid { display: inline-block; margin-top: 8px; font-size: 13px; font-weight: 700; color: #b45309; }
+        .prose-article .pdb-coupon-actions { display: flex; flex-direction: column; justify-content: center; gap: 8px; padding: 14px 16px 14px 0; min-width: 190px; }
+        .prose-article .pdb-coupon-code { display: flex; align-items: center; border: 2px solid #00965E; border-radius: 10px; overflow: hidden; }
+        .prose-article .pdb-coupon-code-txt { flex: 1; min-width: 0; overflow-wrap: anywhere; padding: 8px 10px; font-family: ui-monospace, Menlo, monospace; font-weight: 800; font-size: 16px; letter-spacing: .04em; color: #1A1D23; text-align: center; }
+        .prose-article .pdb-coupon-copy { border: 0; background: #00965E; color: #fff; font-weight: 800; font-size: 14px; padding: 9px 12px; cursor: pointer; }
+        .prose-article .pdb-coupon-copy:hover { background: #007a4d; }
+        .prose-article .pdb-coupon-nocode { justify-content: center; padding: 8px 10px; font-size: 14px; font-weight: 700; color: #00965E; }
+        .prose-article a.pdb-coupon-btn { display: block; text-align: center; background: #1A1D23; color: #fff !important; text-decoration: none !important;
+          font-weight: 800; font-size: 15px; padding: 10px 14px; border-radius: 10px; }
+        .prose-article a.pdb-coupon-btn:hover { background: #000; }
+        @media (max-width: 640px) {
+          .prose-article .pdb-coupon { grid-template-columns: 1fr; }
+          .prose-article .pdb-coupon-store { justify-content: flex-start; padding: 8px 14px; }
+          .prose-article .pdb-coupon-actions { padding: 0 16px 16px; min-width: 0; }
+        }
+`}</style>
   );
 }

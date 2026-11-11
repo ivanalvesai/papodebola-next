@@ -12,6 +12,8 @@ import { ArticleSchema } from "@/components/seo/article-schema";
 import { PageBreadcrumb } from "@/components/seo/page-breadcrumb";
 import { StandingsWidget } from "@/components/sidebar/standings-widget";
 import { BettingDisclaimer } from "@/components/apostas/betting-disclaimer";
+import { AffiliateDisclosure } from "@/components/cupons/affiliate-disclosure";
+import { CouponCopyLoader } from "@/components/article/coupon-copy";
 import { FaqSchema, RankingSchema } from "@/components/seo/faq-schema";
 
 type Standings = Awaited<ReturnType<typeof getBrasileiraoStandings>>;
@@ -232,9 +234,11 @@ export function ArticleView({
           }
         >
           {article.category === "Casas de Apostas" && <BettingDisclaimer className="mb-6" />}
+          {article.category === "Cupons" && <AffiliateDisclosure className="mb-6" />}
           <article className="prose-article" dangerouslySetInnerHTML={{ __html: bodyHtml }} />
           {bodyHtml.includes("instagram-media") && <InstagramEmbedLoader />}
           {bodyHtml.includes("twitter-tweet") && <TweetEmbedLoader />}
+          {bodyHtml.includes("pdb-coupon-copy") && <CouponCopyLoader />}
 
           {/* Tags */}
           {article.tags && article.tags.length > 0 && (

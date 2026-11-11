@@ -166,6 +166,7 @@ export const WP_CATEGORIES = [
   'Eliminatórias',
   'Futebol Brasileiro',
   'Casas de Apostas',
+  'Cupons',
 ] as const;
 
 // Slug de categoria pra URLs limpas (/noticias/brasileirao em vez de ?cat=Brasileirão).
@@ -237,6 +238,10 @@ export const CATEGORY_HUB: Record<string, string> = {
   "Futebol Brasileiro": "/futebol/brasileiro",
   // Apostas: o hub é /apostas (não /casas-de-apostas). Posts da categoria caem em /apostas/{slug}.
   "Casas de Apostas": "/apostas",
+  // Cupons: hub /cupons (página do /cms) com as páginas fixas por loja (/cupons/mercado-livre,
+  // /cupons/amazon, /cupons/shopee). Posts datados dos picos (11.11, Black Friday) caem em
+  // /cupons/{slug}. Categoria SILADA: não aparece na home nem em /noticias.
+  "Cupons": "/cupons",
 };
 
 // URL canônica de uma notícia (estilo ge.globo). Ordem: (1) hub próprio (CATEGORY_HUB),

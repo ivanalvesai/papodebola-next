@@ -242,6 +242,19 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     ...(a.image ? { images: [a.image.startsWith("http") ? a.image : `${BASE}${a.image}`] } : {}),
   }));
 
+  // Cupons — também SILADA: posts datados (/cupons/{slug}) entram por bloco próprio.
+  const { articles: couponArticles } = await getArticles({
+    perPage: 100,
+    category: "Cupons",
+  }).catch(() => ({ articles: [] }));
+  const couponPages: MetadataRoute.Sitemap = couponArticles.map((a) => ({
+    url: `${BASE}${a.url}`,
+    lastModified: a.updatedAt || a.pubDate ? new Date(a.updatedAt || a.pubDate) : now,
+    changeFrequency: "daily" as const,
+    priority: 0.5,
+    ...(a.image ? { images: [a.image.startsWith("http") ? a.image : `${BASE}${a.image}`] } : {}),
+  }));
+
   // Craques (cluster /futebol/craque/[slug]) — só os publicados. getArticles acima
   // já exclui a categoria, então não há entrada /artigos duplicada pro mesmo conteúdo.
   const craques = await getCraques().catch(() => []);
@@ -335,6 +348,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     ...selecaoMatchPages,
     ...articlePages,
     ...betPages,
+    ...couponPages,
     ...craquePages,
   ];
 }

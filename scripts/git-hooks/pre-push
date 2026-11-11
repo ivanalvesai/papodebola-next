@@ -1,0 +1,37 @@
+#!/bin/sh
+# pre-push: bloqueia push se o branch local estiver atras do remoto
+# Detecta o branch atual (master ou development) e compara com o remoto correspondente
+
+remote="$1"
+branch=$(git rev-parse --abbrev-ref HEAD)
+
+# Fetch silencioso; se falhar (offline), deixa passar
+git fetch "$remote" --quiet 2>/dev/null || exit 0
+
+# Verifica se o branch remoto existe
+if ! git rev-parse --verify "origin/$branch" >/dev/null 2>&1; then
+  exit 0
+fi
+
+behind=$(git rev-list --count "HEAD..origin/$branch" 2>/dev/null || echo 0)
+
+if [ "$behind" -gt 0 ]; then
+  echo ""
+  echo "================================================================="
+  echo "  PUSH BLOQUEADO - branch: $branch"
+  echo "================================================================="
+  echo ""
+  echo "  Seu branch local esta $behind commit(s) atras de origin/$branch."
+  echo "  Alguem editou no servidor (watcher dev) ou outro dev pushou."
+  echo ""
+  echo "  Rode:"
+  echo ""
+  echo "      git pull --rebase origin $branch"
+  echo ""
+  echo "  e tente o push novamente."
+  echo ""
+  echo "================================================================="
+  exit 1
+fi
+
+exit 0

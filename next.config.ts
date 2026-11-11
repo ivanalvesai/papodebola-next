@@ -41,6 +41,17 @@ const nextConfig: NextConfig = {
         source: "/studio-pdb/:path*",
         headers: [{ key: "X-Robots-Tag", value: "noindex, nofollow" }],
       },
+      // Escudos/fotos: o Google indexava essas URLs como página ("Indexada, mas bloqueada
+      // pelo robots.txt"). Rastreio liberado no robots.ts pra ele ler este noindex e tirar
+      // do índice — com Disallow ele nunca via o header.
+      {
+        source: "/api/team-img/:path*",
+        headers: [{ key: "X-Robots-Tag", value: "noindex" }],
+      },
+      {
+        source: "/api/player-img/:path*",
+        headers: [{ key: "X-Robots-Tag", value: "noindex" }],
+      },
     ];
   },
   async redirects() {

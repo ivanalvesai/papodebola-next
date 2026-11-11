@@ -20,6 +20,7 @@ import { snippetsCollection } from "@/cms/collections/snippets";
 import { pageTextsCollection } from "@/cms/collections/page-texts";
 import { usersCollection } from "@/cms/collections/users";
 import { siteSettingsGlobal } from "@/cms/globals/site-settings";
+import { promoBannersCollection } from "@/cms/collections/promo-banners";
 import { adminOnly, anyLogged, editorOrAdmin, hiddenUnlessEditor, publishedOrLogged, seoOrEditorOrAdmin } from "@/cms/lib/access";
 import { lockFieldsExceptSeo } from "@/cms/lib/lock-fields";
 import { formBuilderPlugin } from "@payloadcms/plugin-form-builder";
@@ -533,6 +534,50 @@ const richTextEditor = lexicalEditor({
                       { name: "consTitle", type: "text", label: "Título dos contras", defaultValue: "Desvantagens" },
                       { name: "cons", type: "array", label: "Contras", fields: [{ name: "item", type: "text" }] },
                       { name: "cor", type: "select", label: "Cor do card", defaultValue: "verde", options: [{ label: "Verde (padrão)", value: "verde" }, { label: "Azul", value: "azul" }, { label: "Vermelho", value: "vermelho" }, { label: "Dourado", value: "dourado" }, { label: "Roxo", value: "roxo" }, { label: "Escuro", value: "escuro" }] },
+                    ],
+                  },
+                  // Cupom de desconto (páginas /cupons/*): loja + oferta + código copiável +
+                  // botão pro link de afiliado (rel=sponsored). Sem link E sem código o
+                  // card não aparece no site (modelo/placeholder nunca vaza).
+                  {
+                    slug: "coupon",
+                    labels: { singular: "Cupom de desconto", plural: "Cupons de desconto" },
+                    fields: [
+                      { name: "store", type: "select", label: "Loja", defaultValue: "mercadolivre", options: [{ label: "Mercado Livre", value: "mercadolivre" }, { label: "Amazon", value: "amazon" }, { label: "Shopee", value: "shopee" }, { label: "Outra", value: "outra" }] },
+                      { name: "storeName", type: "text", label: "Nome da loja", admin: { description: "Só quando a loja é 'Outra'.", condition: (_: unknown, s: { store?: string } | undefined) => s?.store === "outra" } },
+                      { name: "title", type: "text", required: true, label: "Oferta", admin: { description: 'Ex.: "R$ 30 OFF em compras acima de R$ 199"' } },
+                      { name: "code", type: "text", label: "Código do cupom", admin: { description: "Vazio = desconto aplicado direto pelo link." } },
+                      { name: "details", type: "textarea", label: "Regras / condições", admin: { description: "Ex.: Válido para a 1ª compra no app. Limite de 1 uso por CPF." } },
+                      { name: "validUntil", type: "text", label: "Validade", admin: { description: 'Ex.: "até 11/11, 23h59"' } },
+                      { name: "url", type: "text", label: "Link de afiliado", admin: { description: "Link completo da loja com o seu ID de afiliado." } },
+                      { name: "buttonLabel", type: "text", label: "Texto do botão", defaultValue: "Ir para a loja" },
+                    ],
+                  },
+                  // Vitrine de produtos (afiliado): grade "Nossas escolhas" com foto, etiqueta,
+                  // nota e botão "Ver na Amazon/Mercado Livre/Shopee" (rel=sponsored). Sem preço
+                  // fixo de propósito (preço muda a toda hora; regra do Associados da Amazon).
+                  {
+                    slug: "productGrid",
+                    labels: { singular: "Vitrine de produtos", plural: "Vitrines de produtos" },
+                    fields: [
+                      { name: "title", type: "text", label: "Título da faixa", defaultValue: "Nossas escolhas" },
+                      { name: "columns", type: "select", label: "Colunas (computador)", defaultValue: "3", options: [{ label: "2", value: "2" }, { label: "3", value: "3" }] },
+                      {
+                        name: "items",
+                        type: "array",
+                        label: "Produtos",
+                        fields: [
+                          { name: "badge", type: "text", label: "Etiqueta", admin: { description: 'Ex.: "Mais vendido", "Pré-venda", "Melhor custo-benefício"' } },
+                          { name: "name", type: "text", required: true, label: "Nome do produto" },
+                          { name: "imageUrl", type: "text", label: "Imagem (URL)", admin: { description: "URL da foto do produto (ex.: m.media-amazon.com/...)." } },
+                          { name: "note", type: "textarea", label: "Destaque (1-2 linhas)" },
+                          { name: "rating", type: "text", label: "Nota", admin: { description: 'Ex.: "4,8"' } },
+                          { name: "reviews", type: "text", label: "Nº de avaliações", admin: { description: 'Ex.: "18.425"' } },
+                          { name: "tag", type: "text", label: "Selo extra", admin: { description: 'Ex.: "Cupom de R$ 250" ou "-48%"' } },
+                          { name: "store", type: "select", label: "Loja", defaultValue: "amazon", options: [{ label: "Amazon", value: "amazon" }, { label: "Mercado Livre", value: "mercadolivre" }, { label: "Shopee", value: "shopee" }] },
+                          { name: "url", type: "text", label: "Link de afiliado" },
+                        ],
+                      },
                     ],
                   },
                 ],
@@ -1252,6 +1297,7 @@ export default buildConfig({
         },
       ],
     },
+    promoBannersCollection,
     // Usuários por último: o painel ordena os grupos pela 1ª coleção de cada um
     // (Conteúdo / Futebol / Comercial / Sistema).
     usersCollection,

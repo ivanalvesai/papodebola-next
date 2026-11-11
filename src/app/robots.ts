@@ -7,7 +7,9 @@ export default function robots(): MetadataRoute.Robots {
     rules: [
       {
         userAgent: "*",
-        allow: "/",
+        // Escudos/fotos ficam rastreáveis (regra mais longa vence o Disallow /api/) pra o
+        // Google ler o X-Robots-Tag: noindex do next.config e desindexar essas URLs.
+        allow: ["/", "/api/team-img/", "/api/player-img/"],
         // "/*_rsc=" bloqueia os requests internos de RSC/prefetch do Next (?_rsc=... e
         // &_rsc=...). Não são páginas — o Google já os ignora, mas o bloqueio evita que
         // crawlers/ferramentas (ex: Screaming Frog) desperdicem budget: numa auditoria de
@@ -16,7 +18,7 @@ export default function robots(): MetadataRoute.Robots {
         // "/parceiro/" são redirects de saída pra patrocinadores (link rastreado); não são
         // páginas indexáveis e não devem passar autoridade pro site do parceiro (par com o
         // rel="sponsored" dos links). Bloquear evita que o Google siga o redirect.
-        disallow: ["/painel-pdb-9x/", "/admin/", "/api/", "/parceiro/", "/*_rsc="],
+        disallow: ["/painel-pdb-9x/", "/admin/", "/api/", "/parceiro/", "/oferta/", "/*_rsc="],
       },
     ],
     sitemap: [`${BASE}/sitemap.xml`, `${BASE}/news-sitemap.xml`],

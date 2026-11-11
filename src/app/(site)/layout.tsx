@@ -4,6 +4,7 @@ import { Open_Sans } from "next/font/google";
 import "./globals.css";
 import { Header } from "@/components/layout/header";
 import { MainNav } from "@/components/layout/main-nav";
+import { PromoBanner } from "@/components/layout/promo-banner";
 import { SidePanelLoader } from "@/components/layout/side-panel-loader";
 import { Footer } from "@/components/layout/footer";
 import { CookieConsent } from "@/components/layout/cookie-consent";
@@ -122,6 +123,8 @@ export default function RootLayout({
           <SidePanelProvider>
             <Header />
             <MainNav />
+            {/* Banner promocional (11.11, Black Friday...): /cms → Banners promocionais */}
+            <PromoBanner />
             <SidePanelLoader />
             <main className="flex-1">{children}</main>
             <Footer />
