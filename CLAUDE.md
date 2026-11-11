@@ -736,7 +736,7 @@ Doc completo: `docs/knowledge/2026-06-20-studio-kanbans.md`. Navegação compart
 - **Banner global** abaixo do menu: collection `promoBanners` (/cms → Comercial); sem `url` não aparece (`?banner=preview` pra testar); clique em `/oferta/{slug}` (conta e redireciona). `/api/promo-banners` sai vazio do build → revalidar o path após deploy.
 - **Categoria `Cupons` silada** (fora da home/noticias), posts em `/cupons/{slug}`; aviso de afiliado no FIM do post (frase "Como Associado da Amazon..." é obrigatória). Amazon: ID de rastreamento **`pap0debola-20`** (com zero).
 - **Bloco "Vitrine de produtos"** (`productGrid`, Lexical, sem migração): cards com foto, etiqueta, nota, preço/riscado, selo e botão "Ver na Amazon". Preço exige `priceDate` (aviso de consulta).
-- **Relógio do servidor ~8 min atrasado** (NTP off) → agendamentos saem atrasados.
+- **Relógio do servidor** estava ~8 min atrasado (sem NTP); corrigido em 11/11 com `systemd-timesyncd` (`timedatectl`: synchronized yes, NTP active).
 - Doc: `docs/knowledge/2026-11-10-post-cupom-amazon-11-11.md`.
 
 ## Analytics e Tags
