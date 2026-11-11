@@ -226,6 +226,31 @@ const lexicalConverters: any = ({ defaultConverters }: any) => ({
       const cls = f.style === "outline" ? "pdb-cta-outline" : "pdb-cta-primary";
       return `<a class="pdb-cta ${cls} ${themeClass(f.cor)}" href="${escAttr(f.url)}" target="_blank" rel="sponsored nofollow noopener">${escHtml(f.label)}</a>`;
     },
+    // Vitrine de produtos (afiliado): grade com foto, etiqueta, nota e botão da loja.
+    // Produto sem link não aparece (nunca sai card sem destino).
+    productGrid: ({ node }: any) => {
+      const f = node?.fields || {};
+      const STORE: Record<string, string> = { amazon: "Amazon", mercadolivre: "Mercado Livre", shopee: "Shopee" };
+      const items = (f.items || []).filter((it: any) => it?.name && safeUrl(it?.url));
+      if (!items.length) return "";
+      const cells = items.map((it: any) => {
+        const store = STORE[it.store] ? it.store : "amazon";
+        const href = escAttr(safeUrl(it.url));
+        const img = safeUrl(it.imageUrl)
+          ? `<img class="pdb-pg-img" src="${escAttr(safeUrl(it.imageUrl))}" alt="${escAttr(it.name)}" loading="lazy" width="160" height="160" />`
+          : "";
+        const badge = it.badge ? `<span class="pdb-pg-badge">${escHtml(it.badge)}</span>` : "";
+        const tag = it.tag ? `<span class="pdb-pg-tag">${escHtml(it.tag)}</span>` : "";
+        const rating = it.rating
+          ? `<div class="pdb-pg-rating"><span class="pdb-pg-stars">&#9733;</span> ${escHtml(it.rating)}${it.reviews ? ` <span class="pdb-pg-reviews">(${escHtml(it.reviews)} avaliações)</span>` : ""}</div>`
+          : "";
+        const note = it.note ? `<p class="pdb-pg-note">${escHtml(it.note)}</p>` : "";
+        const prep = store === "mercadolivre" ? "no" : "na";
+        return `<div class="pdb-pg-cell">${badge}<a class="pdb-pg-imgwrap" href="${href}" target="_blank" rel="sponsored nofollow noopener">${img}${tag}</a><div class="pdb-pg-name">${escHtml(it.name)}</div>${rating}${note}<a class="pdb-pg-btn pdb-pg-${store}" href="${href}" target="_blank" rel="sponsored nofollow noopener">Ver ${prep} <span class="pdb-pg-store">${escHtml(STORE[store])}</span></a></div>`;
+      }).join("");
+      const cols = f.columns === "2" ? "2" : "3";
+      return `<div class="pdb-pg pdb-pg-cols-${cols}"><div class="pdb-pg-head"><span class="pdb-pg-check">&#10003;</span>${escHtml(f.title || "Nossas escolhas")}</div><div class="pdb-pg-grid">${cells}</div></div>`;
+    },
     // Cupom de desconto (/cupons/*): sem link E sem código não renderiza (modelo vazio
     // nunca vaza pro site). Botão "Copiar" é ligado pelo CouponCopyLoader (client).
     coupon: ({ node }: any) => {

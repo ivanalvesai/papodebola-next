@@ -553,6 +553,33 @@ const richTextEditor = lexicalEditor({
                       { name: "buttonLabel", type: "text", label: "Texto do botão", defaultValue: "Ir para a loja" },
                     ],
                   },
+                  // Vitrine de produtos (afiliado): grade "Nossas escolhas" com foto, etiqueta,
+                  // nota e botão "Ver na Amazon/Mercado Livre/Shopee" (rel=sponsored). Sem preço
+                  // fixo de propósito (preço muda a toda hora; regra do Associados da Amazon).
+                  {
+                    slug: "productGrid",
+                    labels: { singular: "Vitrine de produtos", plural: "Vitrines de produtos" },
+                    fields: [
+                      { name: "title", type: "text", label: "Título da faixa", defaultValue: "Nossas escolhas" },
+                      { name: "columns", type: "select", label: "Colunas (computador)", defaultValue: "3", options: [{ label: "2", value: "2" }, { label: "3", value: "3" }] },
+                      {
+                        name: "items",
+                        type: "array",
+                        label: "Produtos",
+                        fields: [
+                          { name: "badge", type: "text", label: "Etiqueta", admin: { description: 'Ex.: "Mais vendido", "Pré-venda", "Melhor custo-benefício"' } },
+                          { name: "name", type: "text", required: true, label: "Nome do produto" },
+                          { name: "imageUrl", type: "text", label: "Imagem (URL)", admin: { description: "URL da foto do produto (ex.: m.media-amazon.com/...)." } },
+                          { name: "note", type: "textarea", label: "Destaque (1-2 linhas)" },
+                          { name: "rating", type: "text", label: "Nota", admin: { description: 'Ex.: "4,8"' } },
+                          { name: "reviews", type: "text", label: "Nº de avaliações", admin: { description: 'Ex.: "18.425"' } },
+                          { name: "tag", type: "text", label: "Selo extra", admin: { description: 'Ex.: "Cupom de R$ 250" ou "-48%"' } },
+                          { name: "store", type: "select", label: "Loja", defaultValue: "amazon", options: [{ label: "Amazon", value: "amazon" }, { label: "Mercado Livre", value: "mercadolivre" }, { label: "Shopee", value: "shopee" }] },
+                          { name: "url", type: "text", label: "Link de afiliado" },
+                        ],
+                      },
+                    ],
+                  },
                 ],
               }),
             ],
