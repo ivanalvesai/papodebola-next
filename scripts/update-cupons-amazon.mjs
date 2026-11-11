@@ -158,6 +158,12 @@ try {
   if (first < 0) throw new Error("nenhum cupom Amazon (modelo) para substituir");
   const removed = kids.filter(isAmazonCoupon).length;
   const rest = kids.filter((n) => !isAmazonCoupon(n));
+  // Texto antigo ("enquanto a lista do dia é montada") não faz mais sentido com os cards.
+  for (const n of rest) for (const c of n.children || []) {
+    if (typeof c.text === "string" && c.text.startsWith("Enquanto a lista do dia é montada")) {
+      c.text = "Além dos cupons por categoria abaixo, você pode ver todos os cupons ativos e as ofertas da Black Friday direto na Amazon:";
+    }
+  }
   const cards = GROUPS.map(couponCard);
   rest.splice(first, 0, ...cards);
   rt.content.root.children = rest;
