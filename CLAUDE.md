@@ -738,6 +738,8 @@ Doc completo: `docs/knowledge/2026-06-20-studio-kanbans.md`. Navegação compart
 - **Bloco "Vitrine de produtos"** (`productGrid`, Lexical, sem migração): cards com foto, etiqueta, nota, preço/riscado, selo e botão "Ver na Amazon". Preço exige `priceDate` (aviso de consulta).
 - **Relógio do servidor** estava ~8 min atrasado (sem NTP); corrigido em 11/11 com `systemd-timesyncd` (`timedatectl`: synchronized yes, NTP active).
 - Doc: `docs/knowledge/2026-11-10-post-cupom-amazon-11-11.md`.
+- **Cupom em formato de ticket (11/11):** bloco `coupon` ganhou `headline`, `value` e `offers[]` (mini-cupons clicáveis). `/cupons/amazon` (pág. 28) e `/cupons/shopee` (pág. 29) **publicadas**, largura **wide** (1240px) e aviso de afiliado (`note`) **no fim**. `/cupons/mercado-livre` segue rascunho.
+- **API de afiliados da Shopee:** GraphQL `open-api.affiliate.shopee.com.br/graphql`, assinatura SHA256(AppID+ts+payload+secret); credencial **fora do repo** (arquivo na área de trabalho do Ivan). `generateShortLink` com subId **só alfanumérico** (`cuponsshopee`); `productOfferV2` com IDs inline. Scripts `scripts/update-cupons-shopee.mjs` / `publish-cupons-*.mjs`. Doc: `docs/knowledge/2026-11-11-cupons-ticket-amazon-shopee.md`.
 
 ## Analytics e Tags
 
