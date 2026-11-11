@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import type { PromoBanner } from "@/lib/data/promo-banners";
+import { track } from "@/lib/analytics";
 
 // Lado do navegador do banner promocional:
 //  - confere início/fim pela hora do visitante (a página pode estar em cache);
@@ -55,7 +56,12 @@ export function PromoBannerClient({ banners, initialSlug }: { banners: PromoBann
         href={linked ? `/oferta/${encodeURIComponent(b.slug)}` : "#"}
         target={linked ? "_blank" : undefined}
         rel="sponsored nofollow noopener"
-        onClick={linked ? undefined : (e) => e.preventDefault()}
+        onClick={linked ? () => track("promo_banner_click", { banner: b.slug }) : (e) => e.preventDefault()}
+        // Umami (analytics.vetormedia.com): o clique vira o evento "banner-promocional"
+        // com a propriedade banner={slug}. A ida pra loja passa por /oferta/{slug}
+        // (redirect no servidor), que o Umami não enxerga como visita.
+        data-umami-event={linked ? "banner-promocional" : undefined}
+        data-umami-event-banner={linked ? b.slug : undefined}
         className="relative block overflow-hidden rounded-xl shadow-sm"
         aria-label={b.alt}
       >
