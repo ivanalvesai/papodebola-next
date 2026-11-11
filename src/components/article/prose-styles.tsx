@@ -494,6 +494,10 @@ export function ProseStyles() {
         .prose-article .pdb-pg-rating { font-size: 13px; font-weight: 700; color: #1A1D23; }
         .prose-article .pdb-pg-stars { color: #f5a623; }
         .prose-article .pdb-pg-reviews { font-weight: 400; color: #6b7280; }
+        .prose-article .pdb-pg-price { display: flex; flex-wrap: wrap; align-items: baseline; gap: 6px; }
+        .prose-article .pdb-pg-now { font-size: 20px; font-weight: 800; color: #00965E; }
+        .prose-article .pdb-pg-old { font-size: 13px; color: #9ca3af; }
+        .prose-article p.pdb-pg-pricedate { margin: 0 !important; padding: 10px 16px; font-size: 12px; line-height: 1.5; color: #6b7280; background: #fafafa; }
         .prose-article p.pdb-pg-note { font-size: 14px; line-height: 1.5; color: #555; margin: 0 !important; }
         .prose-article a.pdb-pg-btn { margin-top: auto; display: inline-flex; align-items: center; justify-content: center; gap: 6px; padding: 9px 14px; border-radius: 999px;
           font-size: 14px; font-weight: 700; text-decoration: none !important; background: #14110a; color: #fff !important; border: 2px solid #14110a; }

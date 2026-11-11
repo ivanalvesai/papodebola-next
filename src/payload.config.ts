@@ -561,6 +561,7 @@ const richTextEditor = lexicalEditor({
                     labels: { singular: "Vitrine de produtos", plural: "Vitrines de produtos" },
                     fields: [
                       { name: "title", type: "text", label: "Título da faixa", defaultValue: "Nossas escolhas" },
+                      { name: "priceDate", type: "text", label: "Preço consultado em", admin: { description: 'Ex.: "11/11/2026, 00h30". Aparece abaixo da vitrine (exigência da Amazon pra mostrar preço).' } },
                       { name: "columns", type: "select", label: "Colunas (computador)", defaultValue: "3", options: [{ label: "2", value: "2" }, { label: "3", value: "3" }] },
                       {
                         name: "items",
@@ -574,6 +575,8 @@ const richTextEditor = lexicalEditor({
                           { name: "rating", type: "text", label: "Nota", admin: { description: 'Ex.: "4,8"' } },
                           { name: "reviews", type: "text", label: "Nº de avaliações", admin: { description: 'Ex.: "18.425"' } },
                           { name: "tag", type: "text", label: "Selo extra", admin: { description: 'Ex.: "Cupom de R$ 250" ou "-48%"' } },
+                          { name: "price", type: "text", label: "Preço", admin: { description: 'Ex.: "R$ 3.799,00". Atualize junto com "Preço consultado em".' } },
+                          { name: "oldPrice", type: "text", label: "Preço anterior (riscado)", admin: { description: "Opcional." } },
                           { name: "store", type: "select", label: "Loja", defaultValue: "amazon", options: [{ label: "Amazon", value: "amazon" }, { label: "Mercado Livre", value: "mercadolivre" }, { label: "Shopee", value: "shopee" }] },
                           { name: "url", type: "text", label: "Link de afiliado" },
                         ],
