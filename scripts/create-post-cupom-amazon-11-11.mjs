@@ -29,6 +29,32 @@ const FAQ = (items) => BLOCK("faq", { title: "Perguntas frequentes", firstOpen: 
 
 // ── produtos (links SiteStripe, tag pap0debola-20) ──
 const link = (asin, linkId) => `https://www.amazon.com.br/dp/${asin}?&linkCode=ll2&tag=pap0debola-20&linkId=${linkId}&ref_=as_li_ss_tl`;
+
+// Cupons do dia (amazon.com.br/blackfriday/2 → /promotion/psp/{ID}), conferidos em 11/11 ~11h.
+const psp = (id) => `https://www.amazon.com.br/promotion/psp/${id}?tag=pap0debola-20`;
+const CUPONS_HOJE = BLOCK("coupon", {
+  store: "amazon", storeName: "", headline: "Cupons liberados", value: "Até 50% OFF",
+  title: "Cupons Amazon de hoje: os destaques do 11.11",
+  code: "",
+  details: 'Sem código: o desconto entra no fechamento do pedido. "Só no app" vale apenas no app da Amazon; "Prime" é só para assinantes. Conferidos em 11/11/2026, às 11h.',
+  validUntil: "Futebol, smartphones, smartwatches e moda internacional só hoje (11/11); demais até 18/11, 27/11 ou 30/11",
+  url: "https://www.amazon.com.br/blackfriday/2?tag=pap0debola-20",
+  buttonLabel: "Ver todos os cupons na Amazon",
+  offers: [
+    ["Futebol", "40%", "Prime · só hoje", "AASC2PA0ENBIF"],
+    ["Construção", "50%", "Só no app", "A9Y0D8LUCLXG9"],
+    ["Itens automotivos", "50%", "Só no app", "AF5TE5EMUNIGL"],
+    ["Compre 6 itens", "30%", "Prime · a partir de R$ 10", "ASUP97JVXDHOH"],
+    ["Moda internacional", "30%", "Prime · só hoje", "AFBFIOGRZ1X1O"],
+    ["Corrida", "20%", "Prime · no app", "A8ENSC6UJU4JI"],
+    ["Esportes", "20%", "Só no app", "A23PV8R1LRW57"],
+    ["Fitness", "20%", "Só no app", "A169PKD5RUI3VN"],
+    ["Acessórios tech", "20%", "Só no app", "A3RAFMZYAMURGY"],
+    ["Smartwatches", "15%", "Só hoje", "A3IBQIGHXLT1O2"],
+    ["Brinquedos e jogos", "15%", "Só no app", "A2IMN4MJLBWNZG"],
+    ["Smartphones", "10%", "Só hoje", "A1T164EH8D9D88"],
+  ].map(([label, value, note, id]) => ({ label, value, note, code: "", url: psp(id) })),
+});
 const img = (id) => `https://m.media-amazon.com/images/I/${id}._AC_SL500_.jpg`;
 const PRICES = {"B0H6KT2RWH": ["R$ 418,40", ""], "B0FPGF9J2J": ["R$ 3.719,90", ""], "B0F8R9NDXC": ["R$ 4.184,90", ""], "B0CQKKHT5J": ["R$ 399,00", ""], "B0HGGNZY3Y": ["R$ 305,58", ""], "B0HCRPPXB1": ["R$ 2.279,05", ""], "B0FYRDJ4GJ": ["R$ 1.459,99", ""], "B0DMQKNPR8": ["R$ 1.899,99", ""], "B0DD81K7V7": ["R$ 3.732,55", ""], "B09WR8L93B": ["R$ 1.151,10", ""], "B0G4MTMHF5": ["R$ 399,90", ""], "B0GQWJK3SG": ["R$ 68,30", ""], "B0CDQGYL23": ["R$ 189,90", "R$ 399,99"], "B0GTBYTK7P": ["R$ 239,00", "R$ 279,99"], "B0DHL93XCN": ["R$ 246,92", ""], "B0CVCLGV1W": ["R$ 185,25", ""], "B0FN5DD149": ["R$ 129,00", ""], "B00M3IFUMK": ["R$ 163,29", ""], "B0GQJM9NJK": ["R$ 4.844,05", ""], "B0BCFKG49M": ["R$ 169,99", ""], "B09B8VGCR8": ["R$ 349,00", ""], "B0CFPL6CFY": ["R$ 1.034,10", ""]};
 const prod = (asin, linkId, imgId, name, { badge = "", note = "", rating = "", reviews = "", tag = "" } = {}) => ({
@@ -81,11 +107,12 @@ const TECH = [
 const content = RT(
   P("O 11.11 chegou e a Amazon abriu a temporada de descontos antes da Black Friday. Separamos os produtos que valem a pena olhar hoje, ", B("11 de novembro de 2026"), ", com destaque para a pré-venda de GTA 6, consoles PS5, Smart TVs, impressoras 3D e itens de futebol."),
   P("Os preços dos cards foram conferidos na madrugada do 11.11. Na Amazon o valor muda várias vezes no mesmo dia e o cupom pode acabar antes do fim da tarde, então toque em ", B("Ver na Amazon"), " para ver o preço atualizado e se o cupom ainda está ativo."),
+  CUPONS_HOJE,
   H("h2", "GTA 6 na Amazon: pré-venda e cupom de hoje"),
   P("O lançamento mais esperado do ano está marcado para ", B("19 de novembro"), ". Na Amazon dá para reservar só o jogo ou levar o combo com o PS5 Slim Digital, que hoje aparece com ", B("cupom de R$ 250"), " na página do produto."),
   GRID("GTA 6 em destaque", [GTA, BUNDLE], "2"),
   BLOCK("coupon", {
-    store: "amazon", storeName: "", title: "R$ 250 de desconto no combo PS5 Slim Digital + GTA VI",
+    store: "amazon", storeName: "", headline: "Cupom liberado", value: "R$ 250 OFF", title: "R$ 250 de desconto no combo PS5 Slim Digital + GTA VI",
     code: "", details: "Cupom aplicado pela própria página do produto: marque a caixa do cupom antes de colocar no carrinho. Válido enquanto a Amazon mantiver a oferta.",
     validUntil: "11/11/2026 ou enquanto durar", url: BUNDLE.url, buttonLabel: "Ativar cupom na Amazon",
   }),
