@@ -1,6 +1,7 @@
 import { fetchAllSports } from "@/lib/api/allsports";
 import { TOURNAMENT_BY_SLUG } from "@/lib/config";
 import { translateStatus } from "@/lib/translations";
+import { translateCountry } from "@/lib/i18n/countries";
 import { getStandings } from "./standings";
 import { withSnapshot } from "./snapshot-store";
 import { isChampionshipRegression } from "@/lib/snapshot-guards";
@@ -66,11 +67,12 @@ function roundMatchesPath(id: number, seasonId: number, ref: RoundRef): string {
     : `tournament/${id}/season/${seasonId}/matches/round/${ref.round}`;
 }
 
-function normalizeMatch(event: any, round: number): ChampionshipMatch {
+// tr: torneio de seleções (Liga das Nações) traduz o nome pra PT-BR; clubes passam direto.
+function normalizeMatch(event: any, round: number, tr: (n: string) => string = (n) => n): ChampionshipMatch {
   return {
     id: event.id,
-    home: event.homeTeam?.name || "",
-    away: event.awayTeam?.name || "",
+    home: tr(event.homeTeam?.name || ""),
+    away: tr(event.awayTeam?.name || ""),
     homeId: event.homeTeam?.id || 0,
     awayId: event.awayTeam?.id || 0,
     homeScore: event.homeScore?.current ?? null,
@@ -175,7 +177,11 @@ async function fetchChampionshipDataLive(
     : Array.from({ length: 38 }, (_, i) => ({ key: String(i + 1), round: i + 1, label: `Rodada ${i + 1}`, knockout: false }));
 
   // Fetch standings (pode ter N grupos — Série D tem 16)
-  const standings = await getStandings(id, seasonId, 21600);
+  const tr = TOURNAMENT_BY_SLUG[slug]?.nationalTeams ? translateCountry : (n: string) => n;
+  const standings = (await getStandings(id, seasonId, 21600)).map((g) => ({
+    ...g,
+    rows: g.rows.map((r) => ({ ...r, team: tr(r.team) })),
+  }));
 
   // Rodada corrente REAL: alguns feeds devolvem currentRound.round DEFASADO — ex.: Série A
   // 2026 voltou currentRound=4 com a tabela já em J=18, e só as rodadas 1..5 carregavam
@@ -214,7 +220,7 @@ async function fetchChampionshipDataLive(
   const matchesByRound: Record<string, ChampionshipMatch[]> = {};
   for (const { ref, data } of roundData) {
     if (data?.events?.length) {
-      matchesByRound[ref.key] = data.events.map((e: any) => normalizeMatch(e, ref.round));
+      matchesByRound[ref.key] = data.events.map((e: any) => normalizeMatch(e, ref.round, tr));
     }
   }
 

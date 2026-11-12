@@ -12,6 +12,7 @@ export const DEDICATED_PAGE_ROUTES: Record<string, string> = {
   "jogos-de-hoje-futebol": "/jogos-de-hoje/futebol", // blocos dinâmicos
   "santana-de-parnaiba-municipal": "/sp/santana-de-parnaiba/municipal", // rodapé do municipal
   "copa-do-mundo-feminina": "/futebol/copa-do-mundo-feminina", // hub + SEO da página CMS
+  "liga-das-nacoes": "/futebol/futebol-internacional/liga-das-nacoes", // hub + textos/SEO da página CMS
 };
 
 export function dedicatedPageRoute(slug: string): string | null {

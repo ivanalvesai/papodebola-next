@@ -6,7 +6,7 @@ import { getArticles } from "@/lib/data/articles";
 import { getTodayFootballByLeague } from "@/lib/data/matches";
 import { PageBreadcrumb } from "@/components/seo/page-breadcrumb";
 import { MatchCarousel } from "@/components/match-bar/match-carousel";
-import { TOURNAMENTS } from "@/lib/config";
+import { TOURNAMENTS, champPath } from "@/lib/config";
 import type { MatchBarCardProps } from "@/components/match-bar/match-bar-card";
 import type { NormalizedMatch } from "@/types/match";
 import { buildMetadata } from "@/lib/seo/build-metadata";
@@ -28,7 +28,7 @@ const SLUG_BY_ID = new Map(Object.values(TOURNAMENTS).map((t) => [t.id, t.slug])
 function leagueHref(id: number): string | undefined {
   if (id === 16) return "/futebol/copa-do-mundo";
   const slug = SLUG_BY_ID.get(id);
-  return slug ? `/futebol/${slug}` : undefined;
+  return slug ? champPath(slug) : undefined;
 }
 
 function toCard(m: NormalizedMatch): MatchBarCardProps {
@@ -97,7 +97,7 @@ export default async function FutebolPage() {
             .map((t) => (
               <Link
                 key={t.slug}
-                href={`/futebol/${t.slug}`}
+                href={champPath(t.slug)}
                 className="rounded-lg border border-border-custom bg-card-bg px-3 py-2.5 text-sm font-semibold text-text-primary transition-colors hover:border-green hover:text-green"
               >
                 {t.name}

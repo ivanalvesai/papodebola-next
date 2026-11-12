@@ -1,4 +1,4 @@
-import { TOURNAMENTS, SPORTS, ALL_CLUSTER_TEAMS } from "@/lib/config";
+import { TOURNAMENTS, SPORTS, ALL_CLUSTER_TEAMS, champPath } from "@/lib/config";
 
 // /llms.txt — guia legível por agentes de IA (padrão llmstxt.org). Aponta as
 // seções de maior valor do portal pra facilitar extração/citação. Gerado a
@@ -10,7 +10,7 @@ const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || "https://www.papodebola.com
 export async function GET() {
   const champs = Object.values(TOURNAMENTS)
     .filter((t) => t.seasonId)
-    .map((t) => `- [${t.name}](${SITE_URL}/futebol/${t.slug}): classificação, rodadas e jogos`)
+    .map((t) => `- [${t.name}](${SITE_URL}${champPath(t.slug)}): classificação, rodadas e jogos`)
     .join("\n");
 
   const teams = ALL_CLUSTER_TEAMS.map(

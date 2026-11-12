@@ -174,6 +174,15 @@ export function SidePanel() {
 
         <div className="border-b border-border-custom">
           <div className="px-5 py-2.5 text-xs font-bold text-text-primary uppercase tracking-wider bg-body">
+            Futebol internacional
+          </div>
+          <Link href="/futebol/futebol-internacional/liga-das-nacoes" onClick={close} className="block px-5 py-2.5 text-sm text-text-secondary hover:bg-green-light hover:text-green transition-colors">
+            Liga das Nações
+          </Link>
+        </div>
+
+        <div className="border-b border-border-custom">
+          <div className="px-5 py-2.5 text-xs font-bold text-text-primary uppercase tracking-wider bg-body">
             Europa
           </div>
           <Link href="/futebol/champions-league" onClick={close} className="block px-5 py-2.5 text-sm text-text-secondary hover:bg-green-light hover:text-green transition-colors">

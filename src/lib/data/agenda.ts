@@ -3,7 +3,7 @@ import { translateStatus } from "@/lib/translations";
 import { translateCountry } from "@/lib/i18n/countries";
 import { SELECAO_BY_ID } from "@/lib/selecoes";
 import { worldCupMatchHref } from "@/lib/world-cup-match-url";
-import { TOURNAMENTS, TOURNAMENT_BY_SLUG } from "@/lib/config";
+import { TOURNAMENTS, TOURNAMENT_BY_SLUG, champPath } from "@/lib/config";
 import {
   getWorldCupFixtures,
   getMatchEvent,
@@ -111,7 +111,7 @@ function normalize(event: any, sportSlug: string): AgendaEvent {
     href = worldCupMatchHref(event.startTimestamp || 0, homeId, awayId, homeName, awayName);
   } else if (sportSlug === "futebol") {
     const slug = FUTEBOL_SLUG_BY_ID.get(leagueId);
-    if (slug) href = `/futebol/${slug}`;
+    if (slug) href = champPath(slug);
   } else if (sportSlug) {
     href = `/${sportSlug}`;
   }
@@ -162,9 +162,12 @@ const FOOTBALL_AGENDA_CHAMPS = [
   "serie-a-italia",
   "bundesliga",
   "ligue-1",
+  // Seleções (UEFA): Liga das Nações — datas FIFA (set/out/nov), mesma política de TTL da Europa.
+  "liga-das-nacoes",
 ];
 
 const EUROPE_AGENDA_CHAMPS = new Set([
+  "liga-das-nacoes",
   "champions-league",
   "europa-league",
   "premier-league",
@@ -236,7 +239,7 @@ function rawFootballEventToAgenda(e: any, league: string, slug: string): AgendaE
     statusType,
     time: hhmm(ts),
     timestamp: ts,
-    href: homeId && awayId && ts ? championshipMatchHref(slug, ts, homeId, awayId, home, away) : `/futebol/${slug}`,
+    href: homeId && awayId && ts ? championshipMatchHref(slug, ts, homeId, awayId, home, away) : champPath(slug),
   };
 }
 

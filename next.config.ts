@@ -92,6 +92,11 @@ const nextConfig: NextConfig = {
       // copa-do-brasil) já resolvem sozinhos.
       { source: "/futebol/brasileirao", destination: "/futebol/brasileirao-serie-a", permanent: true },
       { source: "/futebol/internacional", destination: "/noticias/futebol-internacional", permanent: true },
+      // Liga das Nações: hub aninhado (champPath). /futebol/futebol-internacional sem page própria
+      // vai pras notícias; /futebol/liga-das-nacoes(/jogo/...) cairia no [slug] genérico.
+      { source: "/futebol/futebol-internacional", destination: "/noticias/futebol-internacional", permanent: true },
+      { source: "/futebol/liga-das-nacoes", destination: "/futebol/futebol-internacional/liga-das-nacoes", permanent: true },
+      { source: "/futebol/liga-das-nacoes/:path*", destination: "/futebol/futebol-internacional/liga-das-nacoes/:path*", permanent: true },
       { source: "/futebol/mercado-da-bola", destination: "/noticias/mercado-da-bola", permanent: true },
       { source: "/futebol/eliminatorias", destination: "/noticias/eliminatorias", permanent: true },
       { source: "/futebol/brasileiro", destination: "/noticias/futebol-brasileiro", permanent: true },

@@ -144,6 +144,17 @@ export function MainNav() {
                       </Link>
                     </li>
                   ))}
+                  <li><div className="my-1 border-t border-border-custom" /></li>
+                  <li className="px-2 pb-0.5 pt-1 text-xs font-bold uppercase tracking-wide text-text-muted">Futebol internacional</li>
+                  {[
+                    { label: "Liga das Nações", href: "/futebol/futebol-internacional/liga-das-nacoes" },
+                  ].map((l) => (
+                    <li key={l.href}>
+                      <Link href={l.href} prefetch={false} onClick={() => setOpenDropdown(null)} className="block py-1.5 px-2 text-sm text-text-secondary hover:text-green hover:bg-green-light rounded transition-colors">
+                        {l.label}
+                      </Link>
+                    </li>
+                  ))}
                 </ul>
               </div>
             )}

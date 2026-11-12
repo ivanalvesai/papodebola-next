@@ -3,7 +3,8 @@
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import { useParams } from "next/navigation";
-import { TOURNAMENT_BY_SLUG, TEAM_BY_ID } from "@/lib/config";
+import { TOURNAMENT_BY_SLUG, TEAM_BY_ID, champPath } from "@/lib/config";
+import { groupLabel } from "@/lib/group-label";
 import { matchDateSlug, matchPairSlug } from "@/lib/world-cup-match-url";
 import { enrichStandingsWithForm } from "@/lib/standings-utils";
 import { RoundNav, type RoundNavItem } from "@/components/championship/round-nav";
@@ -14,13 +15,6 @@ import type { ChampionshipData } from "@/types/tournament";
 import type { StandingsGroup, StandingRow, FormResult } from "@/types/standings";
 import type { ChampionshipMatch } from "@/types/match";
 import type { ChampionshipLiveScore } from "@/lib/data/championship";
-
-// "Brasileiro Serie D 2026, Group A1" -> "Grupo A1". Sem "Group" -> retorna vazio
-// (tabela única: não mostra cabeçalho de grupo).
-function cleanGroupName(name: string): string {
-  const m = name.match(/Group\s+([A-Za-z]?\d+[A-Za-z]?)/i);
-  return m ? `Grupo ${m[1].toUpperCase()}` : "";
-}
 
 // Tabela de classificação de UM grupo. groupMode = torneio com vários grupos
 // (top-2 classifica, verde). Tabela única (liga) mantém acesso/rebaixamento.
@@ -119,9 +113,14 @@ function StandingsTable({
   );
 }
 
-export default function ChampionshipClient() {
+// slug: seções aninhadas (Liga das Nações) passam o slug explícito (a URL não tem [slug]).
+// header: substitui breadcrumb + H1 padrão (o hub server monta com texto do /cms).
+export default function ChampionshipClient({
+  slug: slugProp,
+  header,
+}: { slug?: string; header?: React.ReactNode } = {}) {
   const params = useParams();
-  const slug = params.slug as string;
+  const slug = slugProp || (params.slug as string);
   const tournament = TOURNAMENT_BY_SLUG[slug];
 
   const [data, setData] = useState<ChampionshipData | null>(null);
@@ -179,15 +178,19 @@ export default function ChampionshipClient() {
   if (loading) {
     return (
       <div className="mx-auto max-w-[1240px] px-4 py-8">
-        <PageBreadcrumb
-          className="mb-4"
-          items={[
-            { label: "Início", href: "/" },
-            { label: "Futebol", href: "/futebol" },
-            { label: tournament.name },
-          ]}
-        />
-        <h1 className="text-xl font-bold text-text-primary mb-6">{tournament.name}</h1>
+        {header ?? (
+          <>
+            <PageBreadcrumb
+              className="mb-4"
+              items={[
+                { label: "Início", href: "/" },
+                { label: "Futebol", href: "/futebol" },
+                { label: tournament.name },
+              ]}
+            />
+            <h1 className="text-xl font-bold text-text-primary mb-6">{tournament.name}</h1>
+          </>
+        )}
         <div className="grid grid-cols-1 lg:grid-cols-[1fr_400px] gap-6">
           <div className="bg-card-bg rounded-lg border border-border-custom p-6">
             <div className="animate-pulse space-y-3">
@@ -232,11 +235,15 @@ export default function ChampionshipClient() {
 
   return (
     <div className="mx-auto max-w-[1240px] px-4 py-8">
-      <PageBreadcrumb
-        className="mb-4"
-        items={[{ label: "Início", href: "/" }, { label: tournament.name }]}
-      />
-      <h1 className="text-xl font-bold text-text-primary mb-6">{tournament.name}</h1>
+      {header ?? (
+        <>
+          <PageBreadcrumb
+            className="mb-4"
+            items={[{ label: "Início", href: "/" }, { label: tournament.name }]}
+          />
+          <h1 className="text-xl font-bold text-text-primary mb-6">{tournament.name}</h1>
+        </>
+      )}
 
       <div className="grid grid-cols-1 lg:grid-cols-[1fr_400px] gap-6">
         {/* Standings */}
@@ -256,7 +263,7 @@ export default function ChampionshipClient() {
               {enriched.map((group, gi) => (
                 <div key={group.name || gi}>
                   <h3 className="text-xs font-bold text-green px-4 py-2 bg-body/60">
-                    {cleanGroupName(group.name) || `Grupo ${gi + 1}`}
+                    {groupLabel(group.name) || `Grupo ${gi + 1}`}
                   </h3>
                   <StandingsTable rows={group.rows} groupMode payloadTeamSlugs={data?.payloadTeamSlugs} />
                 </div>
@@ -304,7 +311,7 @@ export default function ChampionshipClient() {
                       timeZone: "America/Sao_Paulo",
                     })
                   : "";
-                const jogoHref = `/futebol/${slug}/jogo/${matchDateSlug(m.timestamp)}/${matchPairSlug(m.homeId, m.awayId, m.home, m.away)}`;
+                const jogoHref = `${champPath(slug)}/jogo/${matchDateSlug(m.timestamp)}/${matchPairSlug(m.homeId, m.awayId, m.home, m.away)}`;
 
                 return (
                   <Link key={m.id} href={jogoHref} className="block px-3 py-2.5 transition-colors hover:bg-card-hover">
