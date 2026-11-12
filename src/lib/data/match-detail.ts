@@ -9,7 +9,7 @@ import { withSnapshot } from "./snapshot-store";
 import { isCompleteMatchSnapshot } from "@/lib/archive-select";
 import { isMatchRegression } from "@/lib/snapshot-guards";
 import { getMatchComments } from "./match-comments";
-import { TOURNAMENT_BY_SLUG } from "@/lib/config";
+import { TOURNAMENT_BY_SLUG, champPath } from "@/lib/config";
 import { selecaoSlugById } from "@/lib/selecoes";
 import { findRescheduled, type RescheduleCandidate } from "@/lib/match-slug-fuzzy";
 import type { StandingsGroup } from "@/types/standings";
@@ -477,7 +477,7 @@ export function championshipMatchHref(
   home?: string,
   away?: string
 ): string {
-  return `/futebol/${champSlug}/jogo/${matchDateSlug(timestamp)}/${matchPairSlug(
+  return `${champPath(champSlug)}/jogo/${matchDateSlug(timestamp)}/${matchPairSlug(
     homeId,
     awayId,
     home,

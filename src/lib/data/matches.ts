@@ -1,5 +1,5 @@
 import { fetchAllSports } from "@/lib/api/allsports";
-import { getLeagueCategory, TOURNAMENT_BY_ID } from "@/lib/config";
+import { getLeagueCategory, TOURNAMENT_BY_ID, champPath } from "@/lib/config";
 import { translateStatus } from "@/lib/translations";
 import { translateCountry } from "@/lib/i18n/countries";
 import { SELECAO_BY_ID } from "@/lib/selecoes";
@@ -56,6 +56,9 @@ function normalizeEvent(event: any): NormalizedMatch {
 
   // Jogo da Copa → nome em PT-BR e link pra página do jogo ao vivo.
   const isWorldCup = leagueId === WORLD_CUP_LEAGUE_ID;
+  // Torneio de seleções configurado (Liga das Nações): nome do torneio e das seleções em PT-BR.
+  const national = leagueId != null ? TOURNAMENT_BY_ID[leagueId] : undefined;
+  const isNational = isWorldCup || !!national?.nationalTeams;
   const inSelecoes = !!SELECAO_BY_ID[homeId] && !!SELECAO_BY_ID[awayId];
   const href =
     isWorldCup && inSelecoes
@@ -69,11 +72,13 @@ function normalizeEvent(event: any): NormalizedMatch {
     apiId: event.id,
     league: isWorldCup
       ? "Copa do Mundo"
+      : national?.nationalTeams
+      ? national.name
       : event.tournament?.uniqueTournament?.name || event.tournament?.name || "",
     leagueId,
     country: event.tournament?.category?.name || "",
-    homeTeam: isWorldCup ? translateCountry(event.homeTeam?.name || "") : event.homeTeam?.name || "",
-    awayTeam: isWorldCup ? translateCountry(event.awayTeam?.name || "") : event.awayTeam?.name || "",
+    homeTeam: isNational ? translateCountry(event.homeTeam?.name || "") : event.homeTeam?.name || "",
+    awayTeam: isNational ? translateCountry(event.awayTeam?.name || "") : event.awayTeam?.name || "",
     homeScore: event.homeScore?.current ?? null,
     awayScore: event.awayScore?.current ?? null,
     homeLogo: homeId ? `/api/team-img/${homeId}` : null,
@@ -338,7 +343,7 @@ const BR_BAR_LEAGUE_IDS = new Set([325, 390, 1281, 373]); // Série A, B, C, Cop
 // Ligas com página de campeonato própria (getChampionshipData tem os jogos): a URL do
 // lance a lance fica LIMPA (…/jogo/{data}/{casa}-{fora}) — é a que os posts/SEO usam.
 // Série A/B/C + Copa do Brasil. (Copa do Mundo tem rota própria, não passa por aqui.)
-const CLEAN_MATCH_SLUG_LEAGUES = new Set([325, 390, 1281, 373]);
+const CLEAN_MATCH_SLUG_LEAGUES = new Set([325, 390, 1281, 373, 10783]); // + Liga das Nações
 
 function leagueMatchHref(m: NormalizedMatch): string | undefined {
   const t = m.leagueId != null ? TOURNAMENT_BY_ID[m.leagueId] : undefined;
@@ -349,7 +354,7 @@ function leagueMatchHref(m: NormalizedMatch): string | undefined {
   // (…-{apiId}) pra a página resolver via getMatchDetail(id) — sem query string, então a
   // rota continua ISR (nada de force-dynamic). Ligas com página própria mantêm slug limpo.
   const suffix = !CLEAN_MATCH_SLUG_LEAGUES.has(m.leagueId as number) && m.apiId ? `-${m.apiId}` : "";
-  return `/futebol/${t.slug}/jogo/${matchDateSlug(m.timestamp)}/${pair}${suffix}`;
+  return `${champPath(t.slug)}/jogo/${matchDateSlug(m.timestamp)}/${pair}${suffix}`;
 }
 
 // Barra da home com as ligas BR separada em duas abas:
@@ -444,7 +449,7 @@ export async function getBrazilianBarMatches(): Promise<BrazilianBarMatches> {
 // Sul-Americana, Champions, Europa League, Premier, LaLiga, Serie A, Bundesliga,
 // Ligue 1, Eliminatórias.
 const FUTEBOL_TODAY_ORDER = [
-  16, 325, 390, 1281, 10326, 373, 1596, 384, 480, 7, 679, 17, 8, 23, 35, 34, 11, 13,
+  16, 10783, 325, 390, 1281, 10326, 373, 1596, 384, 480, 7, 679, 17, 8, 23, 35, 34, 11, 13,
 ];
 
 // Fallback da barra "Hoje" quando NÃO há jogo da Copa: filtra os jogos de hoje pras

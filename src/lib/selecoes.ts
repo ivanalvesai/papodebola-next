@@ -1,4 +1,5 @@
 import { slugifyCategory } from "@/lib/config";
+import { translateCountry } from "@/lib/i18n/countries";
 
 // 48 seleções da Copa do Mundo 2026 — id (Sofascore) + nome PT-BR.
 // Hardcoded (não depende da API, que é pulada no build). Mantém em sincronia
@@ -43,9 +44,11 @@ export const SELECAO_BY_ID: Record<number, Selecao> = Object.fromEntries(
 );
 
 // Slug de uma seleção pelo id Sofascore (usado pra montar a URL do jogo).
-// Fallback: se o id não estiver no mapa (ex: time fora das 48), slugifica o nome dado.
+// Fallback: se o id não estiver no mapa (ex: time fora das 48), slugifica o nome dado —
+// TRADUZIDO (translateCountry), pra "Italy" e "Itália" gerarem o mesmo slug ("italia") onde
+// quer que o link seja montado (agenda, barra, tabela). Nome de clube passa intacto.
 export function selecaoSlugById(id: number, fallbackName?: string): string {
-  return SELECAO_BY_ID[id]?.slug || (fallbackName ? slugifyCategory(fallbackName) : String(id));
+  return SELECAO_BY_ID[id]?.slug || (fallbackName ? slugifyCategory(translateCountry(fallbackName)) : String(id));
 }
 
 // Link da seleção: Brasil vai pra página dedicada; as outras pra /selecoes/[slug]

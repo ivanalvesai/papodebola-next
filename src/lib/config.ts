@@ -3,6 +3,12 @@ export interface Tournament {
   name: string;
   seasonId: number | null;
   slug: string;
+  /** Caminho do hub quando NÃO é /futebol/{slug} (ex.: seção aninhada). Use champPath(). */
+  basePath?: string;
+  /** Torneio de seleções: nomes traduzidos pra PT-BR (translateCountry). */
+  nationalTeams?: boolean;
+  /** false = fora do select "tournament" dos blocos do CMS (evita mudar a enum do Postgres). */
+  cmsSelectable?: boolean;
 }
 
 export const TOURNAMENTS: Record<string, Tournament> = {
@@ -36,6 +42,13 @@ export const TOURNAMENTS: Record<string, Tournament> = {
   SERIE_A_IT:     { id: 23,    name: 'Serie A (Itália)',      seasonId: 95836, slug: 'serie-a-italia' },
   BUNDESLIGA:     { id: 35,    name: 'Bundesliga',           seasonId: 97464, slug: 'bundesliga' },
   LIGUE_1:        { id: 34,    name: 'Ligue 1',              seasonId: 96127, slug: 'ligue-1' },
+
+  // Seleções - UEFA (temporada 26/27 — GET tournament/10783/seasons). Hub aninhado em
+  // /futebol/futebol-internacional/liga-das-nacoes (ver champPath).
+  NATIONS_LEAGUE: {
+    id: 10783, name: 'Liga das Nações', seasonId: 89945, slug: 'liga-das-nacoes',
+    basePath: '/futebol/futebol-internacional/liga-das-nacoes', nationalTeams: true, cmsSelectable: false,
+  },
 } as const;
 
 export interface TeamInfo {
@@ -300,4 +313,10 @@ export function teamTournament(team: TeamInfo): Tournament | null {
   if (team.tournament === 'europa') return null;
   if (EU_SLUGS.includes(team.slug)) return null;
   return TOURNAMENTS.BRASILEIRAO_A; // default p/ times BR (Série A)
+}
+
+// Caminho base (hub) de um campeonato: /futebol/{slug}, ou o basePath quando a seção é
+// aninhada (Liga das Nações). TODO link de campeonato/jogo deve passar por aqui.
+export function champPath(slug: string): string {
+  return TOURNAMENT_BY_SLUG[slug]?.basePath || `/futebol/${slug}`;
 }

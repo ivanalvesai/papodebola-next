@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { champPath } from "@/lib/config";
 import { BroadcastChannels } from "@/components/team/team-narrative";
 import { getArticles } from "@/lib/data/articles";
 import { getChampionshipData } from "@/lib/data/championship";
@@ -75,7 +76,7 @@ export async function MatchPreview({
               ) : null
             )}
           </ul>
-          <Link href={`/futebol/${champSlug}`} className="mt-2 inline-block text-sm font-semibold text-green hover:text-green-hover">
+          <Link href={champPath(champSlug)} className="mt-2 inline-block text-sm font-semibold text-green hover:text-green-hover">
             Classificação do {fixture.tournamentName} &rarr;
           </Link>
         </section>

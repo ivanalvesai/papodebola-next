@@ -1,6 +1,6 @@
 import type { MetadataRoute } from "next";
 import { TEAMS, SPORTS, WP_CATEGORY_BY_SLUG } from "@/lib/config";
-import { TOURNAMENTS } from "@/lib/config";
+import { TOURNAMENTS, champPath } from "@/lib/config";
 import { SELECOES, BRAZIL_ID } from "@/lib/selecoes";
 import { KNOCKOUT_PHASES } from "@/lib/world-cup-phases";
 import { getArticles } from "@/lib/data/articles";
@@ -28,6 +28,7 @@ const MATCH_CHAMPIONSHIPS = [
   "copa-do-brasil",
   "libertadores",
   "sudamericana",
+  "liga-das-nacoes",
 ];
 
 const BASE = process.env.NEXT_PUBLIC_SITE_URL || "https://www.papodebola.com.br";
@@ -77,7 +78,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const champPages: MetadataRoute.Sitemap = Object.values(TOURNAMENTS)
     .filter((t) => t.seasonId)
     .map((t) => ({
-      url: `${BASE}/futebol/${t.slug}`,
+      url: `${BASE}${champPath(t.slug)}`,
       changeFrequency: "daily" as const,
       priority: 0.8,
     }));
@@ -161,7 +162,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
         const out: MetadataRoute.Sitemap = [];
         for (const m of Object.values(cdata.matchesByRound).flat()) {
           if (!m.timestamp || !m.homeId || !m.awayId) continue;
-          const url = `${BASE}/futebol/${cslug}/jogo/${matchDateSlug(m.timestamp)}/${matchPairSlug(
+          const url = `${BASE}${champPath(cslug)}/jogo/${matchDateSlug(m.timestamp)}/${matchPairSlug(
             m.homeId,
             m.awayId,
             m.home,
