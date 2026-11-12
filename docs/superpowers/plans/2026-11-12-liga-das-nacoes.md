@@ -245,3 +245,4 @@ export function groupLabel(name: string): string {
 - 12/11 ~13h20 — GSC (propriedade URL-prefix www, via navegador): indexação solicitada do post 447 e do hub; sitemap.xml reenviado (Sucesso, 2.765 pág., inclui hub + 156 jogos + post); news-sitemap.xml reenviado (erro antigo de 07/11 sumiu, Sucesso).
 - 12/11 ~13h40 — commit f3d43b4: barra da home com jogos da Liga das Nações (Hoje/Próximos, via getExtraChampBarMatches), pt-gender (pela/da), cabeçalho 'Fase de liga'. pushdev → validar → promote.
 - 12/11 ~13h20 — EM PROD (promote f3b3504): barra da home 'Hoje' com 10 jogos (8 Liga das Nações + 2 Série B), 'Próximos' 67; textos pela/da corrigidos. TUDO DO PLANO CONCLUÍDO.
+- 12/11 ~13h45 — Bandeiras: as 54 seleções da Liga das Nações estão no volume (data/team-images), servidas local/immutable. Script download-team-images rodou com sleep 350ms (152 novos de todos os campeonatos); 5 falharam por rate limit e foram rebaixados 1 a 1.
