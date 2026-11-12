@@ -1,6 +1,7 @@
 // Título/descrição da página de jogo de campeonato conforme o status: antes do jogo a
 // busca é "horário/onde assistir/escalação"; depois, "resultado/lance a lance".
 // Status desconhecido (sem detalhe da API) cai no título "ao vivo" de sempre.
+import { pelo } from "./pt-gender.ts";
 type Input = {
   home: string;
   away: string;
@@ -21,7 +22,7 @@ export function championshipMatchSeo(f: Input): { title: string; description: st
     });
     return {
       title: `${vs}: horário, onde assistir e escalações (${date})`,
-      description: `Veja horário, estádio, onde assistir e a provável escalação de ${vs} pelo ${f.tournamentName}.`,
+      description: `Veja horário, estádio, onde assistir e a provável escalação de ${vs} ${pelo(f.tournamentName)}.`,
     };
   }
   if (f.status === "finished") {
@@ -29,11 +30,11 @@ export function championshipMatchSeo(f: Input): { title: string; description: st
     const line = hasScore ? `${f.home} ${f.homeScore}x${f.awayScore} ${f.away}` : vs;
     return {
       title: `${line}: resultado e lance a lance`,
-      description: `Resultado de ${line} pelo ${f.tournamentName}: gols, lance a lance, escalações e estatísticas.`,
+      description: `Resultado de ${line} ${pelo(f.tournamentName)}: gols, lance a lance, escalações e estatísticas.`,
     };
   }
   return {
     title: `${vs} ao vivo - ${f.tournamentName}`,
-    description: `${vs} pelo ${f.tournamentName}: placar ao vivo, lance a lance, escalações e estatísticas em tempo real (horário de Brasília).`,
+    description: `${vs} ${pelo(f.tournamentName)}: placar ao vivo, lance a lance, escalações e estatísticas em tempo real (horário de Brasília).`,
   };
 }

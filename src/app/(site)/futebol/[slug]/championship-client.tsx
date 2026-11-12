@@ -252,7 +252,9 @@ export default function ChampionshipClient({
             Classificação
             {groupMode && (
               <span className="ml-2 text-[11px] font-medium text-text-muted">
-                · Fase de grupos ({enriched.length} grupos · top 2 avançam)
+                {tournament.nationalTeams
+                  ? `· Fase de liga (${enriched.length} grupos)`
+                  : `· Fase de grupos (${enriched.length} grupos · top 2 avançam)`}
               </span>
             )}
           </h2>

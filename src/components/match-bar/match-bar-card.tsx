@@ -47,7 +47,7 @@ export function MatchBarCard({
   // mapa, `ls` é undefined e o card usa os valores do server render (ISR).
   // O id vem como `api_<eventId>` (normalizeEvent); o mapa ao vivo é por eventId
   // numérico do Sofascore, então tira o prefixo antes de converter.
-  const numericId = id ? Number(id.replace(/^api_/, "")) : -1;
+  const numericId = id ? Number(id.replace(/^(api|sch)_/, "")) : -1;
   const ls = useLiveScore(Number.isFinite(numericId) ? numericId : -1);
   const homeScoreV = ls?.homeScore ?? homeScore;
   const awayScoreV = ls?.awayScore ?? awayScore;

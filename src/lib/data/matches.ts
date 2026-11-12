@@ -1,10 +1,11 @@
 import { fetchAllSports } from "@/lib/api/allsports";
-import { getLeagueCategory, TOURNAMENT_BY_ID, champPath } from "@/lib/config";
+import { getLeagueCategory, TOURNAMENT_BY_ID, TOURNAMENT_BY_SLUG, champPath } from "@/lib/config";
 import { translateStatus } from "@/lib/translations";
 import { translateCountry } from "@/lib/i18n/countries";
 import { SELECAO_BY_ID } from "@/lib/selecoes";
 import { worldCupMatchHref, matchDateSlug, matchPairSlug } from "@/lib/world-cup-match-url";
 import { getCBFUpcomingMatches } from "./cbf-calendar";
+import { getChampionshipData } from "./championship";
 import {
   getWorldCupKnockoutFixtures,
   getWorldCupKnockoutLiveScores,
@@ -402,7 +403,8 @@ function cbfToNormalized(c: CBFMatch): NormalizedMatch {
 export function mergeBarMatches(...lists: NormalizedMatch[][]): NormalizedMatch[] {
   const all = lists
     .flat()
-    .sort((a, b) => (a.id.startsWith("cbf_") ? 1 : 0) - (b.id.startsWith("cbf_") ? 1 : 0));
+    // Cards da API ao vivo (`api_*`, placar/status reais) vencem os agendados (`cbf_*`, `sch_*`).
+    .sort((a, b) => (a.id.startsWith("api_") ? 0 : 1) - (b.id.startsWith("api_") ? 0 : 1));
   const seen = new Set<number>();
   const out: NormalizedMatch[] = [];
   for (const m of all) {
@@ -414,11 +416,65 @@ export function mergeBarMatches(...lists: NormalizedMatch[][]): NormalizedMatch[
   return out.sort(sortForBar);
 }
 
+// Campeonatos FORA do calendário CBF que também entram na barra da home (Hoje/Próximos):
+// os agendados vêm da tabela do campeonato (getChampionshipData, já cacheada/snapshot →
+// custo ~zero); ao vivo, o card do matches/live (api_*) substitui o agendado.
+const BAR_EXTRA_CHAMPS = ["liga-das-nacoes"];
+const BAR_EXTRA_DAYS = 7;
+
+function hhmmBR(ts: number): string {
+  return new Date(ts * 1000).toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit", timeZone: "America/Sao_Paulo" });
+}
+function ddmmyyyyBR(ts: number): string {
+  return new Date(ts * 1000).toLocaleDateString("pt-BR", { day: "2-digit", month: "2-digit", year: "numeric", timeZone: "America/Sao_Paulo" });
+}
+
+async function getExtraChampBarMatches(fromSec: number, toSec: number): Promise<NormalizedMatch[]> {
+  const out: NormalizedMatch[] = [];
+  for (const slug of BAR_EXTRA_CHAMPS) {
+    const t = TOURNAMENT_BY_SLUG[slug];
+    const cd = t ? await getChampionshipData(slug).catch(() => null) : null;
+    if (!t || !cd) continue;
+    for (const m of Object.values(cd.matchesByRound || {}).flat()) {
+      if (!m.timestamp || m.timestamp < fromSec || m.timestamp >= toSec || !m.homeId || !m.awayId) continue;
+      const date = ddmmyyyyBR(m.timestamp);
+      out.push({
+        id: `sch_${m.id}`,
+        apiId: m.id,
+        league: t.name,
+        leagueId: t.id,
+        country: "",
+        homeTeam: m.home,
+        awayTeam: m.away,
+        homeScore: m.status === "finished" ? m.homeScore : null,
+        awayScore: m.status === "finished" ? m.awayScore : null,
+        homeLogo: `/api/team-img/${m.homeId}`,
+        awayLogo: `/api/team-img/${m.awayId}`,
+        time: hhmmBR(m.timestamp),
+        date,
+        timestamp: m.timestamp,
+        status: m.status === "finished" ? ("finished" as const) : ("scheduled" as const),
+        statusText: m.status === "finished" ? "Encerrado" : date,
+        minute: "",
+        category: getLeagueCategory(t.id),
+        homeId: m.homeId,
+        awayId: m.awayId,
+        href: `${champPath(slug)}/jogo/${matchDateSlug(m.timestamp)}/${matchPairSlug(m.homeId, m.awayId, m.home, m.away)}`,
+      });
+    }
+  }
+  return out;
+}
+
 export async function getBrazilianBarMatches(): Promise<BrazilianBarMatches> {
   const [todayRaw, cbf] = await Promise.all([
     getTodayMatches().catch(() => []),
     getCBFUpcomingMatches().catch(() => []),
   ]);
+  const extra = await getExtraChampBarMatches(
+    brasiliaDayStartSec(0),
+    brasiliaDayStartSec(BAR_EXTRA_DAYS)
+  ).catch(() => [] as NormalizedMatch[]);
 
   const todayStart = brasiliaDayStartSec(0);
   const todayEnd = brasiliaDayStartSec(1);
@@ -431,6 +487,7 @@ export async function getBrazilianBarMatches(): Promise<BrazilianBarMatches> {
 
   // 2) Agendados (calendário CBF) → NormalizedMatch, separados por dia (Brasília).
   const scheduled = cbf.filter((c) => c.homeId && c.awayId).map(cbfToNormalized);
+  scheduled.push(...extra);
   const scheduledToday = scheduled.filter(
     (m) => m.timestamp >= todayStart && m.timestamp < todayEnd
   );

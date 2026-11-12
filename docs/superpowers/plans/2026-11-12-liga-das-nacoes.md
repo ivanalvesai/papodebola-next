@@ -234,3 +234,10 @@ export function groupLabel(name: string): string {
     - `DEDICATED_PAGE_ROUTES`.
     - Menu (`main-nav` + `side-panel`).
     - Rodar `npm run gen:paths`, `tsc` e build. Depois commit, pushdev, página no CMS, validação e promote (Task 6). Post rascunho (Task 7).
+- 12/11 ~12h05 — Task 4 e Task 5 CONCLUÍDAS; commit `bed2f87`; `git pushdev` disparado.
+  - Página do CMS criada e PUBLICADA: id **30**, slug `liga-das-nacoes`, via `scripts/seed-pagina-liga-das-nacoes.mjs` + `bash ~/run-seed-cupons.sh`.
+  - Próximo: validar no dev (hub, `/jogo/12-11-2026/turquia-belgica`, 308 de `/futebol/liga-das-nacoes`, agenda via `/api/agenda/refresh`), promote, Task 7 (post).
+- 12/11 ~12h15 — dev validado (hub 200, 14 grupos em PT, jogos 200, 308 ok). Fix: slug na agenda saía em inglês (italy-franca) → selecaoSlugById traduz; commit seguinte + pushdev.
+- 12/11 ~12h35 — POST 447 criado RASCUNHO (slug jogos-de-hoje-liga-das-nacoes-12-de-novembro, capa media 890, foto San Siro 891 CC BY-SA). Script scripts/create-post-jogos-hoje-liga-das-nacoes-12-11.mjs. Falta: validar fix 2ccf2fa no dev (agenda com italia-franca), PROMOTE, revalidar prod, Ivan aprovar post.
+- 12/11 ~12h45 — dev validado após fix (agenda 8 jogos com slug PT, 8 páginas 200). PROMOTE disparado (nohup, log ~/promote-nl-20261112.log). Depois: revalidar prod (/ , hub, /jogos-de-hoje/futebol), checar no navegador.
+- 12/11 ~13h10 — EM PROD (promote 65a9d17). Hub, jogos (200), 308, agenda (8 jogos) validados no navegador. Pendências: 'pelo/do Liga das Nações' (gênero no MatchPreview) e 'top 2 avançam' no cabeçalho da classificação; post 447 aguardando ok do Ivan; commitar scripts (seed-pagina + post).
