@@ -9,6 +9,22 @@ Portal de futebol brasileiro e mundial. Migrado de HTML/CSS/JS estático para Ne
 
 ---
 
+## ⚠️ REGRA DE OURO — todo dado esportivo fica salvo na nossa base
+
+**Nenhuma página pode depender só da API ao vivo.** Tabela, rodadas, chaveamento, placar e **lance a lance** de todo campeonato/jogo têm que ficar gravados no volume (`data/snapshots/`), para o site continuar mostrando tudo se a API sair do ar, cancelar a assinatura ou derrubar o feed de um torneio encerrado. Pedido explícito e repetido do Ivan.
+
+Checklist obrigatório para **toda página/seção nova** que mostre dados da API:
+1. A função de dados passa por **`withSnapshot`** (`src/lib/data/snapshot-store.ts`): busca ao vivo, salva quando vem dado real e serve o último salvo quando falha. Nunca sobrescrever snapshot bom com resposta vazia.
+2. **Campeonato novo entra em `TOURNAMENTS` (`src/lib/config.ts`) com `seasonId`.** Assim ele é coberto automaticamente por `getChampionshipData` (tabela + rodadas) e pelo cron **`# pdb-archive`** (03:20, dev), que grava o lance a lance completo de todo jogo encerrado (`archiveFinishedMatches`).
+3. Páginas de jogo usam **`getMatchDetail`** (já embrulhado: lance a lance, estatísticas, escalação).
+4. Escudos, bandeiras e fotos ficam **no disco** (`data/team-images`, `data/player-images`). Rodar `scripts/download-team-images.mjs` (sleep ≥350 ms) ao incluir times ou seleções novos.
+5. Fonte fora do motor genérico (endpoint próprio, outro esporte)? Criar uma categoria nova de snapshot com `withSnapshot`. Não publicar a página sem isso.
+6. Validar no servidor: `ls /app/data/snapshots/{championships,matches}` deve ter os arquivos do torneio, com `incidents` nos jogos encerrados.
+
+Exemplo conferido em 12/11/2026, Liga das Nações: tabela em `snapshots/championships/liga-das-nacoes.json`; os 112 jogos encerrados com lance a lance em `snapshots/matches/{id}.json`.
+
+---
+
 ## Stack
 
 | Camada | Tecnologia |
