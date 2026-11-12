@@ -222,8 +222,10 @@ function rawFootballEventToAgenda(e: any, league: string, slug: string): AgendaE
   const statusType = e.status?.type || "";
   const homeId = e.homeTeam?.id || 0;
   const awayId = e.awayTeam?.id || 0;
-  const home = e.homeTeam?.name || "";
-  const away = e.awayTeam?.name || "";
+  // Torneio de seleções (Liga das Nações): nomes em PT-BR, iguais aos da tabela/página.
+  const tr = TOURNAMENT_BY_SLUG[slug]?.nationalTeams ? translateCountry : (n: string) => n;
+  const home = tr(e.homeTeam?.name || "");
+  const away = tr(e.awayTeam?.name || "");
   return {
     id: e.id,
     league,
