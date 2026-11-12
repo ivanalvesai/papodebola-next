@@ -24,7 +24,7 @@ export function FeaturedCard({ article, big }: { article: Article; big?: boolean
           src={article.image}
           alt={article.rewrittenTitle}
           fill
-          sizes={big ? "(max-width:1024px) 100vw, 40vw" : "(max-width:1024px) 100vw, 20vw"}
+          sizes={big ? "(max-width:1024px) 100vw, 66vw" : "(max-width:1024px) 100vw, 33vw"}
           className="object-cover transition-transform duration-300 group-hover:scale-105"
           unoptimized
           priority={big}
@@ -52,6 +52,51 @@ export function FeaturedCard({ article, big }: { article: Article; big?: boolean
         </h3>
       </div>
     </Link>
+  );
+}
+
+/**
+ * Os 3 destaques da home numa faixa de LARGURA TOTAL (acima da tabela do Brasileirão).
+ * Antes ficavam na coluna principal, ao lado do sidebar: o card grande ficava estreito e
+ * alto (quase vertical) e o object-cover cortava a foto. Com 2fr/1fr na largura toda, o
+ * grande fica ~16:9 (altura = 2 cards pequenos 16:9) e a foto aparece inteira.
+ */
+export function FeaturedNews({ articles }: NewsSectionProps) {
+  const featured = articles.slice(0, 3);
+  if (featured.length === 0) return null;
+
+  return (
+    <section className="rounded-lg border border-border-custom bg-card-bg p-6">
+      <h2 className="mb-4 flex items-center gap-2 text-base font-bold text-text-primary">
+        <Newspaper className="h-5 w-5 text-green" />
+        Últimas Notícias
+      </h2>
+      <div className="grid gap-3 lg:grid-cols-[2fr_1fr] lg:grid-rows-2">
+        <FeaturedCard article={featured[0]} big />
+        {featured.slice(1).map((a) => (
+          <FeaturedCard key={a.slug} article={a} />
+        ))}
+      </div>
+    </section>
+  );
+}
+
+/** Feed das últimas notícias (sem os 3 destaques, que ficam no FeaturedNews). */
+export function NewsFeedSection({ articles }: NewsSectionProps) {
+  if (articles.length <= 3) return null;
+  return (
+    <section className="rounded-lg border border-border-custom bg-card-bg p-6">
+      {/* Home SEM rolagem infinita: mostra 10 e cresce so no botao "Mostrar mais" — assim a
+          pagina tem fim e da pra chegar no rodape. (A pagina da Copa mantem o scroll.) */}
+      <NewsFeed
+        initial={articles.slice(3)}
+        excludeSlugs={articles.slice(0, 3).map((a) => a.slug)}
+        seeAllHref="/noticias"
+        infinite={false}
+        initialVisible={10}
+        step={10}
+      />
+    </section>
   );
 }
 

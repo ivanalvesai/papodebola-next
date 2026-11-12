@@ -3,7 +3,7 @@ import { MatchBar } from "@/components/match-bar/match-bar";
 import { LiveScoreProvider } from "@/components/world-cup/copa-live-provider";
 // Destaques e Melhores Momentos desativado temporariamente (reativar depois).
 // import { HighlightsSection } from "@/components/home/highlights-section";
-import { NewsSection } from "@/components/home/news-section";
+import { NewsSection, FeaturedNews, NewsFeedSection } from "@/components/home/news-section";
 import { CasasApostasSection } from "@/components/home/casas-apostas-section";
 import { TransfersSection } from "@/components/home/transfers-section";
 import { StandingsWidget } from "@/components/sidebar/standings-widget";
@@ -132,13 +132,20 @@ export default async function HomePage() {
         <MatchBar todayMatches={barMatches} upcomingMatches={brazilBar.upcoming} />
       </LiveScoreProvider>
 
-      <div className="mx-auto max-w-[1240px] px-4 py-6">
+      <div className="mx-auto max-w-[1240px] px-4 py-6 space-y-6">
+        {/* Os 3 destaques ocupam a largura toda (acima da tabela), senão o card grande
+            fica estreito/vertical e a foto é cortada. O feed segue na coluna principal. */}
+        {articles.length > 0 && <FeaturedNews articles={articles} />}
         <div className="grid grid-cols-1 lg:grid-cols-[1fr_340px] gap-6">
           {/* Main content */}
           <div className="space-y-6">
             {/* Destaques e Melhores Momentos — desativado temporariamente, reativar depois:
             <HighlightsSection highlights={highlights} /> */}
-            <NewsSection articles={articles} />
+            {articles.length > 0 ? (
+              <NewsFeedSection articles={articles} />
+            ) : (
+              <NewsSection articles={articles} />
+            )}
             {/* Card "Casas de Apostas" entre as Ultimas Noticias e o Mercado da Bola.
                 So aparece quando ha post publicado na categoria (senao nao renderiza). */}
             <CasasApostasSection articles={casasArticles} />
