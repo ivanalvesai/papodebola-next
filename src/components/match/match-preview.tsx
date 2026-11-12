@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { champPath } from "@/lib/config";
+import { pelo, doDa } from "@/lib/pt-gender";
 import { BroadcastChannels } from "@/components/team/team-narrative";
 import { getArticles } from "@/lib/data/articles";
 import { getChampionshipData } from "@/lib/data/championship";
@@ -55,7 +56,7 @@ export async function MatchPreview({
         <h2 className="mb-2 text-base font-bold text-text-primary">Quando é e onde assistir</h2>
         <p className="mb-3 text-sm text-text-secondary">
           {fixture.home} x {fixture.away} é {when(fixture.timestamp)}
-          {place}, pelo {fixture.tournamentName}.
+          {place}, {pelo(fixture.tournamentName)}.
         </p>
         <BroadcastChannels league={fixture.tournamentName} />
       </section>
@@ -77,7 +78,7 @@ export async function MatchPreview({
             )}
           </ul>
           <Link href={champPath(champSlug)} className="mt-2 inline-block text-sm font-semibold text-green hover:text-green-hover">
-            Classificação do {fixture.tournamentName} &rarr;
+            Classificação {doDa(fixture.tournamentName)} &rarr;
           </Link>
         </section>
       )}

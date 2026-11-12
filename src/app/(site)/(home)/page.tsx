@@ -111,16 +111,23 @@ export default async function HomePage() {
   const nowSec = Date.now() / 1000;
   const leagueLiveSoon = brazilBar.today.some(
     (m) =>
-      m.status === "live" ||
+      m.leagueId !== 10783 &&
+      (m.status === "live" ||
       m.status === "halftime" ||
-      (m.status === "scheduled" && m.timestamp - nowSec < 90 * 60)
+      (m.status === "scheduled" && m.timestamp - nowSec < 90 * 60))
   );
-  const liveEndpoints = leagueLiveSoon
-    ? [
-        "/api/championship/brasileirao-serie-a/ao-vivo",
-        "/api/championship/brasileirao-serie-b/ao-vivo",
-      ]
-    : [];
+  // Liga das Nações (e outros extras da barra): mesmo critério, só com jogo dela na janela.
+  const nationsLiveSoon = brazilBar.today.some(
+    (m) =>
+      m.leagueId === 10783 &&
+      (m.status === "live" || m.status === "halftime" || (m.status === "scheduled" && m.timestamp - nowSec < 90 * 60))
+  );
+  const liveEndpoints = [
+    ...(leagueLiveSoon
+      ? ["/api/championship/brasileirao-serie-a/ao-vivo", "/api/championship/brasileirao-serie-b/ao-vivo"]
+      : []),
+    ...(nationsLiveSoon ? ["/api/championship/liga-das-nacoes/ao-vivo"] : []),
+  ];
 
   return (
     <>

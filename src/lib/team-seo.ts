@@ -1,3 +1,4 @@
+import { pelo } from "./pt-gender.ts";
 export type TeamPage = "hub" | "jogoHoje" | "ondeAssistir" | "escalacao" | "proximos" | "estatisticas";
 type SeoGroup = { metaTitle?: string | null; metaDescription?: string | null };
 type SeoField = "seo" | "seoJogoHoje" | "seoOndeAssistir" | "seoEscalacao" | "seoProximos" | "seoEstatisticas";
@@ -68,17 +69,17 @@ function dynamicTeamSeo(page: TeamPage, name: string, n: TeamNextMatch): { title
     case "proximos":
       return {
         title: `Próximo jogo do ${name}: x ${n.opponent}, ${n.date}, ${n.time}`,
-        description: `O próximo jogo do ${name} é contra o ${n.opponent}, ${n.date} às ${n.time}, pelo ${n.league}. Veja o calendário completo, horários e onde assistir.`,
+        description: `O próximo jogo do ${name} é contra o ${n.opponent}, ${n.date} às ${n.time}, ${pelo(n.league)}. Veja o calendário completo, horários e onde assistir.`,
       };
     case "jogoHoje":
       return {
         title: `${name} x ${n.opponent} hoje: horário e onde assistir`,
-        description: `${name} x ${n.opponent} hoje às ${n.time}, pelo ${n.league}: horário, onde assistir, escalações e placar ao vivo.`,
+        description: `${name} x ${n.opponent} hoje às ${n.time}, ${pelo(n.league)}: horário, onde assistir, escalações e placar ao vivo.`,
       };
     case "ondeAssistir":
       return {
         title: `Onde assistir ${name} x ${n.opponent} hoje`,
-        description: `Onde assistir ${name} x ${n.opponent} (${n.date}, ${n.time}) pelo ${n.league}: canais de TV e streaming.`,
+        description: `Onde assistir ${name} x ${n.opponent} (${n.date}, ${n.time}) ${pelo(n.league)}: canais de TV e streaming.`,
       };
     default:
       return null;
