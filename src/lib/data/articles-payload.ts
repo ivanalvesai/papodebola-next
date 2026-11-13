@@ -1,4 +1,5 @@
 import { cache } from "react";
+import { extractWatchInfo } from "@/lib/watch-info";
 import { getPayload } from "payload";
 import config from "@payload-config";
 import { convertLexicalToHTML } from "@payloadcms/richtext-lexical/html";
@@ -637,6 +638,9 @@ function mapPost(p: any): Article {
   // FAQ e ranking dos blocos do editor → JSON-LD (FAQPage / ItemList) na página do artigo.
   const structured = extractStructured(p.content);
   return {
+    // Onde assistir: jogo ligado + canal do bloco "Ficha do jogo" (matchInfo).
+    matchId: typeof p.matchId === "number" ? p.matchId : undefined,
+    watch: extractWatchInfo(p.content) || undefined,
     faq: structured.faq.length ? structured.faq : undefined,
     ranking: structured.ranking.length ? structured.ranking : undefined,
     imageCaption: cover?.alt || "",
@@ -685,7 +689,7 @@ export async function getArticlesPayload(options?: {
     // (home "Últimas Notícias", /noticias, "Leia também", sitemap geral). Só aparecem quando
     // a categoria é pedida explicitamente. Craques = página própria; Casas de Apostas = seção
     // dedicada (card "Casas de Apostas" na home + hub /casas-de-apostas), fora do feed editorial.
-    for (const siloed of ["Craques", "Casas de Apostas", "Cupons"]) {
+    for (const siloed of ["Craques", "Casas de Apostas", "Cupons", "Onde Assistir"]) {
       if (category !== siloed) and.push({ category: { not_equals: siloed } });
     }
     if (search) and.push({ title: { like: search } });

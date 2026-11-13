@@ -95,6 +95,8 @@ const nextConfig: NextConfig = {
       // Liga das Nações: hub aninhado (champPath). /futebol/futebol-internacional sem page própria
       // vai pras notícias; /futebol/liga-das-nacoes(/jogo/...) cairia no [slug] genérico.
       { source: "/futebol/futebol-internacional", destination: "/noticias/futebol-internacional", permanent: true },
+      // Onde assistir: o hub é /onde-assistir (não duplica com a lista de categoria).
+      { source: "/noticias/onde-assistir", destination: "/onde-assistir", permanent: true },
       { source: "/futebol/liga-das-nacoes", destination: "/futebol/futebol-internacional/liga-das-nacoes", permanent: true },
       { source: "/futebol/liga-das-nacoes/:path*", destination: "/futebol/futebol-internacional/liga-das-nacoes/:path*", permanent: true },
       { source: "/futebol/mercado-da-bola", destination: "/noticias/mercado-da-bola", permanent: true },

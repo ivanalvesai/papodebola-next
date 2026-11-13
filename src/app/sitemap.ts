@@ -1,5 +1,5 @@
 import type { MetadataRoute } from "next";
-import { TEAMS, SPORTS, WP_CATEGORY_BY_SLUG } from "@/lib/config";
+import { WATCH_CATEGORY, TEAMS, SPORTS, WP_CATEGORY_BY_SLUG } from "@/lib/config";
 import { TOURNAMENTS, champPath } from "@/lib/config";
 import { SELECOES, BRAZIL_ID } from "@/lib/selecoes";
 import { KNOCKOUT_PHASES } from "@/lib/world-cup-phases";
@@ -256,6 +256,22 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     ...(a.image ? { images: [a.image.startsWith("http") ? a.image : `${BASE}${a.image}`] } : {}),
   }));
 
+  // Onde assistir — SILADA também: hub + posts /onde-assistir/{slug} em bloco próprio.
+  const { articles: watchArticles } = await getArticles({
+    perPage: 200,
+    category: WATCH_CATEGORY,
+  }).catch(() => ({ articles: [] }));
+  const watchPages: MetadataRoute.Sitemap = [
+    { url: `${BASE}/onde-assistir`, lastModified: now, changeFrequency: "hourly" as const, priority: 0.8 },
+    ...watchArticles.map((a) => ({
+      url: `${BASE}${a.url}`,
+      lastModified: a.updatedAt || a.pubDate ? new Date(a.updatedAt || a.pubDate) : now,
+      changeFrequency: "hourly" as const,
+      priority: 0.7,
+      ...(a.image ? { images: [a.image.startsWith("http") ? a.image : `${BASE}${a.image}`] } : {}),
+    })),
+  ];
+
   // Craques (cluster /futebol/craque/[slug]) — só os publicados. getArticles acima
   // já exclui a categoria, então não há entrada /artigos duplicada pro mesmo conteúdo.
   const craques = await getCraques().catch(() => []);
@@ -350,6 +366,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     ...articlePages,
     ...betPages,
     ...couponPages,
+    ...watchPages,
     ...craquePages,
   ];
 }

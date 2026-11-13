@@ -180,7 +180,12 @@ export const WP_CATEGORIES = [
   'Futebol Brasileiro',
   'Casas de Apostas',
   'Cupons',
+  'Onde Assistir',
 ] as const;
+
+// Posts "X x Y: onde assistir, horário e escalações" (hub /onde-assistir). Silada: fora da
+// home e de /noticias; aparece no hub, na /ao-vivo, no hub do campeonato e na página do jogo.
+export const WATCH_CATEGORY = "Onde Assistir";
 
 // Slug de categoria pra URLs limpas (/noticias/brasileirao em vez de ?cat=Brasileirão).
 // Melhor pra SEO. Ex: 'Seleção Brasileira' -> 'selecao-brasileira'.
@@ -255,6 +260,8 @@ export const CATEGORY_HUB: Record<string, string> = {
   // /cupons/amazon, /cupons/shopee). Posts datados dos picos (11.11, Black Friday) caem em
   // /cupons/{slug}. Categoria SILADA: não aparece na home nem em /noticias.
   "Cupons": "/cupons",
+  // Onde assistir: posts padronizados ligados ao jogo (matchId). Ver src/lib/watch-info.ts.
+  "Onde Assistir": "/onde-assistir",
 };
 
 // URL canônica de uma notícia (estilo ge.globo). Ordem: (1) hub próprio (CATEGORY_HUB),

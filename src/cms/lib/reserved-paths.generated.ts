@@ -30,6 +30,7 @@ export const RESERVED_EXACT: readonly string[] = [
   "/mma",
   "/municipal",
   "/nfl",
+  "/noticias/onde-assistir",
   "/paginas",
   "/privacidade",
   "/proximos-jogos",
