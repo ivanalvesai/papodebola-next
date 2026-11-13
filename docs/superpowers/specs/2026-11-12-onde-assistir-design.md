@@ -181,7 +181,7 @@ escolhidos (SporTV/geTV). "Exclusividade da Disney+" (InfoMoney) está ERRADO.
 | 16:45 Escócia x Macedônia do Norte | ESPN Brasil (YouTube) + Disney+ | 2 fontes |
 | 16:45 Eslováquia x Ilhas Faroé | Disney+ | 2 fontes |
 | 16:45 Eslovênia x Suíça | ESPN 4 + Disney+ | 2 fontes |
-| 16:45 Holanda x Grécia | ESPN + Disney+ (3 fontes) × sportv (Terra, Portal Democrata) | CONFLITO |
+| 16:45 Holanda x Grécia | ESPN + Disney+ (decisão do Ivan, 12/11) | 3 fontes |
 | 16:45 Liechtenstein x Azerbaijão | Disney+ | 2 fontes |
 | 16:45 Luxemburgo x Estônia | Disney+ | 2 fontes |
 | 16:45 Sérvia x Alemanha | SporTV + geTV | 2+ fontes |
@@ -195,6 +195,7 @@ Os outros 8 jogos: completar com a API (`match/{id}` venue/referee). O que não 
 ## Progresso
 - [x] Análise + benchmark (commit cad4556)
 - [x] Design aprovado com os ajustes (12/11 ~22h10)
-- [ ] Spec revisada pelo Ivan → plano (writing-plans)
+- [x] Spec APROVADA pelo Ivan (12/11 ~22h40). Regra: **posts NÃO citam fontes** (portais concorrentes); fontes só neste doc
+- [ ] Plano (writing-plans)
 - [ ] Implementação no dev → aprovação visual
 - [ ] Posts 13/11, um a um
