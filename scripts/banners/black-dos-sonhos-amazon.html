@@ -1,0 +1,125 @@
+<!doctype html>
+<html><head><meta charset="utf-8">
+<!-- Banner "Black dos Sonhos" (promoção da Amazon, Black Friday 2026). Arte própria:
+     céu noturno com nuvens, prêmio em dourado e laranja da campanha; sem logo nem foto da Amazon.
+     Computador: 2400×600 (sai 1200×300). Celular: ?m=1 → 1440×480 (sai 720×240).
+     Animação em laço de 4 s (render-anim.mjs congela as animações quadro a quadro):
+       0–1 s  zoom no R$ 1.000.000 + brilho passando
+       2–3 s  zoom em "e a prêmios semanais"
+       3,2–3,8 s  botão "Clique e concorra" pulsa -->
+<link href="https://fonts.googleapis.com/css2?family=Archivo+Black&family=Archivo:wght@700;800;900&display=block" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+html,body{overflow:hidden;background:#0b0f19}
+body{font-family:'Archivo',sans-serif;color:#fff}
+.b{position:relative;overflow:hidden;width:2400px;height:600px;
+  background:radial-gradient(ellipse 60% 90% at 52% 38%,#2a3550 0%,#161d2d 55%,#0b0f19 100%)}
+.m .b{width:1440px;height:480px}
+
+/* nuvens */
+.cloud{position:absolute;border-radius:50%;background:radial-gradient(circle at 50% 55%,rgba(235,240,255,.85) 0%,rgba(200,210,235,.55) 35%,rgba(160,175,210,0) 70%);filter:blur(14px)}
+.c1{left:-160px;top:380px;width:620px;height:360px}
+.c2{left:260px;top:-170px;width:520px;height:300px;opacity:.6}
+.c3{left:1980px;top:330px;width:720px;height:420px}
+.c4{left:1540px;top:-190px;width:460px;height:280px;opacity:.45}
+.c5{left:1150px;top:470px;width:560px;height:260px;opacity:.35}
+@keyframes drift{0%,100%{transform:translateX(0)}50%{transform:translateX(46px)}}
+@keyframes driftR{0%,100%{transform:translateX(0)}50%{transform:translateX(-40px)}}
+.c1,.c3,.c5{animation:drift 4s ease-in-out infinite}
+.c2,.c4{animation:driftR 4s ease-in-out infinite}
+
+/* marca da campanha (texto, sem logo) */
+.brand{position:absolute;left:96px;top:118px;line-height:.86;font-family:'Archivo Black';color:#ff7a00;text-shadow:0 6px 0 rgba(0,0,0,.25)}
+.brand .l1{font-size:156px;letter-spacing:-4px}
+.brand .l2{font-size:96px;letter-spacing:-2px}
+.brand .l3{font-family:'Archivo';font-weight:900;font-size:66px;color:#fff;margin-top:22px;letter-spacing:-1px}
+
+/* bloco central */
+.mid{position:absolute;left:730px;width:1180px;top:0;height:600px;text-align:center}
+.lead{position:absolute;left:0;right:0;top:40px;font-weight:900;font-size:64px;letter-spacing:-1px}
+.prize{position:absolute;left:0;right:0;top:112px;display:flex;justify-content:center;align-items:flex-start;
+  filter:drop-shadow(0 7px 0 #7a4a06) drop-shadow(0 22px 36px rgba(0,0,0,.65))}
+.prize span{font-family:'Archivo Black';line-height:1;letter-spacing:-6px;color:transparent;-webkit-background-clip:text;background-clip:text;
+  background-image:linear-gradient(100deg,transparent 42%,rgba(255,255,255,.95) 50%,transparent 58%),linear-gradient(180deg,#fff6c9 0%,#ffd75a 28%,#e9a91c 55%,#b8770b 78%,#ffd75a 100%);
+  background-size:300% 100%,100% 100%;background-repeat:no-repeat}
+.prize .cur{font-size:76px;margin:24px 12px 0 0;letter-spacing:-2px}
+.prize .num{font-size:168px;letter-spacing:-4px}
+.sub{position:absolute;left:0;right:0;top:298px;font-size:30px;font-weight:700;opacity:.85}
+.weekly{position:absolute;left:0;right:0;top:346px;font-weight:900;font-size:84px;letter-spacing:-2px}
+.weekly em{font-style:normal;color:#ffd75a}
+
+/* botão */
+.cta{position:absolute;left:50%;top:478px;transform:translateX(-50%);display:flex;align-items:center;gap:18px;white-space:nowrap;
+  background:#ff6a00;color:#fff;font-weight:900;font-size:44px;border-radius:999px;padding:12px 16px 12px 44px;box-shadow:0 10px 26px rgba(255,106,0,.45)}
+.cta i{display:flex;align-items:center;justify-content:center;width:58px;height:58px;border-radius:50%;background:#fff;color:#ff6a00;font-style:normal;font-size:44px;line-height:1;padding-bottom:5px}
+
+/* barras de ouro (CSS) */
+.gold{position:absolute;left:1975px;top:120px;width:380px;height:300px}
+.bar{position:absolute;width:250px;height:92px;clip-path:polygon(12% 0,88% 0,100% 100%,0 100%);
+  background:linear-gradient(180deg,#fff3b8 0%,#ffd75a 30%,#d9970f 70%,#9c6405 100%)}
+.bar::after{content:"";position:absolute;left:14%;right:14%;top:10px;height:16px;border-radius:8px;background:rgba(255,255,255,.55)}
+.g1{left:0;top:180px}.g2{left:130px;top:180px}.g3{left:64px;top:96px}
+@keyframes float{0%,100%{transform:translateY(0)}50%{transform:translateY(-14px)}}
+.gold{animation:float 4s ease-in-out infinite}
+.halo{position:absolute;left:1925px;top:40px;width:480px;height:480px;border-radius:50%;background:radial-gradient(circle,rgba(255,200,60,.35),transparent 65%)}
+
+/* brilhos */
+.sp{position:absolute;width:44px;height:44px;background:#fff6c9;clip-path:polygon(50% 0,60% 40%,100% 50%,60% 60%,50% 100%,40% 60%,0 50%,40% 40%)}
+@keyframes tw{0%,100%{transform:scale(0) rotate(0);opacity:0}50%{transform:scale(1) rotate(45deg);opacity:1}}
+.sp{animation:tw 2s ease-in-out infinite}
+.s1{left:740px;top:150px}.s2{left:1760px;top:120px;animation-delay:-.7s}.s3{left:2280px;top:90px;animation-delay:-1.3s}
+.s4{left:1900px;top:420px;animation-delay:-.4s;width:30px;height:30px}.s5{left:660px;top:330px;animation-delay:-1.6s;width:30px;height:30px}
+
+.fine{position:absolute;left:98px;top:548px;font-size:22px;font-weight:700;opacity:.6}
+
+/* animação principal */
+@keyframes zPrize{0%{transform:scale(1)}12%{transform:scale(1.13)}26%,100%{transform:scale(1)}}
+@keyframes shine{0%{background-position:0% 0,0 0}30%,100%{background-position:100% 0,0 0}}
+@keyframes zWeek{0%,48%{transform:scale(1)}60%{transform:scale(1.14)}74%,100%{transform:scale(1)}}
+@keyframes pulse{0%,78%{transform:translateX(-50%) scale(1);box-shadow:0 10px 26px rgba(255,106,0,.45)}86%{transform:translateX(-50%) scale(1.1);box-shadow:0 0 50px rgba(255,140,0,.9)}95%,100%{transform:translateX(-50%) scale(1);box-shadow:0 10px 26px rgba(255,106,0,.45)}}
+@keyframes arrow{0%,78%,100%{transform:translateX(0)}86%{transform:translateX(10px)}}
+.prize{animation:zPrize 4s ease-in-out infinite;transform-origin:50% 55%}
+.prize span{animation:shine 4s ease-in-out infinite}
+.weekly{animation:zWeek 4s ease-in-out infinite}
+.cta{animation:pulse 4s ease-in-out infinite}
+.cta i{animation:arrow 4s ease-in-out infinite}
+
+/* ---------- CELULAR 1440×480 ---------- */
+.m .brand{left:54px;top:56px}
+.m .brand .l1{font-size:116px;letter-spacing:-3px}
+.m .brand .l2{font-size:66px}
+.m .brand .l3{font-size:44px;margin-top:14px}
+.m .mid{left:540px;width:880px;height:480px}
+.m .lead{top:40px;font-size:46px}
+.m .prize{top:100px}
+.m .prize .cur{font-size:52px;margin:16px 8px 0 0}
+.m .prize .num{font-size:124px;letter-spacing:-3px}
+.m .sub{top:242px;font-size:22px}
+.m .weekly{top:276px;font-size:58px}
+.m .cta{left:auto;right:auto;top:378px;font-size:36px;padding:9px 12px 9px 34px;position:absolute}
+.m .mid .cta{left:50%}
+.m .cta i{width:48px;height:48px;font-size:36px}
+.m .gold,.m .halo{display:none}
+.m .c1{left:-200px;top:300px}.m .c3{left:1100px;top:300px;width:560px;height:330px}.m .c4{left:900px}.m .c5{display:none}
+.m .s1{left:560px;top:110px}.m .s2{left:1360px;top:70px}.m .s3{left:1380px;top:330px}.m .s4{left:60px;top:390px}.m .s5{left:470px;top:60px}
+.m .fine{left:56px;top:430px;font-size:18px}
+</style></head>
+<body>
+<div class="b">
+  <div class="cloud c2"></div><div class="cloud c4"></div>
+  <div class="halo"></div>
+  <div class="gold"><div class="bar g1"></div><div class="bar g2"></div><div class="bar g3"></div></div>
+  <div class="brand"><div class="l1">Black</div><div class="l2">dos Sonhos</div><div class="l3">na Amazon</div></div>
+  <div class="mid">
+    <div class="lead">Concorra a um prêmio de</div>
+    <div class="prize"><span class="cur">R$</span><span class="num">1.000.000</span></div>
+    <div class="sub">em certificados de barra de ouro</div>
+    <div class="weekly">e a <em>prêmios semanais</em></div>
+    <div class="cta">Clique e concorra <i>›</i></div>
+  </div>
+  <div class="sp s1"></div><div class="sp s2"></div><div class="sp s3"></div><div class="sp s4"></div><div class="sp s5"></div>
+  <div class="cloud c1"></div><div class="cloud c3"></div><div class="cloud c5"></div>
+  <div class="fine">Promoção da Amazon. Consulte o regulamento no site.</div>
+</div>
+<script>if(new URLSearchParams(location.search).get('m')==='1')document.body.className='m';</script>
+</body></html>

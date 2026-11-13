@@ -106,12 +106,35 @@ body{font-family:'Baloo 2',sans-serif;}
 .m.C .t1{left:1080px;top:90px;width:300px;height:190px}
 .m.C .t1 .stamp{font-size:26px;bottom:-26px;left:12px;right:12px;white-space:nowrap}
 .m.C .fine{display:none}
+
+/* ---------- ANIMAÇÃO (?anim=1) — laço de 3 s, sem emenda (versão A) ----------
+   Cupons dão zoom alternados (um cresce enquanto o outro volta), raios giram 1 período
+   do padrão (18deg) por volta, CORRA! pulsa 2x, barra "acabando" corre e a seta do botão empurra. */
+@keyframes igT1{0%,50%,100%{transform:rotate(9deg) scale(1)}25%{transform:rotate(3deg) scale(1.2)}}
+@keyframes igT2{0%,50%,100%{transform:rotate(-6deg) scale(1)}25%{transform:rotate(0deg) scale(1.2)}}
+@keyframes igRays{from{transform:rotate(0)}to{transform:rotate(18deg)}}
+@keyframes igCorra{0%,50%,100%{transform:rotate(-7deg) scale(1)}12%,62%{transform:rotate(-9deg) scale(1.1)}}
+@keyframes igCorraM{0%,50%,100%{transform:rotate(-4deg) scale(1)}12%,62%{transform:rotate(-6deg) scale(1.1)}}
+@keyframes igBar{from{background-position:0 0}to{background-position:186.7px 0}}
+@keyframes igArrow{0%,40%,100%{transform:translateX(0)}20%{transform:translateX(10px)}}
+@keyframes igShine{0%{left:-40%}60%,100%{left:140%}}
+.anim .t1{animation:igT1 3s ease-in-out infinite;z-index:3}
+.anim .t2{animation:igT2 3s ease-in-out infinite;animation-delay:-1.5s;z-index:2}
+.anim .rays{animation:igRays 3s linear infinite}
+.anim.A .corra{animation:igCorra 3s ease-in-out infinite}
+.anim.m.A .corra{animation-name:igCorraM}
+.anim .bar span{animation:igBar 3s linear infinite}
+.anim .cta i{animation:igArrow 1.5s ease-in-out infinite}
+.anim .ticket{overflow:hidden}
+.anim .ticket .shine{position:absolute;top:-20%;bottom:-20%;width:28%;left:-40%;transform:skewX(-20deg);background:linear-gradient(90deg,transparent,rgba(255,255,255,.75),transparent);animation:igShine 1.5s ease-in-out infinite}
+.anim .t2 .shine{animation-delay:-.75s}
 </style></head>
 <body>
 <div id="root"></div>
 <script>
 const q=new URLSearchParams(location.search), v=q.get('v')||'A', mob=q.get('m')==='1';
-document.body.className=v+(mob?' m':'');
+const anim=q.get('anim')==='1';
+document.body.className=v+(mob?' m':'')+(anim?' anim':'');
 const T={
 A:`<div class="b"><div class="rays"></div>
  <div class="kicker">CUPONS NOVOS TODO DIA</div>
@@ -138,5 +161,6 @@ C:`<div class="b"><div class="glow"></div><div class="tape top"></div><div class
  <div class="ticket t1"><div class="in"></div><b>%OFF</b><small>CUPOM</small><div class="stamp">QUASE NO FIM</div></div>
  <div class="fine">Cupons sujeitos à disponibilidade na loja.</div></div>`};
 document.getElementById('root').innerHTML=T[v];
+if(anim)document.querySelectorAll('.ticket').forEach(t=>t.insertAdjacentHTML('beforeend','<i class="shine"></i>'));
 </script>
 </body></html>
