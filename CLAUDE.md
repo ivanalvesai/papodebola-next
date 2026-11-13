@@ -765,6 +765,7 @@ Doc completo: `docs/knowledge/2026-06-20-studio-kanbans.md`. Navegação compart
 - **`/onde-assistir`** (menu; `/futebol/onde-assistir` → 308) lista só guias de jogo: categoria **"Onde Assistir"** OU tag **"Onde assistir"**. Os 3 últimos ficam em destaque e os anteriores vêm abaixo. Os guias também aparecem na home.
 - **`/ao-vivo`** mostra só os jogos do dia, com uma seção por campeonato (H2 + texto) e cards com status e link pro lance a lance.
 - Posts: `scripts/onde-assistir/*` + `scripts/capa-onde-assistir.py` + `scripts/create-posts-onde-assistir-lote.mjs`, que agenda via `schedulePublish`. Bloco Lexical novo exige promote antes de agendar.
+- **Lote em escala (template v2, 13/11):** `template-v2.mjs` serve clube (Série A/B, mostra vitórias) e seleção; `build-v2.mjs` monta o JSON (XI do snapshot ou do jogo anterior + `swapHome/swapAway`); `sched.sh` agenda. Capa de clube usa `--crest`. 17 guias do dia 14/11 agendados das 08h às 21h20 (posts 458–474). Conferir placares citados contra `facts.json` antes de agendar; desfalque com fonte única não entra.
 - Doc: `docs/knowledge/2026-11-13-onde-assistir-banner-shopee.md`.
 
 ## Analytics e Tags

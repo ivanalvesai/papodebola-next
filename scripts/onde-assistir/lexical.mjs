@@ -31,8 +31,7 @@ export const LINEUP = (team, side, label = "Provável") =>
     players: side.starters.slice(0, 11).map((p) => ({ id: id(), name: p.name, number: p.number != null ? String(p.number) : "", playerId: String(p.id) })),
   });
 
-const STAND_HEAD = ["Pos.", "Seleção", "Pts", "J", "V", "E", "D", "Gols", "Saldo"];
-export const STANDINGS_TABLE = (rows) =>
-  TABLE(STAND_HEAD, rows.map((r) => [`${r.pos}º`, r.team, String(r.pts), String(r.matches), String(r.wins), String(r.draws), String(r.losses), `${r.gf}-${r.ga}`, r.gd > 0 ? `+${r.gd}` : String(r.gd)]));
+export const STANDINGS_TABLE = (rows, teamHead = "Seleção") =>
+  TABLE(["Pos.", teamHead, "Pts", "J", "V", "E", "D", "Gols", "Saldo"], rows.map((r) => [`${r.pos}º`, r.team, String(r.pts), String(r.matches), String(r.wins), String(r.draws), String(r.losses), `${r.gf}-${r.ga}`, r.gd > 0 ? `+${r.gd}` : String(r.gd)]));
 
 export const slugify = (s) => s.toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "").replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "");

@@ -6,7 +6,7 @@
 # Uso: python scripts/capa-onde-assistir.py --bg foto.jpg --home flagA.png --away flagB.png \
 #        --home-name "Moldávia" --away-name "Cazaquistão" \
 #        --info "Sexta, 13/11 · 14h · ESPN 4 e Disney+" --seal "LIGA DAS NAÇÕES · ONDE ASSISTIR" \
-#        --out capa.png [--preview preview.png]
+#        --out capa.png [--preview preview.png] [--crest]   (--crest = escudo de clube inteiro)
 # As bandeiras vêm do volume (/app/data/team-images/{id}.png).
 import argparse
 import os
@@ -40,12 +40,18 @@ def background(path):
     return Image.composite(dark, img, shade)
 
 
-def flag_circle(path, d):
+def flag_circle(path, d, crest=False):
     src = Image.open(path).convert("RGBA")
-    # Bandeira preenche o círculo (crop central); fundo branco atrás de PNG com transparência.
-    base = Image.new("RGBA", src.size, (255, 255, 255, 255))
-    base.alpha_composite(src)
-    flag = ImageOps.fit(base, (d, d), Image.LANCZOS)
+    if crest:
+        # Escudo de clube: inteiro (sem corte), centralizado num círculo branco com respiro.
+        flag = Image.new("RGBA", (d, d), (255, 255, 255, 255))
+        c = ImageOps.contain(src, (int(d * 0.74), int(d * 0.74)), Image.LANCZOS)
+        flag.alpha_composite(c, ((d - c.width) // 2, (d - c.height) // 2))
+    else:
+        # Bandeira preenche o círculo (crop central); fundo branco atrás de PNG com transparência.
+        base = Image.new("RGBA", src.size, (255, 255, 255, 255))
+        base.alpha_composite(src)
+        flag = ImageOps.fit(base, (d, d), Image.LANCZOS)
     mask = Image.new("L", (d * 4, d * 4), 0)
     ImageDraw.Draw(mask).ellipse((0, 0, d * 4, d * 4), fill=255)
     mask = mask.resize((d, d), Image.LANCZOS)
@@ -54,7 +60,7 @@ def flag_circle(path, d):
     return out
 
 
-def paste_flag(canvas, path, cx, cy, d=220, border=8):
+def paste_flag(canvas, path, cx, cy, d=220, border=8, crest=False):
     # sombra
     sh = Image.new("RGBA", (W, H), (0, 0, 0, 0))
     r = d // 2 + border
@@ -63,7 +69,7 @@ def paste_flag(canvas, path, cx, cy, d=220, border=8):
     ring = Image.new("RGBA", (W, H), (0, 0, 0, 0))
     ImageDraw.Draw(ring).ellipse((cx - r, cy - r, cx + r, cy + r), fill=(255, 255, 255, 255))
     canvas.alpha_composite(ring)
-    canvas.alpha_composite(flag_circle(path, d), (cx - d // 2, cy - d // 2))
+    canvas.alpha_composite(flag_circle(path, d, crest), (cx - d // 2, cy - d // 2))
 
 
 def text_center(draw, cx, y, text, f, fill, shadow=True):
@@ -79,6 +85,7 @@ def main():
         ap.add_argument(f"--{a}", required=True)
     ap.add_argument("--seal", default="LIGA DAS NAÇÕES · ONDE ASSISTIR")
     ap.add_argument("--preview")
+    ap.add_argument("--crest", action="store_true", help="escudos de clube (sem cortar)")
     o = ap.parse_args()
 
     canvas = background(o.bg).convert("RGBA")
@@ -93,8 +100,8 @@ def main():
 
     # Bandeiras (centro y=215, raio 118 → 97..333)
     cy = 215
-    paste_flag(canvas, o.home, 330, cy)
-    paste_flag(canvas, o.away, W - 330, cy)
+    paste_flag(canvas, o.home, 330, cy, crest=o.crest)
+    paste_flag(canvas, o.away, W - 330, cy, crest=o.crest)
     draw = ImageDraw.Draw(canvas)
     text_center(draw, W / 2, cy - 62, "X", font("OpenSans-ExtraBold.ttf", 96), (255, 255, 255))
 
