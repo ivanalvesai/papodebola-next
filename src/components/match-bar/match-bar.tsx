@@ -100,9 +100,9 @@ export function MatchBar({ todayMatches, upcomingMatches }: MatchBarProps) {
       <div className="relative mx-auto max-w-[1240px] px-4">
         <button
           onClick={() => scroll(-300)}
-          className="absolute left-4 top-0 bottom-0 z-10 w-8 bg-gradient-to-r from-surface to-transparent flex items-center justify-center text-text-muted hover:text-text-primary"
+          className="absolute left-4 top-0 bottom-0 z-10 w-8 bg-gradient-to-r from-surface to-transparent group flex items-center justify-center"
         >
-          <ChevronLeft className="h-5 w-5" />
+          <span className="flex h-8 w-8 items-center justify-center rounded-full bg-green text-white shadow-md ring-2 ring-white/70 transition-transform group-hover:scale-110"><ChevronLeft className="h-5 w-5" /></span>
         </button>
 
         <div
@@ -159,9 +159,9 @@ export function MatchBar({ todayMatches, upcomingMatches }: MatchBarProps) {
 
         <button
           onClick={() => scroll(300)}
-          className="absolute right-4 top-0 bottom-0 z-10 w-8 bg-gradient-to-l from-surface to-transparent flex items-center justify-center text-text-muted hover:text-text-primary"
+          className="absolute right-4 top-0 bottom-0 z-10 w-8 bg-gradient-to-l from-surface to-transparent group flex items-center justify-center"
         >
-          <ChevronRight className="h-5 w-5" />
+          <span className="flex h-8 w-8 items-center justify-center rounded-full bg-green text-white shadow-md ring-2 ring-white/70 transition-transform group-hover:scale-110"><ChevronRight className="h-5 w-5" /></span>
         </button>
       </div>
     </div>

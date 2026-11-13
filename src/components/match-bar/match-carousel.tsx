@@ -59,9 +59,9 @@ export function MatchCarousel({
         <button
           onClick={() => scroll(-300)}
           aria-label="Jogos anteriores"
-          className="absolute left-0 top-0 bottom-0 z-10 w-8 bg-gradient-to-r from-card-bg to-transparent flex items-center justify-center text-text-muted hover:text-text-primary"
+          className="absolute left-0 top-0 bottom-0 z-10 w-8 bg-gradient-to-r from-card-bg to-transparent group flex items-center justify-center"
         >
-          <ChevronLeft className="h-5 w-5" />
+          <span className="flex h-8 w-8 items-center justify-center rounded-full bg-green text-white shadow-md ring-2 ring-white/70 transition-transform group-hover:scale-110"><ChevronLeft className="h-5 w-5" /></span>
         </button>
 
         <div
@@ -79,9 +79,9 @@ export function MatchCarousel({
         <button
           onClick={() => scroll(300)}
           aria-label="Próximos jogos"
-          className="absolute right-0 top-0 bottom-0 z-10 w-8 bg-gradient-to-l from-card-bg to-transparent flex items-center justify-center text-text-muted hover:text-text-primary"
+          className="absolute right-0 top-0 bottom-0 z-10 w-8 bg-gradient-to-l from-card-bg to-transparent group flex items-center justify-center"
         >
-          <ChevronRight className="h-5 w-5" />
+          <span className="flex h-8 w-8 items-center justify-center rounded-full bg-green text-white shadow-md ring-2 ring-white/70 transition-transform group-hover:scale-110"><ChevronRight className="h-5 w-5" /></span>
         </button>
       </div>
     </section>
