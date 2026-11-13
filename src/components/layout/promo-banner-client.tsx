@@ -6,7 +6,7 @@ import { track } from "@/lib/analytics";
 
 // Lado do navegador do banner promocional:
 //  - confere início/fim pela hora do visitante (a página pode estar em cache);
-//  - com vários banners no período, sorteia um por visita;
+//  - com vários banners no período, alterna um por hora cheia (rodízio, ver pick);
 //  - página gerada no build vem sem banners → busca em /api/promo-banners;
 //  - ?banner=preview mostra também os sem link e os que ainda não começaram (teste).
 function inWindow(b: PromoBanner, now: number): boolean {
@@ -27,7 +27,12 @@ export function PromoBannerClient({ banners, initialSlug }: { banners: PromoBann
       const ok = items.filter((b) => (isPreview ? !b.endsAt || Date.parse(b.endsAt) > now : b.hasLink && inWindow(b, now)));
       if (!alive) return;
       setList(items);
-      setSlug(ok.length ? ok[Math.floor(Math.random() * ok.length)].slug : null);
+      // Rodízio de hora em hora (pedido do Ivan, 13/11): ordem alfabética do slug e um banner
+      // por hora cheia. Com 2 banners (black-friday-amazon, black-friday-shopee) a Amazon
+      // fica nas horas ímpares de Brasília e a Shopee nas pares. Mesma hora = mesmo banner
+      // pra todo mundo; a troca é na virada da hora, sem depender de cache.
+      ok.sort((a, b) => a.slug.localeCompare(b.slug));
+      setSlug(ok.length ? ok[Math.floor(now / 3_600_000) % ok.length].slug : null);
     };
     // Sorteia já com o que veio no HTML e confirma com a lista atual: a página pode estar
     // em cache de antes de um banner ganhar link, trocar de arte ou sair do ar.
