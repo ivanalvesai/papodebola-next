@@ -133,3 +133,17 @@ export function pickWatchPosts<T extends { tags?: string[]; matchId?: number }>(
     .filter((p) => (!tag || (p.tags || []).some((t) => fold(t) === tag)) && (!ids || (p.matchId != null && ids.has(p.matchId))))
     .sort((a, b) => ko(a) - ko(b));
 }
+
+// Rótulo do dia do jogo no fuso de Brasília: "Hoje", "Amanhã" ou "Sábado, 14/11".
+const BR_DAY = (ts: number) =>
+  new Date(ts * 1000).toLocaleDateString("en-CA", { timeZone: "America/Sao_Paulo" }); // YYYY-MM-DD
+export function watchDayLabel(ts: number, nowSec: number = Date.now() / 1000): string {
+  const d = BR_DAY(ts);
+  if (d === BR_DAY(nowSec)) return "Hoje";
+  if (d === BR_DAY(nowSec + 86400)) return "Amanhã";
+  const s = new Date(ts * 1000).toLocaleDateString("pt-BR", {
+    weekday: "long", day: "2-digit", month: "2-digit", timeZone: "America/Sao_Paulo",
+  });
+  const label = s.replace(/-feira/, "").replace(/^(\w)/, (c) => c.toUpperCase());
+  return label;
+}

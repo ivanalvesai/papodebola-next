@@ -97,3 +97,11 @@ test("pickWatchPosts: filtra por tag (sem acento/caixa) e por matchId; ordena pe
   assert.deepEqual(pickWatchPosts(posts, { tag: "Liga das Nações" }, kickoff).map((p) => p.slug), ["b", "a", "d"]);
   assert.deepEqual(pickWatchPosts(posts, { matchIds: [3] }, kickoff).map((p) => p.slug), ["c"]);
 });
+
+import { watchDayLabel } from "./watch-info.ts";
+test("watchDayLabel: Hoje / Amanhã / dia da semana com data (fuso de Brasília)", () => {
+  const now = Date.UTC(2026, 10, 13, 2, 0) / 1000; // 12/11 23h em Brasília
+  assert.equal(watchDayLabel(Date.UTC(2026, 10, 13, 1, 0) / 1000, now), "Hoje");
+  assert.equal(watchDayLabel(Date.UTC(2026, 10, 13, 19, 45) / 1000, now), "Amanhã");
+  assert.equal(watchDayLabel(Date.UTC(2026, 10, 14, 19, 45) / 1000, now), "Sábado, 14/11");
+});
