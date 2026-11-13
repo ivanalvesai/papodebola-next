@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { readFile } from "fs/promises";
+import { readFile, writeFile, mkdir } from "fs/promises";
 import { join } from "path";
 
 // Foto do jogador servida do ARQUIVO LOCAL (volume compartilhado data/player-images),
@@ -43,6 +43,14 @@ export async function GET(
     if (r.ok) {
       const buf = Buffer.from(await r.arrayBuffer());
       if (buf.length > 500) {
+        // Grava no volume na 1ª vez (velocidade: o Ivan precisou recarregar o post 4x pras
+        // fotos do campinho aparecerem, 13/11). Só webp (magic RIFF....WEBP), que é o formato
+        // servido no passo 1; nunca bloqueia a resposta.
+        if (buf.subarray(0, 4).toString() === "RIFF" && buf.subarray(8, 12).toString() === "WEBP") {
+          mkdir(DIR, { recursive: true })
+            .then(() => writeFile(join(DIR, `${pid}.webp`), buf))
+            .catch(() => {});
+        }
         return new NextResponse(new Uint8Array(buf), {
           headers: {
             "content-type": r.headers.get("content-type") || "image/webp",

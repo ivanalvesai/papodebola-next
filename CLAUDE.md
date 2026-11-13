@@ -21,6 +21,8 @@ Checklist obrigatório para **toda página/seção nova** que mostre dados da AP
 5. Fonte fora do motor genérico (endpoint próprio, outro esporte)? Criar uma categoria nova de snapshot com `withSnapshot`. Não publicar a página sem isso.
 6. Validar no servidor: `ls /app/data/snapshots/{championships,matches}` deve ter os arquivos do torneio, com `incidents` nos jogos encerrados.
 
+**Velocidade é prioridade do Ivan (13/11): nada pode ficar sendo puxado da API a cada acesso.** Imagens e dados saem do disco (volume); a API só atualiza. `/api/player-img` e `/api/team-img` gravam no volume na 1ª busca (write-through). Post com campinho: rodar `scripts/download-match-player-images.mjs <matchIds>` antes de publicar, depois que o snapshot do jogo existir (sem snapshot o script pula o jogo).
+
 **Regra de velocidade, também para toda rota nova com `[param]`:** além de `export const revalidate = N`, a rota precisa exportar `generateStaticParams` (mesmo que `return []`). Sem isso o Next marca a rota como **ƒ (Dynamic)** e remonta a página do zero a cada acesso. Antes de 12/11, as páginas de jogo levavam de 0,6 a 1,9 s; com o cache passaram a ~0,02 s. Confira no log do build: a rota deve aparecer como **●**, não ƒ. Não use `dynamicParams=false` (quebrou campeonatos em prod) nem `loading.tsx` global (causou soft-404). O retorno visual do clique fica com `NavProgress` (`src/components/layout/nav-progress.tsx`).
 
 Exemplo conferido em 12/11/2026, Liga das Nações: tabela em `snapshots/championships/liga-das-nacoes.json`; os 112 jogos encerrados com lance a lance em `snapshots/matches/{id}.json`.
@@ -766,6 +768,8 @@ Doc completo: `docs/knowledge/2026-06-20-studio-kanbans.md`. Navegação compart
 - **`/ao-vivo`** mostra só os jogos do dia, com uma seção por campeonato (H2 + texto) e cards com status e link pro lance a lance.
 - Posts: `scripts/onde-assistir/*` + `scripts/capa-onde-assistir.py` + `scripts/create-posts-onde-assistir-lote.mjs`, que agenda via `schedulePublish`. Bloco Lexical novo exige promote antes de agendar.
 - **Lote em escala (template v2, 13/11):** `template-v2.mjs` serve clube (Série A/B, mostra vitórias) e seleção; `build-v2.mjs` monta o JSON (XI do snapshot ou do jogo anterior + `swapHome/swapAway`); `sched.sh` agenda. Capa de clube usa `--crest`. 17 guias do dia 14/11 agendados das 08h às 21h20 (posts 458–474). Conferir placares citados contra `facts.json` antes de agendar; desfalque com fonte única não entra.
+- **Amistosos (13/11):** `src/lib/data/amistosos.ts` acompanha Brasil, Brasil sub-20, Argentina e Uruguai (`AMISTOSO_TEAM_IDS`; filtro = torneio com "Friendly"). Índice no volume `snapshots/amistosos/jogos.json`; lance a lance em **`/futebol/amistosos/{DD-MM-AAAA}/{casa}-{fora}`** (Brasil principal redireciona pra `/futebol/selecao-brasileira/...`). Entram na barra da home (Hoje/Próximos) e no carrossel "Amistosos" de `/jogos-de-hoje`, que tem ordem fixa: Copa, brasileiros, Amistosos, Liga das Nações, Europa. Guias de amistoso: `template-amistoso.mjs` + `build-amistoso.mjs`.
+- **GOTCHA horário no Windows:** `TZ=America/Sao_Paulo date` no Git Bash devolve UTC. Para agendar "agora", pegar a hora no servidor (`ssh ... date`).
 - Doc: `docs/knowledge/2026-11-13-onde-assistir-banner-shopee.md`.
 
 ## Analytics e Tags

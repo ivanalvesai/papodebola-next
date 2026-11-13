@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { readFile } from "fs/promises";
+import { readFile, writeFile, mkdir } from "fs/promises";
 import { join } from "path";
 
 // Escudo do time servido do ARQUIVO LOCAL (volume compartilhado data/team-images),
@@ -46,6 +46,16 @@ export async function GET(
     if (r.ok) {
       const buf = Buffer.from(await r.arrayBuffer());
       if (buf.length > 500) {
+        // Grava no volume na 1ª vez (o passo 1 já detecta png/webp pelos magic bytes), pra
+        // nunca mais buscar na API. Velocidade é prioridade do Ivan (13/11). Não bloqueia.
+        const isImg =
+          (buf[0] === 0x89 && buf[1] === 0x50) ||
+          (buf.subarray(0, 4).toString() === "RIFF" && buf.subarray(8, 12).toString() === "WEBP");
+        if (isImg) {
+          mkdir(DIR, { recursive: true })
+            .then(() => writeFile(join(DIR, `${tid}.png`), buf))
+            .catch(() => {});
+        }
         return new NextResponse(new Uint8Array(buf), {
           headers: {
             "content-type": r.headers.get("content-type") || "image/png",
