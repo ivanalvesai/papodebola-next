@@ -58,5 +58,95 @@ Islândia (15534234) · Escócia x Macedônia do Norte (15534110) · Eslováquia
 (15534192) · Eslovênia x Suíça (15534113) · Holanda x Grécia (15534069) · Liechtenstein x
 Azerbaijão (15534240) · Luxemburgo x Estônia (15537774) · Sérvia x Alemanha (15534059).
 
-## Design proposto (a validar)
-(preenchido na próxima etapa)
+## Design APROVADO (Ivan, 12/11 ~22h10), com os ajustes dele
+- Estrutura em **2 páginas** (opção recomendada): `/onde-assistir` é a casa dos posts; `/ao-vivo` é refeita.
+- **Autores alternados:** Ivan Alves (authors id 1) e Lucas Lima (id 2), intercalando post a post.
+- **Capa:** montada como as anteriores, com as **bandeiras das duas seleções** sobre foto real
+  (área segura: bandeiras e texto entre y≈30 e y≈420 em 1200×675; ver feedback_capa_post_area_segura).
+  Base: `~/capa-ln-foto.mjs` no servidor.
+- **Publicação:** pode passar da meia-noite. **Publicar cada post assim que ficar pronto**
+  (ordem explícita do Ivan para estes posts); sem agendamento em lote.
+- **Transmissão:** checar a fonte jogo a jogo (ESPN/Disney+ e/ou SporTV/geTV). Sem confirmação,
+  o post diz que a grade está a confirmar e cita os detentores, com fonte. Nunca chutar.
+
+### 1. URLs e modelo de dados (sem migração)
+| Página | URL | Intenção de busca |
+|---|---|---|
+| Hub dos posts (nova) | `/onde-assistir` | "onde assistir", "onde vai passar" |
+| Post | `/onde-assistir/{a}-x-{b}-onde-assistir-horario-e-escalacoes` | "{A} x {B} onde assistir" |
+| Ao vivo (refeita) | `/ao-vivo` | "jogos ao vivo hoje", "placar ao vivo" |
+
+- Post = Payload `posts` com `category: "Onde Assistir"`. `CATEGORY_HUB["Onde Assistir"] = "/onde-assistir"`
+  em `src/lib/config.ts` faz `articleHref` gerar `/onde-assistir/{slug}`.
+- Liga o post ao jogo por `matchId` (já existe). `teams`: só os times que existem na collection
+  (seleções não estão lá, então fica vazio). `tags`: `["Onde assistir", "Liga das Nações", A, B]`.
+- **Silada** como Cupons (fora do feed principal da home e de /noticias), para não inundar a home
+  com 10 posts iguais. Os posts aparecem em: /onde-assistir, /ao-vivo, hub do campeonato, página
+  do jogo (lance a lance) e "Mais jogos para assistir" dentro dos próprios posts.
+- **Sem duplicar:** fora do post, só aparece um CARD (título, capa, hora, canal) com link para a URL
+  canônica do post. O corpo nunca é renderizado fora dela. A canonical do post é a própria URL.
+
+### 2. Post (template)
+Ordem: breadcrumb (Início › Onde Assistir › {campeonato}) → H1 "{A} x {B}: onde assistir, horário e
+escalações" → linha fina → byline (autor alternado) e data → capa → **Ficha do jogo** (componente)
+→ lead → H2 "Como chegam {A} e {B}" (posição no grupo + mini tabela do grupo) → H2 "Escalações
+prováveis" → H2 "Perguntas frequentes" → "Mais jogos para assistir".
+- **Ficha do jogo:** bloco Lexical novo `matchInfo` (sem migração, como `productGrid`), com campos
+  editáveis `channels` (texto, ex.: "ESPN 4 e Disney+"), `channelsConfirmed` (checkbox),
+  `channelsSource` (URL, só interno). O resto sai do jogo (`post.matchId` → `getMatchDetail`/
+  fixture): bandeiras (`/api/team-img`), campeonato e rodada/grupo, data e hora de Brasília, estádio
+  e cidade, árbitro (se houver), placar/status ao vivo, botão "Acompanhe o lance a lance" (href da
+  página do jogo). Uma fonte só, então o card não diverge do texto.
+- **FAQ** gerado dos mesmos dados (que horas, onde passa, onde é) + JSON-LD `FAQPage`.
+- JSON-LD do post: `NewsArticle` (autor Person com url /autor/{slug}) + `SportsEvent` (homeTeam/
+  awayTeam, startDate ISO com -03:00, location, superEvent = Liga das Nações, eventStatus) +
+  `BreadcrumbList` + `FAQPage`.
+
+### 3. Hub `/onde-assistir`
+- H1 "Onde assistir futebol hoje: jogos, horários e canais", com intro editável no /cms (Páginas, slug
+  `onde-assistir`, rota dedicada como a da Liga das Nações).
+- "Jogos de hoje" e "Amanhã": por campeonato, cada jogo com hora, canal (do post, se houver) e
+  link (post, senão lance a lance). Dados da agenda já salva (`data/snapshots/agenda`).
+- Grade de cards 16:9 dos posts (mesmo visual da home), agrupada por dia do jogo; paginação "ver mais".
+- FAQ editável + JSON-LD `CollectionPage` + `ItemList` (posts) + `BreadcrumbList`.
+- SEO: title "Onde assistir futebol hoje: jogos, horários e canais | Papo de Bola"; description
+  específica com acentos; canonical `/onde-assistir`; OG completo; ISR com generateStaticParams/
+  revalidate (regra de velocidade).
+
+### 4. `/ao-vivo` refeita
+- Largura 1240 px, layout do site. "Ao vivo agora" em destaque (vermelho), depois "Ainda hoje" e
+  "Encerrados", em cards agrupados por campeonato (escudos, placar, minuto).
+- Cada card: canal + link "Onde assistir" (post) + "Lance a lance" (página do jogo).
+- **Fonte de dados:** agenda salva (`getFootballAgenda`/store do dev, que grava a cada 1 min) em
+  vez do `getTodayMatches()`, que depende do endpoint por data (quebrado). O placar se atualiza pelo
+  polling que já existe (`/api/championship/{slug}/ao-vivo` / agenda), sem bater na API no render.
+- Texto curto editável + strip "Onde assistir hoje" (cards dos posts do dia).
+- SEO: title "Jogos ao vivo hoje: placares em tempo real e onde assistir | Papo de Bola";
+  description com acentos e campeonatos do dia; canonical `/ao-vivo`; JSON-LD `CollectionPage` +
+  `ItemList` de `SportsEvent` + `BreadcrumbList`.
+
+### 5. Cards em outras páginas (sem duplicar)
+- Hub da Liga das Nações: seção "Onde assistir os próximos jogos" (posts com tag "Liga das Nações"
+  e category "Onde Assistir", jogos futuros/de hoje).
+- Página do jogo (lance a lance): se existir post com `matchId` = jogo → card "Onde assistir {A} x {B}"
+  no `MatchPreview`.
+- Tudo linka a URL canônica do post.
+
+### 6. Posts de 13/11 (10 jogos)
+- Script `scripts/create-post-onde-assistir.mjs` (payload run) parametrizado por matchId: título,
+  slug, excerpt/seo, Lexical (lead, como chegam, escalações, FAQ em texto), bloco `matchInfo` com o
+  canal pesquisado, tags, autor alternado, capa (gerada no servidor com as bandeiras).
+- **Texto humano e único por jogo** (contexto real do grupo, nada de template idêntico com nomes
+  trocados, para não ser conteúdo raso).
+- Fluxo por post: gerar → conferir no dev (`/cms-preview`) → publicar → próximo. Depois: pedir
+  indexação no GSC e reenviar o news-sitemap.
+
+### Fora de escopo (YAGNI)
+Filtro por time no topo do hub, página por canal, post diário "jogos de hoje" automático.
+
+## Progresso
+- [x] Análise + benchmark (commit cad4556)
+- [x] Design aprovado com os ajustes (12/11 ~22h10)
+- [ ] Spec revisada pelo Ivan → plano (writing-plans)
+- [ ] Implementação no dev → aprovação visual
+- [ ] Posts 13/11, um a um
