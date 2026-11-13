@@ -21,6 +21,8 @@ Checklist obrigatório para **toda página/seção nova** que mostre dados da AP
 5. Fonte fora do motor genérico (endpoint próprio, outro esporte)? Criar uma categoria nova de snapshot com `withSnapshot`. Não publicar a página sem isso.
 6. Validar no servidor: `ls /app/data/snapshots/{championships,matches}` deve ter os arquivos do torneio, com `incidents` nos jogos encerrados.
 
+**Regra de velocidade, também para toda rota nova com `[param]`:** além de `export const revalidate = N`, a rota precisa exportar `generateStaticParams` (mesmo que `return []`). Sem isso o Next marca a rota como **ƒ (Dynamic)** e remonta a página do zero a cada acesso. Antes de 12/11, as páginas de jogo levavam de 0,6 a 1,9 s; com o cache passaram a ~0,02 s. Confira no log do build: a rota deve aparecer como **●**, não ƒ. Não use `dynamicParams=false` (quebrou campeonatos em prod) nem `loading.tsx` global (causou soft-404). O retorno visual do clique fica com `NavProgress` (`src/components/layout/nav-progress.tsx`).
+
 Exemplo conferido em 12/11/2026, Liga das Nações: tabela em `snapshots/championships/liga-das-nacoes.json`; os 112 jogos encerrados com lance a lance em `snapshots/matches/{id}.json`.
 
 ---
