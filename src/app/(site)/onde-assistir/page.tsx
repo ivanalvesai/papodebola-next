@@ -1,13 +1,11 @@
 import type { Metadata } from "next";
 import { jsonLd } from "@/lib/json-ld";
-import { getStoredFootballAgenda } from "@/lib/data/agenda";
 import { getPayloadPage } from "@/lib/data/payload-pages";
 import { getWatchPosts, type WatchPost } from "@/lib/data/watch";
-import { watchDayLabel } from "@/lib/watch-info";
 import { PageBlock } from "@/components/payload/page-blocks";
 import { PageBreadcrumb } from "@/components/seo/page-breadcrumb";
 import { FaqSchema } from "@/components/seo/faq-schema";
-import { WatchAgenda } from "@/components/onde-assistir/watch-agenda";
+import { FeaturedCard } from "@/components/home/news-section";
 import { WatchPostCard } from "@/components/onde-assistir/watch-post-card";
 import { buildMetadata } from "@/lib/seo/build-metadata";
 
@@ -23,13 +21,13 @@ const DEFAULT_DESC =
   "Saiba onde assistir aos jogos de futebol de hoje: horários, canais de TV e streaming, prováveis escalações e o lance a lance ao vivo no Papo de Bola.";
 const DEFAULT_H1 = "Onde assistir futebol hoje";
 const DEFAULT_SUBTITLE =
-  "Jogos de hoje com horário de Brasília e canal de transmissão, mais os guias de cada partida com escalações prováveis, arbitragem e local.";
+  "Guias de cada partida com canal de TV e streaming, horário de Brasília, escalações prováveis, arbitragem e local do jogo.";
 
 const FAQ = [
   {
     question: "Onde assistir aos jogos de futebol de hoje?",
     answer:
-      "A lista de jogos de hoje desta página mostra, para cada partida, o horário de Brasília e o canal de TV ou streaming que transmite. Nos jogos com guia, o link leva às escalações prováveis, à arbitragem e ao local.",
+      "Cada guia desta página traz o canal de TV ou streaming que transmite a partida, o horário de Brasília, as escalações prováveis, a arbitragem e o local. Para ver todos os jogos do dia com placar em tempo real, acesse a página de jogos ao vivo.",
   },
   {
     question: "Os horários estão no horário de Brasília?",
@@ -56,30 +54,20 @@ export async function generateMetadata(): Promise<Metadata> {
 }
 
 export default async function OndeAssistirHubPage() {
-  const [page, leagues, posts] = await Promise.all([
+  const [page, posts] = await Promise.all([
     getPayloadPage("onde-assistir").catch(() => null),
-    getStoredFootballAgenda().catch(() => []),
     getWatchPosts({ limit: 80 }).catch(() => [] as WatchPost[]),
   ]);
   const h1 = page?.hero?.h1 || DEFAULT_H1;
   const subtitle = page?.hero?.subtitle || DEFAULT_SUBTITLE;
   const blocks = page?.layout || [];
 
-  const byMatch = new Map(posts.filter((p) => p.article.matchId).map((p) => [p.article.matchId!, p]));
-  // Próximos jogos (ou começados há até 3h) agrupados por dia; o resto vira "Guias anteriores".
-  const nowSec = Date.now() / 1000;
-  const upcoming = posts.filter((p) => p.match && p.match.timestamp > nowSec - 3 * 3600);
-  const older = posts
-    .filter((p) => !upcoming.includes(p))
-    .sort((a, b) => (b.match?.timestamp ?? Date.parse(b.article.pubDate) / 1000) - (a.match?.timestamp ?? Date.parse(a.article.pubDate) / 1000))
-    .slice(0, 12);
-  const days: { label: string; posts: WatchPost[] }[] = [];
-  for (const p of upcoming) {
-    const label = watchDayLabel(p.match!.timestamp);
-    const day = days.find((d) => d.label === label);
-    if (day) day.posts.push(p);
-    else days.push({ label, posts: [p] });
-  }
+  // Mais recentes primeiro (data de publicação): os 3 primeiros no destaque (igual à home),
+  // o resto abaixo. Os jogos do dia ficam na /ao-vivo; aqui só os guias.
+  const recent = [...posts].sort((x, y) => Date.parse(y.article.pubDate) - Date.parse(x.article.pubDate));
+  const featured = recent.slice(0, 3);
+  const older = recent.slice(3, 43);
+
 
   const breadcrumbLd = {
     "@context": "https://schema.org",
@@ -115,33 +103,21 @@ export default async function OndeAssistirHubPage() {
       <p className="mb-8 mt-2 max-w-[760px] text-base text-text-secondary">{subtitle}</p>
 
       <div className="space-y-10">
-        {leagues.length > 0 && (
-          <section>
-            <h2 className="mb-3 border-b-2 border-green pb-2 text-lg font-bold text-text-primary">
-              Jogos de hoje: horário e onde assistir
-            </h2>
-            <WatchAgenda leagues={leagues} posts={byMatch} />
-          </section>
-        )}
-
-        {days.map((d) => (
-          <section key={d.label}>
-            <h2 className="mb-3 border-b-2 border-green pb-2 text-lg font-bold text-text-primary">
-              {`${d.label}: onde assistir, horário e escalações`}
-            </h2>
-            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
-              {d.posts.map((p) => (
-                <WatchPostCard key={p.article.slug} post={p} />
+        {featured.length > 0 && (
+          <section className="rounded-lg border border-border-custom bg-card-bg p-6">
+            <h2 className="mb-4 text-lg font-bold text-text-primary">Últimos guias: onde assistir, horário e escalações</h2>
+            <div className="grid gap-3 lg:grid-cols-[2fr_1fr] lg:grid-rows-2">
+              <FeaturedCard article={featured[0].article} big />
+              {featured.slice(1).map((p) => (
+                <FeaturedCard key={p.article.slug} article={p.article} />
               ))}
             </div>
           </section>
-        ))}
+        )}
 
         {older.length > 0 && (
           <section>
-            <h2 className="mb-3 border-b-2 border-border-custom pb-2 text-lg font-bold text-text-primary">
-              Guias anteriores
-            </h2>
+            <h2 className="mb-3 border-b-2 border-green pb-2 text-lg font-bold text-text-primary">Guias anteriores</h2>
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
               {older.map((p) => (
                 <WatchPostCard key={p.article.slug} post={p} />
@@ -150,11 +126,11 @@ export default async function OndeAssistirHubPage() {
           </section>
         )}
 
-        {!leagues.length && !posts.length && (
+        {!posts.length && (
           <p className="rounded-lg border border-border-custom bg-card-bg p-6 text-center text-text-secondary">
-            Nenhum jogo na agenda agora. Veja os{" "}
-            <a href="/jogos-de-hoje/futebol" className="font-semibold text-green">
-              jogos de hoje
+            Nenhum guia publicado agora. Veja os{" "}
+            <a href="/ao-vivo" className="font-semibold text-green">
+              jogos ao vivo hoje
             </a>
             .
           </p>
