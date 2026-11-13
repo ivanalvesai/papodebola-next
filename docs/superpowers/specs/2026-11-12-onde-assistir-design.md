@@ -208,3 +208,10 @@ Os outros 8 jogos: completar com a API (`match/{id}` venue/referee). O que não 
 2. Capa: `python scripts/capa-onde-assistir.py --bg foto.jpg --home A.png --away B.png --home-name .. --away-name .. --info "Sexta, 13/11 · 16h45 · Canal" --out capa-{a}-x-{b}.png --preview p.png`.
 3. Texto: copiar `scripts/onde-assistir/posts/moldavia-x-cazaquistao.mjs` pro jogo (texto ÚNICO, números da tabela salva; autor alterna 1/2).
 4. `node scripts/onde-assistir/build.mjs {post} m.json ln.json oa-post.json` → `scp oa-post.json capa.png` pra `~/cupons-banners/` → `bash ~/run-seed-cupons.sh create-post-onde-assistir.mjs` (rascunho; `touch ~/cupons-banners/oa-publish` publica).
+
+### Ajustes pedidos pelo Ivan (13/11 ~00h)
+- Post-amostra aprovado ("ficou muito bom"). Fotos do campinho faltando → `scripts/download-match-player-images.mjs` (elencos dos 10 jogos no volume).
+- `/ao-vivo`: só jogos, seção por campeonato com H2/texto, cards com status e lance a lance (commit 84978a9). Sem posts.
+- `/onde-assistir`: só guias (categoria OU tag "Onde assistir"); 25 posts antigos marcados; categoria fora do silo (entra na home); `/futebol/onde-assistir` 308 → `/onde-assistir`, menu atualizado.
+- **10 posts agendados** (jobs 13–22, Scheduled Publish): 448 Moldávia x Cazaquistão 00h30 (Ivan) · 449 Sérvia x Alemanha 00h40 (Lucas) · 450 Holanda x Grécia 00h50 (Ivan) · 451 Eslovênia x Suíça 01h00 (Lucas) · 452 Escócia x Macedônia do Norte 01h10 (Ivan) · 453 Eslováquia x Ilhas Faroé 01h20 (Lucas) · 454 Bulgária x Islândia 01h30 (Ivan) · 455 Luxemburgo x Estônia 01h40 (Lucas) · 456 Liechtenstein x Azerbaijão 01h50 (Ivan) · 457 Andorra x Gibraltar 02h00 (Lucas).
+- Pendente: promote (prod ainda sem o card da Ficha, a /ao-vivo nova e o hub); depois revalidar e pedir indexação.
