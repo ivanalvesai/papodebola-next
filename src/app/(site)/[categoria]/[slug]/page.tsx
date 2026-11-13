@@ -12,6 +12,13 @@ import { getPayloadPageByPath } from "@/lib/data/payload-pages";
 // /artigos/{slug} (ver RESERVED_TOP_LEVEL/articleHref em config).
 export const revalidate = 1800;
 
+// generateStaticParams vazio = ISR sob demanda: sem ele o Next marca a rota como
+// dinâmica (ƒ) e remonta a página do zero a cada acesso (0,6–1,9 s). Com ele, o 1º acesso
+// monta e os seguintes saem prontos do cache (~30 ms), revalidando em segundo plano.
+export async function generateStaticParams() {
+  return [];
+}
+
 function plain(text: string, max: number): string {
   return (text || "").replace(/\s+/g, " ").trim().slice(0, max);
 }
