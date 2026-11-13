@@ -784,6 +784,7 @@ export default buildConfig({
             try {
               revalidatePath("/");
               revalidatePath("/noticias");
+              revalidatePath("/onde-assistir"); // hub dos guias (categoria ou tag "Onde assistir")
               if (doc?.category && doc?.slug) revalidatePath(articleHref(doc.category, doc.slug));
             } catch {
               /* fora de contexto de request (build/cli) */

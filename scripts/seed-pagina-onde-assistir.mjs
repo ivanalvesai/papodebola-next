@@ -14,7 +14,7 @@ const p = (...kids) => ({ type: "paragraph", children: kids.map((k) => (typeof k
 const root = (children) => ({ root: { type: "root", children, direction: "ltr", format: "", indent: 0, version: 1 } });
 
 const content = root([
-  p("Aqui você encontra os jogos de futebol de hoje e de amanhã com horário de Brasília e o canal de cada transmissão, na TV aberta, na TV fechada ou no streaming. Os jogos com guia completo têm a ficha da partida, as escalações prováveis, a situação na tabela e o link para o lance a lance ao vivo."),
+  p("Aqui ficam os guias de onde assistir dos jogos: canal de TV ou streaming, horário de Brasília, ficha da partida, escalações prováveis, situação na tabela e o link para o lance a lance ao vivo."),
   p("A grade das emissoras pode mudar até a hora do jogo. Quando a transmissão ainda não foi confirmada, o guia avisa."),
 ]);
 
@@ -23,7 +23,7 @@ const data = {
   slug: "onde-assistir",
   hero: {
     h1: "Onde assistir futebol hoje",
-    subtitle: "Jogos de hoje com horário de Brasília e canal de transmissão, mais os guias de cada partida com escalações prováveis, arbitragem e local.",
+    subtitle: "Guias de cada partida com canal de TV e streaming, horário de Brasília, escalações prováveis, arbitragem e local do jogo.",
   },
   seo: {
     metaTitle: "Onde assistir futebol hoje: jogos, horários e canais | Papo de Bola",
