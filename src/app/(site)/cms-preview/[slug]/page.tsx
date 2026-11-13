@@ -3,6 +3,9 @@ import { ArticleView } from "@/components/article/article-view";
 import { getArticleBySlug } from "@/lib/data/articles";
 import { assertPreviewAccess } from "@/lib/cms-preview-auth";
 import { LivePreviewListener } from "@/components/payload/live-preview-listener";
+import { WATCH_CATEGORY } from "@/lib/config";
+import { getWatchMatch } from "@/lib/data/watch";
+import { MatchInfoCard } from "@/components/onde-assistir/match-info-card";
 
 // Preview do Payload: renderiza o RASCUNHO de um post no layout real do site.
 // Aberto pelo botão "Preview" do editor (/cms). Protegido por secret OU sessão do
@@ -25,6 +28,10 @@ export default async function CmsPreviewPage({
   const article = await getArticleBySlug(slug, true, true); // noCache + draft
   if (!article) notFound();
 
+  // Post "onde assistir": monta a Ficha do jogo como na página pública.
+  const isWatch = article.category === WATCH_CATEGORY && !!article.matchId;
+  const match = isWatch ? await getWatchMatch(article.matchId!).catch(() => null) : null;
+
   return (
     <>
       <LivePreviewListener />
@@ -32,7 +39,17 @@ export default async function CmsPreviewPage({
         Pré-visualização do CMS &middot; rascunho &middot; esta página é privada e ainda NÃO está
         publicada
       </div>
-      <ArticleView article={article} related={[]} standings={[]} />
+      <ArticleView
+        article={article}
+        related={[]}
+        standings={[]}
+        hub={isWatch ? { label: "Onde Assistir", href: "/onde-assistir" } : undefined}
+        matchCard={
+          match ? (
+            <MatchInfoCard m={match} channels={article.watch?.channels || "A confirmar"} confirmed={article.watch?.confirmed ?? false} />
+          ) : undefined
+        }
+      />
     </>
   );
 }
