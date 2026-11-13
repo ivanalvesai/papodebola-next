@@ -107,3 +107,4 @@ sportsapi.txt
 pdb_local.sql
 *.sql.gz
 /data/
+.superpowers/
