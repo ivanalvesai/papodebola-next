@@ -141,6 +141,29 @@ prováveis" → H2 "Perguntas frequentes" → "Mais jogos para assistir".
 - Fluxo por post: gerar → conferir no dev (`/cms-preview`) → publicar → próximo. Depois: pedir
   indexação no GSC e reenviar o news-sitemap.
 
+### 7. Conteúdo rico e capa profissional (pedido do Ivan, 12/11 ~22h15)
+"Arte bonita, profissional" e "bastante informação, como o Lance: cards, escalações possíveis,
+árbitro, local do jogo etc." Cada post terá, além da Ficha do jogo:
+- **Escalação no campo** (bloco existente `lineupField`, campinho com os 11 pela formação) para as
+  duas seleções: escalação confirmada da API se já saiu; senão a provável (XI do jogo anterior via
+  `/api/lineup-suggest`), rotulada "provável". Inclui técnico.
+- **Card "Situação no grupo"** (bloco de card existente, com linhas rótulo/valor): posição, pontos e
+  campanha de cada um, mais o que cada resultado significa (classificação/rebaixamento), com base na
+  tabela salva.
+- **Card "Arbitragem"**: árbitro (e nacionalidade) da API `match/{id}`. Se não houver, a seção não
+  aparece; nada inventado.
+- **Card "Local"**: estádio, cidade e capacidade (dados do venue).
+- **Retrospecto/confronto direto** (`match/{id}/h2h` ou último encontro), se a API trouxer.
+- **Destaques/quem observar** por seleção (jogador e motivo, a partir dos artilheiros/estatísticas
+  da competição quando disponíveis), em texto.
+- Texto: lead + "Como chegam" (um parágrafo por seleção) + "O que está em jogo" + FAQ: cerca de
+  500–700 palavras, único por jogo, revisado (humanizer) e sem travessão em excesso.
+- **Capa 1200×675:** foto real de estádio ao fundo com tratamento escuro/gradiente; as duas
+  bandeiras grandes em círculo com sombra, "X" central; selo "LIGA DAS NAÇÕES · ONDE ASSISTIR",
+  data e hora em destaque e canal. Tipografia Open Sans bold, verde da marca #00965E nos detalhes.
+  Tudo na área segura (y≈30–420). Simular o overlay da home antes de subir. Gerada no servidor
+  (sharp/SVG), um arquivo por jogo, enviado como mídia do Payload.
+
 ### Fora de escopo (YAGNI)
 Filtro por time no topo do hub, página por canal, post diário "jogos de hoje" automático.
 
