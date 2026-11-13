@@ -111,6 +111,7 @@ export const STATIC_TOP_LEVEL: readonly string[] = [
   "news-sitemap.xml",
   "noticias",
   "oferta",
+  "onde-assistir",
   "paginas",
   "painel-pdb-9x",
   "parceiro",

@@ -3,6 +3,8 @@
 // bandeiras) sai do jogo (post.matchId → snapshot), nunca digitado à mão, pra não divergir.
 // Puro (sem Payload) pra rodar no node:test.
 import { translateCountry } from "./i18n/countries.ts";
+import { TOURNAMENTS } from "./config.ts";
+import { groupLabel } from "./group-label.ts";
 
 export interface WatchInfo {
   channels: string;
@@ -34,4 +36,83 @@ export function normalizeReferee(e: any): { name: string; country: string } | nu
   if (!name) return null;
   const country = String(e?.referee?.country?.name ?? "").trim();
   return { name, country: country ? translateCountry(country) : "" };
+}
+
+// Cidades-sede europeias mais comuns em PT (o resto fica como vem da API).
+const CITY_PT: Record<string, string> = {
+  Amsterdam: "Amsterdã", Belgrade: "Belgrado", London: "Londres", Rome: "Roma", Milan: "Milão",
+  Munich: "Munique", Cologne: "Colônia", Vienna: "Viena", Prague: "Praga", Warsaw: "Varsóvia",
+  Lisbon: "Lisboa", Brussels: "Bruxelas", Copenhagen: "Copenhague", Stockholm: "Estocolmo",
+  Athens: "Atenas", Bucharest: "Bucareste", Budapest: "Budapeste", Sofia: "Sófia",
+  Edinburgh: "Edimburgo", Geneva: "Genebra", Zurich: "Zurique", Basel: "Basileia",
+  Bratislava: "Bratislava", Ljubljana: "Liubliana", Chisinau: "Chisinau", Luxembourg: "Luxemburgo",
+  Seville: "Sevilha", Paris: "Paris", Dublin: "Dublin", Cardiff: "Cardiff", Oslo: "Oslo",
+  Helsinki: "Helsinque", Tbilisi: "Tbilisi", Baku: "Baku", Tirana: "Tirana", Minsk: "Minsk",
+  Riga: "Riga", Yerevan: "Erevan", Nicosia: "Nicósia", Podgorica: "Podgorica", Belfast: "Belfast",
+};
+
+export interface WatchMatch {
+  id: number;
+  home: string;
+  away: string;
+  homeId: number;
+  awayId: number;
+  timestamp: number;
+  statusType: string;
+  homeScore: number | null;
+  awayScore: number | null;
+  champSlug: string | null;
+  tournament: string;
+  group: string;
+  round: number | null;
+  venue: { stadium: string; city: string; capacity: number | null } | null;
+  referee: { name: string; country: string } | null;
+  href: string | null;
+}
+
+export type MatchHrefFn = (
+  champSlug: string, timestamp: number, homeId: number, awayId: number, home: string, away: string
+) => string;
+
+// match/{id} cru da API → dados da Ficha do jogo. O href do lance a lance é injetado
+// (championshipMatchHref no servidor) pra este arquivo continuar puro.
+export function toWatchMatch(e: any, makeHref: MatchHrefFn): WatchMatch | null {
+  if (!e?.id || !e?.homeTeam || !e?.awayTeam) return null;
+  const utId = e?.tournament?.uniqueTournament?.id;
+  const t = Object.values(TOURNAMENTS).find((x) => x.id === utId) || null;
+  const home = translateCountry(e.homeTeam.name || "");
+  const away = translateCountry(e.awayTeam.name || "");
+  const ts = e.startTimestamp || 0;
+  const v = e.venue;
+  const stadium = String(v?.name || v?.stadium?.name || "").trim();
+  const cityRaw = String(v?.city?.name || "").trim();
+  const cap = v?.stadium?.capacity ?? v?.capacity;
+  const num = (x: any) => (typeof x === "number" ? x : null);
+  return {
+    id: e.id,
+    home,
+    away,
+    homeId: e.homeTeam.id || 0,
+    awayId: e.awayTeam.id || 0,
+    timestamp: ts,
+    statusType: e?.status?.type || "notstarted",
+    homeScore: num(e?.homeScore?.display ?? e?.homeScore?.current),
+    awayScore: num(e?.awayScore?.display ?? e?.awayScore?.current),
+    champSlug: t?.slug || null,
+    tournament: t?.name || String(e?.tournament?.uniqueTournament?.name || e?.tournament?.name || ""),
+    group: groupLabel(String(e?.tournament?.name || "")),
+    round: num(e?.roundInfo?.round),
+    venue: stadium ? { stadium, city: CITY_PT[cityRaw] || cityRaw, capacity: typeof cap === "number" ? cap : null } : null,
+    referee: normalizeReferee(e),
+    href: t ? makeHref(t.slug, ts, e.homeTeam.id || 0, e.awayTeam.id || 0, home, away) : null,
+  };
+}
+
+// Marcador que o conversor do bloco matchInfo imprime no HTML do corpo: a página do post
+// encaixa o card React da Ficha do jogo exatamente onde o redator pôs o bloco.
+export const MATCH_INFO_SLOT = '<div class="pdb-matchinfo-slot"></div>';
+export function splitAtMatchInfoSlot(html: string): [string, string] {
+  const i = html.indexOf(MATCH_INFO_SLOT);
+  if (i < 0) return ["", html];
+  return [html.slice(0, i), html.slice(i + MATCH_INFO_SLOT.length)];
 }

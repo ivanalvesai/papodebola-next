@@ -1,5 +1,5 @@
 import { cache } from "react";
-import { extractWatchInfo } from "@/lib/watch-info";
+import { extractWatchInfo, MATCH_INFO_SLOT } from "@/lib/watch-info";
 import { getPayload } from "payload";
 import config from "@payload-config";
 import { convertLexicalToHTML } from "@payloadcms/richtext-lexical/html";
@@ -229,7 +229,7 @@ const lexicalConverters: any = ({ defaultConverters }: any) => ({
     },
     // Ficha do jogo (onde assistir): renderizada pela página do post (precisa dos dados do
     // jogo); no HTML do corpo não sai nada.
-    matchInfo: () => "",
+    matchInfo: () => MATCH_INFO_SLOT,
     // Vitrine de produtos (afiliado): grade com foto, etiqueta, nota e botão da loja.
     // Produto sem link não aparece (nunca sai card sem destino).
     productGrid: ({ node }: any) => {
