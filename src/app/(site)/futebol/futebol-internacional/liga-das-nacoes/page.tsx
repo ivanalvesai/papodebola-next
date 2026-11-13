@@ -6,6 +6,8 @@ import { PageBlock } from "@/components/payload/page-blocks";
 import { NewsFeed } from "@/components/news/news-feed";
 import { PageBreadcrumb } from "@/components/seo/page-breadcrumb";
 import ChampionshipClient from "../../[slug]/championship-client";
+import { getWatchPosts } from "@/lib/data/watch";
+import { WatchPostsStrip } from "@/components/onde-assistir/watch-post-card";
 
 // HUB da Liga das Nações (UEFA Nations League 26/27). Padrão da Copa Feminina:
 // - CONTEÚDO (H1, subtítulo, SEO e blocos de texto) editável no /cms → Páginas, slug
@@ -41,9 +43,11 @@ export async function generateMetadata(): Promise<Metadata> {
 }
 
 export default async function LigaDasNacoesHubPage() {
-  const [page, res] = await Promise.all([
+  const [page, res, watch] = await Promise.all([
     getPayloadPage(CMS_SLUG).catch(() => null),
     getArticles({ perPage: 20, category: CATEGORY }).catch(() => ({ articles: [] })),
+    // Posts "onde assistir" dos próximos jogos: só o CARD aqui; o post mora em /onde-assistir/{slug}.
+    getWatchPosts({ tag: "Liga das Nações", upcoming: true, limit: 8 }).catch(() => []),
   ]);
   const articles = res.articles;
   const h1 = page?.hero?.h1 || DEFAULT_H1;
@@ -94,6 +98,8 @@ export default async function LigaDasNacoesHubPage() {
       <ChampionshipClient slug={SLUG} header={header} />
 
       <div className="mx-auto max-w-[1240px] space-y-8 px-4 pb-8">
+        <WatchPostsStrip posts={watch} title="Onde assistir os próximos jogos" />
+
         {/* Textos editáveis no /cms → Páginas → "Liga das Nações" (como funciona, guia...). */}
         {blocks.length > 0 && (
           <div className="space-y-4 leading-relaxed text-text-secondary">

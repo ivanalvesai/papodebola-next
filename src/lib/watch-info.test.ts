@@ -84,3 +84,16 @@ test("splitAtMatchInfoSlot divide o corpo no marcador do bloco; sem marcador →
   assert.deepEqual(splitAtMatchInfoSlot(`<p>a</p>${MATCH_INFO_SLOT}<p>b</p>`), ["<p>a</p>", "<p>b</p>"]);
   assert.deepEqual(splitAtMatchInfoSlot("<p>a</p>"), ["", "<p>a</p>"]);
 });
+
+import { pickWatchPosts } from "./watch-info.ts";
+test("pickWatchPosts: filtra por tag (sem acento/caixa) e por matchId; ordena pelo horário do jogo, sem jogo por último", () => {
+  const posts = [
+    { slug: "a", tags: ["Liga das Nações"], matchId: 1 },
+    { slug: "b", tags: ["liga das nacoes"], matchId: 2 },
+    { slug: "c", tags: ["Brasileirão"], matchId: 3 },
+    { slug: "d", tags: ["Liga das Nações"] },
+  ];
+  const kickoff = new Map([[1, 2000], [2, 1000]]);
+  assert.deepEqual(pickWatchPosts(posts, { tag: "Liga das Nações" }, kickoff).map((p) => p.slug), ["b", "a", "d"]);
+  assert.deepEqual(pickWatchPosts(posts, { matchIds: [3] }, kickoff).map((p) => p.slug), ["c"]);
+});

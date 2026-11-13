@@ -6,12 +6,13 @@ import { getArticles } from "@/lib/data/articles";
 import { getChampionshipData } from "@/lib/data/championship";
 import { teamSlugById } from "@/lib/data/team";
 import type { StandingRow } from "@/types/standings";
+import { getWatchPosts } from "@/lib/data/watch";
 
 // Bloco de pré-jogo da página de jogo de campeonato: resposta direta (data/hora/local),
 // onde assistir, posição dos dois times, notícias deles e links pras páginas dos times.
 // Tudo de fontes já em cache (tabela do campeonato = mesma da resolução da URL; notícias
 // = Payload). Nenhuma chamada nova à AllSportsApi.
-type Fixture = { home: string; away: string; homeId: number; awayId: number; timestamp: number; tournamentName: string };
+type Fixture = { id?: number; home: string; away: string; homeId: number; awayId: number; timestamp: number; tournamentName: string };
 
 const card = "bg-card-bg rounded-lg border border-border-custom";
 
@@ -34,13 +35,16 @@ export async function MatchPreview({
   // Jogo encerrado: sem "quando é/onde assistir"; ficam tabela, times e notícias.
   finished?: boolean;
 }) {
-  const [champ, homeSlug, awaySlug, homeNews, awayNews] = await Promise.all([
+  const [champ, homeSlug, awaySlug, homeNews, awayNews, watch] = await Promise.all([
     getChampionshipData(champSlug).catch(() => null),
     teamSlugById(fixture.homeId),
     teamSlugById(fixture.awayId),
     getArticles({ team: { id: fixture.homeId, name: fixture.home }, perPage: 3 }).catch(() => ({ articles: [] })),
     getArticles({ team: { id: fixture.awayId, name: fixture.away }, perPage: 3 }).catch(() => ({ articles: [] })),
+    // Post "onde assistir" deste jogo (se houver): só o link aqui; o post mora em /onde-assistir/{slug}.
+    fixture.id && !finished ? getWatchPosts({ matchIds: [fixture.id], limit: 1 }).catch(() => []) : Promise.resolve([]),
   ]);
+  const watchPost = watch[0] || null;
   const rows: StandingRow[] = (champ?.standings || []).flatMap((g) => g.rows);
   const pos = (id: number) => rows.find((r) => r.teamId === id) || null;
   const homePos = pos(fixture.homeId);
@@ -58,7 +62,21 @@ export async function MatchPreview({
           {fixture.home} x {fixture.away} é {when(fixture.timestamp)}
           {place}, {pelo(fixture.tournamentName)}.
         </p>
-        <BroadcastChannels league={fixture.tournamentName} />
+        {watchPost?.article.watch?.channels ? (
+          <p className="text-sm text-text-secondary">
+            Transmissão: <strong className="text-text-primary">{watchPost.article.watch.channels}</strong>
+          </p>
+        ) : (
+          <BroadcastChannels league={fixture.tournamentName} />
+        )}
+        {watchPost && (
+          <Link
+            href={watchPost.article.url}
+            className="mt-3 inline-block text-sm font-semibold text-green hover:text-green-hover"
+          >
+            {watchPost.article.rewrittenTitle} →
+          </Link>
+        )}
       </section>
       )}
 

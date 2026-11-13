@@ -116,3 +116,20 @@ export function splitAtMatchInfoSlot(html: string): [string, string] {
   if (i < 0) return ["", html];
   return [html.slice(0, i), html.slice(i + MATCH_INFO_SLOT.length)];
 }
+
+const fold = (s: string) => s.toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "").trim();
+
+// Seleciona posts de onde assistir por tag do campeonato e/ou jogos, ordenados pelo
+// horário do jogo (kickoff: matchId → timestamp); post sem jogo conhecido vai pro fim.
+export function pickWatchPosts<T extends { tags?: string[]; matchId?: number }>(
+  posts: T[],
+  opts: { tag?: string; matchIds?: number[] },
+  kickoff: Map<number, number>
+): T[] {
+  const tag = opts.tag ? fold(opts.tag) : "";
+  const ids = opts.matchIds ? new Set(opts.matchIds) : null;
+  const ko = (p: T) => (p.matchId != null ? kickoff.get(p.matchId) : undefined) ?? Infinity;
+  return posts
+    .filter((p) => (!tag || (p.tags || []).some((t) => fold(t) === tag)) && (!ids || (p.matchId != null && ids.has(p.matchId))))
+    .sort((a, b) => ko(a) - ko(b));
+}
