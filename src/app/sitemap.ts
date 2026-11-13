@@ -256,14 +256,16 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     ...(a.image ? { images: [a.image.startsWith("http") ? a.image : `${BASE}${a.image}`] } : {}),
   }));
 
-  // Onde assistir — SILADA também: hub + posts /onde-assistir/{slug} em bloco próprio.
+  // Onde assistir: hub + posts /onde-assistir/{slug}. Os posts já entram em articlePages
+  // (a categoria saiu do silo em 13/11); aqui só os que faltarem, sem duplicar.
+  const generalUrls = new Set(articles.map((a) => a.url));
   const { articles: watchArticles } = await getArticles({
     perPage: 200,
     category: WATCH_CATEGORY,
   }).catch(() => ({ articles: [] }));
   const watchPages: MetadataRoute.Sitemap = [
     { url: `${BASE}/onde-assistir`, lastModified: now, changeFrequency: "hourly" as const, priority: 0.8 },
-    ...watchArticles.map((a) => ({
+    ...watchArticles.filter((a) => !generalUrls.has(a.url)).map((a) => ({
       url: `${BASE}${a.url}`,
       lastModified: a.updatedAt || a.pubDate ? new Date(a.updatedAt || a.pubDate) : now,
       changeFrequency: "hourly" as const,

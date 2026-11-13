@@ -59,16 +59,23 @@ export default async function OndeAssistirHubPage() {
   const [page, leagues, posts] = await Promise.all([
     getPayloadPage("onde-assistir").catch(() => null),
     getStoredFootballAgenda().catch(() => []),
-    getWatchPosts({ upcoming: true, limit: 60 }).catch(() => [] as WatchPost[]),
+    getWatchPosts({ limit: 80 }).catch(() => [] as WatchPost[]),
   ]);
   const h1 = page?.hero?.h1 || DEFAULT_H1;
   const subtitle = page?.hero?.subtitle || DEFAULT_SUBTITLE;
   const blocks = page?.layout || [];
 
   const byMatch = new Map(posts.filter((p) => p.article.matchId).map((p) => [p.article.matchId!, p]));
+  // Próximos jogos (ou começados há até 3h) agrupados por dia; o resto vira "Guias anteriores".
+  const nowSec = Date.now() / 1000;
+  const upcoming = posts.filter((p) => p.match && p.match.timestamp > nowSec - 3 * 3600);
+  const older = posts
+    .filter((p) => !upcoming.includes(p))
+    .sort((a, b) => (b.match?.timestamp ?? Date.parse(b.article.pubDate) / 1000) - (a.match?.timestamp ?? Date.parse(a.article.pubDate) / 1000))
+    .slice(0, 12);
   const days: { label: string; posts: WatchPost[] }[] = [];
-  for (const p of posts) {
-    const label = p.match ? watchDayLabel(p.match.timestamp) : "Mais guias";
+  for (const p of upcoming) {
+    const label = watchDayLabel(p.match!.timestamp);
     const day = days.find((d) => d.label === label);
     if (day) day.posts.push(p);
     else days.push({ label, posts: [p] });
@@ -120,7 +127,7 @@ export default async function OndeAssistirHubPage() {
         {days.map((d) => (
           <section key={d.label}>
             <h2 className="mb-3 border-b-2 border-green pb-2 text-lg font-bold text-text-primary">
-              {d.label === "Mais guias" ? d.label : `${d.label}: onde assistir, horário e escalações`}
+              {`${d.label}: onde assistir, horário e escalações`}
             </h2>
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
               {d.posts.map((p) => (
@@ -129,6 +136,19 @@ export default async function OndeAssistirHubPage() {
             </div>
           </section>
         ))}
+
+        {older.length > 0 && (
+          <section>
+            <h2 className="mb-3 border-b-2 border-border-custom pb-2 text-lg font-bold text-text-primary">
+              Guias anteriores
+            </h2>
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+              {older.map((p) => (
+                <WatchPostCard key={p.article.slug} post={p} />
+              ))}
+            </div>
+          </section>
+        )}
 
         {!leagues.length && !posts.length && (
           <p className="rounded-lg border border-border-custom bg-card-bg p-6 text-center text-text-secondary">

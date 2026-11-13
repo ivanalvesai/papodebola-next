@@ -85,6 +85,8 @@ const nextConfig: NextConfig = {
       })),
       // jogos de hoje por esporte vivem sob /jogos-de-hoje/{esporte} (futebol, volei, basquete...)
       { source: "/futebol/jogos-hoje", destination: "/jogos-de-hoje/futebol", permanent: true },
+      // Onde assistir ganhou hub próprio com os guias (13/11): a página antiga redireciona.
+      { source: "/futebol/onde-assistir", destination: "/onde-assistir", permanent: true },
       // Notícias de futebol moram em /futebol/{torneio|bucket}/{slug}. Os "pais" (2 seg) que NÃO
       // têm campeonato/hub próprio redirecionam pra um destino sensato (só o path exato; o
       // /futebol/{x}/{artigo} de 3 seg continua na rota de artigo). Os com hub (copa-do-mundo,

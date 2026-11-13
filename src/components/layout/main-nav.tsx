@@ -112,7 +112,7 @@ export function MainNav() {
                 <ul className="space-y-0.5">
                   {[
                     { label: "Agenda do Futebol", href: "/jogos-de-hoje/futebol" },
-                    { label: "Onde Assistir", href: "/futebol/onde-assistir" },
+                    { label: "Onde Assistir", href: "/onde-assistir" },
                   ].map((l) => (
                     <li key={l.href}>
                       <Link href={l.href} prefetch={false} onClick={() => setOpenDropdown(null)} className="block py-1.5 px-2 text-sm text-text-secondary hover:text-green hover:bg-green-light rounded transition-colors">
@@ -211,9 +211,9 @@ export function MainNav() {
           {/* Onde Assistir */}
           <li className="hidden sm:block">
             <Link
-              href="/futebol/onde-assistir"
+              href="/onde-assistir"
               className={`block px-3 py-3 font-semibold whitespace-nowrap transition-colors ${
-                pathname === "/futebol/onde-assistir"
+                pathname.startsWith("/onde-assistir")
                   ? "text-green border-b-2 border-green"
                   : "text-text-secondary hover:text-green"
               }`}

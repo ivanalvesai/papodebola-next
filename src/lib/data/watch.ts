@@ -1,5 +1,5 @@
 import { fetchAllSports } from "@/lib/api/allsports";
-import { toWatchMatch, pickWatchPosts, type WatchMatch } from "@/lib/watch-info";
+import { toWatchMatch, pickWatchPosts, isWatchTag, WATCH_TAG, type WatchMatch } from "@/lib/watch-info";
 import { WATCH_CATEGORY } from "@/lib/config";
 import type { Article } from "@/types/article";
 import { getArticles } from "./articles";
@@ -44,9 +44,19 @@ export async function getWatchPosts(opts: {
   limit?: number;
   upcoming?: boolean;
 } = {}): Promise<WatchPost[]> {
-  const { articles } = await getArticles({ perPage: 60, category: WATCH_CATEGORY }).catch(() => ({
-    articles: [] as Article[],
-  }));
+  // Guias de onde assistir = categoria "Onde Assistir" (posts novos) OU tag "Onde assistir"
+  // (posts antigos de outras categorias e os feitos à mão, sem mudar a URL deles).
+  const empty = { articles: [] as Article[] };
+  const [byCat, byTag] = await Promise.all([
+    getArticles({ perPage: 60, category: WATCH_CATEGORY }).catch(() => empty),
+    getArticles({ perPage: 60, tag: WATCH_TAG }).catch(() => empty),
+  ]);
+  const seen = new Set<string>();
+  const articles = [...byCat.articles, ...byTag.articles].filter((a) =>
+    a.category === WATCH_CATEGORY || (a.tags || []).some((t) => isWatchTag(t))
+      ? !seen.has(a.slug) && (seen.add(a.slug), true)
+      : false
+  );
   const ids = [...new Set(articles.map((a) => a.matchId).filter((x): x is number => !!x))];
   const matches = new Map<number, WatchMatch>();
   await Promise.all(

@@ -147,3 +147,8 @@ export function watchDayLabel(ts: number, nowSec: number = Date.now() / 1000): s
   const label = s.replace(/-feira/, "").replace(/^(\w)/, (c) => c.toUpperCase());
   return label;
 }
+
+// Marcador dos guias de onde assistir fora da categoria própria: tag "Onde assistir"
+// (com ou sem acento/caixa). É o que o editor marca num post feito à mão.
+export const WATCH_TAG = "Onde assistir";
+export const isWatchTag = (t: string) => fold(t) === fold(WATCH_TAG);

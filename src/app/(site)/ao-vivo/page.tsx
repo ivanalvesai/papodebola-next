@@ -1,15 +1,12 @@
 import type { Metadata } from "next";
 import { jsonLd } from "@/lib/json-ld";
-import { getStoredFootballAgenda, type AgendaLeagueGroup } from "@/lib/data/agenda";
+import { getStoredFootballAgenda } from "@/lib/data/agenda";
 import { getPayloadPage } from "@/lib/data/payload-pages";
-import { getWatchPosts, type WatchPost } from "@/lib/data/watch";
-import { splitByStatus, liveEndpointsFor } from "@/lib/ao-vivo";
+import { liveEndpointsFor, orderCompetitions, competitionIntro } from "@/lib/ao-vivo";
 import { TOURNAMENTS, champPath } from "@/lib/config";
 import { PageBreadcrumb } from "@/components/seo/page-breadcrumb";
 import { LiveScoreProvider } from "@/components/world-cup/copa-live-provider";
-import { MatchCarousel } from "@/components/match-bar/match-carousel";
-import { agendaEventToCard } from "@/components/payload/agenda-blocks";
-import { WatchPostsStrip } from "@/components/onde-assistir/watch-post-card";
+import { LiveMatchCard } from "@/components/ao-vivo/live-match-card";
 import { PageBlock } from "@/components/payload/page-blocks";
 import { buildMetadata } from "@/lib/seo/build-metadata";
 
@@ -28,6 +25,8 @@ const DEFAULT_SUBTITLE =
   "Placar em tempo real dos jogos de futebol de hoje, com horário de Brasília, onde assistir e o lance a lance de cada partida.";
 
 const slugByName = new Map(Object.values(TOURNAMENTS).map((t) => [t.name, t.slug]));
+const anchor = (league: string) =>
+  league.toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "").replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "");
 
 export async function generateMetadata(): Promise<Metadata> {
   const page = await getPayloadPage("ao-vivo").catch(() => null);
@@ -42,50 +41,14 @@ export async function generateMetadata(): Promise<Metadata> {
   });
 }
 
-function Section({
-  title,
-  tone = "default",
-  groups,
-}: {
-  title: string;
-  tone?: "live" | "default" | "muted";
-  groups: AgendaLeagueGroup[];
-}) {
-  if (!groups.length) return null;
-  const total = groups.reduce((n, g) => n + g.events.length, 0);
-  const color = tone === "live" ? "border-red text-red" : tone === "muted" ? "border-border-custom text-text-secondary" : "border-green text-text-primary";
-  return (
-    <section>
-      <h2 className={`mb-3 flex items-center gap-2 border-b-2 pb-2 text-lg font-bold ${color}`}>
-        {tone === "live" && <span className="h-2.5 w-2.5 animate-pulse rounded-full bg-red" aria-hidden />}
-        {title} <span className="text-sm font-semibold text-text-muted">({total})</span>
-      </h2>
-      <div className="space-y-4">
-        {groups.map((g) => {
-          const slug = slugByName.get(g.league);
-          return (
-            <MatchCarousel
-              key={g.league}
-              title={g.league}
-              count={g.events.length}
-              href={slug ? champPath(slug) : undefined}
-              hrefLabel="Tabela"
-              matches={g.events.map(agendaEventToCard)}
-            />
-          );
-        })}
-      </div>
-    </section>
-  );
-}
-
 export default async function AoVivoPage() {
-  const [page, leagues, watch] = await Promise.all([
+  const [page, leagues] = await Promise.all([
     getPayloadPage("ao-vivo").catch(() => null),
     getStoredFootballAgenda().catch(() => []),
-    getWatchPosts({ upcoming: true, limit: 8 }).catch(() => [] as WatchPost[]),
   ]);
-  const { live, upcoming, finished } = splitByStatus(leagues);
+  const competitions = orderCompetitions(leagues);
+  const liveNow = competitions.reduce((n, c) => n + c.live, 0);
+  const total = competitions.reduce((n, c) => n + c.events.length, 0);
   const endpoints = liveEndpointsFor(leagues);
   const h1 = page?.hero?.h1 || DEFAULT_H1;
   const subtitle = page?.hero?.subtitle || DEFAULT_SUBTITLE;
@@ -134,14 +97,52 @@ export default async function AoVivoPage() {
 
       <LiveScoreProvider endpoints={endpoints}>
         <div className="space-y-10">
-          <Section title="Ao vivo agora" tone="live" groups={live} />
-          <WatchPostsStrip posts={watch} title="Onde assistir os próximos jogos" />
-          <Section title="Ainda hoje" groups={upcoming} />
-          <Section title="Encerrados hoje" tone="muted" groups={finished} />
+          {competitions.length > 0 && (
+            <nav aria-label="Campeonatos de hoje" className="flex flex-wrap gap-2">
+              <span className="py-1 text-sm font-semibold text-text-secondary">
+                {total} {total === 1 ? "jogo" : "jogos"} hoje{liveNow ? `, ${liveNow} ao vivo agora` : ""}:
+              </span>
+              {competitions.map((c) => (
+                <a
+                  key={c.league}
+                  href={`#${anchor(c.league)}`}
+                  className={`rounded-full border px-3 py-1 text-sm font-semibold transition-colors hover:border-green hover:text-green ${c.live ? "border-red text-red" : "border-border-custom text-text-primary"}`}
+                >
+                  {c.league} ({c.events.length})
+                </a>
+              ))}
+            </nav>
+          )}
+
+          {competitions.map((c) => {
+            const slug = slugByName.get(c.league);
+            const champ = slug ? champPath(slug) : undefined;
+            return (
+              <section key={c.league} id={anchor(c.league)} className="scroll-mt-24">
+                <div className={`mb-2 flex flex-wrap items-baseline justify-between gap-2 border-b-2 pb-2 ${c.live ? "border-red" : "border-green"}`}>
+                  <h2 className="flex items-center gap-2 text-xl font-bold text-text-primary">
+                    {c.live > 0 && <span className="h-2.5 w-2.5 animate-pulse rounded-full bg-red" aria-hidden />}
+                    {c.league}: jogos de hoje e placar ao vivo
+                  </h2>
+                  {champ && (
+                    <a href={champ} className="text-sm font-semibold text-green hover:underline">
+                      Tabela e rodadas da {c.league}
+                    </a>
+                  )}
+                </div>
+                <p className="mb-4 text-base text-text-secondary">{competitionIntro(c.league, c.events)}</p>
+                <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+                  {c.events.map((e) => (
+                    <LiveMatchCard key={e.id} e={e} fallbackHref={champ} />
+                  ))}
+                </div>
+              </section>
+            );
+          })}
 
           {!leagues.length && (
             <div className="rounded-lg border border-border-custom bg-card-bg p-8 text-center">
-              <p className="text-base font-semibold text-text-primary">Nenhum jogo ao vivo agora.</p>
+              <p className="text-base font-semibold text-text-primary">Nenhum jogo na agenda de hoje.</p>
               <p className="mt-1 text-sm text-text-secondary">
                 Veja a{" "}
                 <a href="/jogos-de-hoje/futebol" className="font-semibold text-green">

@@ -692,7 +692,8 @@ export async function getArticlesPayload(options?: {
     // (home "Últimas Notícias", /noticias, "Leia também", sitemap geral). Só aparecem quando
     // a categoria é pedida explicitamente. Craques = página própria; Casas de Apostas = seção
     // dedicada (card "Casas de Apostas" na home + hub /casas-de-apostas), fora do feed editorial.
-    for (const siloed of ["Craques", "Casas de Apostas", "Cupons", "Onde Assistir"]) {
+    // "Onde Assistir" NÃO é silada (pedido do Ivan, 13/11): os guias entram na home e no feed.
+    for (const siloed of ["Craques", "Casas de Apostas", "Cupons"]) {
       if (category !== siloed) and.push({ category: { not_equals: siloed } });
     }
     if (search) and.push({ title: { like: search } });

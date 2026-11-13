@@ -105,3 +105,11 @@ test("watchDayLabel: Hoje / Amanhã / dia da semana com data (fuso de Brasília)
   assert.equal(watchDayLabel(Date.UTC(2026, 10, 13, 19, 45) / 1000, now), "Amanhã");
   assert.equal(watchDayLabel(Date.UTC(2026, 10, 14, 19, 45) / 1000, now), "Sábado, 14/11");
 });
+
+import { isWatchTag } from "./watch-info.ts";
+test("isWatchTag reconhece a tag de guia com variações de caixa/acento e ignora outras", () => {
+  assert.equal(isWatchTag("Onde assistir"), true);
+  assert.equal(isWatchTag("ONDE ASSISTIR "), true);
+  assert.equal(isWatchTag("Onde assistir hoje"), false);
+  assert.equal(isWatchTag("Copa do Mundo"), false);
+});

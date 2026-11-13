@@ -27,3 +27,19 @@ test("liveEndpointsFor: só campeonatos conhecidos com jogo ao vivo ou começand
   ];
   assert.deepEqual(liveEndpointsFor(ls, now), ["/api/championship/liga-das-nacoes/ao-vivo"]);
 });
+
+import { orderCompetitions, competitionIntro } from "./ao-vivo.ts";
+test("orderCompetitions: campeonato com jogo ao vivo primeiro; dentro, ao vivo > próximos > encerrados", () => {
+  const ls = [
+    { league: "Série B", events: [ev(1, "notstarted", 50)] },
+    { league: "Liga das Nações", events: [ev(2, "finished", 10), ev(3, "notstarted", 300), ev(4, "inprogress", 20)] },
+    { league: "Copa", events: [ev(5, "finished", 5)] },
+  ];
+  const o = orderCompetitions(ls);
+  assert.deepEqual(o.map((l) => l.league), ["Liga das Nações", "Série B", "Copa"]);
+  assert.deepEqual(o[0].events.map((e) => e.id), [4, 3, 2]);
+});
+test("competitionIntro resume jogos, ao vivo e encerrados", () => {
+  assert.match(competitionIntro("Liga das Nações", [ev(1, "inprogress"), ev(2, "finished"), ev(3, "notstarted")]), /^3 jogos da Liga das Nações hoje, 1 rolando agora, 1 encerrado\./);
+  assert.match(competitionIntro("Série B", [ev(1, "notstarted")]), /^1 jogo da Série B hoje\./);
+});
