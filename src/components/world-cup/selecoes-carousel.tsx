@@ -23,9 +23,9 @@ export function SelecoesCarousel() {
           type="button"
           onClick={() => scroll(-1)}
           aria-label="Ver anteriores"
-          className="absolute left-0 top-[34px] -translate-y-1/2 z-10 flex items-center justify-center w-8 h-8 rounded-full bg-surface border border-border-custom shadow-md hover:bg-card-hover transition-colors"
+          className="absolute left-0 top-[34px] -translate-y-1/2 z-10 flex items-center justify-center w-8 h-8 rounded-full bg-green text-white shadow-md ring-2 ring-white/70 hover:scale-110 transition-transform"
         >
-          <ChevronLeft className="h-5 w-5 text-text-primary" />
+          <ChevronLeft className="h-5 w-5" />
         </button>
 
         <div
@@ -52,9 +52,9 @@ export function SelecoesCarousel() {
           type="button"
           onClick={() => scroll(1)}
           aria-label="Ver próximas"
-          className="absolute right-0 top-[34px] -translate-y-1/2 z-10 flex items-center justify-center w-8 h-8 rounded-full bg-surface border border-border-custom shadow-md hover:bg-card-hover transition-colors"
+          className="absolute right-0 top-[34px] -translate-y-1/2 z-10 flex items-center justify-center w-8 h-8 rounded-full bg-green text-white shadow-md ring-2 ring-white/70 hover:scale-110 transition-transform"
         >
-          <ChevronRight className="h-5 w-5 text-text-primary" />
+          <ChevronRight className="h-5 w-5" />
         </button>
       </div>
     </section>

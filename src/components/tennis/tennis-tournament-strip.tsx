@@ -184,7 +184,7 @@ export function TennisTournamentStrip({
         <button
           onClick={() => scroll(-320)}
           aria-label="Anterior"
-          className="absolute left-1.5 top-1/2 z-20 flex h-8 w-8 -translate-y-1/2 items-center justify-center rounded-full border border-border-custom bg-card-bg text-text-secondary shadow-md transition-colors hover:text-green"
+          className="absolute left-1.5 top-1/2 z-20 flex h-8 w-8 -translate-y-1/2 items-center justify-center rounded-full bg-green text-white shadow-md ring-2 ring-white/70 transition-transform hover:scale-110"
         >
           <ChevronLeft className="h-4 w-4" />
         </button>
@@ -196,7 +196,7 @@ export function TennisTournamentStrip({
         <button
           onClick={() => scroll(320)}
           aria-label="Próximo"
-          className="absolute right-1.5 top-1/2 z-20 flex h-8 w-8 -translate-y-1/2 items-center justify-center rounded-full border border-border-custom bg-card-bg text-text-secondary shadow-md transition-colors hover:text-green"
+          className="absolute right-1.5 top-1/2 z-20 flex h-8 w-8 -translate-y-1/2 items-center justify-center rounded-full bg-green text-white shadow-md ring-2 ring-white/70 transition-transform hover:scale-110"
         >
           <ChevronRight className="h-4 w-4" />
         </button>
