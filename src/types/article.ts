@@ -26,6 +26,10 @@ export interface Article {
   faq?: { question: string; answer: string }[];
   /** Itens do ranking (tabela/cards de casas de apostas) → JSON-LD ItemList. */
   ranking?: { name: string; href?: string }[];
+  /** Post ligado a um jogo (ID da API) — onde assistir, página do jogo. */
+  matchId?: number;
+  /** Canal do bloco "Ficha do jogo" (posts de onde assistir). */
+  watch?: { channels: string; confirmed: boolean };
 }
 
 export interface ArticleListResponse {

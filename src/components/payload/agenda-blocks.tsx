@@ -12,7 +12,7 @@ import type { MatchBarCardProps } from "@/components/match-bar/match-bar-card";
 // estáticos (título/texto/lista/FAQ) reusam o `PageBlock` do page-blocks.
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
-function toCard(e: AgendaEvent): MatchBarCardProps {
+export function agendaEventToCard(e: AgendaEvent): MatchBarCardProps {
   const status =
     e.statusType === "inprogress" ? "live" : e.statusType === "finished" ? "finished" : "scheduled";
   return {
@@ -91,7 +91,7 @@ export function TodayGamesBlock({ block, leagues }: { block: any; leagues: Agend
           key={lg.league}
           title={lg.league}
           count={lg.events.length}
-          matches={lg.events.map(toCard)}
+          matches={lg.events.map(agendaEventToCard)}
         />
       ))}
     </div>

@@ -24,6 +24,13 @@ import { buildMetadata } from "@/lib/seo/build-metadata";
 // mobile/tráfego. Com ISR o jogo encerrado cacheia muito e o ao vivo revalida a cada 30s.
 export const revalidate = 30;
 
+// generateStaticParams vazio = ISR sob demanda: sem ele o Next marca a rota como
+// dinâmica (ƒ) e remonta a página do zero a cada acesso (0,6–1,9 s). Com ele, o 1º acesso
+// monta e os seguintes saem prontos do cache (~30 ms), revalidando em segundo plano.
+export async function generateStaticParams() {
+  return [];
+}
+
 // Rótulo da fase: grupos (round 1-3) = "Nª rodada"; mata-mata (6+) = nome da fase.
 function faseSimples(round: number): string {
   const m: Record<number, string> = { 6: "16-avos de final", 7: "oitavas de final", 8: "quartas de final", 9: "semifinal", 10: "final" };

@@ -13,6 +13,8 @@ export const DEDICATED_PAGE_ROUTES: Record<string, string> = {
   "santana-de-parnaiba-municipal": "/sp/santana-de-parnaiba/municipal", // rodapé do municipal
   "copa-do-mundo-feminina": "/futebol/copa-do-mundo-feminina", // hub + SEO da página CMS
   "liga-das-nacoes": "/futebol/futebol-internacional/liga-das-nacoes", // hub + textos/SEO da página CMS
+  "onde-assistir": "/onde-assistir", // hub dos posts de onde assistir (textos/SEO opcionais)
+  "ao-vivo": "/ao-vivo", // jogos ao vivo (textos/SEO opcionais)
 };
 
 export function dedicatedPageRoute(slug: string): string | null {

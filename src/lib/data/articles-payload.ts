@@ -1,4 +1,5 @@
 import { cache } from "react";
+import { extractWatchInfo, MATCH_INFO_SLOT } from "@/lib/watch-info";
 import { getPayload } from "payload";
 import config from "@payload-config";
 import { convertLexicalToHTML } from "@payloadcms/richtext-lexical/html";
@@ -226,6 +227,9 @@ const lexicalConverters: any = ({ defaultConverters }: any) => ({
       const cls = f.style === "outline" ? "pdb-cta-outline" : "pdb-cta-primary";
       return `<a class="pdb-cta ${cls} ${themeClass(f.cor)}" href="${escAttr(f.url)}" target="_blank" rel="sponsored nofollow noopener">${escHtml(f.label)}</a>`;
     },
+    // Ficha do jogo (onde assistir): renderizada pela página do post (precisa dos dados do
+    // jogo); no HTML do corpo não sai nada.
+    matchInfo: () => MATCH_INFO_SLOT,
     // Vitrine de produtos (afiliado): grade com foto, etiqueta, nota e botão da loja.
     // Produto sem link não aparece (nunca sai card sem destino).
     productGrid: ({ node }: any) => {
@@ -637,6 +641,9 @@ function mapPost(p: any): Article {
   // FAQ e ranking dos blocos do editor → JSON-LD (FAQPage / ItemList) na página do artigo.
   const structured = extractStructured(p.content);
   return {
+    // Onde assistir: jogo ligado + canal do bloco "Ficha do jogo" (matchInfo).
+    matchId: typeof p.matchId === "number" ? p.matchId : undefined,
+    watch: extractWatchInfo(p.content) || undefined,
     faq: structured.faq.length ? structured.faq : undefined,
     ranking: structured.ranking.length ? structured.ranking : undefined,
     imageCaption: cover?.alt || "",
@@ -685,6 +692,7 @@ export async function getArticlesPayload(options?: {
     // (home "Últimas Notícias", /noticias, "Leia também", sitemap geral). Só aparecem quando
     // a categoria é pedida explicitamente. Craques = página própria; Casas de Apostas = seção
     // dedicada (card "Casas de Apostas" na home + hub /casas-de-apostas), fora do feed editorial.
+    // "Onde Assistir" NÃO é silada (pedido do Ivan, 13/11): os guias entram na home e no feed.
     for (const siloed of ["Craques", "Casas de Apostas", "Cupons"]) {
       if (category !== siloed) and.push({ category: { not_equals: siloed } });
     }

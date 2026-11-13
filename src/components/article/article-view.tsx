@@ -1,3 +1,5 @@
+import type { ReactNode } from "react";
+import { splitAtMatchInfoSlot } from "@/lib/watch-info";
 import Image from "next/image";
 import Link from "next/link";
 import { Clock, Pen, BookOpen, Tag, Trophy, Radio, CalendarDays, Newspaper } from "lucide-react";
@@ -116,10 +118,18 @@ export function ArticleView({
   article,
   related,
   standings,
+  matchCard,
+  hub,
+  extraSchema,
 }: {
   article: Article;
   related: Article[];
   standings: Standings;
+  /** Ficha do jogo (onde assistir): entra no lugar do bloco matchInfo do corpo (ou no topo). */
+  matchCard?: ReactNode;
+  /** Hub da categoria no breadcrumb (ex.: Onde Assistir → /onde-assistir) em vez de /noticias. */
+  hub?: { label: string; href: string };
+  extraSchema?: ReactNode;
 }) {
   const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://papodebola.com.br";
   const articleUrl = `${siteUrl}${article.url}`;
@@ -145,7 +155,9 @@ export function ArticleView({
   const author = article.author || "Redacao Papo de Bola";
 
   const catSlug = slugifyCategory(article.category);
-  const catHref = WP_CATEGORY_BY_SLUG[catSlug] ? `/noticias/${catSlug}` : "/noticias";
+  const catHref = hub?.href || (WP_CATEGORY_BY_SLUG[catSlug] ? `/noticias/${catSlug}` : "/noticias");
+  // Ficha do jogo: o corpo é dividido no marcador do bloco (sem marcador → ficha no topo).
+  const [bodyBefore, bodyAfter] = matchCard ? splitAtMatchInfoSlot(bodyHtml) : ["", bodyHtml];
 
   // Guias long-form (money pages): coluna larga e SEM a sidebar "Continue no Papo de
   // Bola" — a tabela comparativa e os cards precisam da largura, e o texto respira mais.
@@ -156,6 +168,7 @@ export function ArticleView({
   return (
     <>
       <ArticleSchema article={article} />
+      {extraSchema}
       {/* Blocos do editor viram dados estruturados: FAQ (accordion) → FAQPage;
           tabela/cards de casas de apostas → ItemList do ranking. */}
       {article.faq?.length ? <FaqSchema items={article.faq} /> : null}
@@ -170,8 +183,12 @@ export function ArticleView({
             className="mb-4"
             items={[
               { label: "Início", href: "/" },
-              { label: "Notícias", href: "/noticias" },
-              { label: article.category, href: catHref },
+              ...(hub
+                ? [{ label: hub.label, href: hub.href }]
+                : [
+                    { label: "Notícias", href: "/noticias" },
+                    { label: article.category, href: catHref },
+                  ]),
               { label: article.rewrittenTitle },
             ]}
           />
@@ -234,7 +251,15 @@ export function ArticleView({
           }
         >
           {article.category === "Casas de Apostas" && <BettingDisclaimer className="mb-6" />}
-          <article className="prose-article" dangerouslySetInnerHTML={{ __html: bodyHtml }} />
+          {matchCard ? (
+            <>
+              {bodyBefore && <div className="prose-article" dangerouslySetInnerHTML={{ __html: bodyBefore }} />}
+              {matchCard}
+              <article className="prose-article" dangerouslySetInnerHTML={{ __html: bodyAfter }} />
+            </>
+          ) : (
+            <article className="prose-article" dangerouslySetInnerHTML={{ __html: bodyHtml }} />
+          )}
           {article.category === "Cupons" && <AffiliateDisclosure className="mt-8" html={bodyHtml} />}
           {bodyHtml.includes("instagram-media") && <InstagramEmbedLoader />}
           {bodyHtml.includes("twitter-tweet") && <TweetEmbedLoader />}

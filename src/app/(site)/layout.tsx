@@ -7,6 +7,7 @@ import { MainNav } from "@/components/layout/main-nav";
 import { PromoBanner } from "@/components/layout/promo-banner";
 import { SidePanelLoader } from "@/components/layout/side-panel-loader";
 import { Footer } from "@/components/layout/footer";
+import { NavProgress } from "@/components/layout/nav-progress";
 import { CookieConsent } from "@/components/layout/cookie-consent";
 import { PushPromptModal } from "@/components/push/push-prompt-modal";
 import { SidePanelProvider } from "@/components/layout/side-panel-context";
@@ -119,6 +120,7 @@ export default function RootLayout({
             style={{ display: "none", visibility: "hidden" }}
           />
         </noscript>
+        <NavProgress />
         <MyTeamProvider>
           <SidePanelProvider>
             <Header />
