@@ -167,6 +167,31 @@ prováveis" → H2 "Perguntas frequentes" → "Mais jogos para assistir".
 ### Fora de escopo (YAGNI)
 Filtro por time no topo do hub, página por canal, post diário "jogos de hoje" automático.
 
+## Transmissão 13/11: pesquisa (12/11 ~22h30)
+Regra geral: a página oficial da UEFA lista **Disney+ e sportv** para o Brasil
+(pt.uefa.com/uefanationsleague/news/02a9-219aea41a16f-96f9d2449867-1000--onde-ver-a-nations-league-parceiros-tv-e-streams-em-directo/).
+A Disney fica com a maioria dos jogos (ESPN/ESPN 4/YouTube da ESPN, ou só Disney+); o Globo pega jogos
+escolhidos (SporTV/geTV). "Exclusividade da Disney+" (InfoMoney) está ERRADO.
+
+| Jogo | Canal | Confiança |
+|---|---|---|
+| 14:00 Moldávia x Cazaquistão | ESPN 4 + Disney+ | 2 fontes |
+| 16:45 Andorra x Gibraltar | Disney+ | 2 fontes |
+| 16:45 Bulgária x Islândia | Disney+ | 2 fontes |
+| 16:45 Escócia x Macedônia do Norte | ESPN Brasil (YouTube) + Disney+ | 2 fontes |
+| 16:45 Eslováquia x Ilhas Faroé | Disney+ | 2 fontes |
+| 16:45 Eslovênia x Suíça | ESPN 4 + Disney+ | 2 fontes |
+| 16:45 Holanda x Grécia | ESPN + Disney+ (3 fontes) × sportv (Terra, Portal Democrata) | CONFLITO |
+| 16:45 Liechtenstein x Azerbaijão | Disney+ | 2 fontes |
+| 16:45 Luxemburgo x Estônia | Disney+ | 2 fontes |
+| 16:45 Sérvia x Alemanha | SporTV + geTV | 2+ fontes |
+
+Fontes: antenadosnatvestreaming.com/2026/11/agenda-esportiva-sexta-feira-13-novembro-2026.html ·
+arede.info/esporte/692758/... · gazetaesportiva.com (Sérvia x Alemanha; Holanda x Grécia) · terra.com.br (Holanda x Grécia).
+Árbitros/estádios encontrados: Sérvia x Alemanha (Rajko Mitić, Belgrado; Javier Alberola Rojas, ESP).
+Holanda x Grécia (Johan Cruijff Arena, Amsterdã; Rohit Saggi, NOR; VAR Guillermo Cuadra Fernández, ESP).
+Os outros 8 jogos: completar com a API (`match/{id}` venue/referee). O que não houver não aparece.
+
 ## Progresso
 - [x] Análise + benchmark (commit cad4556)
 - [x] Design aprovado com os ajustes (12/11 ~22h10)
