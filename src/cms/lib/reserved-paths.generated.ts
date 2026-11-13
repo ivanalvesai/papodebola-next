@@ -127,6 +127,7 @@ export const STATIC_TOP_LEVEL: readonly string[] = [
 ];
 
 export const FUTEBOL_CODE: readonly string[] = [
+  "amistosos",
   "copa-do-mundo",
   "copa-do-mundo-feminina",
   "craque",

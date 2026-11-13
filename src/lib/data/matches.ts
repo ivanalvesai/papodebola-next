@@ -1,3 +1,4 @@
+import { getAmistosoBarMatches } from "./amistosos";
 import { fetchAllSports } from "@/lib/api/allsports";
 import { getLeagueCategory, TOURNAMENT_BY_ID, TOURNAMENT_BY_SLUG, champPath } from "@/lib/config";
 import { translateStatus } from "@/lib/translations";
@@ -471,10 +472,17 @@ export async function getBrazilianBarMatches(): Promise<BrazilianBarMatches> {
     getTodayMatches().catch(() => []),
     getCBFUpcomingMatches().catch(() => []),
   ]);
-  const extra = await getExtraChampBarMatches(
-    brasiliaDayStartSec(0),
-    brasiliaDayStartSec(BAR_EXTRA_DAYS)
-  ).catch(() => [] as NormalizedMatch[]);
+  const [extraChamps, amistosos] = await Promise.all([
+    getExtraChampBarMatches(brasiliaDayStartSec(0), brasiliaDayStartSec(BAR_EXTRA_DAYS)).catch(
+      () => [] as NormalizedMatch[]
+    ),
+    // Amistosos das seleções acompanhadas (Brasil, sub-20, Argentina, Uruguai) — índice
+    // salvo no volume + placar ao vivo; ver src/lib/data/amistosos.ts.
+    getAmistosoBarMatches(brasiliaDayStartSec(0), brasiliaDayStartSec(BAR_EXTRA_DAYS)).catch(
+      () => [] as NormalizedMatch[]
+    ),
+  ]);
+  const extra = [...extraChamps, ...amistosos];
 
   const todayStart = brasiliaDayStartSec(0);
   const todayEnd = brasiliaDayStartSec(1);

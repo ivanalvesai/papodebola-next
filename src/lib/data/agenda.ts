@@ -1,3 +1,4 @@
+import { getAmistosoFixtures, amistosoStatus, amistosoMatchHref, AMISTOSOS_LEAGUE, type AmistosoFixture } from "./amistosos";
 import { fetchAllSports } from "@/lib/api/allsports";
 import { translateStatus } from "@/lib/translations";
 import { translateCountry } from "@/lib/i18n/countries";
@@ -316,6 +317,29 @@ export async function getFootballAgendaForDay(
   events.push(...wcEvents);
   for (const list of champLists) events.push(...list);
 
+  // Amistosos das seleções acompanhadas (Brasil, sub-20, Argentina, Uruguai): índice salvo
+  // no volume + placar ao vivo (ver src/lib/data/amistosos.ts).
+  const amistosos = await getAmistosoFixtures().catch(() => [] as AmistosoFixture[]);
+  for (const f of amistosos) {
+    if (!inDay(f.timestamp)) continue;
+    const st = amistosoStatus(f);
+    events.push({
+      id: f.id,
+      league: AMISTOSOS_LEAGUE,
+      home: f.home,
+      away: f.away,
+      homeId: f.homeId,
+      awayId: f.awayId,
+      homeScore: st === "scheduled" ? null : f.homeScore,
+      awayScore: st === "scheduled" ? null : f.awayScore,
+      status: st === "finished" ? "Encerrado" : st === "halftime" ? "Intervalo" : st === "live" ? "Ao Vivo" : "",
+      statusType: f.status || "notstarted",
+      time: hhmm(f.timestamp),
+      timestamp: f.timestamp,
+      href: amistosoMatchHref(f),
+    });
+  }
+
   events.sort(sortForBar);
   const byLeague = new Map<string, AgendaEvent[]>();
   for (const e of events) {
@@ -324,7 +348,18 @@ export async function getFootballAgendaForDay(
     if (list) list.push(e);
     else byLeague.set(key, [e]);
   }
-  return [...byLeague.entries()].map(([league, evs]) => ({ league, events: evs.slice(0, 40) }));
+  // Ordem fixa dos carrosséis (pedido do Ivan, 13/11): Copa, brasileiros, amistosos,
+  // Liga das Nações e Europa. Liga fora da lista vai pro fim.
+  const order = new Map(
+    ["Copa do Mundo", ...FOOTBALL_AGENDA_CHAMPS.slice(0, 6).map((s) => TOURNAMENT_BY_SLUG[s]?.name || s),
+      AMISTOSOS_LEAGUE, ...FOOTBALL_AGENDA_CHAMPS.slice(6).filter((s) => s === "liga-das-nacoes").map((s) => TOURNAMENT_BY_SLUG[s]?.name || s),
+      ...FOOTBALL_AGENDA_CHAMPS.slice(6).filter((s) => s !== "liga-das-nacoes").map((s) => TOURNAMENT_BY_SLUG[s]?.name || s),
+    ].map((n, i) => [n, i] as const)
+  );
+  const rank = (n: string) => order.get(n) ?? 999;
+  return [...byLeague.entries()]
+    .sort((a, b) => rank(a[0]) - rank(b[0]))
+    .map(([league, evs]) => ({ league, events: evs.slice(0, 40) }));
 }
 
 // ---- Store (volume compartilhado): dev grava, prod/páginas leem ----

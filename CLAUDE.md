@@ -21,6 +21,8 @@ Checklist obrigatório para **toda página/seção nova** que mostre dados da AP
 5. Fonte fora do motor genérico (endpoint próprio, outro esporte)? Criar uma categoria nova de snapshot com `withSnapshot`. Não publicar a página sem isso.
 6. Validar no servidor: `ls /app/data/snapshots/{championships,matches}` deve ter os arquivos do torneio, com `incidents` nos jogos encerrados.
 
+**Velocidade é prioridade do Ivan (13/11): nada pode ficar sendo puxado da API a cada acesso.** Imagens e dados saem do disco (volume); a API só atualiza. `/api/player-img` e `/api/team-img` gravam no volume na 1ª busca (write-through). Post com campinho: rodar `scripts/download-match-player-images.mjs <matchIds>` antes de publicar, depois que o snapshot do jogo existir (sem snapshot o script pula o jogo).
+
 **Regra de velocidade, também para toda rota nova com `[param]`:** além de `export const revalidate = N`, a rota precisa exportar `generateStaticParams` (mesmo que `return []`). Sem isso o Next marca a rota como **ƒ (Dynamic)** e remonta a página do zero a cada acesso. Antes de 12/11, as páginas de jogo levavam de 0,6 a 1,9 s; com o cache passaram a ~0,02 s. Confira no log do build: a rota deve aparecer como **●**, não ƒ. Não use `dynamicParams=false` (quebrou campeonatos em prod) nem `loading.tsx` global (causou soft-404). O retorno visual do clique fica com `NavProgress` (`src/components/layout/nav-progress.tsx`).
 
 Exemplo conferido em 12/11/2026, Liga das Nações: tabela em `snapshots/championships/liga-das-nacoes.json`; os 112 jogos encerrados com lance a lance em `snapshots/matches/{id}.json`.
@@ -758,6 +760,17 @@ Doc completo: `docs/knowledge/2026-06-20-studio-kanbans.md`. Navegação compart
 - Doc: `docs/knowledge/2026-11-10-post-cupom-amazon-11-11.md`.
 - **Cupom em formato de ticket (11/11):** bloco `coupon` ganhou `headline`, `value` e `offers[]` (mini-cupons clicáveis). `/cupons/amazon` (pág. 28) e `/cupons/shopee` (pág. 29) **publicadas**, largura **wide** (1240px) e aviso de afiliado (`note`) **no fim**. `/cupons/mercado-livre` segue rascunho.
 - **API de afiliados da Shopee:** GraphQL `open-api.affiliate.shopee.com.br/graphql`, assinatura SHA256(AppID+ts+payload+secret); credencial **fora do repo** (arquivo na área de trabalho do Ivan). `generateShortLink` com subId **só alfanumérico** (`cuponsshopee`); `productOfferV2` com IDs inline. Scripts `scripts/update-cupons-shopee.mjs` / `publish-cupons-*.mjs`. Doc: `docs/knowledge/2026-11-11-cupons-ticket-amazon-shopee.md`.
+- **Banner: SÓ A SHOPEE NO AR (13/11, pedido do Ivan).** O banner id 6 usa a arte "CUPONS ESGOTANDO. CORRA!" e o link `s.shopee.com.br/8Kr2i9GOjg`, que leva à página de cupons do dia. ID de afiliado do Papo de Bola: **18303861358**; subId `cuponsdodia`. Esse link foi gerado no painel de afiliados, porque a API da conta ainda não saiu. Amazon (id 5) e Mercado Livre (id 4) estão **desativados**; religar só com pedido. Fonte da arte: `scripts/banners/cupons-esgotando.html`. Depois de mudar qualquer banner, revalidar `/api/promo-banners`. Os links da `/cupons/shopee` ainda são da conta webbusca. Doc: `docs/knowledge/2026-11-13-onde-assistir-banner-shopee.md`.
+
+### Onde assistir + /ao-vivo (13/11)
+
+- **`/onde-assistir`** (menu; `/futebol/onde-assistir` → 308) lista só guias de jogo: categoria **"Onde Assistir"** OU tag **"Onde assistir"**. Os 3 últimos ficam em destaque e os anteriores vêm abaixo. Os guias também aparecem na home.
+- **`/ao-vivo`** mostra só os jogos do dia, com uma seção por campeonato (H2 + texto) e cards com status e link pro lance a lance.
+- Posts: `scripts/onde-assistir/*` + `scripts/capa-onde-assistir.py` + `scripts/create-posts-onde-assistir-lote.mjs`, que agenda via `schedulePublish`. Bloco Lexical novo exige promote antes de agendar.
+- **Lote em escala (template v2, 13/11):** `template-v2.mjs` serve clube (Série A/B, mostra vitórias) e seleção; `build-v2.mjs` monta o JSON (XI do snapshot ou do jogo anterior + `swapHome/swapAway`); `sched.sh` agenda. Capa de clube usa `--crest`. 17 guias do dia 14/11 agendados das 08h às 21h20 (posts 458–474). Conferir placares citados contra `facts.json` antes de agendar; desfalque com fonte única não entra.
+- **Amistosos (13/11):** `src/lib/data/amistosos.ts` acompanha Brasil, Brasil sub-20, Argentina e Uruguai (`AMISTOSO_TEAM_IDS`; filtro = torneio com "Friendly"). Índice no volume `snapshots/amistosos/jogos.json`; lance a lance em **`/futebol/amistosos/{DD-MM-AAAA}/{casa}-{fora}`** (Brasil principal redireciona pra `/futebol/selecao-brasileira/...`). Entram na barra da home (Hoje/Próximos) e no carrossel "Amistosos" de `/jogos-de-hoje`, que tem ordem fixa: Copa, brasileiros, Amistosos, Liga das Nações, Europa. Guias de amistoso: `template-amistoso.mjs` + `build-amistoso.mjs`.
+- **GOTCHA horário no Windows:** `TZ=America/Sao_Paulo date` no Git Bash devolve UTC. Para agendar "agora", pegar a hora no servidor (`ssh ... date`).
+- Doc: `docs/knowledge/2026-11-13-onde-assistir-banner-shopee.md`.
 
 ## Analytics e Tags
 
