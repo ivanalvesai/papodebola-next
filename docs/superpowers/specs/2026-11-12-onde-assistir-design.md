@@ -199,3 +199,12 @@ Os outros 8 jogos: completar com a API (`match/{id}` venue/referee). O que não 
 - [ ] Plano (writing-plans)
 - [ ] Implementação no dev → aprovação visual
 - [ ] Posts 13/11, um a um
+- [x] Plano + Etapas 1–6 implementadas (commits 3e87224…f4dda7c), no dev desde 12/11 23h28 (build refeito com nohup após o PC reiniciar)
+- [x] Etapa 7: seed do hub (Página id 31, RASCUNHO) + post-amostra **448** Moldávia x Cazaquistão (RASCUNHO, autor Ivan, capa media 893). Prévia do CMS agora monta a Ficha do jogo (5dacaeb)
+- [ ] Aprovação visual do Ivan → então os outros 9 posts (Etapa 8), publicando um a um
+
+### Como gerar cada post (Etapa 8)
+1. Snapshot do jogo e da liga: `docker exec papodebola-next-dev cat /app/data/snapshots/matches/{id}.json` e `.../championships/liga-das-nacoes.json`; bandeiras em `/app/data/team-images/{id}.png`.
+2. Capa: `python scripts/capa-onde-assistir.py --bg foto.jpg --home A.png --away B.png --home-name .. --away-name .. --info "Sexta, 13/11 · 16h45 · Canal" --out capa-{a}-x-{b}.png --preview p.png`.
+3. Texto: copiar `scripts/onde-assistir/posts/moldavia-x-cazaquistao.mjs` pro jogo (texto ÚNICO, números da tabela salva; autor alterna 1/2).
+4. `node scripts/onde-assistir/build.mjs {post} m.json ln.json oa-post.json` → `scp oa-post.json capa.png` pra `~/cupons-banners/` → `bash ~/run-seed-cupons.sh create-post-onde-assistir.mjs` (rascunho; `touch ~/cupons-banners/oa-publish` publica).
