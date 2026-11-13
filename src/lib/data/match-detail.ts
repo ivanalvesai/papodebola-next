@@ -1,4 +1,5 @@
 import { fetchAllSports, fetchAllSportsMeta } from "@/lib/api/allsports";
+import { normalizeReferee } from "@/lib/watch-info";
 import { translateCountry } from "@/lib/i18n/countries";
 import { translateStatus } from "@/lib/translations";
 import { matchDateSlug, matchPairSlug } from "@/lib/world-cup-match-url";
@@ -532,6 +533,7 @@ export interface MatchEvent {
   periodStart: number; // currentPeriodStartTimestamp (pra cronômetro)
   live: boolean;
   venue: { stadium: string; city: string; country: string } | null;
+  referee?: { name: string; country: string } | null; // opcional: fixtures sintéticos não têm
 }
 
 // Uma cobrança da disputa de pênaltis (na ordem em que foi batida).
@@ -665,6 +667,7 @@ function normalizeEvent(e: any): MatchEvent {
     startTimestamp,
     periodStart: e?.time?.currentPeriodStartTimestamp || 0,
     live: isLiveType(type),
+    referee: normalizeReferee(e),
     venue: e?.venue
       ? {
           stadium: e.venue.name || e.venue.stadium?.name || "",

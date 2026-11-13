@@ -2,6 +2,7 @@
 // Lexical `matchInfo` ("Ficha do jogo"). O resto da ficha (data, hora, estádio, árbitro,
 // bandeiras) sai do jogo (post.matchId → snapshot), nunca digitado à mão, pra não divergir.
 // Puro (sem Payload) pra rodar no node:test.
+import { translateCountry } from "./i18n/countries.ts";
 
 export interface WatchInfo {
   channels: string;
@@ -25,4 +26,12 @@ export function extractWatchInfo(content: any): WatchInfo | null {
   const channels = String(f?.channels ?? "").trim();
   if (!channels) return null;
   return { channels, confirmed: !!f.channelsConfirmed };
+}
+
+// Árbitro do match/{id} da API (campo `referee`). Sem nome → null (a ficha omite a linha).
+export function normalizeReferee(e: any): { name: string; country: string } | null {
+  const name = String(e?.referee?.name ?? "").trim();
+  if (!name) return null;
+  const country = String(e?.referee?.country?.name ?? "").trim();
+  return { name, country: country ? translateCountry(country) : "" };
 }

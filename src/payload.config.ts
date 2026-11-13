@@ -568,6 +568,17 @@ const richTextEditor = lexicalEditor({
                       },
                     ],
                   },
+                  // Ficha do jogo (posts "onde assistir"): só o CANAL é editorial. Data, hora,
+                  // estádio, árbitro e bandeiras saem do "ID do jogo" do post (snapshot), e a
+                  // página renderiza o card abaixo da capa (o conversor HTML não imprime nada).
+                  {
+                    slug: "matchInfo",
+                    labels: { singular: "Ficha do jogo (onde assistir)", plural: "Fichas do jogo" },
+                    fields: [
+                      { name: "channels", type: "text", required: true, label: "Onde assistir (canais)", admin: { description: 'Ex.: "ESPN e Disney+". O resto da ficha (data, hora, estádio, árbitro, bandeiras) sai do "ID do jogo" do post.' } },
+                      { name: "channelsConfirmed", type: "checkbox", label: "Transmissão confirmada", defaultValue: true },
+                    ],
+                  },
                   // Vitrine de produtos (afiliado): grade "Nossas escolhas" com foto, etiqueta,
                   // nota e botão "Ver na Amazon/Mercado Livre/Shopee" (rel=sponsored). Sem preço
                   // fixo de propósito (preço muda a toda hora; regra do Associados da Amazon).

@@ -30,3 +30,14 @@ test("extractWatchInfo: sem bloco, conteúdo vazio ou canal vazio → null", () 
     null
   );
 });
+
+import { normalizeReferee } from "./watch-info.ts";
+test("normalizeReferee: nome + país traduzido; sem árbitro → null", () => {
+  assert.deepEqual(normalizeReferee({ referee: { name: "Rohit Saggi", country: { name: "Norway" } } }), {
+    name: "Rohit Saggi",
+    country: "Noruega",
+  });
+  assert.deepEqual(normalizeReferee({ referee: { name: "X" } }), { name: "X", country: "" });
+  assert.equal(normalizeReferee({}), null);
+  assert.equal(normalizeReferee({ referee: { name: "" } }), null);
+});

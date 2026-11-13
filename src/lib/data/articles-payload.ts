@@ -227,6 +227,9 @@ const lexicalConverters: any = ({ defaultConverters }: any) => ({
       const cls = f.style === "outline" ? "pdb-cta-outline" : "pdb-cta-primary";
       return `<a class="pdb-cta ${cls} ${themeClass(f.cor)}" href="${escAttr(f.url)}" target="_blank" rel="sponsored nofollow noopener">${escHtml(f.label)}</a>`;
     },
+    // Ficha do jogo (onde assistir): renderizada pela página do post (precisa dos dados do
+    // jogo); no HTML do corpo não sai nada.
+    matchInfo: () => "",
     // Vitrine de produtos (afiliado): grade com foto, etiqueta, nota e botão da loja.
     // Produto sem link não aparece (nunca sai card sem destino).
     productGrid: ({ node }: any) => {
