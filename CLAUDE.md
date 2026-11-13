@@ -758,6 +758,14 @@ Doc completo: `docs/knowledge/2026-06-20-studio-kanbans.md`. Navegação compart
 - Doc: `docs/knowledge/2026-11-10-post-cupom-amazon-11-11.md`.
 - **Cupom em formato de ticket (11/11):** bloco `coupon` ganhou `headline`, `value` e `offers[]` (mini-cupons clicáveis). `/cupons/amazon` (pág. 28) e `/cupons/shopee` (pág. 29) **publicadas**, largura **wide** (1240px) e aviso de afiliado (`note`) **no fim**. `/cupons/mercado-livre` segue rascunho.
 - **API de afiliados da Shopee:** GraphQL `open-api.affiliate.shopee.com.br/graphql`, assinatura SHA256(AppID+ts+payload+secret); credencial **fora do repo** (arquivo na área de trabalho do Ivan). `generateShortLink` com subId **só alfanumérico** (`cuponsshopee`); `productOfferV2` com IDs inline. Scripts `scripts/update-cupons-shopee.mjs` / `publish-cupons-*.mjs`. Doc: `docs/knowledge/2026-11-11-cupons-ticket-amazon-shopee.md`.
+- **Banner: SÓ A SHOPEE NO AR (13/11, pedido do Ivan).** O banner id 6 usa a arte "CUPONS ESGOTANDO. CORRA!" e o link `s.shopee.com.br/8Kr2i9GOjg`, que leva à página de cupons do dia. ID de afiliado do Papo de Bola: **18303861358**; subId `cuponsdodia`. Esse link foi gerado no painel de afiliados, porque a API da conta ainda não saiu. Amazon (id 5) e Mercado Livre (id 4) estão **desativados**; religar só com pedido. Fonte da arte: `scripts/banners/cupons-esgotando.html`. Depois de mudar qualquer banner, revalidar `/api/promo-banners`. Os links da `/cupons/shopee` ainda são da conta webbusca. Doc: `docs/knowledge/2026-11-13-onde-assistir-banner-shopee.md`.
+
+### Onde assistir + /ao-vivo (13/11)
+
+- **`/onde-assistir`** (menu; `/futebol/onde-assistir` → 308) lista só guias de jogo: categoria **"Onde Assistir"** OU tag **"Onde assistir"**. Os 3 últimos ficam em destaque e os anteriores vêm abaixo. Os guias também aparecem na home.
+- **`/ao-vivo`** mostra só os jogos do dia, com uma seção por campeonato (H2 + texto) e cards com status e link pro lance a lance.
+- Posts: `scripts/onde-assistir/*` + `scripts/capa-onde-assistir.py` + `scripts/create-posts-onde-assistir-lote.mjs`, que agenda via `schedulePublish`. Bloco Lexical novo exige promote antes de agendar.
+- Doc: `docs/knowledge/2026-11-13-onde-assistir-banner-shopee.md`.
 
 ## Analytics e Tags
 

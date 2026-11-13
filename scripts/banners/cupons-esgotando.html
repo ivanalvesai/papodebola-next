@@ -1,0 +1,142 @@
+<!doctype html>
+<html><head><meta charset="utf-8">
+<link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@600;700;800&display=block" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+html,body{overflow:hidden}
+body{font-family:'Baloo 2',sans-serif;}
+.b{position:relative;overflow:hidden;width:2400px;height:600px}
+.m .b{width:1440px;height:480px}
+
+/* ---------- elementos comuns ---------- */
+.ticket{position:absolute;border-radius:22px;display:flex;flex-direction:column;align-items:center;justify-content:center;font-weight:800;line-height:.9;text-align:center}
+.ticket::before,.ticket::after{content:"";position:absolute;top:50%;width:46px;height:46px;border-radius:50%;transform:translateY(-50%)}
+.ticket::before{left:-23px}.ticket::after{right:-23px}
+.ticket .in{position:absolute;inset:14px;border:4px dashed currentColor;border-radius:14px;opacity:.55}
+.ticket b{font-size:118px;letter-spacing:-2px}
+.ticket small{font-size:34px;letter-spacing:4px}
+.cta{position:absolute;display:flex;align-items:center;gap:22px;border-radius:999px;font-weight:800;font-size:46px;padding:14px 18px 10px 48px;box-shadow:0 14px 30px rgba(0,0,0,.25)}
+.cta i{display:flex;align-items:center;justify-content:center;width:72px;height:72px;border-radius:50%;font-style:normal;font-size:54px;line-height:1;padding-bottom:6px}
+.fine{position:absolute;font-weight:600;font-size:26px;opacity:.8}
+.bar{position:absolute;height:34px;border-radius:999px;overflow:hidden}
+.bar span{display:block;height:100%;border-radius:999px}
+.bar-label{position:absolute;font-weight:800;font-size:30px;letter-spacing:2px}
+
+/* ---------- VERSÃO A: laranja Shopee + amarelo ---------- */
+.A .b{background:radial-gradient(circle at 78% 50%,#ff7a45 0%,#f05a2b 38%,#d63c18 100%)}
+.A .rays{position:absolute;left:1860px;top:300px;width:3000px;height:3000px;margin:-1500px;background:repeating-conic-gradient(rgba(255,255,255,.10) 0 7deg,transparent 7deg 18deg)}
+.A .kicker{position:absolute;left:96px;top:50px;background:#111;color:#ffd23f;font-weight:800;font-size:38px;letter-spacing:5px;padding:8px 26px 2px;border-radius:12px}
+.A h1{position:absolute;left:90px;top:140px;color:#fff;font-weight:800;font-size:176px;line-height:.86;letter-spacing:-4px;text-shadow:0 8px 0 rgba(0,0,0,.18)}
+.A h1 em{font-style:normal;color:#ffd23f}
+.A .corra{position:absolute;left:1180px;top:118px;transform:rotate(-7deg);background:#ffd23f;color:#111;font-weight:800;font-size:150px;line-height:1;padding:30px 50px 6px;border-radius:26px;box-shadow:0 12px 0 #111}
+.A .cta{left:1210px;top:396px;background:#111;color:#fff}
+.A .cta i{background:#ffd23f;color:#111}
+.A .t1{left:1950px;top:70px;width:360px;height:220px;background:#fff;color:#ee4d2d;transform:rotate(9deg)}
+.A .t1::before,.A .t1::after{background:#e5491f}
+.A .t2{left:1890px;top:310px;width:400px;height:230px;background:#ffd23f;color:#111;transform:rotate(-6deg)}
+.A .t2::before,.A .t2::after{background:#e04820}
+.A .fine{left:96px;top:540px;color:#fff}
+.A .bar{left:96px;top:478px;width:640px;background:rgba(0,0,0,.25)}
+.A .bar span{width:88%;background:repeating-linear-gradient(-45deg,#ffd23f 0 22px,#ffbf00 22px 44px)}
+.A .bar-label{left:760px;top:476px;color:#fff}
+
+/* ---------- VERSÃO B: identidade do site (amarelo, preto, verde) ---------- */
+.B .b{background:linear-gradient(100deg,#f6b800 0%,#ffcf2e 55%,#ffd84d 100%)}
+.B .rays{position:absolute;left:2000px;top:300px;width:3000px;height:3000px;margin:-1500px;background:repeating-conic-gradient(rgba(255,255,255,.22) 0 6deg,transparent 6deg 16deg)}
+.B .box{position:absolute;background:#16130c;color:#ffd23f;font-weight:800;border-radius:30px;box-shadow:0 16px 0 #00965E}
+.B .b1{left:88px;top:60px;font-size:150px;line-height:1;padding:28px 44px 0}
+.B .b2{left:88px;top:290px;font-size:150px;line-height:1;padding:28px 44px 0;color:#fff}
+.B .b2 em{font-style:normal;color:#ffd23f}
+.B .corra{position:absolute;left:1000px;top:80px;color:#16130c;font-weight:800;font-size:210px;line-height:.8;letter-spacing:-5px;transform:rotate(-4deg)}
+.B .corra span{display:block;transform:rotate(4deg);font-size:60px;letter-spacing:2px;line-height:1.1;margin-top:18px;color:#00965E}
+.B .cta{left:1010px;top:416px;background:#00965E;color:#fff}
+.B .cta i{background:#fff;color:#00965E}
+.B .t1{left:1840px;top:60px;width:380px;height:230px;background:#16130c;color:#ffd23f;transform:rotate(8deg)}
+.B .t1::before,.B .t1::after{background:#ffd23f}
+.B .t2{left:1780px;top:320px;width:420px;height:230px;background:#ee4d2d;color:#fff;transform:rotate(-7deg)}
+.B .t2::before,.B .t2::after{background:#ffd84d}
+.B .fine{left:94px;top:552px;color:#16130c}
+
+/* ---------- VERSÃO C: escura, alerta ---------- */
+.C .b{background:radial-gradient(circle at 25% 40%,#2b1a14 0%,#120d0b 70%)}
+.C .glow{position:absolute;left:1700px;top:-200px;width:1000px;height:1000px;border-radius:50%;background:radial-gradient(circle,rgba(238,77,45,.55),transparent 65%)}
+.C .tape{position:absolute;left:-40px;width:2600px;height:58px;background:repeating-linear-gradient(-45deg,#ffd23f 0 40px,#111 40px 80px);opacity:.95}
+.C .tape.top{top:-6px}.C .tape.bot{top:548px}
+.C .alert{position:absolute;left:100px;top:84px;color:#ee4d2d;font-weight:800;font-size:44px;letter-spacing:8px}
+.C h1{position:absolute;left:94px;top:150px;color:#fff;font-weight:800;font-size:168px;line-height:.86;letter-spacing:-4px}
+.C h1 em{font-style:normal;color:#ff6a3d}
+.C .corra{position:absolute;left:1150px;top:140px;background:#ee4d2d;color:#fff;font-weight:800;font-size:160px;line-height:1;padding:28px 54px 4px;border-radius:24px;transform:rotate(-5deg);box-shadow:0 0 60px rgba(238,77,45,.7)}
+.C .cta{left:1170px;top:376px;background:#ffd23f;color:#111}
+.C .cta i{background:#111;color:#ffd23f}
+.C .t1{left:1910px;top:120px;width:400px;height:240px;background:#fff;color:#ee4d2d;transform:rotate(-8deg)}
+.C .t1::before,.C .t1::after{background:#1d1411}
+.C .t1 .stamp{position:absolute;top:auto;bottom:-34px;left:30px;right:30px;border-radius:12px;transform:rotate(4deg);background:#ee4d2d;color:#fff;font-size:44px;letter-spacing:4px;padding:8px 0 0;box-shadow:0 6px 16px rgba(0,0,0,.35)}
+.C .fine{left:100px;top:486px;color:#fff;opacity:.6}
+
+/* ---------- MOBILE (1440x480) ---------- */
+.m .rays{left:1180px;top:240px}
+.m .kicker{left:56px;top:40px;font-size:30px}
+.m.A h1{left:52px;top:100px;font-size:128px}
+.m.A .corra{left:56px;top:330px;font-size:72px;padding:16px 28px 0;transform:rotate(-4deg);box-shadow:0 8px 0 #111;border-radius:18px}
+.m .cta{font-size:38px;padding:10px 14px 6px 36px}
+.m .cta i{width:60px;height:60px;font-size:44px}
+.m.A .cta{left:400px;top:342px}
+.m .ticket b{font-size:92px}.m .ticket small{font-size:28px}
+.m.A .t1{left:1090px;top:40px;width:290px;height:180px}
+.m.A .t2{left:1050px;top:236px;width:320px;height:190px}
+.m .fine{font-size:22px}
+.m.A .fine{left:56px;top:440px}
+.m.A .bar,.m.A .bar-label{display:none}
+
+.m.B .b1{left:50px;top:36px;font-size:110px;padding:22px 34px 0;border-radius:24px}
+.m.B .b2{left:50px;top:206px;font-size:110px;padding:22px 34px 0;border-radius:24px}
+.m.B .corra{left:50px;top:372px;font-size:76px;letter-spacing:-2px;transform:none}
+.m.B .corra span{display:none}
+.m.B .cta{left:330px;top:370px}
+.m.B .t1{left:1070px;top:40px;width:300px;height:180px}
+.m.B .t2{left:1030px;top:250px;width:330px;height:185px}
+.m.B .fine{display:none}
+
+.m .tape{height:44px}.m .tape.bot{top:442px}
+.m.C .alert{left:56px;top:60px;font-size:34px}
+.m.C h1{left:52px;top:112px;font-size:120px}
+.m.C .corra{left:56px;top:322px;font-size:74px;padding:14px 30px 0;border-radius:16px;transform:rotate(-3deg)}
+.m.C .cta{left:420px;top:330px}
+.m.C .glow{left:900px;top:-200px;width:800px;height:800px}
+.m.C .t1{left:1080px;top:90px;width:300px;height:190px}
+.m.C .t1 .stamp{font-size:26px;bottom:-26px;left:12px;right:12px;white-space:nowrap}
+.m.C .fine{display:none}
+</style></head>
+<body>
+<div id="root"></div>
+<script>
+const q=new URLSearchParams(location.search), v=q.get('v')||'A', mob=q.get('m')==='1';
+document.body.className=v+(mob?' m':'');
+const T={
+A:`<div class="b"><div class="rays"></div>
+ <div class="kicker">CUPONS NOVOS TODO DIA</div>
+ <h1>CUPONS<br><em>ESGOTANDO</em></h1>
+ <div class="bar"><span></span></div><div class="bar-label">ACABANDO RÁPIDO</div>
+ <div class="corra">CORRA!</div>
+ <div class="cta">Pegar cupom na Shopee <i>›</i></div>
+ <div class="ticket t1"><div class="in"></div><b>%OFF</b><small>CUPOM</small></div>
+ <div class="ticket t2"><div class="in"></div><b>FRETE</b><small>GRÁTIS</small></div>
+ <div class="fine">Cupons sujeitos à disponibilidade na loja.</div></div>`,
+B:`<div class="b"><div class="rays"></div>
+ <div class="box b1">CUPONS</div>
+ <div class="box b2"><em>ESGOTANDO</em></div>
+ <div class="corra">CORRA!<span>CUPONS NOVOS TODO DIA</span></div>
+ <div class="cta">Pegar cupom na Shopee <i>›</i></div>
+ <div class="ticket t1"><div class="in"></div><b>%OFF</b><small>CUPOM</small></div>
+ <div class="ticket t2"><div class="in"></div><b>FRETE</b><small>GRÁTIS</small></div>
+ <div class="fine">Cupons sujeitos à disponibilidade na loja.</div></div>`,
+C:`<div class="b"><div class="glow"></div><div class="tape top"></div><div class="tape bot"></div>
+ <div class="alert">ÚLTIMOS CUPONS DO DIA</div>
+ <h1>CUPONS<br><em>ESGOTANDO</em></h1>
+ <div class="corra">CORRA!</div>
+ <div class="cta">Pegar cupom na Shopee <i>›</i></div>
+ <div class="ticket t1"><div class="in"></div><b>%OFF</b><small>CUPOM</small><div class="stamp">QUASE NO FIM</div></div>
+ <div class="fine">Cupons sujeitos à disponibilidade na loja.</div></div>`};
+document.getElementById('root').innerHTML=T[v];
+</script>
+</body></html>
