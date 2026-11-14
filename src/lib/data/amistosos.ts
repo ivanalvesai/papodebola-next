@@ -112,6 +112,9 @@ async function mergeIndex(fresh: AmistosoFixture[]): Promise<AmistosoFixture[]> 
   let changed = false;
   for (const f of fresh) {
     const prev = byId.get(f.id);
+    // Encerrado não volta a "ao vivo": o feed matches/live da API às vezes segura o jogo
+    // como inprogress horas depois do apito (Japão 3x2 Brasil, 14/11, ficou 2x2 "ao vivo").
+    if (prev?.status === "finished" && f.status !== "finished") continue;
     if (!prev || JSON.stringify(prev) !== JSON.stringify(f)) changed = true;
     byId.set(f.id, f);
   }
@@ -132,19 +135,20 @@ async function fetchFresh(): Promise<AmistosoFixture[]> {
     ]),
   ]);
   const teams = new Set(AMISTOSO_TEAM_IDS);
-  const out: AmistosoFixture[] = [];
-  const seen = new Set<number>();
-  // feed ao vivo primeiro: placar/status mais frescos vencem o do next/previous
+  const byId = new Map<number, AmistosoFixture>();
+  // feed ao vivo primeiro: placar/status mais frescos vencem o do next/previous.
+  // Exceção: se o previous já dá o jogo como encerrado, ele vence o live (o feed ao
+  // vivo da API deixa jogo fantasma "inprogress" depois do apito).
   for (const feed of feeds) {
     for (const e of (feed as any)?.events || []) {
       if (!teams.has(e?.homeTeam?.id) && !teams.has(e?.awayTeam?.id)) continue;
       const f = eventToFixture(e);
-      if (!f || seen.has(f.id)) continue;
-      seen.add(f.id);
-      out.push(f);
+      if (!f) continue;
+      const prev = byId.get(f.id);
+      if (!prev || (prev.status !== "finished" && f.status === "finished")) byId.set(f.id, f);
     }
   }
-  return out;
+  return [...byId.values()];
 }
 
 // Índice durável + API. Nunca lança.
