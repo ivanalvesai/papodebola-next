@@ -184,7 +184,7 @@ export async function SportPageContent({
                     <div className="px-4 py-1.5 text-[10px] font-bold text-green uppercase bg-body">{group.name}</div>
                   )}
                   <div className="divide-y divide-border-light">
-                    {group.rows.slice(0, 8).map((r) => (
+                    {group.rows.slice(0, 10).map((r) => (
                       <div key={r.teamId} className="flex items-center gap-2 px-4 py-1.5 text-xs">
                         <span className="w-4 text-center text-text-muted">{r.pos}</span>
                         <span className="font-semibold flex-1 truncate">{r.team}</span>

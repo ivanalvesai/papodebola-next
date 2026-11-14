@@ -64,6 +64,23 @@ function normalizeEvent(event: any): SportEvent {
   };
 }
 
+// A API devolve conferências, divisões e a tabela geral juntas. NBA: só as 2 conferências
+// (é o que define playoffs). NFL: as 8 divisões. Outros: tudo.
+function pickStandingGroups(groups: any[]): any[] {
+  const conf = groups.filter((g) => /conference/i.test(g?.name || ""));
+  if (conf.length) return conf;
+  const div = groups.filter((g) => /^(AFC|NFC) (North|South|East|West)$/i.test(g?.name || ""));
+  return div.length ? div : groups;
+}
+const DIR_PT: Record<string, string> = { North: "Norte", South: "Sul", East: "Leste", West: "Oeste" };
+function groupNamePt(name: string): string {
+  const conf = name.match(/^(Eastern|Western) Conference$/i);
+  if (conf) return `Conferência ${/^e/i.test(conf[1]) ? "Leste" : "Oeste"}`;
+  const div = name.match(/^(AFC|NFC) (North|South|East|West)$/i);
+  if (div) return `${div[1].toUpperCase()} ${DIR_PT[div[2][0].toUpperCase() + div[2].slice(1).toLowerCase()]}`;
+  return name;
+}
+
 export async function getSportData(slug: string): Promise<SportData | null> {
   const config = SPORT_CONFIGS[slug];
   if (!config) return null;
@@ -149,8 +166,8 @@ export async function getSportData(slug: string): Promise<SportData | null> {
         if (!seasonId) return null;
         const data = await fetchAllSports<any>(`tournament/${tid}/season/${seasonId}/standings/total`, 3600);
         if (!data?.standings) return null;
-        return data.standings.map((g: any) => ({
-          name: g.name || "",
+        return pickStandingGroups(data.standings).map((g: any) => ({
+          name: groupNamePt(g.name || ""),
           rows: (g.rows || []).map((r: any) => ({
             pos: r.position ?? 0,
             team: r.team?.name || "",

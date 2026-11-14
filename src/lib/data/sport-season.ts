@@ -33,12 +33,14 @@ export async function getSeasonWindow(tournamentId: number, fallbackSeason?: num
       const seasonId = await currentSeasonId(tournamentId, fallbackSeason);
       if (!seasonId) return null;
       const base = `tournament/${tournamentId}/season/${seasonId}/matches`;
-      const [last, next] = await Promise.all([
+      // next/0 traz 30 jogos (~3 dias de NBA); next/1 completa os 5 dias do calendário.
+      const [last, next, next1] = await Promise.all([
         fetchAllSports<any>(`${base}/last/0`, 600).catch(() => null),
         fetchAllSports<any>(`${base}/next/0`, 600).catch(() => null),
+        fetchAllSports<any>(`${base}/next/1`, 3600).catch(() => null),
       ]);
       const byId = new Map<number, any>();
-      for (const e of [...(last?.events || []), ...(next?.events || [])]) if (e?.id) byId.set(e.id, e);
+      for (const e of [...(last?.events || []), ...(next?.events || []), ...(next1?.events || [])]) if (e?.id) byId.set(e.id, e);
       const events = [...byId.values()].sort((a, b) => (a.startTimestamp || 0) - (b.startTimestamp || 0));
       return { seasonId, events };
     },
