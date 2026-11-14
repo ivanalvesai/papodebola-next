@@ -85,3 +85,4 @@ export function watchPostV2(o, { facts, lineups }) {
 // Atalhos de data
 export const SAB14 = { slug: "14-11-2026", longa: "sábado, 14 de novembro", curta: "sábado, 14/11", frase: "Neste sábado, 14 de novembro de 2026" };
 export const DOM15 = { slug: "15-11-2026", longa: "domingo, 15 de novembro", curta: "domingo, 15/11", frase: "Neste domingo, 15 de novembro de 2026" };
+export const SEG16 = { slug: "16-11-2026", longa: "segunda-feira, 16 de novembro", curta: "segunda, 16/11", frase: "Nesta segunda-feira, 16 de novembro de 2026" };
