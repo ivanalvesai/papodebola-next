@@ -1,0 +1,7 @@
+{
+  "_doc": "Canais dos guias NBA/NFL por 'mandante|visitante' (apelido, minúsculo). Só jogos com TV; o resto é NBA League Pass / NFL Game Pass (DAZN). Cada canal com 2 fontes (14/11: gameoverdrive + cenariomt na NBA; 365scores + sportune na NFL). 'nota' = divergência de fonte única.",
+  "celtics|mavericks": { "tv": "Prime Video", "tvLongo": "Prime Video (streaming)", "capa": "PRIME VIDEO", "capaAlt": "no Prime Video", "faq": "do Prime Video, no streaming,", "assistir": "O jogo passa no Prime Video, o serviço de streaming da Amazon." },
+  "celtics|magic": { "tv": "ESPN 2, Disney+", "tvLongo": "ESPN 2 (TV fechada), Disney+ Premium (streaming)", "capa": "ESPN 2 E DISNEY+", "capaAlt": "na ESPN 2 e no Disney+", "faq": "da ESPN 2, na TV fechada, do Disney+ Premium, no streaming,", "assistir": "Na TV fechada, o jogo passa na ESPN 2. No streaming, está no Disney+ Premium." },
+  "cowboys|49ers": { "nota": "Um dos guias de programação aponta também transmissão da ESPN 2 e do Disney+; vale conferir a grade da emissora." },
+  "ravens|chargers": { "nota": "Um dos guias de programação aponta também transmissão da ESPN 2 e do Disney+; vale conferir a grade da emissora." }
+}
