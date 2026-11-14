@@ -1,3 +1,4 @@
+import { stripSiteSuffix } from "@/components/payload/cms-page-route";
 import type { Metadata } from "next";
 import { notFound, permanentRedirect } from "next/navigation";
 import { getPayloadPage } from "@/lib/data/payload-pages";
@@ -30,7 +31,7 @@ export async function generateMetadata({
   if (!page) return {};
   if (customPath(page, slug)) permanentRedirect(page.path as string);
   return {
-    title: page.seo?.metaTitle || page.title,
+    title: stripSiteSuffix(page.seo?.metaTitle || page.title),
     description: page.seo?.metaDescription,
     alternates: { canonical: `/paginas/${slug}` },
   };
