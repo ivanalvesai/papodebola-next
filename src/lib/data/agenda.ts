@@ -1,5 +1,6 @@
 import { getAmistosoFixtures, amistosoStatus, amistosoMatchHref, AMISTOSOS_LEAGUE, type AmistosoFixture } from "./amistosos";
 import { fetchAllSports } from "@/lib/api/allsports";
+import { getSeasonWindow, spDayKey } from "@/lib/data/sport-season";
 import { translateStatus } from "@/lib/translations";
 import { translateCountry } from "@/lib/i18n/countries";
 import { SELECAO_BY_ID } from "@/lib/selecoes";
@@ -31,6 +32,9 @@ interface AgendaSource {
   sportSlug: string; // pra link da página do esporte (vazio = sem página)
   endpoint: (d: number, m: number, y: number) => string;
   ids: number[]; // uniqueTournament.id das competições principais
+  // Ligas com temporada: se o feed por data vier vazio (bug do provedor), os jogos do dia
+  // saem da temporada da liga (getSeasonWindow, salvo em snapshot).
+  seasonTournaments?: { id: number; seasonId?: number }[];
 }
 
 // FUTEBOL não usa mais o feed por data (matches/{d}/{m}/{y}) — ele devolve [] há semanas
@@ -40,9 +44,10 @@ interface AgendaSource {
 const SOURCES: AgendaSource[] = [
   {
     sport: "Basquete",
-    sportSlug: "basquete",
+    sportSlug: "nba",
     endpoint: (d, m, y) => `basketball/matches/${d}/${m}/${y}`,
     ids: [132, 486], // NBA, WNBA
+    seasonTournaments: [{ id: 132, seasonId: 100772 }],
   },
   {
     sport: "Vôlei",
@@ -55,6 +60,7 @@ const SOURCES: AgendaSource[] = [
     sportSlug: "futebol-americano",
     endpoint: (d, m, y) => `american-football/matches/${d}/${m}/${y}`,
     ids: [9464], // NFL
+    seasonTournaments: [{ id: 9464, seasonId: 94366 }],
   },
 ];
 
@@ -447,8 +453,23 @@ export async function getGeneralAgenda(date: Date): Promise<AgendaSportGroup[]> 
         const liveEp = src.endpoint(d, m, y).replace(/\/\d+\/\d+\/\d+$/, "/live");
         data = await fetchAllSports<any>(liveEp, 60).catch(() => null);
       }
+      let raw: any[] = data?.events || [];
+      if (src.seasonTournaments?.length) {
+        // Temporada da liga, filtrada pelo dia de Brasília; o ao vivo (se veio) tem prioridade.
+        const key = spDayKey(date.getTime() / 1000);
+        const wins = await Promise.all(
+          src.seasonTournaments.map((t) => getSeasonWindow(t.id, t.seasonId).catch(() => null))
+        );
+        const seen = new Set(raw.map((e: any) => e?.id));
+        for (const w of wins)
+          for (const e of w?.events || [])
+            if (!seen.has(e.id) && spDayKey(e.startTimestamp || 0) === key) {
+              seen.add(e.id);
+              raw = [...raw, e];
+            }
+      }
       const allow = new Set(src.ids);
-      const events: AgendaEvent[] = (data?.events || [])
+      const events: AgendaEvent[] = raw
         .filter((e: any) => allow.has(e.tournament?.uniqueTournament?.id))
         .map((e: any) => normalize(e, src.sportSlug))
         .sort(sortForBar);

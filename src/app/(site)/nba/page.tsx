@@ -5,7 +5,7 @@ import { buildMetadata } from "@/lib/seo/build-metadata";
 // Basquete = NBA (e, futuramente, NBB). Não há mais landing genérica /basquete: ela
 // e /basquete/nba redirecionam pra cá (ver next.config). Notícias da categoria "NBA"
 // vivem em /nba/{slug} (catch-all) e são listadas aqui via SPORT_WP_CATEGORY.
-export const revalidate = 86400;
+export const revalidate = 1800;
 
 export async function generateMetadata(): Promise<Metadata> {
   return buildMetadata("/nba", {
@@ -19,6 +19,7 @@ export async function generateMetadata(): Promise<Metadata> {
 export default function NbaPage() {
   return (
     <SportPageContent
+      watchTag="NBA"
       sportKey="basquete-nba"
       title="NBA"
       breadcrumbItems={[{ label: "Início", href: "/" }, { label: "NBA" }]}

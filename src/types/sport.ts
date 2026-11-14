@@ -53,4 +53,7 @@ export interface SportConfig {
   // (9MB+, estoura o cache de 2MB do Next e queima banda). Pula "hoje/calendário"
   // nesses esportes — o conteúdo relevante vive nas páginas de torneio.
   skipDateFeeds?: boolean;
+  // Liga com temporada (NBA, NFL): hoje/calendário saem de tournament/{id}/season/{s}/matches
+  // (salvo em snapshot) e o "ao vivo" fica só com jogos dessa liga.
+  seasonFeed?: boolean;
 }

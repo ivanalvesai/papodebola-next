@@ -1,17 +1,21 @@
-import { fetchSport } from "@/lib/api/allsports";
+import { fetchAllSports, fetchSport } from "@/lib/api/allsports";
 import { translateStatus } from "@/lib/translations";
+import { currentSeasonId, getSeasonWindow, spDayKey } from "@/lib/data/sport-season";
+import { withSnapshot } from "@/lib/data/snapshot-store";
 import type { SportData, SportEvent, SportConfig } from "@/types/sport";
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
 const SPORT_CONFIGS: Record<string, SportConfig> = {
-  "basquete-nba": { slug: "basquete-nba", api: "basketball", tournamentId: 132, seasonId: 80229, hasStandings: true },
+  // seasonFeed: jogos pela temporada do campeonato (o feed por data da API devolve 0).
+  // seasonId = reserva; a temporada atual é descoberta sozinha (currentSeasonId).
+  "basquete-nba": { slug: "basquete-nba", api: "basketball", tournamentId: 132, seasonId: 100772, hasStandings: true, seasonFeed: true },
   tenis: { slug: "tenis", api: "tennis", rankingType: "atp", hasRankings: true, skipDateFeeds: true },
   "formula-1": { slug: "formula-1", api: "motorsport" },
   combate: { slug: "combate", api: "mma", tournamentId: 19906 },
   volei: { slug: "volei", api: "volleyball" },
   esports: { slug: "esports", api: "esports" },
-  "futebol-americano": { slug: "futebol-americano", api: "american-football" },
+  "futebol-americano": { slug: "futebol-americano", api: "american-football", tournamentId: 9464, seasonId: 94366, hasStandings: true, seasonFeed: true },
   boxe: { slug: "boxe", api: "boxing" },
   futsal: { slug: "futsal", api: "futsal" },
 };
@@ -66,16 +70,39 @@ export async function getSportData(slug: string): Promise<SportData | null> {
 
   const { api } = config;
 
-  // Live events
+  // Live events (liga com temporada: só os jogos dela; o feed ao vivo traz o mundo todo)
   const liveData = await fetchSportEvents(api, "live", 300);
-  const live = filterEvents(api, liveData?.events || []).map(normalizeEvent);
+  let live = filterEvents(api, liveData?.events || []).map(normalizeEvent);
+  if (config.seasonFeed && config.tournamentId) {
+    const tid = config.tournamentId;
+    live = filterEvents(api, liveData?.events || [])
+      .filter((e: any) => e?.tournament?.uniqueTournament?.id === tid)
+      .map(normalizeEvent);
+  }
 
-  // Today's events + Calendar (próximos 5 dias). No tênis o feed por data é gigante
-  // (todo o tênis mundial, 9MB+) e não cabe no cache de 2MB do Next → pulamos esses
-  // esportes; o conteúdo relevante vive nas páginas de torneio (ex: /tenis/halle-2026).
   let today: SportEvent[] = [];
   const calendar = [];
-  if (!config.skipDateFeeds) {
+  if (config.seasonFeed && config.tournamentId) {
+    // NBA/NFL: últimos + próximos jogos da temporada (snapshot), agrupados por dia de Brasília.
+    const win = await getSeasonWindow(config.tournamentId, config.seasonId);
+    const events = (win?.events || []).map(normalizeEvent);
+    const todayKey = spDayKey(Date.now() / 1000);
+    today = events.filter((e) => spDayKey(e.timestamp) === todayKey);
+    for (let i = 1; i <= 5; i++) {
+      const date = new Date(Date.now() + i * 86400000);
+      const key = spDayKey(date.getTime() / 1000);
+      const label = date.toLocaleDateString("pt-BR", {
+        weekday: "short",
+        day: "2-digit",
+        month: "2-digit",
+        timeZone: "America/Sao_Paulo",
+      });
+      calendar.push({ date: key, label, events: events.filter((e) => spDayKey(e.timestamp) === key) });
+    }
+  } else if (!config.skipDateFeeds) {
+    // Today's events + Calendar (próximos 5 dias). No tênis o feed por data é gigante
+    // (todo o tênis mundial, 9MB+) e não cabe no cache de 2MB do Next → pulamos esses
+    // esportes; o conteúdo relevante vive nas páginas de torneio (ex: /tenis/halle-2026).
     const now = new Date();
     const d = now.getDate();
     const m = now.getMonth() + 1;
@@ -110,33 +137,38 @@ export async function getSportData(slug: string): Promise<SportData | null> {
     }
   }
 
-  // Standings (NBA)
+  // Standings (NBA, NFL) — temporada atual descoberta pela API; salva em snapshot.
   let standings = null;
-  if (config.hasStandings && config.tournamentId && config.seasonId) {
-    const data = await fetchSport<any>(
-      api,
-      `tournament/${config.tournamentId}/season/${config.seasonId}/standings/total`,
-      86400
-    );
-    if (data?.standings) {
-      standings = data.standings.map((g: any) => ({
-        name: g.name || "",
-        rows: (g.rows || []).map((r: any) => ({
-          pos: r.position ?? 0,
-          team: r.team?.name || "",
-          teamId: r.team?.id || 0,
-          pts: r.points ?? 0,
-          matches: r.matches ?? 0,
-          wins: r.wins ?? 0,
-          draws: r.draws ?? 0,
-          losses: r.losses ?? 0,
-          gf: r.scoresFor ?? 0,
-          ga: r.scoresAgainst ?? 0,
-          gd: (r.scoresFor ?? 0) - (r.scoresAgainst ?? 0),
-          promo: r.promotion?.text || "",
-        })),
-      }));
-    }
+  if (config.hasStandings && config.tournamentId) {
+    const tid = config.tournamentId;
+    standings = await withSnapshot<any[]>(
+      "sport-standings",
+      config.slug,
+      async () => {
+        const seasonId = await currentSeasonId(tid, config.seasonId);
+        if (!seasonId) return null;
+        const data = await fetchAllSports<any>(`tournament/${tid}/season/${seasonId}/standings/total`, 3600);
+        if (!data?.standings) return null;
+        return data.standings.map((g: any) => ({
+          name: g.name || "",
+          rows: (g.rows || []).map((r: any) => ({
+            pos: r.position ?? 0,
+            team: r.team?.name || "",
+            teamId: r.team?.id || 0,
+            pts: r.points ?? 0,
+            matches: r.matches ?? 0,
+            wins: r.wins ?? 0,
+            draws: r.draws ?? 0,
+            losses: r.losses ?? 0,
+            gf: r.scoresFor ?? 0,
+            ga: r.scoresAgainst ?? 0,
+            gd: (r.scoresFor ?? 0) - (r.scoresAgainst ?? 0),
+            promo: r.promotion?.text || "",
+          })),
+        }));
+      },
+      (g) => Array.isArray(g) && g.some((x: any) => x.rows?.length > 0)
+    ).catch(() => null);
   }
 
   // Rankings (Tennis)
