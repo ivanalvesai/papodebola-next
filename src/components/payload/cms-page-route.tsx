@@ -8,11 +8,18 @@ const SITE = process.env.NEXT_PUBLIC_SITE_URL || "https://www.papodebola.com.br"
 // /.env…) responde 404 sem consultar o Payload.
 const CMS_PATH_RE = /^(\/[a-z0-9]+(?:-[a-z0-9]+)*){1,6}$/;
 
+// O layout já acrescenta " | Papo de Bola" (title.template). Título salvo no CMS com o nome do
+// site no fim saía repetido ("... | Papo de Bola | Papo de Bola"), então tiramos o sufixo aqui.
+export function stripSiteSuffix(title?: string | null): string | undefined {
+  if (!title) return undefined;
+  return title.replace(/\s*[|\-–—]\s*Papo de Bola\s*$/i, "").trim() || title;
+}
+
 export async function cmsPageMetadata(path: string): Promise<Metadata | null> {
   if (!CMS_PATH_RE.test(path)) return null;
   const page = await getPayloadPageByPath(path);
   if (!page) return null;
-  const title = page.seo?.metaTitle || page.title;
+  const title = stripSiteSuffix(page.seo?.metaTitle || page.title);
   const description = page.seo?.metaDescription || page.hero?.subtitle || undefined;
   const img = page.hero?.image && typeof page.hero.image === "object" ? page.hero.image.url : undefined;
   return {
