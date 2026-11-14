@@ -7,12 +7,15 @@ import { getArticles } from "@/lib/data/articles";
 import { SPORT_WP_CATEGORY } from "@/lib/config";
 import { translateStatus } from "@/lib/translations";
 import { PageBreadcrumb, type BreadcrumbItem } from "@/components/seo/page-breadcrumb";
+import { getWatchPosts } from "@/lib/data/watch";
+import { WatchPostsStrip } from "@/components/onde-assistir/watch-post-card";
 
 interface SportPageContentProps {
   sportKey: string;
   title: string;
   breadcrumbItems: BreadcrumbItem[];
   featured?: ReactNode; // destaque opcional no topo (ex: torneio com chaveamento)
+  watchTag?: string; // tag dos guias "onde assistir" desse esporte (ex: "NBA")
 }
 
 export async function SportPageContent({
@@ -20,13 +23,15 @@ export async function SportPageContent({
   title,
   breadcrumbItems,
   featured,
+  watchTag,
 }: SportPageContentProps) {
   const catName = SPORT_WP_CATEGORY[sportKey];
-  const [data, newsRes] = await Promise.all([
+  const [data, newsRes, watch] = await Promise.all([
     getSportData(sportKey),
     catName
       ? getArticles({ category: catName, perPage: 12 }).catch(() => ({ articles: [], total: 0 }))
       : Promise.resolve({ articles: [], total: 0 }),
+    watchTag ? getWatchPosts({ tag: watchTag, upcoming: true, limit: 8 }).catch(() => []) : Promise.resolve([]),
   ]);
   const news = newsRes.articles;
 
@@ -40,6 +45,7 @@ export async function SportPageContent({
             coluna do grid e a página vaza horizontalmente na tela) */}
         <div className="min-w-0 space-y-6">
           {featured}
+          {watch.length > 0 && <WatchPostsStrip posts={watch} title="Onde assistir os próximos jogos" />}
           {/* Notícias da categoria (links pra /{esporte}/{slug}) */}
           {news.length > 0 && (
             <div className="bg-card-bg rounded-lg border border-border-custom p-6">
@@ -178,7 +184,7 @@ export async function SportPageContent({
                     <div className="px-4 py-1.5 text-[10px] font-bold text-green uppercase bg-body">{group.name}</div>
                   )}
                   <div className="divide-y divide-border-light">
-                    {group.rows.slice(0, 8).map((r) => (
+                    {group.rows.slice(0, 10).map((r) => (
                       <div key={r.teamId} className="flex items-center gap-2 px-4 py-1.5 text-xs">
                         <span className="w-4 text-center text-text-muted">{r.pos}</span>
                         <span className="font-semibold flex-1 truncate">{r.team}</span>

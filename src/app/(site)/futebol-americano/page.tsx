@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { SportPageContent } from "@/components/sports/sport-page-content";
 import { buildMetadata } from "@/lib/seo/build-metadata";
 
-export const revalidate = 86400;
+export const revalidate = 1800;
 
 export async function generateMetadata(): Promise<Metadata> {
   return buildMetadata("/futebol-americano", {
@@ -16,6 +16,7 @@ export async function generateMetadata(): Promise<Metadata> {
 export default function FutebolAmericanoPage() {
   return (
     <SportPageContent
+      watchTag="NFL"
       sportKey="futebol-americano"
       title="Futebol Americano"
       breadcrumbItems={[
