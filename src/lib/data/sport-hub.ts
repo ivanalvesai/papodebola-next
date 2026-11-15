@@ -39,6 +39,8 @@ export interface HubEvent {
   winner: number | null; // 1 casa, 2 fora, 3 empate
   bestOf: number | null;
   round: string; // nome da fase quando a API traz (ex.: "Final")
+  cupN?: number; // partidas nesta fase do mata-mata (1 = jogo único da fase; eSports não traz o nome "Final")
+  stage?: string; // fase do campeonato pelo nome do torneio do jogo (ex.: "Worlds Playoffs")
   weightClass?: string; // UFC
   order?: number; // UFC: ordem no card
 }
@@ -99,6 +101,8 @@ export function normalizeHubEvent(e: any): HubEvent {
     winner: e.winnerCode ?? null,
     bestOf: e.bestOf ?? null,
     round: e.roundInfo?.name || "",
+    ...(typeof e.cupMatchesInRound === "number" ? { cupN: e.cupMatchesInRound } : {}),
+    ...(e.tournament?.name ? { stage: String(e.tournament.name) } : {}),
     ...(e.weightClass ? { weightClass: String(e.weightClass) } : {}),
     ...(typeof e.order === "number" ? { order: e.order } : {}),
   };
@@ -399,10 +403,18 @@ export interface HubTournamentView {
   live: HubEvent[];
   upcoming: HubEvent[];
   results: HubEvent[];
-  champion: string | null;
+  champion: HubChampion | null;
   standings: HubStandingGroup[] | null;
   prev: HubSeasonSnap["prev"];
   cards?: HubCard[]; // modo events (UFC)
+}
+
+export interface HubChampion {
+  name: string;
+  loser: string;
+  ws: number; // placar do campeão
+  ls: number; // placar do vice
+  sentence: string; // "A Bilibili Gaming é a grande campeã do Mundial de League of Legends de 2026 após vencer a Gen.G por 3 a 1 na grande final."
 }
 
 export interface HubGroupView {
@@ -418,16 +430,60 @@ export interface SportHubView {
   live: { event: HubEvent; league: string }[];
 }
 
-const isFinal = (r: string) => /^(grand )?final$/i.test(r.trim()) || /^finals?$/i.test(r.trim());
+const isFinal = (r: string) => /^(grand )?finals?$/i.test(r.trim());
+
+// Temporada na frase: "2026" -> "de 2026"; "26/27" -> "2026/27"; "Wimbledon Men Singles 2026" -> "de 2026";
+// "Summer 2026" -> "(Summer 2026)".
+function seasonPhrase(seasonName: string, sportKey: string): string {
+  const n = seasonName.trim();
+  if (!n) return "";
+  if (/^\d{4}$/.test(n)) return `de ${n}`;
+  const y2 = n.match(/^(\d{2})\/(\d{2})$/);
+  if (y2) return `20${y2[1]}/${y2[2]}`;
+  const y = n.match(/(20\d{2})/);
+  if (sportKey === "tenis" && y) return `de ${y[1]}`;
+  return `(${n})`;
+}
+
+// Quem venceu o campeonato, com a frase pronta. Só quando dá pra saber com certeza:
+// a final tem o nome "Final" (tênis) ou, já com o campeonato encerrado, o último jogo é
+// fase de jogo único do mata-mata ou dos playoffs. No eSports a API não dá nome à fase,
+// mas a grande final é sempre o último jogo dos playoffs (também na chave dupla).
+// Fora: série de acesso ("Promotion") e Copa Davis (cfg.noChampion).
+function findChampion(cfg: HubTournament, hub: SportHubConfig, results: HubEvent[], finished: boolean, seasonName: string): HubChampion | null {
+  if (cfg.noChampion || /promotion/i.test(seasonName)) return null;
+  const last = results[0];
+  const lastIsFinal = !!last && (last.cupN === 1 || /playoffs?/i.test(last.stage || ""));
+  const final = results.find((e) => isFinal(e.round)) || (finished && lastIsFinal ? last : undefined);
+  if (!final || (final.winner !== 1 && final.winner !== 2) || final.hs == null || final.as == null) return null;
+  const homeWon = final.winner === 1;
+  const w = homeWon ? final.home : final.away;
+  const l = homeWon ? final.away : final.home;
+  const ws = homeWon ? final.hs : final.as;
+  const ls = homeWon ? final.as : final.hs;
+  const sport = hub.sportKey;
+  const of = [cfg.of || `do ${cfg.name}`, seasonPhrase(seasonName, sport)].filter(Boolean).join(" ");
+  const unit = hub.scoreLabel === "sets" ? `${ws} sets a ${ls}` : `${ws} a ${ls}`;
+  let sentence: string;
+  if (sport === "esports") {
+    sentence = `A ${w.name} é a grande campeã ${of} após vencer a ${l.name} por ${unit} na grande final.`;
+  } else if (sport === "tenis") {
+    const dupla = w.name.includes("/");
+    sentence = dupla
+      ? `${w.name} são os campeões ${of} após vencer ${l.name} por ${unit} na final.`
+      : `${w.name} é o campeão ${of} após vencer ${l.name} por ${unit} na final.`;
+  } else {
+    sentence = `O ${w.name} é o campeão ${of} após vencer o ${l.name} por ${unit} na final.`;
+  }
+  return { name: w.name, loser: l.name, ws, ls, sentence };
+}
 const STATUS_ORDER: Record<HubStatus, number> = { live: 0, ongoing: 1, upcoming: 2, finished: 3, empty: 4 };
 
-function viewSeason(cfg: HubTournament, s: HubSeasonSnap | null): HubTournamentView {
+function viewSeason(cfg: HubTournament, hub: SportHubConfig, s: HubSeasonSnap | null): HubTournamentView {
   const events = s?.events || [];
   const live = events.filter((e) => e.status === "inprogress");
   const upcoming = events.filter((e) => e.status === "notstarted").sort((a, b) => a.ts - b.ts);
   const results = events.filter((e) => e.status === "finished").sort((a, b) => b.ts - a.ts);
-  const final = results.find((e) => isFinal(e.round));
-  const champion = final && final.winner ? (final.winner === 1 ? final.home.name : final.winner === 2 ? final.away.name : null) : null;
   const status: HubStatus = !events.length
     ? "empty"
     : live.length
@@ -437,6 +493,7 @@ function viewSeason(cfg: HubTournament, s: HubSeasonSnap | null): HubTournamentV
         : upcoming.length
           ? "upcoming"
           : "finished";
+  const champion = findChampion(cfg, hub, results, status === "finished", s?.seasonName || "");
   return {
     cfg,
     status,
@@ -482,7 +539,7 @@ export async function getSportHub(sportKey: string): Promise<SportHubView | null
   for (const g of config.groups) {
     const tournaments: HubTournamentView[] = [];
     for (const t of g.tournaments) {
-      const v = t.mode === "events" ? viewEvents(t, await readHubEvents(t.id), now) : viewSeason(t, await readHubSeason(t.id));
+      const v = t.mode === "events" ? viewEvents(t, await readHubEvents(t.id), now) : viewSeason(t, config, await readHubSeason(t.id));
       for (const e of v.live) live.push({ event: e, league: t.name });
       tournaments.push(v);
     }

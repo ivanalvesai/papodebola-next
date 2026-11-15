@@ -146,8 +146,18 @@ function TournamentCard({ t }: { t: HubTournamentView }) {
 
       <div className={`grid gap-5 p-4 ${!done && (standings || t.results.length) ? "lg:grid-cols-2" : ""}`}>
         {t.champion && (
-          <p className="rounded-md bg-body px-3 py-2 text-sm text-text-primary lg:col-span-2">
-            Campeão: <strong>{t.champion}</strong>
+          <p className="rounded-md border-l-4 border-green bg-body px-3 py-2 text-[15px] leading-relaxed text-text-primary lg:col-span-2">
+            {(() => {
+              const s = t.champion.sentence;
+              const i = s.indexOf(t.champion.name);
+              return i < 0 ? s : (
+                <>
+                  {s.slice(0, i)}
+                  <strong>{t.champion.name}</strong>
+                  {s.slice(i + t.champion.name.length)}
+                </>
+              );
+            })()}
           </p>
         )}
         {games.length > 0 && (
