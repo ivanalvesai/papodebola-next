@@ -440,7 +440,7 @@ function seasonPhrase(seasonName: string, sportKey: string): string {
   if (/^\d{4}$/.test(n)) return `de ${n}`;
   const y2 = n.match(/^(\d{2})\/(\d{2})$/);
   if (y2) return `20${y2[1]}/${y2[2]}`;
-  const y = n.match(/(20\d{2})/);
+  const y = n.match(/\b(20\d{2})\b/);
   if (sportKey === "tenis" && y) return `de ${y[1]}`;
   return `(${n})`;
 }
@@ -453,7 +453,7 @@ function seasonPhrase(seasonName: string, sportKey: string): string {
 function findChampion(cfg: HubTournament, hub: SportHubConfig, results: HubEvent[], finished: boolean, seasonName: string): HubChampion | null {
   if (cfg.noChampion || /promotion/i.test(seasonName)) return null;
   const last = results[0];
-  const lastIsFinal = !!last && (last.cupN === 1 || /playoffs?/i.test(last.stage || ""));
+  const lastIsFinal = !!last && (last.cupN === 1 || /\bplayoffs?\b/i.test(last.stage || ""));
   const final = results.find((e) => isFinal(e.round)) || (finished && lastIsFinal ? last : undefined);
   if (!final || (final.winner !== 1 && final.winner !== 2) || final.hs == null || final.as == null) return null;
   const homeWon = final.winner === 1;
