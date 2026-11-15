@@ -16,6 +16,7 @@ export async function generateMetadata(): Promise<Metadata> {
 export default function FutebolAmericanoPage() {
   return (
     <SportPageContent
+      watchKeys={["nfl"]}
       watchTag="NFL"
       sportKey="futebol-americano"
       title="Futebol Americano"

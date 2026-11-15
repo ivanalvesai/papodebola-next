@@ -2,7 +2,8 @@ import type { Metadata } from "next";
 import { SportPageContent } from "@/components/sports/sport-page-content";
 import { buildMetadata } from "@/lib/seo/build-metadata";
 
-export const revalidate = 86400;
+// Lê os campeonatos do disco (data/snapshots/sport-hub, gravado pelo cron do dev): barato regenerar.
+export const revalidate = 300;
 
 export async function generateMetadata(): Promise<Metadata> {
   return buildMetadata("/combate", {

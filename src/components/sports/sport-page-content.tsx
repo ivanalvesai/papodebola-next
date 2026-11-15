@@ -9,6 +9,8 @@ import { translateStatus } from "@/lib/translations";
 import { PageBreadcrumb, type BreadcrumbItem } from "@/components/seo/page-breadcrumb";
 import { getWatchPosts } from "@/lib/data/watch";
 import { WatchPostsStrip } from "@/components/onde-assistir/watch-post-card";
+import { SportHub, WatchBox as WatchOnly } from "@/components/sports/hub/sport-hub";
+import { SPORT_HUBS } from "@/lib/sport-hub-config";
 
 interface SportPageContentProps {
   sportKey: string;
@@ -16,6 +18,8 @@ interface SportPageContentProps {
   breadcrumbItems: BreadcrumbItem[];
   featured?: ReactNode; // destaque opcional no topo (ex: torneio com chaveamento)
   watchTag?: string; // tag dos guias "onde assistir" desse esporte (ex: "NBA")
+  // Bloco "onde assistir" fixo (sport-hub-watch.ts) pra esportes sem campeonato no hub (F1, boxe, NBA...).
+  watchKeys?: string[];
 }
 
 export async function SportPageContent({
@@ -24,7 +28,9 @@ export async function SportPageContent({
   breadcrumbItems,
   featured,
   watchTag,
+  watchKeys,
 }: SportPageContentProps) {
+  const hasHub = !!SPORT_HUBS[sportKey];
   const catName = SPORT_WP_CATEGORY[sportKey];
   const [data, newsRes, watch] = await Promise.all([
     getSportData(sportKey),
@@ -45,6 +51,8 @@ export async function SportPageContent({
             coluna do grid e a página vaza horizontalmente na tela) */}
         <div className="min-w-0 space-y-6">
           {featured}
+          {hasHub && <SportHub sportKey={sportKey} />}
+          {!hasHub && watchKeys?.length ? <WatchOnly keys={watchKeys} /> : null}
           {watch.length > 0 && <WatchPostsStrip posts={watch} title="Onde assistir os próximos jogos" />}
           {/* Notícias da categoria (links pra /{esporte}/{slug}) */}
           {news.length > 0 && (
@@ -85,7 +93,7 @@ export async function SportPageContent({
             </div>
           )}
           {/* Live */}
-          {data && data.live.length > 0 && (
+          {!hasHub && data && data.live.length > 0 && (
             <div className="bg-card-bg rounded-lg border border-red p-6">
               <h2 className="text-sm font-bold text-red uppercase mb-4">Ao Vivo</h2>
               <div className="space-y-3">
@@ -105,7 +113,8 @@ export async function SportPageContent({
             </div>
           )}
 
-          {/* Today */}
+          {/* Today (esportes com hub: o conteúdo vem do SportHub; só mostra se houver jogo) */}
+          {(!hasHub || (data && data.today.length > 0)) && (
           <div className="bg-card-bg rounded-lg border border-border-custom p-6">
             <h2 className="text-sm font-bold text-text-primary uppercase mb-4">Jogos de Hoje</h2>
             {!data || data.today.length === 0 ? (
@@ -130,9 +139,10 @@ export async function SportPageContent({
               </div>
             )}
           </div>
+          )}
 
           {/* Calendar */}
-          {data && data.calendar.length > 0 && (
+          {data && data.calendar.some((d) => d.events.length > 0) && (
             <div className="bg-card-bg rounded-lg border border-border-custom p-6">
               <h2 className="text-sm font-bold text-text-primary uppercase mb-4">Próximos Dias</h2>
               {data.calendar.map((day) => (

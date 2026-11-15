@@ -54,6 +54,29 @@ export const promoBannersCollection: CollectionConfig = {
         { name: "imageMobile", type: "upload", relationTo: "media", label: "Arte do celular (720×240)", admin: { width: "50%", description: "Vazio = usa a do computador." } },
       ],
     },
+    // Banner ANIMADO: em vez de GIF/WebP animado (1–2 MB), envie um MP4 curto (sem som). Ele
+    // toca sozinho, em loop, como um GIF, e pesa ~5x menos. A arte acima vira a imagem estática
+    // que aparece na hora e fica no lugar do vídeo quando ele não toca (iPhone em economia de
+    // bateria, "reduzir movimento"). Use como arte estática o 1º quadro da animação.
+    {
+      type: "row",
+      fields: [
+        {
+          name: "videoDesktop",
+          type: "upload",
+          relationTo: "media",
+          label: "Vídeo do computador (MP4, opcional)",
+          admin: { width: "50%", description: "Animação em MP4 1200×300, sem som. Vazio = banner estático." },
+        },
+        {
+          name: "videoMobile",
+          type: "upload",
+          relationTo: "media",
+          label: "Vídeo do celular (MP4, opcional)",
+          admin: { width: "50%", description: "MP4 720×240. Vazio = usa o do computador." },
+        },
+      ],
+    },
     { name: "alt", type: "text", label: "Texto alternativo", admin: { description: "Ex.: 11.11 com cupom de desconto no Mercado Livre" } },
     {
       name: "url",
