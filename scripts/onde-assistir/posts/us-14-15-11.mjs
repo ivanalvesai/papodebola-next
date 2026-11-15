@@ -268,7 +268,7 @@ export const posts = [
     metaDescription: "Saiba onde assistir a Packers x Vikings neste domingo (15/11), às 15h, pela NFL. Transmissão do SporTV 4 e NFL Game Pass e a classificação da NFC Norte.",
   },
   {
-    ...NFL, at: "2026-11-15T07:00:00-03:00", authorId: 2, matchId: 16184643, homeId: 4390, awayId: 4430,
+    ...NFL, at: "2026-11-14T18:00:00-03:00", authorId: 2, matchId: 16184643, homeId: 4390, awayId: 4430,
     A: "Raiders", Bn: "Seahawks", hora: "18h05", canal: "SporTV 2, ge tv e NFL Game Pass", canalLongo: "SporTV 2 (TV fechada), ge tv (YouTube, grátis) e NFL Game Pass (DAZN)", canalCapa: "SPORTV 2 E GE TV", canalCapaAlt: "no SporTV 2 e no ge tv",
     localCurto: "Allegiant Stadium, em Las Vegas",
     ondeFrase: "no Allegiant Stadium, em Las Vegas (Nevada), com capacidade para 65 mil torcedores",
@@ -298,7 +298,7 @@ export const posts = [
     metaDescription: "Saiba onde assistir a Raiders x Seahawks neste domingo (15/11), às 18h05, pela NFL. Transmissão do SporTV 2, ge tv e NFL Game Pass e classificação.",
   },
   {
-    ...NFL, at: "2026-11-15T08:00:00-03:00", authorId: 1, matchId: 16184646, homeId: 4416, awayId: 4345,
+    ...NFL, at: "2026-11-14T18:30:00-03:00", authorId: 1, matchId: 16184646, homeId: 4416, awayId: 4345,
     A: "Bengals", Bn: "Steelers", hora: "22h20", canal: "SporTV 2 e NFL Game Pass", canalLongo: "SporTV 2 (TV fechada) e NFL Game Pass (DAZN)", canalCapa: "SPORTV 2", canalCapaAlt: "no SporTV 2",
     title: "Bengals x Steelers no Sunday Night Football: onde assistir e horário",
     localCurto: "Paycor Stadium, em Cincinnati",

@@ -12,6 +12,8 @@ export interface PromoBanner {
   slug: string;
   desktop: string;
   mobile: string;
+  videoDesktop: string; // MP4 do banner animado ("" = só imagem)
+  videoMobile: string;
   alt: string;
   hasLink: boolean;
   startsAt: string | null;
@@ -43,6 +45,8 @@ async function load(): Promise<PromoBanner[]> {
         slug: String(d.slug || ""),
         desktop: mediaUrl(d.imageDesktop),
         mobile: mediaUrl(d.imageMobile) || mediaUrl(d.imageDesktop),
+        videoDesktop: mediaUrl(d.videoDesktop),
+        videoMobile: mediaUrl(d.videoMobile) || mediaUrl(d.videoDesktop),
         alt: String(d.alt || d.name || "Oferta"),
         hasLink: !!String(d.url || "").trim(),
         startsAt: d.startsAt || null,

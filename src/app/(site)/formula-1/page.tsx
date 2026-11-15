@@ -16,6 +16,7 @@ export async function generateMetadata(): Promise<Metadata> {
 export default function Formula1Page() {
   return (
     <SportPageContent
+      watchKeys={["f1"]}
       sportKey="formula-1"
       title="Fórmula 1"
       breadcrumbItems={[

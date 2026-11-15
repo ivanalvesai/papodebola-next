@@ -12,12 +12,12 @@ const SPORT_CONFIGS: Record<string, SportConfig> = {
   "basquete-nba": { slug: "basquete-nba", api: "basketball", tournamentId: 132, seasonId: 100772, hasStandings: true, seasonFeed: true },
   tenis: { slug: "tenis", api: "tennis", rankingType: "atp", hasRankings: true, skipDateFeeds: true },
   "formula-1": { slug: "formula-1", api: "motorsport" },
-  combate: { slug: "combate", api: "mma", tournamentId: 19906 },
-  volei: { slug: "volei", api: "volleyball" },
-  esports: { slug: "esports", api: "esports" },
+  combate: { slug: "combate", api: "mma", tournamentId: 19906, skipDateFeeds: true },
+  volei: { slug: "volei", api: "volleyball", skipDateFeeds: true },
+  esports: { slug: "esports", api: "esports", skipDateFeeds: true },
   "futebol-americano": { slug: "futebol-americano", api: "american-football", tournamentId: 9464, seasonId: 94366, hasStandings: true, seasonFeed: true },
   boxe: { slug: "boxe", api: "boxing" },
-  futsal: { slug: "futsal", api: "futsal" },
+  futsal: { slug: "futsal", api: "futsal", skipDateFeeds: true },
 };
 
 // O provider divergiu os paths por esporte: tênis usa `events/*` (live e por data),

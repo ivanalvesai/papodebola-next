@@ -37,10 +37,11 @@ export function usPost(o) {
     MATCH_INFO(canal, true),
     H("h2", `Como chegam ${A} e ${Bn}`),
     ...o.comoChegam.map(txt),
-    STAT_CARD(`${A} x ${Bn}: a campanha`, "Antes do jogo", o.cardRows),
+    STAT_CARD(`${A} x ${Bn}: a campanha`, o.cardSub || "Antes do jogo", o.cardRows),
     H("h2", o.tabelaTitulo),
     TABLE(L.tabelaHead, o.tabela.map(L.row)),
     ...(o.tabelaNota ? [P(o.tabelaNota)] : []),
+    ...(o.extraSecoes || []).flatMap(([titulo, paras]) => [H("h2", titulo), ...paras.map(txt)]),
     H("h2", "O que está em jogo"),
     ...o.emJogo.map(txt),
     H("h2", `Como assistir a ${A} x ${Bn} ao vivo`),
@@ -54,7 +55,8 @@ export function usPost(o) {
     ]),
   );
 
-  const base = `${slugify(A)}-x-${slugify(Bn)}`;
+  // slugDate: times se enfrentam várias vezes na temporada → o gerador automático põe a data.
+  const base = `${slugify(A)}-x-${slugify(Bn)}${o.slugDate ? `-${o.slugDate}` : ""}`;
   const title = o.title || `${A} x ${Bn}: onde assistir e horário ${o.liga === "nba" ? "do jogo da NBA" : "do jogo da NFL"}`;
   return {
     slug: `${base}-onde-assistir-e-horario`,

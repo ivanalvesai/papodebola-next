@@ -6,6 +6,7 @@ import { TennisTournamentStrip } from "@/components/tennis/tennis-tournament-str
 import { getTennisDraw, TENNIS_TOURNAMENTS } from "@/lib/data/tennis";
 import { buildMetadata } from "@/lib/seo/build-metadata";
 
+// Lê os campeonatos do disco (data/snapshots/sport-hub, gravado pelo cron do dev): barato regenerar.
 export const revalidate = 300;
 
 export async function generateMetadata(): Promise<Metadata> {
