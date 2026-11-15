@@ -1,3 +1,5 @@
+import { access, mkdir, writeFile } from "fs/promises";
+import { join } from "path";
 import { fetchAllSports } from "@/lib/api/allsports";
 import { readSnapshot, saveSnapshot } from "@/lib/data/snapshot-store";
 import { SPORT_HUBS, type HubTournament, type SportHubConfig } from "@/lib/sport-hub-config";
@@ -303,7 +305,85 @@ export async function refreshSportHubs(opts: { force?: boolean; only?: string } 
       }
   }
   result._chamadas = String(b.used);
+  if (!opts.only) result._escudos = await syncHubImages();
   return result;
+}
+
+// ---------- escudos/fotos no disco ----------
+// Toda equipe/jogador que aparece nos campeonatos gravados tem a imagem baixada pro volume
+// (data/team-images/{id}.png, o mesmo arquivo que /api/team-img serve). Assim a página nunca
+// busca imagem na API: antes, a página de eSports pedia 130 escudos de uma vez, estourava o
+// limite de 6 req/s e as imagens quebravam (15/11). Só o DEV baixa (roda no cron).
+const IMG_DIR = join(process.cwd(), "data", "team-images");
+const IMG_PER_RUN = 120; // ~3/s → ~40 s por execução
+const imgFailed = new Map<number, number>(); // id → quando falhou (não insiste por 6 h)
+
+function collectTeamIds(node: any, out: Set<number>) {
+  if (!node || typeof node !== "object") return;
+  if (Array.isArray(node)) return node.forEach((x) => collectTeamIds(x, out));
+  if (typeof node.teamId === "number" && node.teamId > 0) out.add(node.teamId);
+  for (const side of ["home", "away"]) {
+    const id = node[side]?.id;
+    if (typeof id === "number" && id > 0) out.add(id);
+  }
+  for (const v of Object.values(node)) if (v && typeof v === "object") collectTeamIds(v, out);
+}
+
+const isImage = (buf: Buffer) =>
+  (buf[0] === 0x89 && buf[1] === 0x50) ||
+  (buf.subarray(0, 4).toString() === "RIFF" && buf.subarray(8, 12).toString() === "WEBP") ||
+  (buf[0] === 0xff && buf[1] === 0xd8);
+
+export async function syncHubImages(limit = IMG_PER_RUN): Promise<string> {
+  const ids = new Set<number>();
+  for (const tid of hubTournamentIdsAll()) {
+    collectTeamIds(await readHubSeason(tid), ids);
+    collectTeamIds(await readHubEvents(tid), ids);
+  }
+  const missing: number[] = [];
+  for (const id of ids) {
+    try {
+      await access(join(IMG_DIR, `${id}.png`));
+    } catch {
+      const f = imgFailed.get(id);
+      if (!f || Date.now() - f > 6 * HOUR) missing.push(id);
+    }
+  }
+  if (!missing.length) return `${ids.size} no disco`;
+  const host = process.env.ALLSPORTS_API_HOST || "allsportsapi2.p.rapidapi.com";
+  const key = process.env.ALLSPORTS_API_KEY || "";
+  if (!key) return `${missing.length} faltando (sem chave da API neste ambiente)`;
+  await mkdir(IMG_DIR, { recursive: true });
+  let ok = 0;
+  let fail = 0;
+  for (const id of missing.slice(0, limit)) {
+    try {
+      const r = await fetch(`https://${host}/api/team/${id}/image`, {
+        headers: { "x-rapidapi-key": key, "x-rapidapi-host": host },
+        signal: AbortSignal.timeout(8000),
+      });
+      const buf = r.ok ? Buffer.from(await r.arrayBuffer()) : null;
+      if (buf && buf.length > 200 && isImage(buf)) {
+        await writeFile(join(IMG_DIR, `${id}.png`), buf);
+        ok++;
+      } else {
+        imgFailed.set(id, Date.now());
+        fail++;
+        if (r.status === 429) await new Promise((res) => setTimeout(res, 3000));
+      }
+    } catch {
+      imgFailed.set(id, Date.now());
+      fail++;
+    }
+    await new Promise((res) => setTimeout(res, 350));
+  }
+  return `${ids.size} times; baixados ${ok}, falhas ${fail}, faltam ${Math.max(0, missing.length - ok - fail)}`;
+}
+
+function hubTournamentIdsAll(): number[] {
+  const ids = new Set<number>();
+  for (const hub of Object.values(SPORT_HUBS)) for (const g of hub.groups) for (const t of g.tournaments) ids.add(t.id);
+  return [...ids];
 }
 
 // ---------- modelo da página ----------
