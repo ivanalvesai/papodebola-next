@@ -69,6 +69,7 @@ export function amistosoPost(o) {
 
 export const SEX13 = { slug: "13-11-2026", longa: "sexta-feira, 13 de novembro", curta: "sexta, 13/11", frase: "Nesta sexta-feira, 13 de novembro de 2026" };
 export const SAB14 = { slug: "14-11-2026", longa: "sábado, 14 de novembro", curta: "sábado, 14/11", frase: "Neste sábado, 14 de novembro de 2026" };
+export const TER17 = { slug: "17-11-2026", longa: "terça-feira, 17 de novembro", curta: "terça, 17/11", frase: "Nesta terça-feira, 17 de novembro de 2026" };
 
 // Monta {formation, starters} a partir de "Nome#num@id; ..." (ordem goleiro → ataque).
 export const XI = (formation, list) => ({
