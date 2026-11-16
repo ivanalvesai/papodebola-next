@@ -772,6 +772,16 @@ Doc completo: `docs/knowledge/2026-06-20-studio-kanbans.md`. Navegação compart
 - **GOTCHA horário no Windows:** `TZ=America/Sao_Paulo date` no Git Bash devolve UTC. Para agendar "agora", pegar a hora no servidor (`ssh ... date`).
 - Doc: `docs/knowledge/2026-11-13-onde-assistir-banner-shopee.md`.
 
+## API pública /v1 (api.papodebola.com.br, 16/11)
+
+API com chave para o site novo de futebol do Ivan (outro servidor, IP `138.117.60.42`) ler os dados do Papo de Bola sem tocar na AllSportsApi.
+- **Container `papodebola-api`** (`/home/ivan/papodebola-api/`, :3002 só em localhost): mesma imagem da prod, `PDB_API_MODE=1`, lê o volume em modo somente leitura. O `rebuild.sh` da prod recria a API junto (inclusive no rollback).
+- **Onde a `/v1` responde:** só no container da API. Na prod do site é 404. No dev, só em modo teste (`PDB_API_DEV=1`) e só com chave de IP `*`.
+- **nginx** `api.papodebola.com.br.conf`: aceita só IPs da Cloudflare, `X-Real-IP` vem do `CF-Connecting-IP`, `limit_req` 20 r/s e só `/v1/`.
+- **Chaves:** painel `/painel-pdb-9x/api` (dev), arquivo `data/api-keys.json` (só o hash). O uso fica em `pdb-api-state`. A chave "Site novo" está em `/home/ivan/api-key-site-novo.txt`.
+- **Rota nova:** conversor em `src/lib/public-api/v1/` + rota `src/app/v1/` com `withPublicApi` + entrada em `openapi.ts` (o teste obriga).
+- Doc: `docs/knowledge/2026-11-16-api-publica.md`.
+
 ## Analytics e Tags
 
 GTM (`GTM-MMRXG48R`) gerencia:
