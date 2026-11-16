@@ -1,5 +1,10 @@
 import { V1ErrorLike } from "./v1-error.ts"; // criado no Task 4
 
+// Leitura segura de mapa vindo de JSON/Object.fromEntries: ignora chaves do protótipo.
+export function ownGet<T>(obj: Record<string, T> | undefined | null, key: string): T | undefined {
+  return obj && Object.prototype.hasOwnProperty.call(obj, key) ? obj[key] : undefined;
+}
+
 export function parseId(raw: string): number {
   if (!/^\d{1,10}$/.test(raw || "") || Number(raw) <= 0) throw new V1ErrorLike(400, "parametro_invalido", "Id inválido.");
   return Number(raw);

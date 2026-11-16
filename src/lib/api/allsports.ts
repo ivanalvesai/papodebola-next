@@ -252,11 +252,14 @@ async function fetchAllSportsResult<T>(
     // "só o dev consulta a API" (prod re-bateria no rapidapi e tomaria 429 também).
     // O cliente faz polling — a página renderiza com o que tiver.
     if (result.reason !== "unreachable") return { ok: false, data: null, outage: isOutage(result), skipped: false };
-    if (!allowDirectFallback(process.env)) {
-      console.warn(`API_MODE: proxy inacessível, sem fallback direto: ${endpoint}`);
-      return { ok: false, data: null, outage: true, skipped: false };
-    }
     console.warn(`SportsProxy unreachable, falling back to direct API: ${endpoint}`);
+  }
+
+  // Container da API (PDB_API_MODE=1): NUNCA consulta a RapidAPI direto — nem com o proxy fora,
+  // nem se faltar a config do proxy. Serve o disco (snapshot/api-cache).
+  if (!allowDirectFallback(process.env)) {
+    console.warn(`API_MODE: sem fetch direto ao fornecedor: ${endpoint}`);
+    return { ok: false, data: null, outage: true, skipped: false };
   }
 
   // No build SEM proxy (dev), pula o fetch direto: a AllSportsApi as vezes demora

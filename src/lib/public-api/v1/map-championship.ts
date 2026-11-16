@@ -1,6 +1,7 @@
 import type { ChampionshipData, RoundRef } from "@/types/tournament";
 import type { Scorer } from "@/types/team";
 import { fromChampionshipMatch, teamRef } from "./map-match.ts";
+import { ownGet } from "./validate.ts";
 import type { CampeonatoResumoV1, CampeonatoV1, JogoResumoV1, ArtilheiroV1, RodadaRefV1 } from "./dto.ts";
 
 type T = { slug: string; name: string; id: number; seasonId: number | null };
@@ -38,7 +39,7 @@ export function toCampeonato(t: T, d: ChampionshipData): CampeonatoV1 {
 }
 
 export function toRodada(d: ChampionshipData, chave: string): JogoResumoV1[] | null {
-  const list = d.matchesByRound?.[chave];
+  const list = ownGet(d.matchesByRound, chave);
   if (!list) return null;
   return list.map((m) => fromChampionshipMatch(m, d.tournament.name)).sort((a, b) => a.inicioTs - b.inicioTs);
 }

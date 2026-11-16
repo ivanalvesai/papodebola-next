@@ -4,6 +4,10 @@ export function createResponseCache(now: () => number = Date.now, maxEntries = 5
   const store = new Map<string, { value: unknown; exp: number }>();
   const inflight = new Map<string, Promise<unknown>>();
   return {
+    has(key: string): boolean {
+      const hit = store.get(key);
+      return !!hit && hit.exp > now();
+    },
     async get<T>(key: string, load: () => Promise<{ value: T; ttl: number }>): Promise<T> {
       const hit = store.get(key);
       if (hit && hit.exp > now()) return hit.value as T;

@@ -2,6 +2,7 @@ import { readFile } from "node:fs/promises";
 import { join } from "node:path";
 import { imageType } from "./image-type.ts";
 import { fail } from "../envelope.ts";
+import { imageOrigin } from "./image-origin.ts";
 
 // Mesmos arquivos que /api/team-img e /api/player-img usam no volume.
 const FILES = {
@@ -21,7 +22,8 @@ export async function serveImage(kind: "team" | "player", id: number): Promise<R
   } catch {
     /* não está no disco */
   }
-  const origin = process.env.PDB_IMG_ORIGIN || "http://127.0.0.1:3000";
+  const origin = imageOrigin(process.env);
+  if (!origin) return fail(404, "nao_encontrado", "Imagem não encontrada.");
   try {
     const r = await fetch(`${origin}/api/${ROUTE[kind]}/${id}`, { redirect: "manual", signal: AbortSignal.timeout(8000) });
     if (r.ok) {

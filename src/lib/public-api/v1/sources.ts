@@ -9,11 +9,12 @@ import type { ChampionshipData } from "@/types/tournament";
 import type { AgendaLeagueGroup } from "@/lib/data/agenda";
 import { V1ErrorLike } from "./v1-error.ts";
 
+import { ownGet } from "./validate.ts";
 export { parseId, parseDay, isStale } from "./validate.ts";
 
 export async function championship(slug: string): Promise<{ t: Tournament; d: ChampionshipData }> {
-  const t = TOURNAMENT_BY_SLUG[slug];
-  if (!t) throw new V1ErrorLike(404, "nao_encontrado", "Campeonato não encontrado.");
+  const t = ownGet(TOURNAMENT_BY_SLUG, slug);
+  if (!t || !t.seasonId) throw new V1ErrorLike(404, "nao_encontrado", "Campeonato não encontrado.");
   const d = await getChampionshipData(slug);
   if (!d) throw new V1ErrorLike(503, "indisponivel", "Dados do campeonato ainda não coletados.");
   return { t, d };
