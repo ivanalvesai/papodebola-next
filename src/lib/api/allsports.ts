@@ -1,5 +1,6 @@
 import { breakerOpen, readLastGood, recordResult, saveLastGood } from "./api-cache";
 import { isSavableResponse, shouldDiskCache, shouldFallback } from "./cache-policy";
+import { allowDirectFallback } from "./direct-fallback";
 
 // Suporta as DUAS APIs, detectado pelo host (env ALLSPORTS_API_HOST):
 //  - SportApi7 (Sofascore nativo): base /api/v1 + tradutor toSofascore.
@@ -252,6 +253,13 @@ async function fetchAllSportsResult<T>(
     // O cliente faz polling — a página renderiza com o que tiver.
     if (result.reason !== "unreachable") return { ok: false, data: null, outage: isOutage(result), skipped: false };
     console.warn(`SportsProxy unreachable, falling back to direct API: ${endpoint}`);
+  }
+
+  // Container da API (PDB_API_MODE=1): NUNCA consulta a RapidAPI direto — nem com o proxy fora,
+  // nem se faltar a config do proxy. Serve o disco (snapshot/api-cache).
+  if (!allowDirectFallback(process.env)) {
+    console.warn(`API_MODE: sem fetch direto ao fornecedor: ${endpoint}`);
+    return { ok: false, data: null, outage: true, skipped: false };
   }
 
   // No build SEM proxy (dev), pula o fetch direto: a AllSportsApi as vezes demora

@@ -15,7 +15,7 @@ export async function middleware(request: NextRequest) {
     return new NextResponse("Gone", { status: 410, headers: { "Content-Type": "text/plain" } });
   }
 
-  const protectedPaths = [PANEL_PATH, "/studio-pdb", "/api/kanban", "/api/ideas", "/api/meu-kanban", "/api/promote", "/api/push/send", "/api/transmissoes"];
+  const protectedPaths = [PANEL_PATH, "/studio-pdb", "/api/kanban", "/api/ideas", "/api/meu-kanban", "/api/promote", "/api/push/send", "/api/transmissoes", "/api/painel-api-keys"];
   const isProtected = protectedPaths.some((p) => request.nextUrl.pathname.startsWith(p));
   const isLogin = request.nextUrl.pathname.startsWith(`${PANEL_PATH}/login`);
 
@@ -72,6 +72,7 @@ export const config = {
     "/api/promote/:path*",
     "/api/push/send/:path*",
     "/api/transmissoes/:path*",
+    "/api/painel-api-keys/:path*",
     "/admin/:path*",
     "/noticias",
     // 410 Gone (src/lib/gone-paths.ts)
