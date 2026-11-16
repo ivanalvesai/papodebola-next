@@ -3,6 +3,8 @@ import { Tv } from "lucide-react";
 import type { TeamNarrative } from "@/lib/team-narrative";
 import { channelKind } from "@/lib/team-narrative";
 import { getBroadcasters } from "@/lib/broadcasters";
+import { doDa } from "@/lib/pt-gender";
+import { getMatchBroadcast } from "@/lib/data/broadcast-store";
 import type { TeamLastLineup } from "@/lib/data/team";
 
 const card = "bg-card-bg rounded-lg border border-border-custom";
@@ -22,8 +24,23 @@ export function TeamNarrativeSection({ narrative }: { narrative: TeamNarrative |
   );
 }
 
-// Canais com direitos do campeonato do jogo (mapa em lib/broadcasters.ts).
-export function BroadcastChannels({ league }: { league: string }) {
+// Onde o jogo passa. Com matchId e canal salvo no painel "Transmissões" (lib/data/broadcast-store.ts),
+// mostra só esse canal. Senão, as emissoras com direitos do campeonato (lib/broadcasters.ts).
+export async function BroadcastChannels({ league, matchId }: { league: string; matchId?: number | null }) {
+  const exact = await getMatchBroadcast(matchId);
+  if (exact) {
+    return (
+      <div className="flex items-center gap-3 p-3 bg-body rounded-lg">
+        <div className="w-10 h-10 rounded bg-green/10 flex items-center justify-center">
+          <Tv className="h-5 w-5 text-green" />
+        </div>
+        <div>
+          <div className="text-xs text-text-muted">Transmissão deste jogo</div>
+          <div className="text-sm font-semibold text-text-primary">{exact.channels}</div>
+        </div>
+      </div>
+    );
+  }
   const channels = getBroadcasters(league);
   if (!channels.length) {
     return (
@@ -32,8 +49,15 @@ export function BroadcastChannels({ league }: { league: string }) {
       </p>
     );
   }
+  // Lista de DIREITOS do campeonato, não do jogo: deixar isso claro antes da lista (16/11: o Ivan leu
+  // "Premiere, Globoplay, Record, SporTV" em Cruzeiro x Palmeiras, que passa só no Premiere).
   return (
     <div className="space-y-2">
+      <p className="text-sm font-semibold text-text-primary">Emissoras com direitos {doDa(league)}</p>
+      <p className="text-xs text-text-muted">
+        Nem todo jogo passa em todos estes canais: cada emissora escolhe as partidas que vai exibir, e a transmissão de
+        cada jogo é definida na semana da rodada.
+      </p>
       {channels.map((c) => (
         <div key={c} className="flex items-center gap-3 p-3 bg-body rounded-lg">
           <div className="w-10 h-10 rounded bg-green/10 flex items-center justify-center">
@@ -45,9 +69,6 @@ export function BroadcastChannels({ league }: { league: string }) {
           </div>
         </div>
       ))}
-      <p className="text-xs text-text-muted text-center mt-3">
-        Direitos de transmissão de {league} no Brasil. Cada emissora escolhe os jogos que vai exibir.
-      </p>
     </div>
   );
 }
