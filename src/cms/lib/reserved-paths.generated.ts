@@ -63,6 +63,7 @@ export const RESERVED_PREFIXES: readonly string[] = [
   "/jogos-de-jogos-de-hoje",
   "/naturmadoamendoim",
   "/painel-pdb-9x",
+  "/painel-pdb-9x/api",
   "/painel-pdb-9x/artigos",
   "/painel-pdb-9x/config",
   "/painel-pdb-9x/jogos",
