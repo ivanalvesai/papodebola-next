@@ -111,3 +111,17 @@ test("dia agrupa por campeonato e filtra ao vivo", () => {
   assert.deepEqual(live[0].jogos.map((j) => j.id), [1]);
   assert.equal(fromAgendaEvent(e(9, "notstarted") as any).campeonato, "Série A");
 });
+
+test("dia montado das tabelas: só jogos dentro do dia (BRT), ordenados, por campeonato", async () => {
+  const { dayFromChampionships } = await import("./map-match.ts");
+  const start = Date.UTC(2026, 10, 18, 3) / 1000; // 18/11 00:00 BRT
+  const end = start + 86400;
+  const champs = [
+    { nome: "Brasileirão Série A", jogos: [cm({ id: 2, timestamp: start + 80000 }), cm({ id: 1, timestamp: start + 3600 }), cm({ id: 3, timestamp: end })] },
+    { nome: "Premier League", jogos: [cm({ id: 9, timestamp: start - 1 })] },
+  ];
+  const dia = dayFromChampionships(champs as any, start, end);
+  assert.equal(dia.length, 1);
+  assert.equal(dia[0].campeonato, "Brasileirão Série A");
+  assert.deepEqual(dia[0].jogos.map((j) => j.id), [1, 2]);
+});

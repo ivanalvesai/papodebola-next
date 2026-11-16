@@ -75,3 +75,21 @@ export function toDia(groups: AgendaLeagueGroup[], onlyLive = false): DiaCampeon
     .map((g) => ({ campeonato: g.league, jogos: g.events.filter((e) => !onlyLive || e.statusType === "inprogress").map(fromAgendaEvent) }))
     .filter((g) => g.jogos.length > 0);
 }
+
+// Jogos de um dia a partir das tabelas/rodadas salvas (snapshots de campeonato): cobre qualquer
+// data das temporadas configuradas sem consultar o fornecedor. [start, end) em segundos Unix.
+export function dayFromChampionships(
+  champs: { nome: string; jogos: ChampionshipMatch[] }[],
+  start: number,
+  end: number
+): DiaCampeonatoV1[] {
+  return champs
+    .map((c) => ({
+      campeonato: c.nome,
+      jogos: c.jogos
+        .filter((m) => m.timestamp >= start && m.timestamp < end)
+        .sort((a, b) => a.timestamp - b.timestamp)
+        .map((m) => fromChampionshipMatch(m, c.nome)),
+    }))
+    .filter((g) => g.jogos.length > 0);
+}

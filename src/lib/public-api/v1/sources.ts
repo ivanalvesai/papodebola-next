@@ -1,4 +1,8 @@
-import { TOURNAMENT_BY_SLUG, type Tournament } from "@/lib/config";
+import { TOURNAMENTS, TOURNAMENT_BY_SLUG, type Tournament } from "@/lib/config";
+import { getAmistosoFixtures, AMISTOSOS_LEAGUE } from "@/lib/data/amistosos";
+import type { ChampionshipMatch } from "@/types/match";
+import { dayFromChampionships } from "./map-match.ts";
+import type { DiaCampeonatoV1 } from "./dto.ts";
 import { getChampionshipData } from "@/lib/data/championship";
 import { readSnapshot } from "@/lib/data/snapshot-store";
 import type { ChampionshipData } from "@/types/tournament";
@@ -22,3 +26,33 @@ export async function todayStore(): Promise<{ leagues: AgendaLeagueGroup[]; upda
   if (!s || s.date !== brToday()) return { leagues: [], updatedAt: null };
   return { leagues: s.leagues || [], updatedAt: s.updatedAt };
 }
+
+// Jogos de um dia (que não seja hoje) a partir dos snapshots de campeonato no disco: cobre todas
+// as rodadas das temporadas configuradas sem consultar o fornecedor. Amistosos vêm do índice
+// durável (getAmistosoFixtures). [start, end) = o dia em BRT.
+export async function dayFromSnapshots(day: Date): Promise<DiaCampeonatoV1[]> {
+  const start = Date.UTC(day.getUTCFullYear(), day.getUTCMonth(), day.getUTCDate(), 3) / 1000;
+  const end = start + 86400;
+  const champs = await Promise.all(
+    Object.values(TOURNAMENTS)
+      .filter((t) => t.seasonId)
+      .map(async (t) => {
+        const d = await readSnapshot<ChampionshipData>("championships", t.slug);
+        const seen = new Map<number, ChampionshipMatch>();
+        for (const list of Object.values(d?.matchesByRound || {})) for (const m of list) seen.set(m.id, m);
+        return { nome: t.name, jogos: [...seen.values()] };
+      })
+  );
+  const amistosos = await getAmistosoFixtures().catch(() => []);
+  champs.push({
+    nome: AMISTOSOS_LEAGUE,
+    jogos: amistosos.map((f) => ({
+      id: f.id, home: f.home, away: f.away, homeId: f.homeId, awayId: f.awayId,
+      homeScore: f.homeScore, awayScore: f.awayScore, status: f.status || "notstarted",
+      statusDesc: f.statusDesc || "", timestamp: f.timestamp, round: 0,
+    })),
+  });
+  return dayFromChampionships(champs, start, end);
+}
+
+export const isTodayBrt = (day: Date) => day.toISOString().slice(0, 10) === brToday();

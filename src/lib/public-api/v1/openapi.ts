@@ -254,7 +254,7 @@ paths:
       parameters:
         - { name: data, in: query, required: true, schema: { type: string }, example: "2026-11-18", description: "AAAA-MM-DD, de 60 dias atrás até 30 dias à frente" }
       responses:
-        "200": { description: OK (cache 10 min; dia passado 24 h), content: { application/json: { schema: { properties: { data: { $ref: "#/components/schemas/Dia" }, meta: { $ref: "#/components/schemas/Meta" } } } } } }
+        "200": { description: "OK (hoje: cache 30 s, ao vivo; outros dias: 10 min, montado das tabelas salvas)", content: { application/json: { schema: { properties: { data: { $ref: "#/components/schemas/Dia" }, meta: { $ref: "#/components/schemas/Meta" } } } } } }
         "400": { $ref: "#/components/responses/Erro400" }
   /v1/jogos/{id}:
     get:
