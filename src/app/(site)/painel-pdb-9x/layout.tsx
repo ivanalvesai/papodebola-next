@@ -2,13 +2,14 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { FileText, Users, Gamepad2, Settings, LogOut, Sparkles, Rocket, Bell, Flame, Lightbulb, KanbanSquare } from "lucide-react";
+import { FileText, Users, Gamepad2, Settings, LogOut, Sparkles, Rocket, Bell, Flame, Lightbulb, KanbanSquare, Tv } from "lucide-react";
 
 const TABS = [
   { href: "/painel-pdb-9x/artigos", label: "Artigos", icon: FileText },
   { href: "/painel-pdb-9x/pautas", label: "Pautas", icon: Flame },
   { href: "/painel-pdb-9x/usuarios", label: "Usuarios", icon: Users },
   { href: "/painel-pdb-9x/jogos", label: "Jogos", icon: Gamepad2 },
+  { href: "/painel-pdb-9x/transmissoes", label: "Transmissões", icon: Tv },
   { href: "/painel-pdb-9x/notificacoes", label: "Notificações", icon: Bell },
   { href: "/painel-pdb-9x/config", label: "Config", icon: Settings },
   { href: "/painel-pdb-9x/promote", label: "Promover", icon: Rocket },

@@ -71,6 +71,7 @@ export const RESERVED_PREFIXES: readonly string[] = [
   "/painel-pdb-9x/paginas",
   "/painel-pdb-9x/pautas",
   "/painel-pdb-9x/promote",
+  "/painel-pdb-9x/transmissoes",
   "/painel-pdb-9x/usuarios",
   "/papodemidia",
   "/papoespecial",

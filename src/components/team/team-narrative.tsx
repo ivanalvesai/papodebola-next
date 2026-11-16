@@ -4,6 +4,7 @@ import type { TeamNarrative } from "@/lib/team-narrative";
 import { channelKind } from "@/lib/team-narrative";
 import { getBroadcasters } from "@/lib/broadcasters";
 import { doDa } from "@/lib/pt-gender";
+import { getMatchBroadcast } from "@/lib/data/broadcast-store";
 import type { TeamLastLineup } from "@/lib/data/team";
 
 const card = "bg-card-bg rounded-lg border border-border-custom";
@@ -23,8 +24,23 @@ export function TeamNarrativeSection({ narrative }: { narrative: TeamNarrative |
   );
 }
 
-// Canais com direitos do campeonato do jogo (mapa em lib/broadcasters.ts).
-export function BroadcastChannels({ league }: { league: string }) {
+// Onde o jogo passa. Com matchId e canal salvo no painel "Transmissões" (lib/data/broadcast-store.ts),
+// mostra só esse canal. Senão, as emissoras com direitos do campeonato (lib/broadcasters.ts).
+export async function BroadcastChannels({ league, matchId }: { league: string; matchId?: number | null }) {
+  const exact = await getMatchBroadcast(matchId);
+  if (exact) {
+    return (
+      <div className="flex items-center gap-3 p-3 bg-body rounded-lg">
+        <div className="w-10 h-10 rounded bg-green/10 flex items-center justify-center">
+          <Tv className="h-5 w-5 text-green" />
+        </div>
+        <div>
+          <div className="text-xs text-text-muted">Transmissão deste jogo</div>
+          <div className="text-sm font-semibold text-text-primary">{exact.channels}</div>
+        </div>
+      </div>
+    );
+  }
   const channels = getBroadcasters(league);
   if (!channels.length) {
     return (

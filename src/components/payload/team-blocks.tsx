@@ -184,7 +184,7 @@ function WhereToWatch({ data, title }: { data: TeamPageData; title?: string }) {
             <div className="text-xs text-text-muted mt-2">{m.date}</div>
           </div>
           <div className="border-t border-border-custom pt-4">
-            <BroadcastChannels league={m.league} />
+            <BroadcastChannels league={m.league} matchId={m.id} />
           </div>
         </>
       ) : (

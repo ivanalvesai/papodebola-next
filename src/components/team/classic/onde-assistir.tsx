@@ -46,9 +46,9 @@ export function ClassicTeamOndeAssistir({ data }: { data: TeamPageData }) {
           <div className="border-t border-border-custom pt-4">
             <h3 className="text-sm font-bold text-text-primary mb-3 flex items-center gap-2">
               <Tv className="h-4 w-4 text-green" />
-              Canais com os direitos
+              Onde assistir
             </h3>
-            <BroadcastChannels league={match.league} />
+            <BroadcastChannels league={match.league} matchId={match.id} />
           </div>
         </div>
       ) : (

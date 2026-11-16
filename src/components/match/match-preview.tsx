@@ -67,7 +67,7 @@ export async function MatchPreview({
             Transmissão: <strong className="text-text-primary">{watchPost.article.watch.channels}</strong>
           </p>
         ) : (
-          <BroadcastChannels league={fixture.tournamentName} />
+          <BroadcastChannels league={fixture.tournamentName} matchId={fixture.id} />
         )}
         {watchPost && (
           <Link
