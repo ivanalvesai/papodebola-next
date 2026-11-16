@@ -108,3 +108,6 @@ pdb_local.sql
 *.sql.gz
 /data/
 .superpowers/
+
+# Uso da API pública /v1 (volume pdb-api-state no container papodebola-api)
+/data-api/
