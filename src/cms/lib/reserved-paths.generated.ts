@@ -124,6 +124,7 @@ export const STATIC_TOP_LEVEL: readonly string[] = [
   "studio-pdb",
   "tenis",
   "termos-de-uso",
+  "v1",
   "volei",
 ];
 
