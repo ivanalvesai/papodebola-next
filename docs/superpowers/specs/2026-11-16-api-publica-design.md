@@ -58,11 +58,14 @@ esportes (NBA, NFL, tênis, eSports), acesso para terceiros/venda de acesso.
   - `pdb-data` em `/app/data` **somente leitura** (`:ro`).
   - `pdb-api-state` em `/app/data-api` (leitura e escrita): uso por chave e cache de respostas.
     O container **dev** monta o mesmo volume em `/app/data-api:ro` para o painel exibir o uso.
-- Sem Postgres/Payload no caminho da API (nenhuma rota `/v1` depende do CMS).
+- Rede `pdb-net` (como a prod): `getMatchDetail`/`getMatchLive` injetam os comentários
+  editoriais do /cms (`getMatchComments`, Payload/Postgres). Sem o banco, eles só voltam vazios.
 
 ### 2.2 Modo API (`PDB_API_MODE=1`)
 
-- O `middleware.ts`, nesse modo, devolve 404 para qualquer caminho fora de `/v1/`.
+- O bloqueio de tudo que não é `/v1/` fica no **nginx** do vhost `api` (só existe `location /v1/`;
+  o resto é `return 404`) e a porta 3002 só escuta em `127.0.0.1`. O matcher do `middleware.ts` é
+  estático e não cobre todas as rotas, por isso a trava não fica nele.
 - Crons, push, archive e warm não rodam nesse container (já são disparados por URL do dev;
   nada a fazer além de não apontar nenhum cron para ele).
 - `PDB_API_NO_DIRECT=1`: em `fetchAllSports`, quando o proxy do dev estiver **inacessível**,
@@ -97,10 +100,10 @@ com a mesma exigência de chave. Lá se valida antes do promote; o endereço pú
 | `GET /v1/campeonatos/{slug}/artilharia` | artilheiros | `topScorers` / `getScorersFor` |
 | `GET /v1/jogos/hoje` | jogos do dia agrupados por campeonato | `getStoredFootballAgenda` |
 | `GET /v1/jogos?data=AAAA-MM-DD` | jogos de um dia agrupados por campeonato | `getFootballAgendaForDay` |
-| `GET /v1/jogos/ao-vivo` | só jogos em andamento: placar, minuto, status | `getLiveMatches` |
+| `GET /v1/jogos/ao-vivo` | só jogos em andamento: placar, status (sem chamada ao fornecedor) | store de hoje filtrado por `statusType = inprogress` |
 | `GET /v1/jogos/{id}` | jogo completo: evento, lance a lance, escalações, estatísticas, pênaltis | `getMatchDetail` |
 | `GET /v1/jogos/{id}/ao-vivo` | versão enxuta para polling: placar, minuto, status, lances | `getMatchLive` |
-| `GET /v1/times/{id}` | dados do time, próximos jogos, últimos resultados (+ posição na tabela se o time estiver configurado) | `team.ts` (`getTeamNextEvents`, `getTeamPreviousEvents`, `getTeamStandingPosition`) |
+| `GET /v1/times/{id}` | dados do time, próximos jogos, últimos resultados (posição na tabela: usar `/v1/campeonatos/{slug}`) | `team.ts` (`getTeamNextEvents`, `getTeamPreviousEvents`) |
 | `GET /v1/imagens/time/{id}` | escudo (webp/png) | disco `data/team-images` |
 | `GET /v1/imagens/jogador/{id}` | foto | disco `data/player-images` |
 | `GET /v1/docs` | página com as rotas e exemplos (pública, sem dados) | `openapi.yaml` |
