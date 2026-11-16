@@ -87,3 +87,4 @@ export const SAB14 = { slug: "14-11-2026", longa: "sábado, 14 de novembro", cur
 export const DOM15 = { slug: "15-11-2026", longa: "domingo, 15 de novembro", curta: "domingo, 15/11", frase: "Neste domingo, 15 de novembro de 2026" };
 export const SEG16 = { slug: "16-11-2026", longa: "segunda-feira, 16 de novembro", curta: "segunda, 16/11", frase: "Nesta segunda-feira, 16 de novembro de 2026" };
 export const TER17 = { slug: "17-11-2026", longa: "terça-feira, 17 de novembro", curta: "terça, 17/11", frase: "Nesta terça-feira, 17 de novembro de 2026" };
+export const QUA18 = { slug: "18-11-2026", longa: "quarta-feira, 18 de novembro", curta: "quarta, 18/11", frase: "Nesta quarta-feira, 18 de novembro de 2026" };
