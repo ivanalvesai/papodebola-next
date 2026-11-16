@@ -7,6 +7,7 @@ import { getChampionshipData } from "@/lib/data/championship";
 import { teamSlugById } from "@/lib/data/team";
 import type { StandingRow } from "@/types/standings";
 import { getWatchPosts } from "@/lib/data/watch";
+import { getMatchBroadcast } from "@/lib/data/broadcast-store";
 
 // Bloco de pré-jogo da página de jogo de campeonato: resposta direta (data/hora/local),
 // onde assistir, posição dos dois times, notícias deles e links pras páginas dos times.
@@ -23,6 +24,14 @@ function when(ts: number): string {
   return `${date}, às ${time} (Brasília)`;
 }
 
+// Frase de transmissão em texto corrido (ajuda o Google: "onde vai passar X x Y").
+// "Premiere" → pelo canal; "SporTV e Premiere" / "Globo, SporTV e Premiere" → pelos canais.
+// O sujeito é "a partida" (singular), então o verbo fica "será transmitida" nos dois casos.
+function broadcastSentence(home: string, away: string, channels: string): string {
+  const plural = channels.split(/,|\s+e\s+/).filter((c) => c.trim()).length > 1;
+  return `A partida entre ${home} e ${away} será transmitida ${plural ? "pelos canais" : "pelo canal"} ${channels}.`;
+}
+
 export async function MatchPreview({
   fixture,
   champSlug,
@@ -35,7 +44,7 @@ export async function MatchPreview({
   // Jogo encerrado: sem "quando é/onde assistir"; ficam tabela, times e notícias.
   finished?: boolean;
 }) {
-  const [champ, homeSlug, awaySlug, homeNews, awayNews, watch] = await Promise.all([
+  const [champ, homeSlug, awaySlug, homeNews, awayNews, watch, saved] = await Promise.all([
     getChampionshipData(champSlug).catch(() => null),
     teamSlugById(fixture.homeId),
     teamSlugById(fixture.awayId),
@@ -43,8 +52,13 @@ export async function MatchPreview({
     getArticles({ team: { id: fixture.awayId, name: fixture.away }, perPage: 3 }).catch(() => ({ articles: [] })),
     // Post "onde assistir" deste jogo (se houver): só o link aqui; o post mora em /onde-assistir/{slug}.
     fixture.id && !finished ? getWatchPosts({ matchIds: [fixture.id], limit: 1 }).catch(() => []) : Promise.resolve([]),
+    // Canal salvo no painel "Transmissões" (mesma fonte do card abaixo).
+    !finished ? getMatchBroadcast(fixture.id).catch(() => null) : Promise.resolve(null),
   ]);
   const watchPost = watch[0] || null;
+  // Mesma ordem do card: guia publicado > canal do painel. Sem nenhum dos dois, não escreve a frase
+  // (a lista de direitos do campeonato não diz em qual canal ESTE jogo passa).
+  const exactChannels = (watchPost?.article.watch?.channels || saved?.channels || "").trim();
   const rows: StandingRow[] = (champ?.standings || []).flatMap((g) => g.rows);
   const pos = (id: number) => rows.find((r) => r.teamId === id) || null;
   const homePos = pos(fixture.homeId);
@@ -61,6 +75,7 @@ export async function MatchPreview({
         <p className="mb-3 text-sm text-text-secondary">
           {fixture.home} x {fixture.away} é {when(fixture.timestamp)}
           {place}, {pelo(fixture.tournamentName)}.
+          {exactChannels ? <> {broadcastSentence(fixture.home, fixture.away, exactChannels)}</> : null}
         </p>
         {watchPost?.article.watch?.channels ? (
           <p className="text-sm text-text-secondary">
