@@ -121,6 +121,14 @@ add_header Strict-Transport-Security "max-age=31536000" always;   # re-add: add_
 
 ---
 
+### Certificado SSL do site (certbot, desde 16/11)
+
+O cert Let's Encrypt de `papodebola.com.br` + `www` (também servido no vhost `api`) é do **certbot**, não do aaPanel. O renovador do aaPanel falhava nesse domínio (site proxy, sem pasta) e o cert venceu em 15/07 sem ninguém notar, porque a Cloudflare em Full não confere a validade.
+- Cert `papodebola-site` (`/etc/letsencrypt/renewal/papodebola-site.conf`), webroot `/www/server/nginx/html` (o include `well-known` do vhost serve o `/.well-known/` de lá, inclusive pela Cloudflare).
+- **Renova 1 dia antes de vencer** (`renew_before_expiry = 1 days`, pedido do Ivan); `certbot.timer` roda 2x/dia.
+- O deploy hook `/usr/local/bin/pdb-cert-deploy.sh` copia para `/www/server/panel/vhost/cert/papodebola.com.br/` e recarrega o nginx. Log em `/var/log/pdb-cert-deploy.log`. Backup do cert antigo em `/root/cert-papodebola-backup-20261116`.
+- Conferir: `sudo certbot certificates --cert-name papodebola-site` e `sudo certbot renew --dry-run --cert-name papodebola-site`. **Não** reemitir esse cert pela UI do aaPanel.
+
 ## Fluxo de deploy — dev primeiro, depois promove
 
 ```
