@@ -128,6 +128,7 @@ O cert Let's Encrypt de `papodebola.com.br` + `www` (também servido no vhost `a
 - **Renova 1 dia antes de vencer** (`renew_before_expiry = 1 days`, pedido do Ivan); `certbot.timer` roda 2x/dia.
 - O deploy hook `/usr/local/bin/pdb-cert-deploy.sh` copia para `/www/server/panel/vhost/cert/papodebola.com.br/` e recarrega o nginx. Log em `/var/log/pdb-cert-deploy.log`. Backup do cert antigo em `/root/cert-papodebola-backup-20261116`.
 - Conferir: `sudo certbot certificates --cert-name papodebola-site` e `sudo certbot renew --dry-run --cert-name papodebola-site`. **Não** reemitir esse cert pela UI do aaPanel.
+- **`lead.multiplicnet.com.br` não é deste servidor** (conferido em 16/11): o DNS aponta para `138.117.60.19` e aqui não há vhost. O cert vencido que sobrou na pasta do aaPanel foi movido para `/root/cert-lead-multiplicnet-backup-20261116`; não dá para renovar daqui. `admin.papodebola.com.br` (WordPress descontinuado) segue com cert vencido desde 15/07, sem renovar. Doc: `docs/knowledge/2026-11-16-ssl-certbot.md`.
 
 ## Fluxo de deploy — dev primeiro, depois promove
 
