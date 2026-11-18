@@ -9,10 +9,11 @@ Portal de futebol brasileiro e mundial. Migrado de HTML/CSS/JS estático para Ne
 
 ---
 
-## ⏸️ API ALLSPORTS PAUSADA (desde 18/11/2026 07h15, pedido do Ivan) — só religar quando ele pedir
+## API AllSports: pausada e religada em 18/11/2026
 
-Nenhuma consulta sai do servidor pra AllSportsApi: `ALLSPORTS_API_HOST=allsportsapi2-pausada.invalid` no `.env.local` de prod e dev (domínio `.invalid` nunca resolve; o container da API pública lê o env da prod). O site serve tudo do disco (`data/api-cache/` + snapshots; log `API_FALLBACK_DISK`). Crons pausados (prefixo `# PAUSA-API-20261118:`): copa-kickoff, agenda/refresh, archive/run, sport-hub/refresh. Seguem ativos: payload-jobs-run (agendamento de posts), news-discovery, sisgel. Enquanto pausada, não dá pra gerar guia novo com `facts.json`/`facts-us.py`.
-**Religar:** nos 2 `.env.local`, apagar a linha `.invalid` e descomentar a original `# PAUSA-API-20261118 (original): ...`; `crontab -l | sed 's/^# PAUSA-API-20261118: //' | crontab -`; `docker compose up -d` em `papodebola-next-dev`, `papodebola-next` e `papodebola-api` (sem rebuild). Backups: `.env.local.bak.20261118-0714-pausa-api` e `~/crontab.backup.20261118-0714-pausa-api`. Depois, revalidar as páginas principais (ver "Reaquecimento depois que a API volta").
+Ficou pausada das 07h15 até a noite de 18/11 (host `.invalid` no `.env.local` + 4 crons comentados com `# PAUSA-API-20261118:`). Religada a pedido do Ivan, porque havia jogos ao vivo. Backups: `.env.local.bak.20261118-religa` e `~/crontab.backup.20261118-religa`. Para pausar de novo, use a mesma técnica: trocar o host por um `.invalid`, comentar os crons com um marcador e rodar `docker compose up -d` em dev, prod e api.
+
+---
 
 ## ⚠️ REGRA DE OURO — todo dado esportivo fica salvo na nossa base
 
