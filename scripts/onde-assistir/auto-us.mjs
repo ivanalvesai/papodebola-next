@@ -220,7 +220,7 @@ for (const g of F.games) {
   const lh = lastBefore(g.homeId, g.ts).pop(), la = lastBefore(g.awayId, g.ts).pop();
   const o = {
     liga: g.liga, data: d, at: new Date(at).toISOString(), authorId: author, matchId: g.id, homeId: g.homeId, awayId: g.awayId,
-    A, Bn, hora: h, slugDate: dKey(g.ts).split("-").reverse().join("-"),
+    semana: g.liga === "nfl" ? g.round : undefined, A, Bn, hora: h, slugDate: dKey(g.ts).split("-").reverse().join("-"),
     title: `${A} x ${Bn}: onde assistir e horário do jogo da ${nba ? "NBA" : "NFL"} (${ddmm(g.ts)})`,
     canal: ch.canal, canalLongo: ch.canalLongo, canalCapa: ch.canalCapa, canalCapaAlt: ch.canalCapaAlt,
     localCurto, ondeFrase: `${g.venue ? `no ${g.venue}` : ""}${cidade ? `, em ${cidade}` : ""}${cap}`.replace(/^, /, "em "),

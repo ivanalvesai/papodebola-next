@@ -16,7 +16,7 @@ export const LIGAS = {
   },
   nfl: {
     tag: "NFL", hub: "/futebol-americano", hubNome: "página de futebol americano", seal: "NFL · ONDE ASSISTIR",
-    competicao: "NFL, temporada regular 2026 (semana 10)",
+    competicao: "NFL, temporada regular 2026",
     tabelaHead: ["Pos.", "Time", "V", "D", "Pontos pró", "Pontos contra"],
     row: (r) => [`${r.pos}º`, r.team, String(r.w), String(r.l), String(r.pf), String(r.pa)],
   },
@@ -31,7 +31,7 @@ export function usPost(o) {
       [B("Horário: "), `${hora} (de Brasília), ${o.data.longa}`],
       [B("Local: "), o.localCurto],
       [B("Onde assistir: "), canalLongo],
-      [B("Competição: "), L.competicao],
+      [B("Competição: "), o.semana ? `${L.competicao} (semana ${o.semana})` : L.competicao],
     ]),
     H("h2", "Ficha do jogo"),
     MATCH_INFO(canal, true),
