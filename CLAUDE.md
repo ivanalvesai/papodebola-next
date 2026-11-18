@@ -795,6 +795,8 @@ API com chave para o site novo de futebol do Ivan (outro servidor, IP `138.117.6
 - **nginx** `api.papodebola.com.br.conf`: aceita só IPs da Cloudflare, `X-Real-IP` vem do `CF-Connecting-IP`, `limit_req` 20 r/s e só `/v1/`.
 - **Chaves:** painel `/painel-pdb-9x/api` (dev), arquivo `data/api-keys.json` (só o hash). O uso fica em `pdb-api-state`. A chave "Site novo" está em `/home/ivan/api-key-site-novo.txt`.
 - **Rota nova:** conversor em `src/lib/public-api/v1/` + rota `src/app/v1/` com `withPublicApi` + entrada em `openapi.ts` (o teste obriga).
+- **Jogo completo pro site novo (18/11, commit `a046785`):** `/v1/jogos/{id}` traz fase, agregado, `avancou`, `jogoIdaId`, técnicos, capacidade do estádio, `gols[]`, `resumo` (frase do jogo encerrado), ids de jogador e motivo do cartão em cada lance, `rotulo` no lugar do sentinela 999 e `eventos` por jogador na escalação. Tudo sai do mesmo `match/{id}`, sem chamada extra. Snapshots antigos completados por `scripts/backfill-match-context.mjs`, que lê só o cache bruto em disco. Rótulos PT em `src/lib/match-labels.ts`.
+- **GOTCHA placar com pênaltis (18/11):** o `homeScore.current` da API SOMA a disputa (Palmeiras 0x1 Flu, 5x3 nos pênaltis, aparecia 5x4). Sempre `scoreOf`/`pensOf` (`src/lib/score.ts`). A API às vezes manda `display` negativo; o helper cai pro `current`. 87 jogos de snapshot corrigidos (backup em `snapshots/_bak-pens-20261118/`).
 - Doc: `docs/knowledge/2026-11-16-api-publica.md`.
 
 ## Analytics e Tags
