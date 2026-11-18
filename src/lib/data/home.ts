@@ -1,4 +1,5 @@
 import { fetchAllSports } from "@/lib/api/allsports";
+import { scoreOf } from "@/lib/score";
 import { translateStatus } from "@/lib/translations";
 import type { HomeData, HomeNews } from "@/types/home";
 import type { Highlight, Transfer } from "@/types/team";
@@ -101,8 +102,8 @@ export async function getTopMatches(): Promise<TopMatch[]> {
     away: event.awayTeam?.name || "",
     homeId: event.homeTeam?.id || 0,
     awayId: event.awayTeam?.id || 0,
-    homeScore: event.homeScore?.current ?? null,
-    awayScore: event.awayScore?.current ?? null,
+    homeScore: scoreOf(event.homeScore),
+    awayScore: scoreOf(event.awayScore),
     league: event.tournament?.uniqueTournament?.name || "",
     status: translateStatus(event.status?.description) || "",
     time: event.startTimestamp

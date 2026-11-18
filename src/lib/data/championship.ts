@@ -1,4 +1,5 @@
 import { fetchAllSports } from "@/lib/api/allsports";
+import { scoreOf, pensOf } from "@/lib/score";
 import { TOURNAMENT_BY_SLUG } from "@/lib/config";
 import { translateStatus } from "@/lib/translations";
 import { translateCountry } from "@/lib/i18n/countries";
@@ -75,8 +76,10 @@ function normalizeMatch(event: any, round: number, tr: (n: string) => string = (
     away: tr(event.awayTeam?.name || ""),
     homeId: event.homeTeam?.id || 0,
     awayId: event.awayTeam?.id || 0,
-    homeScore: event.homeScore?.current ?? null,
-    awayScore: event.awayScore?.current ?? null,
+    homeScore: scoreOf(event.homeScore),
+    awayScore: scoreOf(event.awayScore),
+    homePens: pensOf(event.homeScore),
+    awayPens: pensOf(event.awayScore),
     status: event.status?.type || "",
     statusDesc: translateStatus(event.status?.description) || "",
     timestamp: event.startTimestamp || 0,
@@ -132,8 +135,8 @@ export async function getChampionshipLiveScores(
   );
   return (data?.events || []).map((e: any) => ({
     id: e.id,
-    homeScore: e.homeScore?.current ?? null,
-    awayScore: e.awayScore?.current ?? null,
+    homeScore: scoreOf(e.homeScore),
+    awayScore: scoreOf(e.awayScore),
     statusType: e.status?.type || "",
     statusDesc: translateStatus(e.status?.description) || "",
   }));

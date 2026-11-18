@@ -1,4 +1,5 @@
 import { fetchAllSports, fetchAllSportsMeta } from "@/lib/api/allsports";
+import { scoreOf } from "@/lib/score";
 import { normalizeReferee } from "@/lib/watch-info";
 import { translateCountry } from "@/lib/i18n/countries";
 import { translateStatus } from "@/lib/translations";
@@ -266,8 +267,8 @@ export async function getWorldCupLiveScores(): Promise<WorldCupLiveScore[]> {
       if (isLiveType(type) && ts > 0 && now - ts > MAX_LIVE) type = "finished";
       out.push({
         id: e.id,
-        homeScore: e.homeScore?.current ?? null,
-        awayScore: e.awayScore?.current ?? null,
+        homeScore: scoreOf(e.homeScore),
+        awayScore: scoreOf(e.awayScore),
         statusType: type,
         statusDesc: translateStatus(e.status?.description) || "",
       });
@@ -657,8 +658,8 @@ function normalizeEvent(e: any): MatchEvent {
     awayId: e?.awayTeam?.id || 0,
     home: translateCountry(e?.homeTeam?.name || ""),
     away: translateCountry(e?.awayTeam?.name || ""),
-    homeScore: hs.display ?? hs.current ?? null,
-    awayScore: as.display ?? as.current ?? null,
+    homeScore: scoreOf(hs),
+    awayScore: scoreOf(as),
     homePens,
     awayPens,
     winnerCode: typeof e?.winnerCode === "number" ? e.winnerCode : null,
