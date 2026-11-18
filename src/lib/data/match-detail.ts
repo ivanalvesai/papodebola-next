@@ -1,5 +1,6 @@
 import { fetchAllSports, fetchAllSportsMeta } from "@/lib/api/allsports";
 import { scoreOf } from "@/lib/score";
+import { translateStat, koLabel } from "@/lib/match-labels";
 import { normalizeReferee } from "@/lib/watch-info";
 import { translateCountry } from "@/lib/i18n/countries";
 import { translateStatus } from "@/lib/translations";
@@ -11,7 +12,7 @@ import { withSnapshot } from "./snapshot-store";
 import { isCompleteMatchSnapshot } from "@/lib/archive-select";
 import { isMatchRegression } from "@/lib/snapshot-guards";
 import { getMatchComments } from "./match-comments";
-import { TOURNAMENT_BY_SLUG, champPath } from "@/lib/config";
+import { TOURNAMENTS, TOURNAMENT_BY_SLUG, champPath } from "@/lib/config";
 import { selecaoSlugById } from "@/lib/selecoes";
 import { findRescheduled, type RescheduleCandidate } from "@/lib/match-slug-fuzzy";
 import type { StandingsGroup } from "@/types/standings";
@@ -533,8 +534,16 @@ export interface MatchEvent {
   startTimestamp: number;
   periodStart: number; // currentPeriodStartTimestamp (pra cronômetro)
   live: boolean;
-  venue: { stadium: string; city: string; country: string } | null;
+  venue: { stadium: string; city: string; country: string; capacity?: number | null } | null;
   referee?: { name: string; country: string } | null; // opcional: fixtures sintéticos não têm
+  // Contexto do jogo (desde 18/11, pra /v1). Opcionais: snapshots antigos não têm.
+  tournamentId?: number | null;
+  tournament?: string | null; // nome PT do nosso config ou o da API
+  round?: { number: number | null; label: string; slug: string | null; knockout: boolean } | null;
+  aggregate?: { home: number; away: number } | null; // placar agregado (jogo de volta)
+  aggWinnerCode?: number | null; // 1/2 = quem avançou no agregado
+  previousLegId?: number | null; // id do jogo de ida
+  managers?: { home: string | null; away: string | null } | null;
 }
 
 // Uma cobrança da disputa de pênaltis (na ordem em que foi batida).
@@ -559,6 +568,12 @@ export interface MatchIncident {
   homeScore: number | null;
   awayScore: number | null;
   text: string | null;
+  // Desde 18/11 (pra /v1 ligar o lance à escalação/foto). Opcionais: snapshots antigos não têm.
+  playerId?: number | null;
+  assistId?: number | null;
+  playerInId?: number | null;
+  playerOutId?: number | null;
+  reason?: string | null; // motivo do cartão (Foul, Argument...)
 }
 
 export interface LineupPlayer {
@@ -674,8 +689,39 @@ function normalizeEvent(e: any): MatchEvent {
           stadium: e.venue.name || e.venue.stadium?.name || "",
           city: e.venue.city?.name || "",
           country: e.venue.city?.country?.name || e.venue.country?.name || "",
+          capacity: typeof e.venue.capacity === "number" ? e.venue.capacity : e.venue.stadium?.capacity ?? null,
         }
       : null,
+    ...eventContext(e),
+  };
+}
+
+// Campeonato, fase, agregado e técnicos: vêm no mesmo match/{id}, sem chamada extra.
+export function eventContext(e: any): Pick<MatchEvent, "tournamentId" | "tournament" | "round" | "aggregate" | "aggWinnerCode" | "previousLegId" | "managers"> {
+  const ut = e?.tournament?.uniqueTournament;
+  const tid: number | null = ut?.id ?? null;
+  const ours = tid ? Object.values(TOURNAMENTS).find((t) => t.id === tid) : undefined;
+  const ri = e?.roundInfo;
+  const hAgg = e?.homeScore?.aggregated;
+  const aAgg = e?.awayScore?.aggregated;
+  return {
+    tournamentId: tid,
+    tournament: ours?.name || ut?.name || e?.tournament?.name || null,
+    round: ri
+      ? {
+          number: typeof ri.round === "number" ? ri.round : null,
+          label: ri.slug ? koLabel(ri.slug, ri.name) : typeof ri.round === "number" ? `Rodada ${ri.round}` : ri.name || "",
+          slug: ri.slug || null,
+          knockout: !!ri.slug,
+        }
+      : null,
+    aggregate: typeof hAgg === "number" && typeof aAgg === "number" ? { home: hAgg, away: aAgg } : null,
+    aggWinnerCode: typeof e?.aggregatedWinnerCode === "number" ? e.aggregatedWinnerCode : null,
+    previousLegId: typeof e?.previousLegEventId === "number" ? e.previousLegEventId : null,
+    managers:
+      e?.homeTeam?.manager || e?.awayTeam?.manager
+        ? { home: e?.homeTeam?.manager?.name || null, away: e?.awayTeam?.manager?.name || null }
+        : null,
   };
 }
 
@@ -694,6 +740,11 @@ function normalizeIncidents(raw: any): MatchIncident[] {
     homeScore: typeof i?.homeScore === "number" ? i.homeScore : null,
     awayScore: typeof i?.awayScore === "number" ? i.awayScore : null,
     text: i?.text || null,
+    playerId: i?.player?.id || null,
+    assistId: i?.assist1?.id || null,
+    playerInId: i?.playerIn?.id || null,
+    playerOutId: i?.playerOut?.id || null,
+    reason: i?.reason || null,
   }));
 }
 
@@ -738,77 +789,6 @@ function toNum(v: any): number {
   if (typeof v === "number") return v;
   const m = String(v ?? "").match(/[\d.]+/);
   return m ? parseFloat(m[0]) : 0;
-}
-
-// Nomes de estatística EN -> PT-BR (a AllSportsApi devolve em inglês).
-const STAT_PT: Record<string, string> = {
-  "Ball possession": "Posse de bola",
-  "Expected goals": "Gols esperados (xG)",
-  "Total shots": "Finalizações",
-  "Shots on target": "Finalizações no alvo",
-  "Shots off target": "Finalizações para fora",
-  "Blocked shots": "Finalizações bloqueadas",
-  "Shots inside box": "Finalizações na área",
-  "Shots outside box": "Finalizações fora da área",
-  "Big chances": "Grandes chances",
-  "Big chances missed": "Grandes chances perdidas",
-  "Big chances scored": "Grandes chances convertidas",
-  "Corner kicks": "Escanteios",
-  Corners: "Escanteios",
-  Offsides: "Impedimentos",
-  Fouls: "Faltas",
-  "Yellow cards": "Cartões amarelos",
-  "Red cards": "Cartões vermelhos",
-  "Free kicks": "Tiros livres",
-  "Throw-ins": "Laterais",
-  "Goal kicks": "Tiros de meta",
-  Saves: "Defesas",
-  "Goalkeeper saves": "Defesas do goleiro",
-  "Total saves": "Defesas",
-  Passes: "Passes",
-  "Accurate passes": "Passes certos",
-  "Long balls": "Bolas longas",
-  Crosses: "Cruzamentos",
-  Dribbles: "Dribles",
-  "Total tackles": "Desarmes",
-  Tackles: "Desarmes",
-  Interceptions: "Interceptações",
-  Clearances: "Cortes",
-  "Counter attacks": "Contra-ataques",
-  "Counterattacks": "Contra-ataques",
-  Duels: "Duelos",
-  "Duels won": "Duelos vencidos",
-  "Aerials won": "Duelos aéreos vencidos",
-  "Hit woodwork": "Na trave",
-  "Touches in penalty area": "Toques na área",
-  "Final third entries": "Entradas no último terço",
-  "Final third phase": "Jogo no último terço",
-  "Fouled in final third": "Faltas sofridas no ataque",
-  "Through balls": "Passes em profundidade",
-  "Dispossessed": "Posses perdidas",
-  "Ground duels": "Duelos no chão",
-  "Aerial duels": "Duelos aéreos",
-  "Tackles won": "Desarmes certos",
-  "Recoveries": "Recuperações de bola",
-  "Goals prevented": "Gols evitados",
-  "Big saves": "Defesas difíceis",
-  "High claims": "Saídas de cruzamento",
-  // extras comuns do Sofascore (pra não vazar inglês em outros jogos)
-  "Penalty saves": "Pênaltis defendidos",
-  "Punches": "Socos do goleiro",
-  "Errors lead to shot": "Erros que viraram finalização",
-  "Errors lead to goal": "Erros que viraram gol",
-  "Big chances created": "Grandes chances criadas",
-  "Key passes": "Passes decisivos",
-  "Accurate long balls": "Bolas longas certas",
-  "Accurate crosses": "Cruzamentos certos",
-  "Goalkeeper punches": "Socos do goleiro",
-};
-function translateStat(name: string): string {
-  if (!name) return "";
-  if (STAT_PT[name]) return STAT_PT[name];
-  const hit = Object.keys(STAT_PT).find((k) => k.toLowerCase() === name.toLowerCase());
-  return hit ? STAT_PT[hit] : name;
 }
 
 function normalizeStats(raw: any): MatchStatItem[] {

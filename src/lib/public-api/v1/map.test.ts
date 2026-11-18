@@ -85,13 +85,13 @@ test("jogo completo: lances, narração em PT, escalação, pênaltis, vencedor"
   assert.equal(j.id, 77);
   assert.equal(j.status, "encerrado");
   assert.equal(j.vencedor, "visitante");
-  assert.deepEqual(j.estadio, { nome: "Mineirão", cidade: "Belo Horizonte", pais: "Brasil" });
+  assert.deepEqual(j.estadio, { nome: "Mineirão", cidade: "Belo Horizonte", pais: "Brasil", capacidade: null });
   assert.equal(j.arbitro, "Juiz");
   assert.equal(j.lances[0].lado, "mandante");
   assert.equal(j.narracao[0].texto, "Gol!");
   assert.equal(j.escalacoes.mandante!.titulares[0].foto, "/v1/imagens/jogador/1");
   assert.equal(j.escalacoes.visitante, null);
-  assert.deepEqual(j.penaltis[0], { ordem: 1, jogador: "A", lado: "mandante", converteu: true, motivo: "scored" });
+  assert.deepEqual(j.penaltis[0], { ordem: 1, jogador: "A", jogadorId: 1, lado: "mandante", converteu: true, motivo: "scored" });
   assert.equal(j.inicio, "2025-11-18T17:00:00-03:00");
 });
 
@@ -124,4 +124,74 @@ test("dia montado das tabelas: só jogos dentro do dia (BRT), ordenados, por cam
   assert.equal(dia.length, 1);
   assert.equal(dia[0].campeonato, "Brasileirão Série A");
   assert.deepEqual(dia[0].jogos.map((j) => j.id), [1, 2]);
+});
+
+// Caso real (18/11): Palmeiras 0x1 Fluminense, 5x3 nos pênaltis, semifinal da Libertadores (volta).
+const palFlu = () => ({
+  event: ev({
+    id: 17116882, homeId: 1963, awayId: 1961, home: "Palmeiras", away: "Fluminense", homeScore: 0, awayScore: 1,
+    homePens: 5, awayPens: 3, winnerCode: 1,
+    venue: { stadium: "Nubank Parque", city: "São Paulo", country: "Brasil", capacity: 43713 },
+    tournament: "Copa Libertadores", round: { number: 28, label: "Semifinal", slug: "semifinals", knockout: true },
+    aggregate: { home: 2, away: 2 }, aggWinnerCode: 1, previousLegId: 17116828,
+    managers: { home: "Abel Ferreira", away: "Marcão" },
+  }),
+  incidents: [
+    { type: "period", cls: "", minute: 999, addedTime: 999, player: null, assist: null, playerIn: null, playerOut: null, isHome: null, homeScore: 5, awayScore: 3, text: "PEN" },
+    { type: "goal", cls: "regular", minute: 82, addedTime: null, player: "Hércules", assist: "Wesley Natã", playerIn: null, playerOut: null, isHome: false, homeScore: 0, awayScore: 1, text: null },
+    { type: "card", cls: "yellow", minute: 76, addedTime: null, player: "Jhon Arias", assist: null, playerIn: null, playerOut: null, isHome: true, homeScore: null, awayScore: null, text: null, reason: "Foul" },
+    { type: "substitution", cls: "regular", minute: 60, addedTime: null, player: null, assist: null, playerIn: "Flaco López", playerOut: "Vitor Roque", isHome: true, homeScore: null, awayScore: null, text: null },
+  ],
+  commentary: [],
+  home: { formation: "4-4-2", starters: [{ id: 10, name: "Jhon Arias", number: 11, position: "F", rating: "6.5", captain: false }, { id: 11, name: "Vitor Roque", number: 9, position: "F", rating: "6.1", captain: false }], bench: [{ id: 12, name: "Flaco López", number: 42, position: "F", rating: null, captain: false }] },
+  away: { formation: "4-2-3-1", starters: [{ id: 20, name: "Hércules", number: 35, position: "M", rating: "8.0", captain: false }, { id: 21, name: "Wesley Natã", number: 7, position: "M", rating: "7.2", captain: false }], bench: [] },
+  lineupsConfirmed: true,
+  stats: [{ name: "Distance covered", home: "110 km", away: "112 km", homeNum: 110, awayNum: 112 }],
+  shootout: [{ sequence: 1, player: "Jhon Arias", isHome: true, scored: true, reason: "scored" }],
+});
+
+test("jogo de volta com pênaltis: fase, agregado, quem avançou, técnicos, capacidade e resumo", () => {
+  const j = toJogoCompleto(palFlu() as any);
+  assert.equal(j.campeonato, "Copa Libertadores");
+  assert.deepEqual(j.fase, { nome: "Semifinal", mataMata: true, chave: "semifinals" });
+  assert.deepEqual(j.agregado, { mandante: 2, visitante: 2 });
+  assert.equal(j.avancou, "mandante");
+  assert.equal(j.jogoIdaId, 17116828);
+  assert.deepEqual(j.tecnicos, { mandante: "Abel Ferreira", visitante: "Marcão" });
+  assert.equal(j.estadio!.capacidade, 43713);
+  assert.equal(j.resumo, "Fim de jogo: Palmeiras 0 x 1 Fluminense, pela semifinal da Copa Libertadores. Nos pênaltis, Palmeiras venceu por 5 a 3, depois do empate em 2 a 2 no agregado, e avançou. Gols: Hércules (82', Fluminense).");
+});
+
+test("lances: 999 vira null + rótulo; ids e motivo do cartão; gols no topo", () => {
+  const j = toJogoCompleto(palFlu() as any);
+  const fim = j.lances[0];
+  assert.equal(fim.minuto, null);
+  assert.equal(fim.acrescimo, null);
+  assert.equal(fim.rotulo, "Fim da disputa de pênaltis");
+  const gol = j.lances[1];
+  assert.equal(gol.jogadorId, 20);
+  assert.equal(gol.assistenciaId, 21);
+  assert.equal(j.lances[2].motivo, "Falta");
+  assert.equal(j.lances[3].entrouId, 12);
+  assert.equal(j.lances[3].saiuId, 11);
+  assert.deepEqual(j.gols, [{ jogador: "Hércules", jogadorId: 20, assistencia: "Wesley Natã", minuto: 82, acrescimo: null, lado: "visitante", tipo: "normal" }]);
+  assert.equal(j.penaltis[0].jogadorId, 10);
+  assert.equal(j.estatisticas[0].nome, "Distância percorrida");
+});
+
+test("escalação: eventos de cada jogador", () => {
+  const e = toJogoCompleto(palFlu() as any).escalacoes;
+  assert.deepEqual(e.visitante!.titulares[0].eventos, [{ tipo: "gol", minuto: 82, acrescimo: null }]);
+  assert.deepEqual(e.visitante!.titulares[1].eventos, [{ tipo: "assistencia", minuto: 82, acrescimo: null }]);
+  assert.deepEqual(e.mandante!.titulares[0].eventos, [{ tipo: "amarelo", minuto: 76, acrescimo: null, motivo: "Falta" }]);
+  assert.deepEqual(e.mandante!.titulares[1].eventos, [{ tipo: "saiu", minuto: 60, acrescimo: null }]);
+  assert.deepEqual(e.mandante!.reservas[0].eventos, [{ tipo: "entrou", minuto: 60, acrescimo: null }]);
+});
+
+test("resumo por rodada usa o artigo do campeonato", () => {
+  const d = palFlu() as any;
+  d.event = ev({ tournament: "Brasileirão Série A", round: { number: 34, label: "Rodada 34", slug: null, knockout: false }, homePens: null, awayPens: null, homeScore: 2, awayScore: 1, winnerCode: 1 });
+  d.incidents = [];
+  assert.equal(toJogoCompleto(d).resumo, "Fim de jogo: Cruzeiro 2 x 1 Palmeiras, pela 34ª rodada do Brasileirão Série A.");
+  assert.equal(toJogoCompleto(d).rodada, 34);
 });

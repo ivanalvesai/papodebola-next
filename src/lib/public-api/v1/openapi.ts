@@ -118,10 +118,34 @@ components:
         - $ref: "#/components/schemas/JogoResumo"
         - type: object
           properties:
-            estadio: { type: [object, "null"], properties: { nome: { type: string }, cidade: { type: string }, pais: { type: string } } }
+            estadio: { type: [object, "null"], properties: { nome: { type: string }, cidade: { type: string }, pais: { type: string }, capacidade: { type: [integer, "null"], example: 43713 } } }
             arbitro: { type: [string, "null"] }
-            vencedor: { type: [string, "null"], enum: [mandante, visitante, null] }
+            vencedor: { type: [string, "null"], enum: [mandante, visitante, null], description: "vencedor DESTE jogo (nos pênaltis, quem ganhou a disputa)" }
             inicioPeriodoTs: { type: integer, description: início do período atual (para cronômetro) }
+            fase:
+              type: [object, "null"]
+              properties:
+                nome: { type: string, example: Semifinal, description: "Rodada 34, Oitavas de final, Semifinal, Final..." }
+                mataMata: { type: boolean }
+                chave: { type: [string, "null"], example: semifinals, description: "mesma chave de /v1/campeonatos/{slug}/rodadas/{chave}" }
+            agregado: { type: [object, "null"], description: "placar somado da ida e da volta (só no jogo de volta)", properties: { mandante: { type: integer }, visitante: { type: integer } } }
+            avancou: { type: [string, "null"], enum: [mandante, visitante, null], description: "quem avançou no confronto (agregado ou pênaltis); null em jogo de ida, jogo de grupo ou quando a API não diz" }
+            jogoIdaId: { type: [integer, "null"], description: "id do jogo de ida (use em /v1/jogos/{id})" }
+            tecnicos: { type: [object, "null"], properties: { mandante: { type: [string, "null"] }, visitante: { type: [string, "null"] } } }
+            gols:
+              type: array
+              description: "gols em ordem de minuto (para o topo da página)"
+              items:
+                type: object
+                properties:
+                  jogador: { type: [string, "null"] }
+                  jogadorId: { type: [integer, "null"], description: "foto em /v1/imagens/jogador/{id}" }
+                  assistencia: { type: [string, "null"] }
+                  minuto: { type: [integer, "null"] }
+                  acrescimo: { type: [integer, "null"] }
+                  lado: { type: [string, "null"], enum: [mandante, visitante, null], description: "time que somou o gol no placar" }
+                  tipo: { type: string, enum: [normal, penalti, contra] }
+            resumo: { type: [string, "null"], description: "frase de resumo do jogo encerrado (placar, fase, pênaltis, agregado e gols)", example: "Fim de jogo: Palmeiras 0 x 1 Fluminense, pela semifinal da Copa Libertadores. Nos pênaltis, Palmeiras venceu por 5 a 3, depois do empate em 2 a 2 no agregado, e avançou. Gols: Hércules (82', Fluminense)." }
             lances:
               type: array
               items:
@@ -129,12 +153,18 @@ components:
                 properties:
                   tipo: { type: string, description: goal, card, substitution, period, injuryTime }
                   detalhe: { type: string, description: regular, yellow, red, penalty, ownGoal... }
-                  minuto: { type: [integer, "null"] }
+                  minuto: { type: [integer, "null"], description: "null nos marcadores de fim de período e nos pênaltis" }
                   acrescimo: { type: [integer, "null"] }
+                  rotulo: { type: [string, "null"], example: "Fim da disputa de pênaltis", description: "texto para os marcadores (Intervalo, Fim do tempo normal, Fim da prorrogação, Fim da disputa de pênaltis, Acréscimos)" }
                   jogador: { type: [string, "null"] }
+                  jogadorId: { type: [integer, "null"] }
                   assistencia: { type: [string, "null"] }
+                  assistenciaId: { type: [integer, "null"] }
                   entrou: { type: [string, "null"] }
+                  entrouId: { type: [integer, "null"] }
                   saiu: { type: [string, "null"] }
+                  saiuId: { type: [integer, "null"] }
+                  motivo: { type: [string, "null"], example: Falta, description: "motivo do cartão (PT-BR), quando a fonte informa" }
                   lado: { type: [string, "null"], enum: [mandante, visitante, null] }
                   placarMandante: { type: [integer, "null"] }
                   placarVisitante: { type: [integer, "null"] }
@@ -152,13 +182,15 @@ components:
                   rotuloMinuto: { type: [string, "null"], example: Intervalo }
                   lado: { type: [string, "null"] }
                   jogador: { type: [string, "null"] }
+                  jogadorId: { type: [integer, "null"] }
+                  motivo: { type: [string, "null"], description: "motivo do cartão (PT-BR)" }
                   html: { type: [string, "null"], description: comentário editorial com imagem/link }
             estatisticas:
               type: array
               items: { type: object, properties: { nome: { type: string }, mandante: { type: string }, visitante: { type: string } } }
             penaltis:
               type: array
-              items: { type: object, properties: { ordem: { type: integer }, jogador: { type: string }, lado: { type: string }, converteu: { type: boolean }, motivo: { type: string } } }
+              items: { type: object, properties: { ordem: { type: integer }, jogador: { type: string }, jogadorId: { type: [integer, "null"] }, lado: { type: string }, converteu: { type: boolean }, motivo: { type: string } } }
     Escalacao:
       type: [object, "null"]
       properties:
@@ -175,6 +207,16 @@ components:
         nota: { type: [string, "null"] }
         capitao: { type: boolean }
         foto: { type: string, example: /v1/imagens/jogador/123 }
+        eventos:
+          type: array
+          description: "o que o jogador fez no jogo (para mostrar ao lado do nome)"
+          items:
+            type: object
+            properties:
+              tipo: { type: string, enum: [gol, golPenalti, golContra, assistencia, amarelo, segundoAmarelo, vermelho, entrou, saiu] }
+              minuto: { type: [integer, "null"] }
+              acrescimo: { type: [integer, "null"] }
+              motivo: { type: [string, "null"], description: "só nos cartões" }
     JogoCompleto:
       allOf:
         - $ref: "#/components/schemas/Jogo"
