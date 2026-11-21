@@ -1,4 +1,5 @@
 import { fetchAllSports } from "@/lib/api/allsports";
+import { scoreOf } from "@/lib/score";
 import { translateCountry } from "@/lib/i18n/countries";
 import { translateStatus } from "@/lib/translations";
 import { enrichStandingsWithForm } from "@/lib/standings-utils";
@@ -55,8 +56,8 @@ function normalizeMatch(e: any, round: number): ChampionshipMatch {
     away: translateCountry(e.awayTeam?.name || ""),
     homeId: e.homeTeam?.id || 0,
     awayId: e.awayTeam?.id || 0,
-    homeScore: e.homeScore?.current ?? null,
-    awayScore: e.awayScore?.current ?? null,
+    homeScore: scoreOf(e.homeScore),
+    awayScore: scoreOf(e.awayScore),
     status: e.status?.type || "",
     statusDesc: translateStatus(e.status?.description) || "",
     timestamp: e.startTimestamp || 0,

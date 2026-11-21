@@ -1,4 +1,5 @@
 import { fetchAllSports, fetchSport } from "@/lib/api/allsports";
+import { scoreOf } from "@/lib/score";
 import { translateStatus } from "@/lib/translations";
 import { currentSeasonId, getSeasonWindow, spDayKey } from "@/lib/data/sport-season";
 import { withSnapshot } from "@/lib/data/snapshot-store";
@@ -55,8 +56,8 @@ function normalizeEvent(event: any): SportEvent {
     away: event.awayTeam?.name || event.awayTeam?.shortName || "",
     homeId: event.homeTeam?.id || 0,
     awayId: event.awayTeam?.id || 0,
-    homeScore: event.homeScore?.current ?? null,
-    awayScore: event.awayScore?.current ?? null,
+    homeScore: scoreOf(event.homeScore),
+    awayScore: scoreOf(event.awayScore),
     league: event.tournament?.uniqueTournament?.name || event.tournament?.name || "",
     status: translateStatus(event.status?.description) || translateStatus(event.status?.type) || "",
     time: ts.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit", timeZone: "America/Sao_Paulo" }),

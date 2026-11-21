@@ -1,4 +1,5 @@
 import { getAmistosoBarMatches } from "./amistosos";
+import { scoreOf } from "@/lib/score";
 import { fetchAllSports } from "@/lib/api/allsports";
 import { getLeagueCategory, TOURNAMENT_BY_ID, TOURNAMENT_BY_SLUG, champPath } from "@/lib/config";
 import { translateStatus } from "@/lib/translations";
@@ -81,8 +82,8 @@ function normalizeEvent(event: any): NormalizedMatch {
     country: event.tournament?.category?.name || "",
     homeTeam: isNational ? translateCountry(event.homeTeam?.name || "") : event.homeTeam?.name || "",
     awayTeam: isNational ? translateCountry(event.awayTeam?.name || "") : event.awayTeam?.name || "",
-    homeScore: event.homeScore?.current ?? null,
-    awayScore: event.awayScore?.current ?? null,
+    homeScore: scoreOf(event.homeScore),
+    awayScore: scoreOf(event.awayScore),
     homeLogo: homeId ? `/api/team-img/${homeId}` : null,
     awayLogo: awayId ? `/api/team-img/${awayId}` : null,
     time: ts.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit", timeZone: "America/Sao_Paulo" }),

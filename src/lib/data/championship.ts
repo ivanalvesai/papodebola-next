@@ -1,4 +1,6 @@
 import { fetchAllSports } from "@/lib/api/allsports";
+import { scoreOf, pensOf } from "@/lib/score";
+import { koLabel } from "@/lib/match-labels";
 import { TOURNAMENT_BY_SLUG } from "@/lib/config";
 import { translateStatus } from "@/lib/translations";
 import { translateCountry } from "@/lib/i18n/countries";
@@ -10,22 +12,6 @@ import type { ChampionshipMatch } from "@/types/match";
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
-// Rótulos PT dos rounds de mata-mata (por slug da API). Fallback: o `name` da API.
-// Convenção "avos de final": o número = quantidade de CONFRONTOS (= times/2). Logo,
-// Round of 32 (32 times, 16 jogos) = "16 avos de final".
-const KO_LABEL: Record<string, string> = {
-  "round-of-128": "64 avos de final",
-  "round-of-64": "32 avos de final",
-  "round-of-32": "16 avos de final",
-  "round-of-16": "Oitavas de final",
-  quarterfinals: "Quartas de final",
-  "quarter-finals": "Quartas de final",
-  semifinals: "Semifinal",
-  "semi-finals": "Semifinal",
-  final: "Final",
-  "3rd-place": "Disputa de 3º lugar",
-  "third-place": "Disputa de 3º lugar",
-};
 // Ordem do chaveamento (pra listar 32avos → oitavas → quartas → semi → final).
 const KO_RANK: Record<string, number> = {
   "round-of-128": 1,
@@ -40,8 +26,6 @@ const KO_RANK: Record<string, number> = {
   "third-place": 7,
   final: 8,
 };
-const koLabel = (slug?: string, name?: string) =>
-  (slug && KO_LABEL[slug]) || name || "Fase final";
 
 // Monta a lista ordenada de rounds (grupos por número; mata-mata por chaveamento).
 function buildRoundList(apiRounds: any[]): { list: RoundRef[]; groupRounds: number[] } {
@@ -75,8 +59,10 @@ function normalizeMatch(event: any, round: number, tr: (n: string) => string = (
     away: tr(event.awayTeam?.name || ""),
     homeId: event.homeTeam?.id || 0,
     awayId: event.awayTeam?.id || 0,
-    homeScore: event.homeScore?.current ?? null,
-    awayScore: event.awayScore?.current ?? null,
+    homeScore: scoreOf(event.homeScore),
+    awayScore: scoreOf(event.awayScore),
+    homePens: pensOf(event.homeScore),
+    awayPens: pensOf(event.awayScore),
     status: event.status?.type || "",
     statusDesc: translateStatus(event.status?.description) || "",
     timestamp: event.startTimestamp || 0,
@@ -132,8 +118,8 @@ export async function getChampionshipLiveScores(
   );
   return (data?.events || []).map((e: any) => ({
     id: e.id,
-    homeScore: e.homeScore?.current ?? null,
-    awayScore: e.awayScore?.current ?? null,
+    homeScore: scoreOf(e.homeScore),
+    awayScore: scoreOf(e.awayScore),
     statusType: e.status?.type || "",
     statusDesc: translateStatus(e.status?.description) || "",
   }));

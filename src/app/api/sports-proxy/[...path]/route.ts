@@ -19,8 +19,8 @@ function slimEvent(e: any) {
     id: e.id,
     homeTeam: slimTeam(e.homeTeam),
     awayTeam: slimTeam(e.awayTeam),
-    homeScore: e.homeScore ? { current: e.homeScore.current } : null,
-    awayScore: e.awayScore ? { current: e.awayScore.current } : null,
+    homeScore: e.homeScore ? { current: e.homeScore.current, display: e.homeScore.display, penalties: e.homeScore.penalties } : null,
+    awayScore: e.awayScore ? { current: e.awayScore.current, display: e.awayScore.display, penalties: e.awayScore.penalties } : null,
     status: e.status
       ? { type: e.status.type, code: e.status.code, description: e.status.description }
       : null,

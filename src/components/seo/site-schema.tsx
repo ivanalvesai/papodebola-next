@@ -34,6 +34,8 @@ export async function SiteSchema() {
         "@id": `${SITE_URL}/#website`,
         url: `${SITE_URL}/`,
         name,
+        // Nome alternativo pro Google usar se não aceitar o principal (site names).
+        alternateName: "PapodeBola",
         inLanguage: "pt-BR",
         publisher: { "@id": `${SITE_URL}/#org` },
         potentialAction: {

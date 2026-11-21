@@ -9,6 +9,12 @@ Portal de futebol brasileiro e mundial. Migrado de HTML/CSS/JS estático para Ne
 
 ---
 
+## API AllSports: pausada e religada em 18/11/2026
+
+Ficou pausada das 07h15 até a noite de 18/11 (host `.invalid` no `.env.local` + 4 crons comentados com `# PAUSA-API-20261118:`). Religada a pedido do Ivan, porque havia jogos ao vivo. Backups: `.env.local.bak.20261118-religa` e `~/crontab.backup.20261118-religa`. Para pausar de novo, use a mesma técnica: trocar o host por um `.invalid`, comentar os crons com um marcador e rodar `docker compose up -d` em dev, prod e api.
+
+---
+
 ## ⚠️ REGRA DE OURO — todo dado esportivo fica salvo na nossa base
 
 **Nenhuma página pode depender só da API ao vivo.** Tabela, rodadas, chaveamento, placar e **lance a lance** de todo campeonato/jogo têm que ficar gravados no volume (`data/snapshots/`), para o site continuar mostrando tudo se a API sair do ar, cancelar a assinatura ou derrubar o feed de um torneio encerrado. Pedido explícito e repetido do Ivan.
@@ -120,6 +126,15 @@ add_header Strict-Transport-Security "max-age=31536000" always;   # re-add: add_
 **Por quê:** o Next.js manda `Cache-Control: s-maxage=31536000` (1 ano) nas páginas pré-renderizadas. Se a CDN cacheia esse HTML, um deploy seguinte apaga os chunks JS que o HTML referencia → 404 do chunk → página trava ("Algo deu errado" / spinner infinito). Com `no-store` só no HTML/RSC, os `/_next/static/*` continuam `immutable` (cacheados pra sempre, hash muda por build) e o HTML sempre vem fresco. Backup do conf original em `*.conf.bak.TIMESTAMP`. Ver Troubleshooting "Página quebra após deploy".
 
 ---
+
+### Certificado SSL do site (certbot, desde 16/11)
+
+O cert Let's Encrypt de `papodebola.com.br` + `www` (também servido no vhost `api`) é do **certbot**, não do aaPanel. O renovador do aaPanel falhava nesse domínio (site proxy, sem pasta) e o cert venceu em 15/07 sem ninguém notar, porque a Cloudflare em Full não confere a validade.
+- Cert `papodebola-site` (`/etc/letsencrypt/renewal/papodebola-site.conf`), webroot `/www/server/nginx/html` (o include `well-known` do vhost serve o `/.well-known/` de lá, inclusive pela Cloudflare).
+- **Renova 1 dia antes de vencer** (`renew_before_expiry = 1 days`, pedido do Ivan); `certbot.timer` roda 2x/dia.
+- O deploy hook `/usr/local/bin/pdb-cert-deploy.sh` copia para `/www/server/panel/vhost/cert/papodebola.com.br/` e recarrega o nginx. Log em `/var/log/pdb-cert-deploy.log`. Backup do cert antigo em `/root/cert-papodebola-backup-20261116`.
+- Conferir: `sudo certbot certificates --cert-name papodebola-site` e `sudo certbot renew --dry-run --cert-name papodebola-site`. **Não** reemitir esse cert pela UI do aaPanel.
+- **`lead.multiplicnet.com.br` não é deste servidor** (conferido em 16/11): o DNS aponta para `138.117.60.19` e aqui não há vhost. O cert vencido que sobrou na pasta do aaPanel foi movido para `/root/cert-lead-multiplicnet-backup-20261116`; não dá para renovar daqui. `admin.papodebola.com.br` (WordPress descontinuado) segue com cert vencido desde 15/07, sem renovar. Doc: `docs/knowledge/2026-11-16-ssl-certbot.md`.
 
 ## Fluxo de deploy — dev primeiro, depois promove
 
@@ -768,9 +783,22 @@ Doc completo: `docs/knowledge/2026-06-20-studio-kanbans.md`. Navegação compart
 - **`/ao-vivo`** mostra só os jogos do dia, com uma seção por campeonato (H2 + texto) e cards com status e link pro lance a lance.
 - Posts: `scripts/onde-assistir/*` + `scripts/capa-onde-assistir.py` + `scripts/create-posts-onde-assistir-lote.mjs`, que agenda via `schedulePublish`. Bloco Lexical novo exige promote antes de agendar.
 - **Lote em escala (template v2, 13/11):** `template-v2.mjs` serve clube (Série A/B, mostra vitórias) e seleção; `build-v2.mjs` monta o JSON (XI do snapshot ou do jogo anterior + `swapHome/swapAway`); `sched.sh` agenda. Capa de clube usa `--crest`. 17 guias do dia 14/11 agendados das 08h às 21h20 (posts 458–474). Conferir placares citados contra `facts.json` antes de agendar; desfalque com fonte única não entra.
+- **Guias NBA/NFL (`facts-us.py` → `fix-us.py` → `auto-us.mjs`, 17/11):** o feed `team/{id}/matches/previous` da API chega a atrasar dias (jogo já disputado aparece em `next` como não iniciado). Rodar **`scripts/onde-assistir/fix-us.py`** no servidor depois do `facts-us.py` em todo lote: ele confere via `match/{id}` e move os encerrados pra `last`. A API chama o Miami Heat de "Vice City Heat" (trocar no JSON). Semana da NFL vem do `round` do jogo. O create lê a capa pelo `coverFile` do JSON (`capa-{jogo}-{DD-MM-AAAA}.png`), então subir a capa com esse nome. Doc: `docs/knowledge/2026-11-17-guias-quinta-19-11.md`.
 - **Amistosos (13/11):** `src/lib/data/amistosos.ts` acompanha Brasil, Brasil sub-20, Argentina e Uruguai (`AMISTOSO_TEAM_IDS`; filtro = torneio com "Friendly"). Índice no volume `snapshots/amistosos/jogos.json`; lance a lance em **`/futebol/amistosos/{DD-MM-AAAA}/{casa}-{fora}`** (Brasil principal redireciona pra `/futebol/selecao-brasileira/...`). Entram na barra da home (Hoje/Próximos) e no carrossel "Amistosos" de `/jogos-de-hoje`, que tem ordem fixa: Copa, brasileiros, Amistosos, Liga das Nações, Europa. Guias de amistoso: `template-amistoso.mjs` + `build-amistoso.mjs`.
 - **GOTCHA horário no Windows:** `TZ=America/Sao_Paulo date` no Git Bash devolve UTC. Para agendar "agora", pegar a hora no servidor (`ssh ... date`).
 - Doc: `docs/knowledge/2026-11-13-onde-assistir-banner-shopee.md`.
+
+## API pública /v1 (api.papodebola.com.br, 16/11)
+
+API com chave para o site novo de futebol do Ivan (outro servidor, IP `138.117.60.42`) ler os dados do Papo de Bola sem tocar na AllSportsApi.
+- **Container `papodebola-api`** (`/home/ivan/papodebola-api/`, :3002 só em localhost): mesma imagem da prod, `PDB_API_MODE=1`, lê o volume em modo somente leitura. O `rebuild.sh` da prod recria a API junto (inclusive no rollback).
+- **Onde a `/v1` responde:** só no container da API. Na prod do site é 404. No dev, só em modo teste (`PDB_API_DEV=1`) e só com chave de IP `*`.
+- **nginx** `api.papodebola.com.br.conf`: aceita só IPs da Cloudflare, `X-Real-IP` vem do `CF-Connecting-IP`, `limit_req` 20 r/s e só `/v1/`.
+- **Chaves:** painel `/painel-pdb-9x/api` (dev), arquivo `data/api-keys.json` (só o hash). O uso fica em `pdb-api-state`. A chave "Site novo" está em `/home/ivan/api-key-site-novo.txt`.
+- **Rota nova:** conversor em `src/lib/public-api/v1/` + rota `src/app/v1/` com `withPublicApi` + entrada em `openapi.ts` (o teste obriga).
+- **Jogo completo pro site novo (18/11, commit `a046785`):** `/v1/jogos/{id}` traz fase, agregado, `avancou`, `jogoIdaId`, técnicos, capacidade do estádio, `gols[]`, `resumo` (frase do jogo encerrado), ids de jogador e motivo do cartão em cada lance, `rotulo` no lugar do sentinela 999 e `eventos` por jogador na escalação. Tudo sai do mesmo `match/{id}`, sem chamada extra. Snapshots antigos completados por `scripts/backfill-match-context.mjs`, que lê só o cache bruto em disco. Rótulos PT em `src/lib/match-labels.ts`.
+- **GOTCHA placar com pênaltis (18/11):** o `homeScore.current` da API SOMA a disputa (Palmeiras 0x1 Flu, 5x3 nos pênaltis, aparecia 5x4). Sempre `scoreOf`/`pensOf` (`src/lib/score.ts`). A API às vezes manda `display` negativo; o helper cai pro `current`. 87 jogos de snapshot corrigidos (backup em `snapshots/_bak-pens-20261118/`).
+- Doc: `docs/knowledge/2026-11-16-api-publica.md`.
 
 ## Analytics e Tags
 

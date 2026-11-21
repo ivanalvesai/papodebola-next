@@ -30,9 +30,10 @@ export const revalidate = 1800;
 // (metaTitle/metaDescription/noindex) sobrescreve via buildMetadata; sem ele valem os
 // textos "home.meta.*" (com fallback no default do registro).
 export async function generateMetadata(): Promise<Metadata> {
-  const [title, description] = await Promise.all([
+  const [title, description, siteName] = await Promise.all([
     getEditableText("home.meta.title"),
     getEditableText("home.meta.description"),
+    getEditableText("site.name"),
   ]);
   return buildMetadata("/", {
     // `absolute` evita o template "%s | Papo de Bola" do layout (senao duplicaria a marca).
@@ -41,7 +42,13 @@ export async function generateMetadata(): Promise<Metadata> {
     alternates: { canonical: "/" },
     // images explícito: o openGraph aqui SUBSTITUI o do layout, então sem isto a
     // home ficava sem og:image (preview vazio ao compartilhar). Reusa o og-image.jpg.
+    // siteName/url/type pelo mesmo motivo: o Google lê o og:site_name da home pra
+    // escolher o nome do site na busca (sem ele, mostrava "papodebola.com.br").
     openGraph: {
+      siteName,
+      url: "/",
+      type: "website",
+      locale: "pt_BR",
       title,
       description,
       images: [{ url: "/og-image.jpg", width: 1200, height: 630 }],

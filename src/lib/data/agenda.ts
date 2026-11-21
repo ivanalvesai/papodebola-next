@@ -1,4 +1,5 @@
 import { getAmistosoFixtures, amistosoStatus, amistosoMatchHref, AMISTOSOS_LEAGUE, type AmistosoFixture } from "./amistosos";
+import { scoreOf } from "@/lib/score";
 import { fetchAllSports } from "@/lib/api/allsports";
 import { getSeasonWindow, spDayKey } from "@/lib/data/sport-season";
 import { translateStatus } from "@/lib/translations";
@@ -133,8 +134,8 @@ function normalize(event: any, sportSlug: string): AgendaEvent {
     away: translate ? translateCountry(awayName) : awayName,
     homeId,
     awayId,
-    homeScore: event.homeScore?.current ?? null,
-    awayScore: event.awayScore?.current ?? null,
+    homeScore: scoreOf(event.homeScore),
+    awayScore: scoreOf(event.awayScore),
     status: translateStatus(event.status?.description) || translateStatus(event.status?.type) || "",
     statusType: event.status?.type || "",
     time: ts.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit", timeZone: "America/Sao_Paulo" }),
@@ -240,8 +241,8 @@ function rawFootballEventToAgenda(e: any, league: string, slug: string): AgendaE
     away,
     homeId,
     awayId,
-    homeScore: e.homeScore?.current ?? null,
-    awayScore: e.awayScore?.current ?? null,
+    homeScore: scoreOf(e.homeScore),
+    awayScore: scoreOf(e.awayScore),
     status:
       translateStatus(e.status?.description) ||
       (statusType === "finished" ? "Encerrado" : statusType === "inprogress" ? "Ao Vivo" : ""),

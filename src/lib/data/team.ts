@@ -1,4 +1,5 @@
 import { fetchAllSports } from "@/lib/api/allsports";
+import { scoreOf } from "@/lib/score";
 import { TEAM_BY_SLUG, TOURNAMENT_BY_ID, ALL_CLUSTER_TEAMS, teamTournament, type TeamInfo } from "@/lib/config";
 import { getPayloadTeamSlugMap } from "./payload-teams";
 import { championshipMatchHref } from "./match-detail";
@@ -112,8 +113,8 @@ function normalizeTeamMatch(event: any): TeamMatch {
     away: event.awayTeam?.name || "",
     homeId: event.homeTeam?.id || 0,
     awayId: event.awayTeam?.id || 0,
-    homeScore: event.homeScore?.current ?? null,
-    awayScore: event.awayScore?.current ?? null,
+    homeScore: scoreOf(event.homeScore),
+    awayScore: scoreOf(event.awayScore),
     league: event.tournament?.uniqueTournament?.name || event.tournament?.name || "",
     status: event.status?.type || "",
     statusText: translateStatus(event.status?.description),

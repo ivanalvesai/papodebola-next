@@ -10,13 +10,24 @@ export interface RodadaRefV1 { chave: string; numero: number; nome: string; mata
 export interface CampeonatoResumoV1 { slug: string; nome: string; id: number; temporadaId: number | null }
 export interface CampeonatoV1 extends CampeonatoResumoV1 { rodadaAtual: string; rodadas: RodadaRefV1[]; tabela: GrupoTabelaV1[]; temJogoAoVivo: boolean }
 export interface ArtilheiroV1 { posicao: number; jogador: { id: number; nome: string; foto: string }; time: TimeRefV1; gols: number; nota: number | null }
-export interface LanceV1 { tipo: string; detalhe: string; minuto: number | null; acrescimo: number | null; jogador: string | null; assistencia: string | null; entrou: string | null; saiu: string | null; lado: "mandante" | "visitante" | null; placarMandante: number | null; placarVisitante: number | null; texto: string | null }
-export interface NarracaoV1 { id: number; tipo: string; texto: string; minuto: number | null; rotuloMinuto: string | null; lado: "mandante" | "visitante" | null; jogador: string | null; html: string | null }
-export interface JogadorEscalacaoV1 { id: number; nome: string; numero: number | null; posicao: string; nota: string | null; capitao: boolean; foto: string }
+type Lado = "mandante" | "visitante" | null;
+// minuto/acrescimo = null no lugar do sentinela 999 da API; `rotulo` nomeia os marcadores de período.
+export interface LanceV1 { tipo: string; detalhe: string; minuto: number | null; acrescimo: number | null; rotulo: string | null; jogador: string | null; jogadorId: number | null; assistencia: string | null; assistenciaId: number | null; entrou: string | null; entrouId: number | null; saiu: string | null; saiuId: number | null; motivo: string | null; lado: Lado; placarMandante: number | null; placarVisitante: number | null; texto: string | null }
+export interface GolV1 { jogador: string | null; jogadorId: number | null; assistencia: string | null; minuto: number | null; acrescimo: number | null; lado: Lado; tipo: "normal" | "penalti" | "contra" }
+export interface EventoJogadorV1 { tipo: "gol" | "golPenalti" | "golContra" | "assistencia" | "amarelo" | "segundoAmarelo" | "vermelho" | "entrou" | "saiu"; minuto: number | null; acrescimo: number | null; motivo?: string | null }
+export interface FaseV1 { nome: string; mataMata: boolean; chave: string | null }
+export interface NarracaoV1 { id: number; tipo: string; texto: string; minuto: number | null; rotuloMinuto: string | null; lado: "mandante" | "visitante" | null; jogador: string | null; jogadorId: number | null; motivo: string | null; html: string | null }
+export interface JogadorEscalacaoV1 { id: number; nome: string; numero: number | null; posicao: string; nota: string | null; capitao: boolean; foto: string; eventos: EventoJogadorV1[] }
 export interface EscalacaoV1 { formacao: string | null; titulares: JogadorEscalacaoV1[]; reservas: JogadorEscalacaoV1[] }
 export interface EstatisticaV1 { nome: string; mandante: string; visitante: string }
-export interface CobrancaPenaltiV1 { ordem: number; jogador: string; lado: "mandante" | "visitante"; converteu: boolean; motivo: string }
-export interface JogoV1 extends JogoResumoV1 { estadio: { nome: string; cidade: string; pais: string } | null; arbitro: string | null; vencedor: "mandante" | "visitante" | null; inicioPeriodoTs: number; lances: LanceV1[]; narracao: NarracaoV1[]; estatisticas: EstatisticaV1[]; penaltis: CobrancaPenaltiV1[] }
+export interface CobrancaPenaltiV1 { ordem: number; jogador: string; jogadorId: number | null; lado: "mandante" | "visitante"; converteu: boolean; motivo: string }
+export interface JogoV1 extends JogoResumoV1 {
+  estadio: { nome: string; cidade: string; pais: string; capacidade: number | null } | null; arbitro: string | null; vencedor: Lado; inicioPeriodoTs: number;
+  fase: FaseV1 | null; agregado: { mandante: number; visitante: number } | null; avancou: Lado; jogoIdaId: number | null;
+  tecnicos: { mandante: string | null; visitante: string | null } | null;
+  gols: GolV1[]; resumo: string | null;
+  lances: LanceV1[]; narracao: NarracaoV1[]; estatisticas: EstatisticaV1[]; penaltis: CobrancaPenaltiV1[];
+}
 export interface JogoCompletoV1 extends JogoV1 { escalacoes: { confirmadas: boolean; mandante: EscalacaoV1 | null; visitante: EscalacaoV1 | null } }
 export interface DiaCampeonatoV1 { campeonato: string; jogos: JogoResumoV1[] }
 export interface TimeV1 { id: number; nome: string; escudo: string; proximos: JogoResumoV1[]; ultimos: JogoResumoV1[] }
